@@ -27,3 +27,32 @@ jobs:
           node-version-file: .nvmrc
       - name: Lancer les tests avec la couverture
         run: npm run test:coverage
+
+  # Après des tests réussis sur main : version, CHANGELOG.md, tag et GitHub Release, d'après les commits.
+  # Outils lancés ici seulement, versions figées : l'application reste sans dépendance.
+  release:
+    name: Version
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Publier la version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          npx --yes
+          -p semantic-release@25.0.9
+          -p @semantic-release/changelog@7.0.0
+          -p @semantic-release/git@11.0.1
+          -p @semantic-release/npm@13.2.0
+          -p conventional-changelog-conventionalcommits@10.4.1
+          semantic-release

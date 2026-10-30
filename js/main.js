@@ -21,8 +21,19 @@ async function useService(name) {
   }
 }
 
+/** Affiche le numéro de version, tiré de package.json. Sans lui, rien n'est affiché. */
+async function showVersion() {
+  try {
+    const { version } = await (await fetch('package.json', { cache: 'no-store' })).json();
+    document.getElementById('appVersion').textContent = 'v' + version;
+  } catch (e) {
+    /* hébergement sans package.json */
+  }
+}
+
 async function init() {
   loadPrefs();
+  showVersion();
   applyStatic();
   bindEvents();
   renderAll(); // état « Ouverture de l'arbre… »

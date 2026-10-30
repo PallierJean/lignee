@@ -16,7 +16,9 @@ lignee/
 ├── package.json                Scripts npm start et npm test, version de Node (26 ou plus)
 ├── .nvmrc                      Version de Node pour nvm (26)
 ├── .gitignore                  Exclut data/arbres/ (vos données) du dépôt
-├── .github/workflows/ci.yml    Intégration continue : tests à chaque push
+├── .github/workflows/ci.yml    Intégration continue : tests, puis version automatique
+├── .releaserc.json             Réglages du calcul des versions
+├── CHANGELOG.md                Historique des versions (généré)
 ├── server.js                   Serveur local : sert l'application, écrit data/arbres/
 ├── assets/
 │   └── favicon.svg             Icône de l'onglet
@@ -366,3 +368,19 @@ connus, pas encore corrigés : ils s'affichent sans faire échouer la suite.
 
 GitHub Actions (`.github/workflows/ci.yml`) lance `npm run test:coverage` à chaque push sur `main`
 et sur chaque pull request, avec la version de Node de `.nvmrc`. Résultats : onglet Actions du dépôt.
+
+## Versions
+
+Le numéro suit le [versionnage sémantique](https://semver.org/lang/fr/) et se calcule tout seul à partir
+des commits ([Conventional Commits](https://www.conventionalcommits.org/fr/)), après des tests réussis sur `main` :
+
+| Commit | Effet | Exemple |
+| --- | --- | --- |
+| `fix: …` | correctif | 1.2.3 → 1.2.4 |
+| `feat: …` | nouvelle fonction | 1.2.3 → 1.3.0 |
+| `feat!: …` ou pied `BREAKING CHANGE:` | changement incompatible | 1.2.3 → 2.0.0 |
+| `docs`, `ci`, `chore`, `test`, `refactor`… | pas de nouvelle version | |
+
+`semantic-release` met à jour `package.json` et `CHANGELOG.md`, crée le tag `vX.Y.Z` et la Release GitHub.
+Ces outils tournent seulement dans GitHub Actions : le projet reste sans dépendance. Le commit de version
+est ajouté par GitHub : faites `git pull` avant de repartir de `main`. La version s'affiche à côté du nom.
