@@ -387,8 +387,9 @@ est ajouté par GitHub : faites `git pull` avant de repartir de `main`. La versi
 ## Mises à jour
 
 [Renovate](https://docs.renovatebot.com/) propose chaque lundi, en pull request, les mises à jour des actions GitHub,
-des outils de version et de Node (`renovate.json`). Rien n'est fusionné sans validation, et une version
-doit avoir au moins sept jours pour être proposée. Le preset `conventional-changelog-conventionalcommits`
+des outils de version et de Node (`renovate.json`). Une pull request est fusionnée toute seule si la CI est verte,
+sauf celle des outils de version : ils ne tournent qu'après la fusion et les tests ne les vérifient pas, elle
+attend donc une validation. Une version doit avoir au moins sept jours pour être proposée. Le preset `conventional-changelog-conventionalcommits`
 reste en 9.x, la version 10 étant incompatible.
 Les actions GitHub sont figées sur l'empreinte exacte de leur version. Le tableau de bord de Renovate est
 une issue ouverte en permanence : y cocher une mise à jour la lance sans attendre le lundi.

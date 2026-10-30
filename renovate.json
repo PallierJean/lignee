@@ -1,6 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "automerge": true,
+  "automergeType": "pr",
+  "platformAutomerge": false,
   "timezone": "Europe/Paris",
   "schedule": ["before 6am on monday"],
   "minimumReleaseAge": "7 days",
@@ -16,9 +19,10 @@
   ],
   "packageRules": [
     {
-      "description": "Les outils de version évoluent ensemble",
+      "description": "Les outils de version évoluent ensemble, et à la main : ils ne tournent qu'après la fusion, les tests ne les vérifient pas",
       "matchPackageNames": ["semantic-release", "@semantic-release/**", "conventional-changelog-conventionalcommits"],
-      "groupName": "outils de version"
+      "groupName": "outils de version",
+      "automerge": false
     },
     {
       "description": "La version 10 casse les notes de version de semantic-release",
