@@ -51,7 +51,7 @@ const TYPES = {
 
 // Ce que la page a le droit de charger : ses propres fichiers, les polices, le service de localisation
 const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-  + "font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://nominatim.openstreetmap.org; "
+  + "font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://nominatim.openstreetmap.org https://api.github.com https://raw.githubusercontent.com; "
   + "object-src 'none'; base-uri 'none'; form-action 'none'";
 
 function send(res, status, body, type = 'text/plain; charset=utf-8', headers = {}) {

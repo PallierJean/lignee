@@ -124,7 +124,7 @@ const attached = (p) => [...sourcesOf(p), ...mediaList(p)];
 const hasPhotoData = (p) => isPhotoData(p.photo) || attached(p).some((x) => isPhotoData(x.photo));
 
 /** Fiche dont la photo et les documents des sources sont passés par `convert`. */
-async function convertPhotos(p, convert) {
+export async function convertPhotos(p, convert) {
   const out = Object.assign({}, p);
   if (p.photo) out.photo = await convert(p.photo);
   for (const [key, list] of [['sources', sourcesOf(p)], ['media', mediaList(p)]]) {

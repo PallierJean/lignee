@@ -1,4 +1,4 @@
-/** Fenêtre « Importer / exporter » : GEDCOM et sauvegarde Lignée. */
+/** Fenêtre « Importer / exporter » : GEDCOM, sauvegarde Lignée et dépôt GitHub. */
 import { S, services, treeName } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { pool, norm } from '../utils/helpers.js';
@@ -6,6 +6,7 @@ import { mapOf, dbSet, saveLocal, storePhotos, buildPortableBackup, beginAction,
 import { buildRegistreCsv } from '../services/csv.js';
 import { buildGedcom, parseGedcom } from '../services/gedcom.js';
 import { parseBackup } from '../services/backup.js';
+import { openRepo, attachPhotos } from '../services/github.js';
 import { afterData } from './render.js';
 import { toast } from './toast.js';
 import { newTree } from './trees.js';
@@ -19,6 +20,9 @@ const fileBase = () => ['lignee', norm(treeName()).replace(/[^a-z0-9]+/g, '-').r
 
 /* ---------- Ouverture / fermeture ---------- */
 
+/* Dépôt GitHub en cours de lecture, quand il faut choisir entre plusieurs sauvegardes */
+let openedRepo = null;
+
 export function openTransfer() {
   $('#transfer').hidden = false;
   $('#exportHint').textContent = '';
@@ -26,6 +30,7 @@ export function openTransfer() {
   $('#copyRow').hidden = true;
   if (!S.pending) $('#importInfo').innerHTML = '';
   $('#importFile').value = '';
+  $('#repoToken').value = '';
   setTimeout(() => {
     const close = $('#transfer .icon-btn');
     if (close) close.focus();
@@ -34,6 +39,8 @@ export function openTransfer() {
 
 export function closeTransfer() {
   $('#transfer').hidden = true;
+  $('#repoToken').value = '';
+  openedRepo = null; // il garde le jeton pour lire les photos
 }
 
 /* ---------- Export ---------- */
@@ -144,6 +151,16 @@ export async function copyExport() {
 
 /* ---------- Import ---------- */
 
+/** Met en attente ce qui a été lu et propose de l'importer. */
+function offerImport(result, source, note = '') {
+  S.pending = result;
+  $('#importInfo').innerHTML = `<p>${t('tr.found', result.people.length, result.unions.length, esc(source))}</p>${note}`
+    + '<div class="row-btns import-actions">'
+    + `<button class="btn primary" type="button" data-act="import-go">${t('tr.addTo', esc(treeName()))}</button>`
+    + `<button class="btn" type="button" data-act="import-new">${t('tr.newTree')}</button>`
+    + '</div>';
+}
+
 /** Lit le fichier choisi et affiche ce qu'il contient, sans encore l'importer. */
 export async function readImportFile(input) {
   const file = input.files && input.files[0];
@@ -165,14 +182,59 @@ export async function readImportFile(input) {
   }
 
   result.fileName = file.name.replace(/\.[^.]+$/, '');
-  S.pending = result;
-  const np = result.people.length;
-  const nu = result.unions.length;
-  info.innerHTML = `<p>${t('tr.found', np, nu, esc(file.name))}</p>`
-    + '<div class="row-btns import-actions">'
-    + `<button class="btn primary" type="button" data-act="import-go">${t('tr.addTo', esc(treeName()))}</button>`
-    + `<button class="btn" type="button" data-act="import-new">${t('tr.newTree')}</button>`
-    + '</div>';
+  offerImport(result, file.name);
+}
+
+function repoFailed(e) {
+  S.pending = null;
+  $('#importInfo').innerHTML = `<p class="err">${t('tr.repoErr.' + (e.code || 'failed'))}</p>`;
+}
+
+/** Charge les photos de la sauvegarde choisie et la propose à l'import. */
+async function offerRepoBackup(repo, backup) {
+  $('#importInfo').innerHTML = `<p>${t('tr.repoLoading')}</p>`;
+  const { found, missing } = await attachPhotos(repo, backup);
+  backup.fileName = backup.path.split('/').pop().replace(/\.json$/i, '');
+  const note = found || missing ? `<p>${t('tr.repoPhotos', found, missing)}</p>` : '';
+  offerImport(backup, repo.name + ' / ' + backup.path, note);
+}
+
+/** Lit le dépôt indiqué et affiche ce qu'il contient, sans encore l'importer. */
+export async function importRepo(button) {
+  const info = $('#importInfo');
+  S.pending = null;
+  openedRepo = null;
+  button.disabled = true;
+  info.innerHTML = `<p>${t('tr.repoLoading')}</p>`;
+  const token = $('#repoToken').value.trim();
+  $('#repoToken').value = ''; // effacé dès sa lecture, même si le chargement échoue
+  try {
+    const repo = await openRepo($('#repoUrl').value, token);
+    if (repo.backups.length === 1) {
+      await offerRepoBackup(repo, repo.backups[0]);
+      return;
+    }
+    openedRepo = repo;
+    info.innerHTML = `<p>${t('tr.repoPick')}</p><div class="row-btns import-actions">`
+      + repo.backups.map((b, i) => `<button class="btn" type="button" data-act="import-repo-pick" data-i="${i}">${esc(b.path)}</button>`).join('')
+      + '</div>';
+  } catch (e) {
+    repoFailed(e);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+/** Sauvegarde choisie parmi celles du dépôt. */
+export async function pickRepoBackup(i) {
+  const repo = openedRepo;
+  if (!repo || !repo.backups[i]) return;
+  openedRepo = null;
+  try {
+    await offerRepoBackup(repo, repo.backups[i]);
+  } catch (e) {
+    repoFailed(e);
+  }
 }
 
 /**
