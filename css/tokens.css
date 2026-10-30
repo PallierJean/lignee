@@ -1,0 +1,85 @@
+/* ==========================================================
+   Jetons de design : couleurs, polices, rayon
+   Mise en page : un registre d'état civil. L'arbre sur papier
+   pointé à gauche, la fiche et le registre à droite.
+   Thème clair par défaut, thème sombre suivant le système.
+   ========================================================== */
+
+:root {
+  /* Couleurs */
+  --paper: #EDF1EE;        /* fond de page et de la toile */
+  --surface: #FAFBFA;      /* panneaux, fiches */
+  --ink: #16211E;          /* texte principal */
+  --muted: #56645F;        /* texte secondaire */
+  --line: #C8D2CD;         /* bordures */
+  --edge: #86948F;         /* traits de l'arbre */
+  --dot: #C6D0CB;          /* trame pointée de la toile */
+  --accent: #1D5B54;
+  --accent-ink: #F4FAF8;   /* texte sur l'accent */
+  --accent-soft: #D5E7E2;
+  --warn: #9A6A12;
+  --danger: #A33A28;
+  --danger-soft: #F6E1DC;
+  --ok: #2F7A4B;
+  --halo: #2FA35A;         /* lignée directe de la personne centrale */
+  --male: #4F86C6;         /* contour des fiches d'hommes */
+  --female: #E9A8BD;       /* contour des fiches de femmes */
+  --scrim: rgba(14, 24, 21, .42);
+
+  /* Polices */
+  --f-display: "Gloock", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Formes */
+  --r: 8px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0E1412;
+    --surface: #161E1B;
+    --ink: #E2EAE6;
+    --muted: #97A6A0;
+    --line: #2D3A35;
+    --edge: #5C6C66;
+    --dot: #222D29;
+    --accent: #7EC4B6;
+    --accent-ink: #0B1916;
+    --accent-soft: #1B342F;
+    --warn: #E0B055;
+    --danger: #EC8C79;
+    --danger-soft: #3A221D;
+    --ok: #7CCB97;
+    --halo: #5FD08A;
+    --male: #6E9FDB;
+    --female: #E4A3BA;
+    --scrim: rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+}
+
+/* Thème sombre forcé (attribut data-theme="dark" sur <html>) */
+:root[data-theme="dark"] {
+  --paper: #0E1412;
+  --surface: #161E1B;
+  --ink: #E2EAE6;
+  --muted: #97A6A0;
+  --line: #2D3A35;
+  --edge: #5C6C66;
+  --dot: #222D29;
+  --accent: #7EC4B6;
+  --accent-ink: #0B1916;
+  --accent-soft: #1B342F;
+  --warn: #E0B055;
+  --danger: #EC8C79;
+  --danger-soft: #3A221D;
+  --ok: #7CCB97;
+  --halo: #5FD08A;
+  --male: #6E9FDB;
+  --female: #E4A3BA;
+  --scrim: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}

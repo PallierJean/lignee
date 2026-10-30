@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lignée</title>
+  <meta name="description" content="Arbre généalogique : fiches, unions, numéros Sosa, registre et import/export GEDCOM.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+  <!-- Polices -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Gloock&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+  <!-- Styles : jetons, base, mise en page, puis composants -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components/controls.css">
+  <link rel="stylesheet" href="css/components/badges.css">
+  <link rel="stylesheet" href="css/components/header.css">
+  <link rel="stylesheet" href="css/components/tree.css">
+  <link rel="stylesheet" href="css/components/panel.css">
+  <link rel="stylesheet" href="css/components/form.css">
+  <link rel="stylesheet" href="css/components/registre.css">
+  <link rel="stylesheet" href="css/components/search.css">
+  <link rel="stylesheet" href="css/components/modal.css">
+  <link rel="stylesheet" href="css/components/person.css">
+  <link rel="stylesheet" href="css/components/toast.css">
+  <link rel="stylesheet" href="css/components/print.css">
+  <link rel="stylesheet" href="css/components/trees.css">
+  <link rel="stylesheet" href="css/components/analyse.css">
+
+  <!-- Application (module ES, chargé après le HTML) -->
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+          <rect x="3" y="4" width="13" height="9" rx="1.5"/>
+          <rect x="24" y="4" width="13" height="9" rx="1.5"/>
+          <rect class="f" x="13.5" y="27" width="13" height="9" rx="1.5"/>
+          <path d="M9.5 13v6h21v-6M20 19v8"/>
+        </svg>
+        <div>
+          <h1>Lignée</h1>
+          <p class="sum" id="summary">Ouverture de l’arbre…</p>
+        </div>
+        <button class="tree-switch" type="button" data-act="trees-open" aria-haspopup="dialog"
+          title="Changer d’arbre, en créer un autre" data-i18n-attr="title:treeSwitch.title">
+          <span class="lbl" data-i18n="treeSwitch.lbl">Arbre</span>
+          <b id="treeName">…</b>
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg>
+        </button>
+      </div>
+      <div class="find" role="search">
+        <label class="sr" for="find" data-i18n="find.label">Rechercher une personne</label>
+        <input id="find" type="search" placeholder="Rechercher une personne…  ( / )" data-i18n-attr="placeholder:find.placeholder" autocomplete="off" spellcheck="false"
+          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="findList">
+        <ul class="find-list" id="findList" role="listbox" aria-label="Personnes trouvées" data-i18n-attr="aria-label:find.list" hidden></ul>
+      </div>
+      <div class="top-actions">
+        <span class="pill" id="status"><i></i><span>Connexion…</span></span>
+        <button class="btn lang" type="button" data-act="lang" id="btnLang" title="Switch to English" aria-label="Switch to English">EN</button>
+        <button class="btn" type="button" data-act="transfer-open" data-i18n="btn.transfer">Importer / exporter</button>
+        <button class="btn primary" type="button" data-act="new" id="btnNew" data-i18n="btn.new">Ajouter une personne</button>
+      </div>
+    </header>
+
+    <div class="banner" id="banner" hidden></div>
+
+    <main class="main">
+      <!-- Arbre -->
+      <section class="stage" aria-label="Arbre généalogique" data-i18n-attr="aria-label:stage.label">
+        <div class="stage-bar">
+          <div class="ctl">
+            <span class="lbl" id="lblUp" data-i18n="ctl.up">Ascendants</span>
+            <div class="seg" id="segUp" role="group" aria-labelledby="lblUp"></div>
+          </div>
+          <div class="ctl">
+            <span class="lbl" id="lblDown" data-i18n="ctl.down">Descendants</span>
+            <div class="seg" id="segDown" role="group" aria-labelledby="lblDown"></div>
+          </div>
+          <div class="ctl">
+            <button class="btn small toggle" type="button" id="btnFull" data-act="full" aria-pressed="false"
+              title="Afficher toutes les personnes, génération par génération"
+              data-i18n="ctl.full" data-i18n-attr="title:ctl.fullTitle">Tout l’arbre</button>
+            <button class="btn small toggle" type="button" id="btnLine" data-act="line" aria-pressed="true"
+              title="Halo vert sur les ancêtres directs de la personne centrale" data-i18n="ctl.line" data-i18n-attr="title:ctl.lineTitle">Lignée directe</button>
+            <button class="btn small toggle" type="button" id="btnFan" data-act="fan" aria-pressed="false"
+              title="Afficher les ascendants en éventail" data-i18n="ctl.fan" data-i18n-attr="title:ctl.fanTitle">Éventail</button>
+            <button class="btn small" type="button" data-act="print-open" data-i18n="ctl.print">Imprimer</button>
+          </div>
+          <div class="ctl" id="undoCtl">
+            <button class="btn small" type="button" id="btnUndo" data-act="undo" disabled
+              title="Annuler (Ctrl+Z)" data-i18n="ctl.undo" data-i18n-attr="title:ctl.undoTitle">Annuler</button>
+            <button class="btn small" type="button" id="btnRedo" data-act="redo" disabled
+              title="Rétablir (Ctrl+Maj+Z)" data-i18n="ctl.redo" data-i18n-attr="title:ctl.redoTitle">Rétablir</button>
+          </div>
+          <div class="ctl zoomctl">
+            <button class="zbtn" type="button" data-act="zoom" data-d="-1" aria-label="Réduire" data-i18n-attr="aria-label:ctl.zoomOut">−</button>
+            <span id="zoomVal">100 %</span>
+            <button class="zbtn" type="button" data-act="zoom" data-d="1" aria-label="Agrandir" data-i18n-attr="aria-label:ctl.zoomIn">+</button>
+            <button class="btn small" type="button" data-act="center" data-i18n="ctl.center">Recentrer</button>
+          </div>
+        </div>
+        <div class="canvas" id="canvas">
+          <div class="sizer" id="sizer" hidden>
+            <div class="tree" id="tree"><svg class="edges" id="edges" aria-hidden="true"></svg></div>
+          </div>
+          <div class="fan" id="fan" hidden></div>
+          <div class="empty" id="empty"></div>
+        </div>
+        <p class="legend">
+          <span data-i18n-html="legend.birth"><b>°</b> naissance</span>
+          <span data-i18n-html="legend.union"><b>×</b> union</span>
+          <span data-i18n-html="legend.married"><b>⚭</b> personne mariée</span>
+          <span data-i18n-html="legend.death"><b>†</b> décès</span>
+          <span data-i18n-html="legend.male"><i class="sx M"></i> homme</span>
+          <span data-i18n-html="legend.female"><i class="sx F"></i> femme</span>
+          <span data-i18n-html="legend.unknown"><i class="sx U"></i> non précisé</span>
+          <span data-i18n-html="legend.sosa"><b class="sosa">6</b> numéro Sosa : personne centrale = 1, père = 2n, mère = 2n + 1</span>
+          <span data-i18n-html="legend.line"><i class="halo-key"></i> lignée directe de la personne centrale</span>
+          <span data-i18n="legend.partner">Fiche sans numéro à côté d’un ancêtre : autre conjoint (remariage, veuvage…)</span>
+        </p>
+      </section>
+
+      <!-- Fiche et registre -->
+      <aside class="side" aria-label="Fiche et registre" data-i18n-attr="aria-label:side.label">
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" id="tab-fiche" data-act="tab" data-tab="fiche" aria-controls="paneFiche" data-i18n="tab.fiche">Fiche</button>
+          <button type="button" role="tab" id="tab-registre" data-act="tab" data-tab="registre" aria-controls="paneRegistre"><span data-i18n="tab.registre">Registre</span><span class="n" id="regCount"></span></button>
+          <button type="button" role="tab" id="tab-analyse" data-act="tab" data-tab="analyse" aria-controls="paneAnalyse"><span data-i18n="tab.analyse">Analyse</span><span class="n" id="anCount"></span></button>
+        </div>
+        <div class="pane" id="paneFiche" role="tabpanel" aria-labelledby="tab-fiche"></div>
+        <div class="pane" id="paneRegistre" role="tabpanel" aria-labelledby="tab-registre" hidden>
+          <label class="search">
+            <span class="sr" data-i18n="reg.searchLabel">Rechercher dans le registre</span>
+            <input id="q" type="search" placeholder="Nom, prénom, lieu ou profession" data-i18n-attr="placeholder:reg.searchPlaceholder" autocomplete="off">
+          </label>
+          <div class="row-btns reg-tools"><button class="btn small" type="button" data-act="registre-csv" data-i18n="reg.csv">Exporter le registre (.csv)</button></div>
+          <div id="reglist"></div>
+        </div>
+        <div class="pane" id="paneAnalyse" role="tabpanel" aria-labelledby="tab-analyse" hidden></div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Fenêtre Importer / exporter -->
+  <div class="overlay" id="transfer" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="trTitle">
+      <div class="sheet-head">
+        <h2 id="trTitle" data-i18n="btn.transfer">Importer / exporter</h2>
+        <button class="icon-btn" type="button" data-act="transfer-close" aria-label="Fermer" data-i18n-attr="aria-label:close">×</button>
+      </div>
+      <section>
+        <h3 data-i18n="tr.export">Exporter</h3>
+        <p data-i18n="tr.exportText">Le format GEDCOM est accepté par Geneanet, Ancestris, Gramps, Heredis et MyHeritage. La sauvegarde Lignée permet de tout restaurer ici.</p>
+        <div class="row-btns">
+          <button class="btn primary" type="button" data-act="export-ged" data-i18n="tr.exportGed">Exporter en GEDCOM</button>
+          <button class="btn" type="button" data-act="export-json" data-i18n="tr.exportJson">Sauvegarde Lignée (.json)</button>
+          <button class="btn" type="button" data-act="export-csv" data-i18n="tr.exportCsv">Registre (.csv)</button>
+        </div>
+        <p class="hint" id="exportHint"></p>
+        <textarea id="exportText" readonly hidden aria-label="Contenu exporté" data-i18n-attr="aria-label:tr.exported"></textarea>
+        <div class="row-btns" id="copyRow" hidden>
+          <button class="btn" type="button" data-act="copy-export" data-i18n="tr.copy">Copier le texte</button>
+        </div>
+      </section>
+      <section id="importSection">
+        <h3 data-i18n="tr.import">Importer</h3>
+        <p data-i18n="tr.importText">Ajoutez un arbre existant (fichier .ged) ou restaurez une sauvegarde Lignée (.json). Les personnes importées s’ajoutent à celles déjà présentes.</p>
+        <label class="fld"><span data-i18n="tr.file">Fichier à importer</span><input type="file" id="importFile" accept=".ged,.GED,.json,.txt"></label>
+        <div id="importInfo"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Fenêtre Mes arbres -->
+  <div class="overlay" id="treesDlg" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tsTitle">
+      <div class="sheet-head">
+        <h2 id="tsTitle" data-i18n="ts.title">Mes arbres</h2>
+        <button class="icon-btn" type="button" data-act="trees-close" aria-label="Fermer" data-i18n-attr="aria-label:close">×</button>
+      </div>
+      <section>
+        <p data-i18n="ts.text">Chaque arbre a ses propres personnes et unions. Choisissez celui à afficher.</p>
+        <ul class="tree-list" id="treeList"></ul>
+      </section>
+      <section id="newTreeSection">
+        <h3 data-i18n="ts.new">Nouvel arbre</h3>
+        <form class="tree-new" id="newTreeForm">
+          <label class="fld"><span data-i18n="ts.name">Nom</span>
+            <input id="newTreeName" type="text" maxlength="80" placeholder="Famille Dupont, côté maternel…" data-i18n-attr="placeholder:ts.namePlaceholder" autocomplete="off">
+          </label>
+          <button class="btn primary" type="submit" data-i18n="ts.create">Créer l’arbre</button>
+        </form>
+        <p class="hint" data-i18n="ts.hint">L’arbre créé est vide. Pour y reprendre un fichier GEDCOM ou une sauvegarde, utilisez « Importer / exporter ».</p>
+      </section>
+    </div>
+  </div>
+
+  <!-- Fenêtre Imprimer l'arbre -->
+  <div class="overlay" id="printDlg" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="prTitle">
+      <div class="sheet-head">
+        <h2 id="prTitle" data-i18n="pr.title">Imprimer l’arbre</h2>
+        <button class="icon-btn" type="button" data-act="print-close" aria-label="Fermer" data-i18n-attr="aria-label:close">×</button>
+      </div>
+      <section>
+        <p data-i18n="pr.text">Toutes les personnes sont mises à l’échelle sur une seule feuille. Dans la fenêtre d’impression, choisissez « Enregistrer au format PDF » pour obtenir le fichier, ou une imprimante grand format.</p>
+        <label class="fld"><span data-i18n="pr.content">Contenu</span>
+          <select id="prContent">
+            <option value="tree" data-i18n="pr.contentTree">Arbre complet</option>
+            <option value="fan" data-i18n="pr.contentFan">Roue d’ascendance</option>
+            <option value="book" data-i18n="pr.contentBook">Livret de famille (A4)</option>
+          </select>
+        </label>
+        <label class="fld" id="prTilesRow"><span data-i18n="pr.tiles">Découpage</span><select id="prTiles"></select></label>
+        <div class="print-opts" id="prPaper">
+          <label class="fld"><span data-i18n="pr.format">Format</span>
+            <select id="prFormat">
+              <option value="A3">A3 (297 × 420 mm)</option>
+              <option value="A2">A2 (420 × 594 mm)</option>
+              <option value="A4">A4 (210 × 297 mm)</option>
+            </select>
+          </label>
+          <label class="fld"><span data-i18n="pr.orient">Orientation</span>
+            <select id="prOrient">
+              <option value="auto" data-i18n="pr.auto">Automatique</option>
+              <option value="landscape" data-i18n="pr.landscape">Paysage</option>
+              <option value="portrait" data-i18n="pr.portrait">Portrait</option>
+            </select>
+          </label>
+        </div>
+        <label class="fld"><span data-i18n="pr.titleField">Titre</span><input id="prTitleText" type="text" maxlength="120" autocomplete="off"></label>
+        <p class="hint" id="printInfo"></p>
+        <div class="row-btns">
+          <button class="btn primary" type="button" data-act="print-go" data-i18n="pr.go">Imprimer ou enregistrer en PDF</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Fiche d'une personne, en lecture seule (clic sur une fiche de l'arbre) -->
+  <div class="overlay person-dlg" id="personDlg" hidden>
+    <article class="pd-card" id="personCard" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="pdName"></article>
+  </div>
+
+  <!-- Feuille imprimée (visible à l'impression seulement) -->
+  <div class="print-area" id="printArea" aria-hidden="true"></div>
+
+  <!-- Galerie : image et personnes identifiées -->
+  <div class="overlay" id="mediaDlg" hidden>
+    <div class="sheet media-sheet" id="mediaCard" role="dialog" aria-modal="true" aria-labelledby="mdTitle"></div>
+  </div>
+
+  <!-- Agrandissement de la photo d'une fiche : un clic n'importe où le ferme -->
+  <div class="overlay photo-zoom" id="photoZoom" hidden>
+    <img id="photoZoomImg" src="" alt="">
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

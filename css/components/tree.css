@@ -1,0 +1,357 @@
+/* ==========================================================
+   Arbre : barre d'outils, toile pointée, traits, fiches
+   ========================================================== */
+
+/* Barre d'outils au-dessus de l'arbre */
+.stage-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lbl {
+  font-size: 11.5px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Sélecteur du nombre de générations */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.seg button {
+  font: inherit;
+  font-family: var(--f-mono);
+  font-size: 12.5px;
+  min-width: 31px;
+  padding: 5px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.seg button + button {
+  border-left: 1px solid var(--line);
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* Zoom */
+.zoomctl {
+  margin-left: auto;
+}
+
+.zbtn {
+  font: inherit;
+  font-family: var(--f-mono);
+  font-size: 16px;
+  width: 31px;
+  height: 29px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+#zoomVal {
+  font-family: var(--f-mono);
+  font-size: 12.5px;
+  min-width: 46px;
+  text-align: center;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Toile : papier pointé qui défile dans les deux sens */
+.canvas {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+  background-color: var(--paper);
+  background-image: radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
+  background-size: 20px 20px;
+  overscroll-behavior: contain;
+}
+
+.sizer {
+  position: relative;
+}
+
+.tree {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+/* Traits de filiation et d'union (SVG) */
+.edges {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+  transition: opacity .3s ease .22s;
+}
+
+.edges.fresh {
+  opacity: 0;
+  transition: none;
+}
+
+.edges path {
+  fill: none;
+  stroke: var(--edge);
+  stroke-width: 1.4;
+}
+
+.edges path.dash {
+  stroke-dasharray: 4 4;
+}
+
+.edges .um circle {
+  fill: var(--surface);
+  stroke: var(--edge);
+  stroke-width: 1.2;
+}
+
+.edges .um.dash circle {
+  stroke-dasharray: 3 3;
+}
+
+.edges .um text {
+  fill: var(--muted);
+  font-family: var(--f-mono);
+  font-size: 12px;
+}
+
+/* Légende sous l'arbre */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend b {
+  font-family: var(--f-mono);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Fiche d'une personne dans l'arbre */
+.card {
+  position: absolute;
+  width: 176px;   /* = CW dans js/config.js */
+  height: 78px;   /* = CH dans js/config.js */
+  padding: 9px 11px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    left .4s cubic-bezier(.2, .7, .2, 1),
+    top .4s cubic-bezier(.2, .7, .2, 1),
+    border-color .15s;
+}
+
+/* Contour selon le sexe : bleu pour un homme, rose pâle pour une femme */
+.card.is-M {
+  border-color: var(--male);
+}
+
+.card.is-F {
+  border-color: var(--female);
+}
+
+.card:hover {
+  border-color: var(--accent);
+}
+
+.card.is-focus {
+  border: 2px solid var(--accent);
+  padding: 8px 10px 7px;
+  background: var(--accent-soft);
+}
+
+.card .tp {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.card .g {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card .s {
+  font-size: 11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card .d {
+  margin-top: auto;
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+.card .d .wed {
+  width: 18px;
+  height: 11px;
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+
+/* Conjoint d'un ancêtre, hors lignée directe (sans numéro Sosa) */
+.card.is-partner {
+  background: var(--paper);
+}
+
+.card.is-partner .g {
+  font-weight: 600;
+}
+
+/* Emplacement vide : « Ajouter le père », « Ajouter un enfant »… */
+.card.ph {
+  border: 1.5px dashed var(--edge);
+  background: var(--paper);
+  color: var(--muted);
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.card.ph:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.ph .plus {
+  font-family: var(--f-mono);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.card.enter {
+  animation: enter .35s ease both;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* État vide ou chargement */
+.empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+}
+
+.empty svg {
+  width: 120px;
+  height: auto;
+  color: var(--accent);
+}
+
+.empty h2 {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 25px;
+  line-height: 1.15;
+  margin: 4px 0 0;
+  text-wrap: balance;
+}
+
+.empty p {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .zoomctl {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .card.enter {
+    animation: none;
+  }
+
+  .edges {
+    transition: none;
+  }
+}

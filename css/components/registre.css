@@ -1,0 +1,77 @@
+/* ==========================================================
+   Registre : liste des personnes par nom de famille
+   ========================================================== */
+
+.search {
+  display: block;
+}
+
+.reg-empty {
+  margin-top: 14px;
+}
+
+.reg-group {
+  margin-top: 16px;
+}
+
+.reg-group h4 {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.reg-group h4 span {
+  font-family: var(--f-mono);
+  letter-spacing: 0;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.reg-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 7px 6px;
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.reg-row:hover {
+  background: var(--paper);
+}
+
+.reg-row.cur {
+  background: var(--accent-soft);
+}
+
+.reg-row .nm {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reg-row .pl {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.reg-row .y {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,104 @@
+/* ==========================================================
+   En-tête et bandeau d'information
+   ========================================================== */
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  min-width: 0;
+}
+
+/* Logo : deux parents reliés à un enfant */
+.mark {
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+
+.mark rect {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.mark rect.f {
+  fill: var(--accent);
+}
+
+.mark path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.brand h1 {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 31px;
+  line-height: 1;
+  margin: 0;
+  letter-spacing: -.01em;
+}
+
+.sum {
+  margin: 4px 0 0;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Bandeau : famille d'exemple ou mode local */
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 10px 14px;
+  border: 1px dashed var(--accent);
+  border-radius: var(--r);
+  background: var(--accent-soft);
+}
+
+.banner p {
+  margin: 0;
+  max-width: 72ch;
+}
+
+.banner .acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .brand h1 {
+    font-size: 27px;
+  }
+}
+
+/* Bouton de langue : FR / EN */
+.btn.lang {
+  min-width: 44px;
+  font-family: var(--f-mono);
+  letter-spacing: .04em;
+}

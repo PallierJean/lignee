@@ -1,0 +1,10 @@
+# Données personnelles : arbres, photos et ancien fichier migré
+/data/arbres/
+/data/arbre.json
+/data/arbre.json.migre
+*.tmp
+
+# Outils
+node_modules/
+coverage/
+.DS_Store

@@ -1,0 +1,146 @@
+/* ==========================================================
+   Collection d'arbres : bouton de l'en-tête, fenêtre « Mes arbres »
+   ========================================================== */
+
+/* Bouton de l'en-tête : nom de l'arbre ouvert */
+.tree-switch {
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 220px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.tree-switch:hover {
+  border-color: var(--accent);
+}
+
+.tree-switch .lbl {
+  font-size: 11px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tree-switch b {
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.tree-switch svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+/* Liste des arbres */
+.tree-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tree-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 4px 4px 4px 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.tree-row.cur {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.tree-row.editing {
+  padding: 10px;
+}
+
+.tree-open {
+  font: inherit;
+  flex: 1 1 200px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 10px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tree-open .nm {
+  font-weight: 700;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.tree-open .ct {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tree-acts {
+  display: flex;
+  gap: 4px;
+}
+
+.tree-rename,
+.tree-new {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.tree-rename input {
+  font: inherit;
+  font-size: 15px;
+  flex: 1 1 180px;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.tree-new .fld {
+  flex: 1 1 220px;
+}
+
+.tree-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .tree-switch {
+    max-width: 100%;
+  }
+}

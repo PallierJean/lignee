@@ -1,0 +1,61 @@
+/* ==========================================================
+   Mise en page : en-tête, grille arbre + panneau latéral
+   ========================================================== */
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1640px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 14px 16px;
+}
+
+.main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 390px);
+  gap: 12px;
+}
+
+/* Les deux panneaux : arbre (.stage) et fiche/registre (.side) */
+.stage,
+.side {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Tablette et téléphone : une seule colonne, la page défile */
+@media (max-width: 900px) {
+  html,
+  body,
+  .app {
+    height: auto;
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stage {
+    height: 480px;
+    flex: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .stage {
+    height: 430px;
+  }
+}

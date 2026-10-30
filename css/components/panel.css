@@ -1,0 +1,284 @@
+/* ==========================================================
+   Panneau latéral : onglets et fiche d'une personne
+   ========================================================== */
+
+/* Onglets Fiche / Registre */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.tabs button {
+  flex: 1;
+  font: inherit;
+  font-size: 14px;
+  padding: 11px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tabs button[aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+  font-weight: 700;
+}
+
+.tabs .n {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 5px;
+}
+
+.pane {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 18px 22px;
+}
+
+/* En-tête de la fiche : photo facultative à gauche du nom */
+.fiche-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.fiche-head > div {
+  min-width: 0;
+}
+
+.photo {
+  flex: none;
+  width: 84px;
+  height: 105px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+/* Avatar par défaut : l'image a déjà son cadre ovale */
+.photo.avatar {
+  border: 0;
+  background: transparent;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 7px;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.name {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 31px;
+  line-height: 1.08;
+  margin: 0;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.name .sur {
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+/* « née FAURE » sous le nom */
+.maiden {
+  margin: 4px 0 0;
+  font-size: 17px;
+  color: var(--muted);
+}
+
+.maiden .sur {
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--ink);
+}
+
+.occ {
+  margin: 7px 0 0;
+  color: var(--muted);
+}
+
+/* Naissance, décès, âge */
+.facts {
+  margin: 16px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.facts > div {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.facts dt {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--muted);
+  padding-top: 2px;
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Parents, unions, enfants, frères et sœurs */
+.rel {
+  margin-top: 20px;
+}
+
+.rel h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.rel h3 .n {
+  font-family: var(--f-mono);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 1px 10px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--accent);
+}
+
+.chip .cn {
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip .cy {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chip .cx {
+  grid-column: 1 / -1;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.addline {
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px dashed var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.addline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.unknown {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.notes {
+  white-space: pre-wrap;
+  margin: 0;
+  max-width: 65ch;
+}
+
+/* Actions en bas de la fiche */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.confirm {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: var(--danger-soft);
+  border-radius: 6px;
+}
+
+.confirm p {
+  margin: 0;
+  width: 100%;
+}
+
+.nofocus {
+  color: var(--muted);
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .pane {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 480px) {
+  .facts > div {
+    grid-template-columns: 98px minmax(0, 1fr);
+  }
+}

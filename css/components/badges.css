@@ -1,0 +1,74 @@
+/* ==========================================================
+   Badges et pastilles : statut, numéro Sosa, sexe, étiquette
+   ========================================================== */
+
+/* Pastille d'état de l'enregistrement (en-tête) */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--muted);
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.pill i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--edge);
+}
+
+.pill.ok i {
+  background: var(--ok);
+}
+
+.pill.warn i {
+  background: var(--warn);
+}
+
+/* Numéro Sosa */
+.sosa {
+  flex: none;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  line-height: 1;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 2px 4px;
+  background: var(--surface);
+}
+
+/* Symbole du sexe : carré = homme, rond = femme, losange = non précisé */
+.sx {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+  opacity: .6;
+}
+
+.sx.F {
+  border-radius: 50%;
+}
+
+.sx.U {
+  transform: rotate(45deg) scale(.8);
+}
+
+/* Étiquette « exemple » */
+.tag {
+  font-family: var(--f-mono);
+  text-transform: none;
+  letter-spacing: 0;
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11.5px;
+}

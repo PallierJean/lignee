@@ -1,0 +1,22 @@
+/* ==========================================================
+   Message de confirmation ou d'erreur, en bas de l'écran
+   ========================================================== */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 60;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  max-width: calc(100% - 32px);
+}
+
+.toast.bad {
+  background: var(--danger);
+  color: var(--surface);
+}

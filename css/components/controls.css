@@ -1,0 +1,91 @@
+/* ==========================================================
+   Contrôles partagés : boutons et champs de saisie
+   ========================================================== */
+
+.btn {
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.2;
+  padding: 8px 13px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+.btn.primary:hover {
+  filter: brightness(1.07);
+}
+
+.btn.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--surface);
+  font-weight: 700;
+}
+
+.btn.quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn.quiet:hover {
+  color: var(--danger);
+  border-color: transparent;
+}
+
+.btn.small {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.btn:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.icon-btn {
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* Champs de saisie (formulaire et recherche du registre) */
+.fld input,
+.fld select,
+.fld textarea,
+.search input {
+  font: inherit;
+  font-size: 15px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  min-width: 0;
+  width: 100%;
+}

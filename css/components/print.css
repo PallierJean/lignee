@@ -1,0 +1,480 @@
+/* ==========================================================
+   Impression : fenêtre d'options et feuille imprimée
+   ========================================================== */
+
+/* Bouton bascule « Tout l'arbre » */
+.btn.toggle[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.seg button:disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: .55;
+}
+
+/* Options de la fenêtre Imprimer */
+.print-opts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .print-opts {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Feuille imprimée : absente à l'écran */
+.print-area {
+  display: none;
+}
+
+@media print {
+  :root {
+    padding: 0;
+  }
+
+  html,
+  body {
+    height: auto;
+    background: #fff;
+  }
+
+  body > :not(.print-area) {
+    display: none !important;
+  }
+
+  .print-area {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    break-inside: avoid;
+    color: #16211E;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-area:not(.book) header {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .print-area:not(.book) h1 {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 7mm;
+    line-height: 1.1;
+  }
+
+  .print-area:not(.book) p {
+    margin: 1.2mm 0 0;
+    font-family: var(--f-mono);
+    font-size: 2.8mm;
+    color: #56645F;
+    white-space: pre;
+  }
+
+  .print-tree {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .print-tree svg {
+    display: block;
+  }
+
+  /* Découpage : une feuille par section, à assembler */
+  .print-area.tiles {
+    display: block;
+    overflow: visible;
+  }
+
+  .tile {
+    overflow: hidden;
+    break-after: page;
+    break-inside: avoid;
+  }
+
+  .tile:last-child {
+    break-after: auto;
+  }
+
+  .tile svg {
+    display: block;
+  }
+
+  .tile-foot {
+    display: flex;
+    align-items: center;
+    gap: 4mm;
+    margin-top: 1mm;
+    font-family: var(--f-mono);
+    font-size: 2.8mm;
+    color: #56645F;
+    white-space: pre;
+  }
+
+  .tile-foot b {
+    font-family: var(--f-body);
+    font-size: 5mm;
+    color: #1D5B54;
+  }
+
+  .tile-foot svg {
+    flex: none;
+  }
+
+  .tile-title {
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Plan d'assemblage */
+  .tile-plan {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3mm;
+    text-align: center;
+  }
+
+  .print-area:not(.book) .tile-plan p {
+    margin: 0;
+    white-space: normal;
+  }
+
+  .tile-plan ol {
+    margin: 0;
+    text-align: left;
+    font-family: var(--f-body);
+    font-size: 3.6mm;
+    line-height: 1.5;
+  }
+
+  .print-area.book {
+    display: block;
+    overflow: visible;
+  }
+
+  .bk-page {
+    break-after: page;
+    break-inside: avoid;
+  }
+
+  .bk-page:last-child {
+    break-after: auto;
+  }
+}
+
+/* Livret de famille : pages A4 complètes, marges comprises.
+   Hors de @media print : les blocs sont mesurés à l'écran, hors du cadre, avant la répartition */
+.print-area .bk-page,
+.print-area .bk-page p {
+  white-space: normal;
+}
+
+.bk-measure {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 170mm;
+  visibility: hidden;
+}
+
+.bk-page {
+  box-sizing: border-box;
+  width: 210mm;
+  height: 296.5mm;
+  padding: 20mm 20mm 12mm;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+
+.bk-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.bk-measure,
+.bk-body {
+  font-family: var(--f-body);
+  font-size: 10.5pt;
+  line-height: 1.5;
+  color: #16211E;
+}
+
+.bk-foot {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 8mm;
+  padding-top: 2.5mm;
+  border-top: .25mm solid #C8D2CD;
+  font-family: var(--f-mono);
+  font-size: 8pt;
+  color: #56645F;
+}
+
+/* Couverture */
+.bk-cover {
+  padding: 12mm;
+}
+
+.bk-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4mm;
+  text-align: center;
+  border: .5mm solid #1D5B54;
+  outline: .2mm solid #1D5B54;
+  outline-offset: -2.2mm;
+  padding: 12mm 8mm;
+}
+
+.bk-mark {
+  width: 16mm;
+  height: 16mm;
+  fill: none;
+  stroke: #1D5B54;
+  stroke-width: 1.6;
+}
+
+.bk-mark .f {
+  fill: #1D5B54;
+}
+
+.print-area .bk-kicker {
+  margin: 0;
+  font-family: var(--f-body);
+  font-size: 11pt;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: #1D5B54;
+}
+
+.print-area .bk-cover h1 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 38pt;
+  line-height: 1.1;
+  color: #16211E;
+}
+
+.bk-fan {
+  margin: 8mm 0;
+}
+
+.bk-fan svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.print-area .bk-facts {
+  margin: 0;
+  font-family: var(--f-body);
+  font-size: 11pt;
+  color: #16211E;
+}
+
+.print-area .bk-date {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 8.5pt;
+  color: #56645F;
+}
+
+/* Sommaire */
+.bk-toc-title {
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 26pt;
+  margin: 0 0 10mm;
+  color: #1D5B54;
+}
+
+.bk-toc {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bk-toc li {
+  display: flex;
+  align-items: baseline;
+  gap: 3mm;
+  padding: 1.6mm 0;
+  font-size: 12pt;
+}
+
+.bk-toc small {
+  margin-left: 2mm;
+  font-family: var(--f-mono);
+  font-size: 8.5pt;
+  color: #56645F;
+}
+
+.bk-toc i {
+  flex: 1;
+  border-bottom: .25mm dotted #9AA8A2;
+}
+
+.bk-toc b {
+  font-family: var(--f-mono);
+  font-weight: 500;
+}
+
+/* Chapitre : une génération. Marges internes seulement, pour que la mesure soit exacte */
+.bk-chapter {
+  display: flex;
+  align-items: center;
+  gap: 5mm;
+  padding: 7mm 0 4mm;
+  break-inside: avoid;
+}
+
+.bk-num {
+  flex: none;
+  width: 13mm;
+  height: 13mm;
+  border-radius: 50%;
+  background: #1D5B54;
+  color: #F4FAF8;
+  font-family: var(--f-display);
+  font-size: 18pt;
+  line-height: 13mm;
+  text-align: center;
+}
+
+.bk-chapter h2 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 19pt;
+  line-height: 1.15;
+  color: #1D5B54;
+}
+
+.bk-measure .bk-chapter p,
+.print-area .bk-chapter p {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 8.5pt;
+  color: #56645F;
+}
+
+/* Une personne */
+.bk-entry {
+  display: flow-root;
+  padding: 2.5mm 0 3mm;
+  border-top: .2mm solid #E0E6E3;
+}
+
+.bk-entry header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4mm;
+  margin-bottom: .8mm;
+}
+
+.bk-entry h3 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 400;
+  font-size: 12.5pt;
+  line-height: 1.2;
+}
+
+.bk-entry header span {
+  flex: none;
+  font-family: var(--f-mono);
+  font-size: 8.5pt;
+  color: #56645F;
+}
+
+.bk-measure .bk-entry p,
+.print-area .bk-entry p {
+  margin: 0;
+  font-family: var(--f-body);
+  font-size: 10.5pt;
+  line-height: 1.5;
+  color: #16211E;
+}
+
+.bk-measure .bk-entry .bk-src,
+.print-area .bk-entry .bk-src {
+  margin-top: .8mm;
+  font-size: 8.5pt;
+  font-style: italic;
+  color: #56645F;
+}
+
+.bk-photo {
+  float: left;
+  width: 17mm;
+  height: 21mm;
+  object-fit: cover;
+  margin: .5mm 4mm 1mm 0;
+  border-radius: 1mm;
+  border: .2mm solid #C8D2CD;
+}
+
+/* Livret d'une personne : des extraits, façon mairie */
+.bk-names h1 + h1 {
+  margin-top: 3mm;
+}
+
+.print-area .bk-names h1 {
+  font-size: 28pt;
+}
+
+.bk-measure .bk-extract .bk-label,
+.print-area .bk-extract .bk-label {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 8pt;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #1D5B54;
+}
+
+.bk-extract dl {
+  display: grid;
+  grid-template-columns: 26mm minmax(0, 1fr);
+  gap: .8mm 3mm;
+  margin: 1mm 0 0;
+  overflow: hidden;
+}
+
+.bk-extract dt {
+  font-family: var(--f-mono);
+  font-size: 8.5pt;
+  line-height: 1.7;
+  color: #56645F;
+}
+
+.bk-extract dd {
+  margin: 0;
+}
+
