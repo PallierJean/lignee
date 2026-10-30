@@ -27,6 +27,7 @@ export const GEO_KEY = 'lignee.geo.v1';     // coordonnées des lieux déjà loc
 // Arbre de départ (et arbre des données créées avant la gestion de plusieurs arbres) ;
 // son nom par défaut est t('ts.default')
 export const DEFAULT_TREE = 'principal';
+export const EXAMPLE_FILE = 'data/arbres/exemple-famille-bertrand.json'; // famille chargée à la première visite
 
 /**
  * Règle @page d'une feuille, en millimètres : Chrome ne connaît pas le mot-clé A2,

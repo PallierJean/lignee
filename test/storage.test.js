@@ -6,7 +6,7 @@ import path from 'node:path';
 import { S, services, loadPrefs, savePrefs, treeName } from '../js/state.js';
 import { createServer } from '../server.js';
 import {
-  loadFile, loadLocal, saveLocal, opSet, opUpdate, opDelete, openTree, createTree, renameTree, deleteTree, storePhoto, storePhotos,
+  loadFile, loadLocal, seedExample, saveLocal, opSet, opUpdate, opDelete, openTree, createTree, renameTree, deleteTree, storePhoto, storePhotos,
   buildPortableBackup, withRetry, subscribe, beginAction, commitAction, undoAction,
 } from '../js/services/storage.js';
 import { PREF_KEY, TREES_KEY, TREE_KEY } from '../js/config.js';
@@ -241,5 +241,53 @@ describe('base en ligne', () => {
   test('abonnement révoqué : lecture seule', () => {
     services.db.fail('people', { code: 'revoked' });
     assert.equal(S.canWrite, false);
+  });
+});
+
+describe('famille d’exemple à la première visite', () => {
+  const nativeFetch = globalThis.fetch;
+  const family = JSON.stringify({ format: 'lignee', name: 'Famille Bertrand (exemple)', people: [{ id: 'e1', given: 'Louis', example: true }], unions: [{ id: 'u1', a: 'e1' }] });
+
+  beforeEach(() => {
+    resetApp();
+    localStorage.clear();
+    globalThis.fetch = async () => new Response(family);
+  });
+
+  after(() => { globalThis.fetch = nativeFetch; });
+
+  test('navigateur vierge : chargée et ouverte sous son nom', async () => {
+    await seedExample();
+    loadLocal();
+    assert.equal(treeName(), 'Famille Bertrand (exemple)');
+    assert.equal(S.people.get('e1').given, 'Louis');
+    assert.equal(S.unions.size, 1);
+  });
+
+  test('un arbre existe déjà : rien n’est demandé ni remplacé', async () => {
+    localStorage.setItem(TREES_KEY, JSON.stringify([{ id: 'principal', name: 'Ma famille' }]));
+    localStorage.setItem(TREE_KEY + 'principal', JSON.stringify({ people: { a: { given: 'Ana' } }, unions: {} }));
+    globalThis.fetch = async () => { throw new Error('ne doit pas être appelé'); };
+    await seedExample();
+    loadLocal();
+    assert.equal(treeName(), 'Ma famille');
+    assert.deepEqual([...S.people.keys()], ['a']);
+  });
+
+  test('retirer les exemples ne les fait pas revenir', async () => {
+    await seedExample();
+    loadLocal();
+    S.people.delete('e1');
+    saveLocal();
+    await seedExample();
+    loadLocal();
+    assert.equal(S.people.size, 0);
+  });
+
+  test('fichier absent : démarrage sur un arbre vide', async () => {
+    globalThis.fetch = async () => new Response('', { status: 404 });
+    await seedExample();
+    loadLocal();
+    assert.equal(S.people.size, 0);
   });
 });
