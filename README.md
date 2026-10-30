@@ -18,6 +18,7 @@ lignee/
 ├── .gitignore                  Exclut data/arbres/ (vos données) du dépôt
 ├── .github/workflows/ci.yml    Intégration continue : tests, puis version automatique
 ├── .releaserc.json             Réglages du calcul des versions
+├── renovate.json               Mises à jour automatiques proposées par Renovate
 ├── CHANGELOG.md                Historique des versions (généré)
 ├── server.js                   Serveur local : sert l'application, écrit data/arbres/
 ├── assets/
@@ -384,3 +385,10 @@ des commits ([Conventional Commits](https://www.conventionalcommits.org/fr/)), a
 `semantic-release` met à jour `package.json` et `CHANGELOG.md`, crée le tag `vX.Y.Z` et la Release GitHub.
 Ces outils tournent seulement dans GitHub Actions : le projet reste sans dépendance. Le commit de version
 est ajouté par GitHub : faites `git pull` avant de repartir de `main`. La version s'affiche à côté du nom.
+
+## Mises à jour
+
+[Renovate](https://docs.renovatebot.com/) propose chaque lundi, en pull request, les mises à jour des actions GitHub,
+des outils de version et de Node (`renovate.json`). Rien n'est fusionné sans validation, et une version
+doit avoir au moins sept jours pour être proposée. Le preset `conventional-changelog-conventionalcommits`
+reste en 9.x, la version 10 étant incompatible.
