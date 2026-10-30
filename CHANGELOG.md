@@ -1,5 +1,12 @@
 # Historique des versions
 
+## [1.3.0](https://github.com/PallierJean/lignee/compare/v1.2.0...v1.3.0) (2026-10-30)
+
+### Features
+
+* connecter l'arbre ouvert à un dépôt et le sauvegarder d'un clic ([e89e4b2](https://github.com/PallierJean/lignee/commit/e89e4b249bb04268459cdd059c675dacbd5d8045))
+* renvoyer l'arbre et ses photos vers le dépôt GitHub ([4e09838](https://github.com/PallierJean/lignee/commit/4e0983871a5a586836fb7527e09175a8288bcc75))
+
 ## [1.2.0](https://github.com/PallierJean/lignee/compare/v1.1.0...v1.2.0) (2026-10-30)
 
 ### Features
