@@ -30,6 +30,7 @@ jobs:
 
   # Après des tests réussis sur main : version, CHANGELOG.md, tag et GitHub Release, d'après les commits.
   # Outils lancés ici seulement, versions figées : l'application reste sans dépendance.
+  # conventional-changelog-conventionalcommits reste en 9.x : la 10 exige un rédacteur de notes plus récent.
   release:
     name: Version
     needs: test
@@ -54,5 +55,5 @@ jobs:
           -p @semantic-release/changelog@7.0.0
           -p @semantic-release/git@11.0.1
           -p @semantic-release/npm@13.2.0
-          -p conventional-changelog-conventionalcommits@10.4.1
+          -p conventional-changelog-conventionalcommits@9.3.1
           semantic-release
