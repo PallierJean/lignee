@@ -1,5 +1,15 @@
 # Historique des versions
 
+## [1.1.0](https://github.com/PallierJean/lignee/compare/v1.0.0...v1.1.0) (2026-10-30)
+
+### Features
+
+* charger une sauvegarde et ses photos depuis un dépôt GitHub ([1ac3793](https://github.com/PallierJean/lignee/commit/1ac3793466d0611e589ecd3d055400fc199fffee))
+
+### Bug Fixes
+
+* effacer le jeton GitHub dès sa lecture ([9a5f0ae](https://github.com/PallierJean/lignee/commit/9a5f0aeed58612ed3ae27bf40bd9e836cb2a1d29))
+
 ## 1.0.0 (2026-10-30)
 
 ### Features
