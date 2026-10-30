@@ -166,18 +166,13 @@ Les photos n'y sont pas intégrées : chacune est un fichier
 `data/arbres/<id de l'arbre>/photos/NOM-Prénom-<uuid>.jpg` (même identifiant que le
 fichier `<id>.json`), et la fiche garde `"photo": "photos/<fichier>"`. Les documents des
 sources et les images de la galerie suivent la même règle. Renommer l'arbre
-ne déplace rien ; les photos rangées autrefois sous le nom de l'arbre
-(`data/arbres/<nom>/photos/`) sont déplacées au démarrage de `server.js`. Une
+ne déplace rien. Une
 photo retirée ou remplacée, ou celle d'une personne supprimée, reste sur le disque le temps
 que l'action puisse être annulée, puis est effacée à la prochaine ouverture de l'arbre. Les photos
 encore intégrées (arbre importé, ou enregistré avant ce changement) sont sorties en
 fichiers à l'ouverture de l'arbre. La sauvegarde .json exportée les réintègre en data URL.
 
-Reprise des données d'avant la gestion de plusieurs arbres, sans rien perdre :
-l'ancien `data/arbre.json` devient `data/arbres/principal.json` (« Mon arbre ») et
-l'original est renommé `data/arbre.json.migre` ; dans le navigateur, l'ancienne clé
-`lignee.local.v1` devient l'arbre « Mon arbre ». Dans la base en ligne, les fiches
-portent un champ `tree` (identifiant de l'arbre) ; celles qui n'en ont pas
+Dans la base en ligne, les fiches portent un champ `tree` (identifiant de l'arbre) ; celles qui n'en ont pas
 appartiennent à « Mon arbre », et les noms des arbres sont dans la collection `trees`.
 
 En stockage navigateur, les données restent sur cet appareil et dans ce navigateur.
@@ -362,7 +357,7 @@ GEDCOM (dont un aller-retour export / import de la famille d'exemple), modèle e
 de parenté, mise en page (numéros Sosa, pas de chevauchement), sauvegarde .json,
 analyse, annuler / rétablir, doublons, frise, lieux, livret, roue d'ascendance, galerie,
 traductions (mêmes clés en français et en anglais, aucune clé manquante) et serveur
-(API, photos, chemins refusés, mises à niveau), lancé sur un dossier temporaire :
+(API, photos, chemins refusés), lancé sur un dossier temporaire :
 vos données ne sont jamais touchées. Les tests marqués « todo » décrivent des défauts
 connus, pas encore corrigés : ils s'affichent sans faire échouer la suite.
 
