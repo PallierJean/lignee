@@ -390,8 +390,8 @@ est ajouté par GitHub : faites `git pull` avant de repartir de `main`. La versi
 des outils de version et de Node (`renovate.json`). Rien n'est fusionné sans validation, et une version
 doit avoir au moins sept jours pour être proposée. Le preset `conventional-changelog-conventionalcommits`
 reste en 9.x, la version 10 étant incompatible.
-Les actions GitHub sont figées sur l'empreinte exacte de leur version. Le tableau de bord de Renovate
-(issue ouverte en permanence) est désactivé : les mises à jour arrivent directement en pull request.
+Les actions GitHub sont figées sur l'empreinte exacte de leur version. Le tableau de bord de Renovate est
+une issue ouverte en permanence : y cocher une mise à jour la lance sans attendre le lundi.
 
 ## Site GitHub Pages
 
