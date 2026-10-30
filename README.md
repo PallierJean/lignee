@@ -77,6 +77,7 @@ lignee/
 │   │   │   ├── file.js         Mode fichier (server.js), photos en fichiers
 │   │   │   └── local.js        Mode navigateur (localStorage)
 │   │   ├── gedcom.js           Export et import GEDCOM 5.5.1
+│   │   ├── github.js           Lecture d'une sauvegarde et de ses photos dans un dépôt GitHub
 │   │   ├── backup.js           Sauvegarde complète au format JSON
 │   │   ├── csv.js              Export du registre en CSV
 │   │   ├── history.js          Historique annuler / rétablir
@@ -400,6 +401,12 @@ une issue ouverte en permanence : y cocher une mise à jour la lance sans attend
 <https://pallierjean.github.io/lignee/>, en mode navigateur : chaque visiteur garde ses arbres dans son
 propre navigateur, et rien n'est envoyé au site. Pensez à exporter une sauvegarde `.json` : effacer les données du
 navigateur efface l'arbre. La place y est limitée (souvent 5 Mo), photos et documents compris.
+
+« Importer / exporter » charge aussi un dépôt GitHub contenant une sauvegarde `.json` et ses photos, disposées
+comme dans `data/arbres/` (`principal.json` et `principal/photos/`) ou à côté du fichier (`photos/`). Les
+photos sont intégrées à l'arbre, en data URL. Un dépôt public se lit sans rien de plus. Un dépôt privé demande un
+[jeton à portée limitée](https://github.com/settings/personal-access-tokens/new) sur ce seul dépôt, avec la
+permission Contents en lecture : il n'est jamais enregistré et ne part que vers `api.github.com`.
 
 `scripts/build-site.sh` prépare le dossier `_site/` : seuls les fichiers de l'application et la famille
 d'exemple y figurent, jamais `data/arbres/`, avec la politique de sécurité dans la page. Une seule
