@@ -3,9 +3,10 @@
  * est ouverte ailleurs (par exemple avec python3 -m http.server).
  */
 import { S } from '../../state.js';
-import { TREES_KEY, TREE_KEY } from '../../config.js';
+import { TREES_KEY, TREE_KEY, DEFAULT_TREE, EXAMPLE_FILE } from '../../config.js';
 import { t } from '../../i18n.js';
 import { toast } from '../../ui/toast.js';
+import { parseBackup } from '../backup.js';
 import { ensureTree, sortTrees } from './trees.js';
 
 function readJSON(key) {
@@ -36,6 +37,21 @@ function writeLocalTrees() {
   localStorage.setItem(TREES_KEY, JSON.stringify(
     [...S.trees].map(([id, t]) => ({ id, name: t.name, createdAt: t.createdAt || 0 })),
   ));
+}
+
+/** Première visite, aucun arbre dans ce navigateur : y range la famille d'exemple. */
+export async function seedExample() {
+  if (readLocalTrees().length) return;
+  try {
+    const res = await fetch(EXAMPLE_FILE, { cache: 'no-store' });
+    if (!res.ok) return;
+    const { name, people, unions } = parseBackup(await res.text());
+    const byId = (list) => Object.fromEntries(list.map((x) => [x.id, x.data]));
+    localStorage.setItem(TREE_KEY + DEFAULT_TREE, JSON.stringify({ people: byId(people), unions: byId(unions) }));
+    localStorage.setItem(TREES_KEY, JSON.stringify([{ id: DEFAULT_TREE, name, createdAt: 0 }]));
+  } catch (e) {
+    /* fichier absent ou stockage bloqué : l'application démarre avec un arbre vide */
+  }
 }
 
 export function loadLocal() {

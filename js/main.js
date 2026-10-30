@@ -10,7 +10,7 @@ import { S, services, loadPrefs } from './state.js';
 import { bindEvents } from './events.js';
 import { applyStatic } from './i18n.js';
 import { renderAll, afterData } from './ui/render.js';
-import { loadLocal, loadFile, subscribe } from './services/storage.js';
+import { loadLocal, seedExample, loadFile, subscribe } from './services/storage.js';
 
 /** Service fourni par claude.ai, ou null hors de claude.ai. */
 async function useService(name) {
@@ -47,6 +47,7 @@ async function init() {
   } else {
     if (!(await loadFile())) {
       S.mode = 'local';
+      await seedExample();
       loadLocal();
     }
     S.loadedP = true;
