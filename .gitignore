@@ -6,5 +6,6 @@
 
 # Outils
 node_modules/
+_site/
 coverage/
 .DS_Store
