@@ -19,7 +19,6 @@ export const GM = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP'
 
 // Clés du stockage local du navigateur
 export const PREF_KEY = 'lignee.view.v1';   // préférences d'affichage
-export const LOCAL_KEY = 'lignee.local.v1'; // ancien arbre unique en mode local (repris au premier lancement)
 export const TREES_KEY = 'lignee.trees.v1'; // liste des arbres en mode local
 export const TREE_KEY = 'lignee.tree.';     // + identifiant : données d'un arbre en mode local
 export const LANG_KEY = 'lignee.lang.v1';   // langue de l'interface : 'fr' ou 'en'

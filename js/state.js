@@ -77,7 +77,6 @@ export function loadPrefs() {
     if (ZOOMS.includes(v.zoom)) S.zoom = v.zoom;
     if (typeof v.tree === 'string') S.tree = v.tree;
     if (v.foci && typeof v.foci === 'object') S.foci = v.foci;
-    else if (typeof v.focus === 'string') S.foci = { [DEFAULT_TREE]: v.focus }; // ancien format
     if (typeof S.foci[S.tree] === 'string') S.focus = S.foci[S.tree];
     S.full = v.full === true;
     S.fan = v.fan === true;

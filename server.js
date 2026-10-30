@@ -22,7 +22,7 @@
  *
  * Aucune dépendance. Le serveur n'écoute que sur cet ordinateur (127.0.0.1) et refuse les
  * requêtes venues d'un autre site (en-têtes Host et Origin).
- * Importé comme module, il fournit createServer() et migrate() (utilisés par les tests).
+ * Importé comme module, il fournit createServer() (utilisé par les tests).
  */
 import http from 'node:http';
 import fs from 'node:fs/promises';
@@ -165,50 +165,6 @@ function paths(dataDir) {
   }
 
   return { treeFile, photoDir, readTree, treeIds };
-}
-
-/**
- * Mises à niveau des données, au démarrage :
- * - ancien data/arbre.json (un seul arbre) déplacé vers data/arbres/principal.json ;
- * - photos rangées autrefois sous le nom de l'arbre (data/arbres/<nom>/photos/)
- *   déplacées vers data/arbres/<id>/photos/.
- */
-export async function migrate({ dataDir = path.join(ROOT, 'data', 'arbres'), oldFile = path.join(ROOT, 'data', 'arbre.json') } = {}) {
-  const { treeFile, photoDir, readTree, treeIds } = paths(dataDir);
-  try {
-    const text = await fs.readFile(oldFile, 'utf8');
-    await fs.mkdir(dataDir, { recursive: true });
-    const o = JSON.parse(text);
-    o.name = o.name || 'Mon arbre';
-    await fs.writeFile(treeFile('principal'), JSON.stringify(o, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
-    await fs.rename(oldFile, oldFile + '.migre');
-    console.log('data/arbre.json déplacé vers data/arbres/principal.json');
-  } catch (e) {
-    if (e.code !== 'ENOENT' && e.code !== 'EEXIST') console.error(e);
-  }
-
-  for (const id of await treeIds()) {
-    const tree = await readTree(id);
-    const from = path.join(dataDir, safeName(tree && tree.name, id), 'photos');
-    const to = photoDir(id);
-    if (!tree || from === to) continue;
-    let moved = 0;
-    for (const f of photoRefs(tree)) {
-      try {
-        await fs.mkdir(to, { recursive: true });
-        await fs.rename(path.join(from, f), path.join(to, f));
-        moved++;
-      } catch (e) {
-        if (e.code !== 'ENOENT') console.error(e);
-      }
-    }
-    if (moved) {
-      await removePhotos(from, []);
-      console.log(`${moved} photo(s) de « ${tree.name} » déplacée(s) vers ${path.relative(dataDir, to)}`);
-    } else {
-      await removePhotos(to, []); // dossier créé pour rien
-    }
-  }
 }
 
 /**
@@ -406,7 +362,6 @@ export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'a
 if (import.meta.main) {
   const PORT = Number(process.env.PORT) || 8000;
   const dataDir = path.join(ROOT, 'data', 'arbres');
-  await migrate({ dataDir });
   createServer({ dataDir }).listen(PORT, '127.0.0.1', () => {
     console.log(`Lignée : http://localhost:${PORT}`);
     console.log(`Données : ${path.relative(process.cwd(), dataDir) || dataDir}`);

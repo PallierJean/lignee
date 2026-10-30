@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, readFile, readdir, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createServer, migrate, safeName } from '../server.js';
+import { createServer, safeName } from '../server.js';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 const exists = (f) => access(f).then(() => true, () => false);
@@ -175,29 +175,6 @@ describe('fichiers de l’application', () => {
   test('méthodes non prévues', async () => {
     assert.equal((await fetch(base, { method: 'POST' })).status, 405);
     assert.equal((await api('', { method: 'DELETE' })).status, 405);
-  });
-});
-
-describe('mises à niveau au démarrage', () => {
-  test('ancien data/arbre.json et photos rangées sous le nom de l’arbre', async () => {
-    const dir = await mkdtemp(path.join(tmpdir(), 'lignee-migr-'));
-    const arbres = path.join(dir, 'arbres');
-    const oldFile = path.join(dir, 'arbre.json');
-    await writeFile(oldFile, backup('Mon arbre', [{ id: 'p1', photo: 'photos/A-1.jpg' }]));
-    await mkdir(path.join(arbres, 'Mon arbre', 'photos'), { recursive: true });
-    await writeFile(path.join(arbres, 'Mon arbre', 'photos', 'A-1.jpg'), 'img');
-    await writeFile(path.join(arbres, 'Mon arbre', 'photos', 'B-autre-arbre.jpg'), 'img');
-
-    await migrate({ dataDir: arbres, oldFile });
-    assert.ok(await exists(oldFile + '.migre'));
-    assert.equal(JSON.parse(await readFile(path.join(arbres, 'principal.json'), 'utf8')).name, 'Mon arbre');
-    assert.equal(await readFile(path.join(arbres, 'principal', 'photos', 'A-1.jpg'), 'utf8'), 'img');
-    // Une photo que l'arbre ne cite pas reste où elle est
-    assert.deepEqual(await readdir(path.join(arbres, 'Mon arbre', 'photos')), ['B-autre-arbre.jpg']);
-
-    await migrate({ dataDir: arbres, oldFile }); // une seconde fois : rien ne change
-    assert.ok(await exists(path.join(arbres, 'principal', 'photos', 'A-1.jpg')));
-    await rm(dir, { recursive: true, force: true });
   });
 });
 

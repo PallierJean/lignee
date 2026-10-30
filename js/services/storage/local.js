@@ -3,7 +3,7 @@
  * est ouverte ailleurs (par exemple avec python3 -m http.server).
  */
 import { S } from '../../state.js';
-import { LOCAL_KEY, TREES_KEY, TREE_KEY, DEFAULT_TREE } from '../../config.js';
+import { TREES_KEY, TREE_KEY } from '../../config.js';
 import { t } from '../../i18n.js';
 import { toast } from '../../ui/toast.js';
 import { ensureTree, sortTrees } from './trees.js';
@@ -20,21 +20,12 @@ function readJSON(key) {
 /** Arbres gardés dans ce navigateur : [{ id, name, createdAt }]. */
 export function readLocalTrees() {
   const list = readJSON(TREES_KEY);
-  if (Array.isArray(list)) return list.filter((t) => t && typeof t.id === 'string');
-  // Ancien format (un seul arbre) : il devient l'arbre de départ
-  const old = readJSON(LOCAL_KEY);
-  if (!old) return [];
-  try {
-    localStorage.setItem(TREE_KEY + DEFAULT_TREE, JSON.stringify(old));
-  } catch (e) {
-    /* stockage plein ou bloqué : l'ancien arbre reste lisible à son ancienne clé */
-  }
-  return [{ id: DEFAULT_TREE, name: t('ts.default'), createdAt: 0 }];
+  return Array.isArray(list) ? list.filter((t) => t && typeof t.id === 'string') : [];
 }
 
 /** Données d'un arbre du navigateur, en Map. */
 export function readLocalData(id) {
-  const data = readJSON(TREE_KEY + id) || (id === DEFAULT_TREE && readJSON(LOCAL_KEY)) || {};
+  const data = readJSON(TREE_KEY + id) || {};
   return {
     people: new Map(Object.entries(data.people || {})),
     unions: new Map(Object.entries(data.unions || {})),
