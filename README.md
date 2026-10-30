@@ -15,7 +15,7 @@ lignee/
 ├── index.html                  Structure de la page
 ├── package.json                Scripts npm start et npm test, version de Node (26 ou plus)
 ├── .nvmrc                      Version de Node pour nvm (26)
-├── .gitignore                  Exclut data/arbres/ (vos données) du dépôt
+├── .gitignore                  Exclut vos arbres et photos du dépôt
 ├── .github/workflows/ci.yml    Intégration continue : tests, puis version automatique
 ├── .releaserc.json             Réglages du calcul des versions
 ├── scripts/build-site.sh       Prépare le site GitHub Pages
@@ -108,8 +108,8 @@ lignee/
 │   ├── setup.js                Faux navigateur minimal (window, localStorage, document)
 │   └── helpers.js              Famille d'exemple, arbre en mémoire
 └── data/
-    ├── arbres/                         Vos arbres, un fichier .json chacun (créés par server.js)
-    └── exemple-famille-bertrand.json   Famille d'exemple, à importer
+    └── arbres/                         Vos arbres, un fichier .json chacun (créés par server.js)
+        └── exemple-famille-bertrand.json   Famille d'exemple, seul fichier de ce dossier dans git
 ```
 
 ## Langue
@@ -137,7 +137,7 @@ python3 -m http.server 8000
 Puis ouvrez <http://localhost:8000>.
 
 Pour voir l'application avec des données, cliquez sur « Importer / exporter » et
-importez `data/exemple-famille-bertrand.json`, dans l'arbre ouvert ou dans un nouvel
+importez `data/arbres/exemple-famille-bertrand.json`, dans l'arbre ouvert ou dans un nouvel
 arbre. Le bandeau « Retirer les exemples » efface ensuite cette famille d'un clic.
 
 ## Plusieurs arbres

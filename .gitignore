@@ -1,7 +1,6 @@
-# Données personnelles : arbres, photos et ancien fichier migré
-/data/arbres/
-/data/arbre.json
-/data/arbre.json.migre
+# Données personnelles : arbres et photos, sauf la famille d'exemple (fictive)
+/data/arbres/*
+!/data/arbres/exemple-famille-bertrand.json
 *.tmp
 
 # Outils
