@@ -22,6 +22,7 @@ export const PREF_KEY = 'lignee.view.v1';   // préférences d'affichage
 export const TREES_KEY = 'lignee.trees.v1'; // liste des arbres en mode local
 export const TREE_KEY = 'lignee.tree.';     // + identifiant : données d'un arbre en mode local
 export const LANG_KEY = 'lignee.lang.v1';   // langue de l'interface : 'fr' ou 'en'
+export const REPO_KEY = 'lignee.repo.v1';   // dépôt relié à chaque arbre, sans le jeton
 export const GEO_KEY = 'lignee.geo.v1';     // coordonnées des lieux déjà localisés
 
 // Arbre de départ (et arbre des données créées avant la gestion de plusieurs arbres) ;

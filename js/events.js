@@ -8,7 +8,7 @@ import { situationOptions } from './ui/form.js';
 import { t } from './i18n.js';
 import * as A from './actions.js';
 import {
-  openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo, importRepo, pickRepoBackup,
+  openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo, importRepo, pickRepoBackup, connectRepo,
 } from './ui/transfer.js';
 import { renderRegistre } from './ui/registre.js';
 import { startLocate } from './ui/analyse.js';
@@ -16,7 +16,7 @@ import { openMedia, closeMedia, placePin, cancelPin, addTag, removeTag } from '.
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
-import { confirmRepoPush, pushRepo, forgetRepo } from './ui/repo-link.js';
+import { confirmRepoSave, saveRepo, forgetRepo } from './ui/repo-link.js';
 import { openPrint, closePrint, updatePrintInfo, printTree, printFamilyBook } from './ui/print.js';
 import {
   openTrees, closeTrees, switchTree, newTree, askTree, cancelTreeEdit, submitRename, confirmDeleteTree,
@@ -194,9 +194,14 @@ const CLICK_ACTIONS = {
   },
   'copy-export': () => copyExport(),
   'import-repo': (el) => importRepo(el),
-  'repo-push-ask': () => confirmRepoPush(true),
-  'repo-push-no': () => confirmRepoPush(false),
-  'repo-push-yes': once(() => pushRepo()),
+  'repo-connect': (el) => connectRepo(el),
+  'repo-reconnect': () => {
+    openTransfer();
+    setTimeout(() => document.getElementById('repoToken').focus(), 40);
+  },
+  'repo-save': once(() => saveRepo(false)),
+  'repo-save-no': () => confirmRepoSave(false),
+  'repo-save-yes': once(() => saveRepo(true)),
   'repo-forget': () => forgetRepo(),
   'import-repo-pick': once((el) => pickRepoBackup(+el.dataset.i)),
   'import-go': once(() => importGo(false)),

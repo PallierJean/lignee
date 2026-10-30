@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
 import { parseRepo, openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
-import { confirmRepoPush, pushRepo, forgetRepo, renderRepoBanner } from '../js/ui/repo-link.js';
-import { readImportFile, importGo, importRepo, pickRepoBackup, openTransfer, closeTransfer } from '../js/ui/transfer.js';
+import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner } from '../js/ui/repo-link.js';
+import { readImportFile, importGo, importRepo, pickRepoBackup, connectRepo, openTransfer, closeTransfer } from '../js/ui/transfer.js';
 import { photoOf } from '../js/model/people.js';
+import { REPO_KEY } from '../js/config.js';
 import { resetApp, html } from './helpers.js';
 
 const el = (id) => document.getElementById(id);
@@ -22,11 +23,12 @@ function serve(files, status, writable = false) {
     calls.push({ url, method, auth: init.headers && init.headers.Authorization, body: init.body && JSON.parse(init.body) });
     if (status) return new Response('', { status });
     if (method !== 'GET') {
-      if (url.endsWith('/git/refs') && method === 'POST') return new Response('', { status: writable ? 422 : 403 });
+      if (url.endsWith('/git/refs') && method === 'POST') return new Response('', { status: writable ? (head ? 422 : 409) : 403 });
+      if (url.includes('/contents/')) return Response.json({ commit: { sha: 'premier' } });
       if (url.includes('/git/refs/heads/')) return Response.json({});
       return Response.json({ sha: url.split('/').pop() + '-sha' });
     }
-    if (url.endsWith('/commits/HEAD')) return new Response(head + '\n');
+    if (url.endsWith('/commits/HEAD')) return head ? new Response(head + '\n') : new Response('', { status: 409 });
     if (url.endsWith('/compte/depot')) return Response.json({ default_branch: 'main' });
     if (url.includes('/git/commits/')) return Response.json({ tree: { sha: 'arbre' } });
     if (url.includes('/git/trees/')) {
@@ -42,7 +44,9 @@ beforeEach(() => {
   resetApp();
   S.pending = null;
   head = 'c0';
-  forgetRepo();
+  localStorage.clear();
+  S.repoLink = null;
+  S.repoSavedAt = '';
   el('repoUrl').value = 'compte/depot';
   el('repoToken').value = '';
 });
@@ -228,10 +232,10 @@ describe('bandeaux', () => {
     renderRepoBanner();
     assert.equal(el('repoBanner').hidden, false);
     assert.ok(html('repoBanner').includes('Lecture seule'));
-    assert.ok(!html('repoBanner').includes('repo-push'));
+    assert.ok(!html('repoBanner').includes('repo-save'));
     assert.ok(!('repo' in S.repoLink));
     calls.length = 0;
-    await pushRepo();
+    await saveRepo();
     assert.equal(calls.length, 0);
   });
 
@@ -239,20 +243,19 @@ describe('bandeaux', () => {
     await load(true);
     renderRepoBanner();
     assert.ok(html('repoBanner').includes('ATTENTION : LECTURE ET ÉCRITURE'));
-    assert.ok(html('repoBanner').includes('data-act="repo-push-ask"'));
-    confirmRepoPush(true);
-    assert.ok(html('repoBanner').includes('data-act="repo-push-yes"'));
-    confirmRepoPush(false);
-    await pushRepo();
+    assert.ok(html('repoBanner').includes('data-act="repo-save"'));
+    assert.ok(!html('repoBanner').includes('data-act="repo-save-yes"'));
+    await saveRepo();
     assert.ok(calls.some((c) => c.url.endsWith('/git/refs/heads/main') && c.method === 'PATCH'));
-    assert.match(el('toast').textContent, /envoyé/);
+    assert.match(el('toast').textContent, /sauvegardé/);
+    assert.ok(html('repoBanner').includes('Dernière sauvegarde'));
   });
 
   test('dépôt changé entretemps : rien n’est écrit, message affiché', async () => {
     await load(true);
     head = 'c1';
     calls.length = 0;
-    await pushRepo();
+    await saveRepo();
     assert.ok(calls.every((c) => c.method === 'GET'));
     assert.ok(html('repoBanner').includes('a changé'));
   });
@@ -263,7 +266,7 @@ describe('bandeaux', () => {
     renderRepoBanner();
     assert.equal(el('repoBanner').hidden, true);
     calls.length = 0;
-    await pushRepo();
+    await saveRepo();
     assert.equal(calls.length, 0);
   });
 
@@ -340,5 +343,100 @@ describe('envoi vers le dépôt', () => {
     calls.length = 0;
     await pushBackup(repo, target, send([{ id: 'a', photo: other }]), 'msg');
     assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')));
+  });
+});
+
+describe('connecter l’arbre ouvert', () => {
+  const connect = async (files, writable = true, token = 'jeton') => {
+    serve(files, 0, writable);
+    el('repoToken').value = token;
+    await connectRepo(el('repoConnect'));
+  };
+
+  beforeEach(() => {
+    S.trees.get(S.tree).name = 'Agathé Famille';
+    S.people.set('a', { given: 'Agathe', photo: 'data:image/jpeg;base64,' + btoa('img') });
+  });
+
+  test('dépôt vide : premier commit, puis fichier nommé d’après l’arbre et photo en fichier', async () => {
+    head = '';
+    await connect({});
+    assert.equal(el('repoToken').value, '');
+    assert.equal(S.repoLink.path, 'agathe-famille.json');
+    calls.length = 0;
+    await saveRepo();
+    const first = calls.find((c) => c.method === 'PUT');
+    assert.ok(first.url.endsWith('/contents/agathe-famille.json'));
+    assert.deepEqual(calls.find((c) => c.url.endsWith('/git/commits')).body.parents, ['premier']);
+    const { tree } = calls.find((c) => c.url.endsWith('/git/trees')).body;
+    const json = JSON.parse(tree.find((x) => x.path === 'agathe-famille.json').content);
+    assert.match(json.people[0].photo, /^photos\/photo_.+\.jpg$/);
+    assert.ok(tree.some((x) => x.path === 'agathe-famille/' + json.people[0].photo));
+    assert.equal(S.repoError, '');
+  });
+
+  test('sans jeton ou jeton en lecture : refus clair, pas de lien', async () => {
+    await connect({ 'x.json': backup() }, true, '');
+    assert.ok(html('importInfo').includes('Indiquez un jeton'));
+    await connect({ 'x.json': backup() }, false);
+    assert.ok(html('importInfo').includes('ne permet pas d’écrire'));
+    assert.equal(S.repoLink, null);
+  });
+
+  test('sauvegarde déjà présente : confirmation au premier envoi seulement', async () => {
+    await connect({ 'agathe.json': backup({ photo: '' }) });
+    assert.equal(S.repoLink.path, 'agathe.json');
+    calls.length = 0;
+    await saveRepo();
+    assert.ok(calls.every((c) => c.method === 'GET'));
+    assert.ok(html('repoBanner').includes('data-act="repo-save-yes"'));
+    await saveRepo(true);
+    assert.ok(calls.some((c) => c.method === 'PATCH'));
+    head = S.repoLink.repo.head;
+    calls.length = 0;
+    await saveRepo();
+    assert.ok(calls.some((c) => c.method === 'PATCH'));
+  });
+
+  test('plusieurs sauvegardes : celle de l’arbre, sinon un nouveau fichier', async () => {
+    await connect({ 'agathe-famille.json': backup(), 'autre.json': backup() });
+    assert.equal(S.repoLink.path, 'agathe-famille.json');
+    forgetRepo();
+    await connect({ 'a.json': backup(), 'b.json': backup() });
+    assert.equal(S.repoLink.path, 'agathe-famille.json');
+    assert.equal(S.repoLink.mustConfirm, false);
+  });
+
+  test('rechargement : dépôt retenu sans le jeton, reconnexion sans confirmation', async () => {
+    head = '';
+    await connect({});
+    await saveRepo();
+    head = S.repoLink.repo.head;
+    assert.ok(!localStorage.getItem(REPO_KEY).includes('jeton'));
+    assert.equal(JSON.parse(localStorage.getItem(REPO_KEY))[S.tree].name, 'compte/depot');
+    S.repoLink = null; // page rechargée
+    renderRepoBanner();
+    assert.ok(html('repoBanner').includes('data-act="repo-reconnect"'));
+    openTransfer();
+    assert.equal(el('repoUrl').value, 'compte/depot');
+    await connect({ 'agathe-famille.json': backup({ photo: '' }) });
+    assert.equal(S.repoLink.mustConfirm, false);
+  });
+
+  test('dépôt modifié ailleurs depuis la dernière sauvegarde : confirmation demandée', async () => {
+    head = '';
+    await connect({});
+    await saveRepo();
+    S.repoLink = null;
+    head = 'ailleurs';
+    await connect({ 'agathe-famille.json': backup({ photo: '' }) });
+    assert.equal(S.repoLink.mustConfirm, true);
+  });
+
+  test('déconnecter oublie aussi le dépôt retenu', async () => {
+    await connect({});
+    forgetRepo();
+    renderRepoBanner();
+    assert.equal(el('repoBanner').hidden, true);
   });
 });

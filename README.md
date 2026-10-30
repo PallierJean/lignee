@@ -412,13 +412,16 @@ photos sont intégrées à l'arbre, en data URL. Un dépôt public se lit sans r
 [jeton à portée limitée](https://github.com/settings/personal-access-tokens/new) sur ce seul dépôt, avec la
 permission Contents en lecture : il n'est jamais enregistré et ne part que vers `api.github.com`.
 
-Avec la permission Contents en lecture et écriture, l'arbre peut repartir vers le dépôt. Le site le détecte et
-l'annonce par un bandeau : « Lecture seule », ou « ATTENTION : LECTURE ET ÉCRITURE » avec le bouton « Envoyer vers
-GitHub ». Après confirmation, le `.json` et les photos partent en un seul commit sur la branche par défaut, et une
-photo retirée de l'arbre quitte le dépôt (elle reste dans son historique). L'envoi est refusé si le dépôt a changé
-depuis son chargement. Le lien n'existe que pour un arbre créé par l'import, ou vide avant lui, et jusqu'à la
-fermeture de la page : un jeton d'écriture reste en mémoire pendant ce temps. Après un rechargement, chargez le
-dépôt de nouveau. Les modifications non envoyées restent dans l'ancien arbre du navigateur.
+Pour sauvegarder un arbre sur GitHub, indiquez l'adresse d'un dépôt, même vide, et un jeton avec la permission
+Contents en lecture et écriture, puis cliquez sur « Connecter l'arbre ouvert ». Le bandeau
+« ATTENTION : LECTURE ET ÉCRITURE » apparaît, avec le bouton « Sauvegarder sur GitHub » : le `.json` et les photos
+partent en un seul commit sur la branche par défaut, et une photo retirée de l'arbre quitte le dépôt (elle reste
+dans son historique). Remplacer une sauvegarde que ce navigateur n'a pas écrite demande une confirmation.
+L'envoi est refusé si le dépôt a changé depuis sa lecture.
+
+Le site retient le dépôt de chaque arbre, jamais le jeton : il reste en mémoire jusqu'à la fermeture de la page.
+Après un rechargement, le bandeau propose de reconnecter l'arbre avec le jeton. Une importation avec « Charger le
+dépôt » relie aussi l'arbre créé, ou vide avant l'import ; avec un jeton en lecture, le bandeau indique « Lecture seule ».
 
 `scripts/build-site.sh` prépare le dossier `_site/` : seuls les fichiers de l'application et la famille
 d'exemple y figurent, jamais vos arbres de `data/arbres/`, avec la politique de sécurité dans la page. Une seule

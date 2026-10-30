@@ -16,6 +16,8 @@ const MAX_BACKUPS = 20; // fichiers .json lus au plus pour trouver les sauvegard
 const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
 const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
 
+const EMPTY_BACKUP = '{"format":"lignee","version":1,"people":[],"unions":[]}\n';
+
 const fail = (code) => Object.assign(new Error(code), { code });
 
 function checked(res) {
@@ -58,30 +60,34 @@ const headCommit = async (api) => (await (await api('/commits/HEAD', 'applicatio
 
 /**
  * Vrai si le jeton peut écrire. GitHub ne donne pas les droits d'un jeton à accès limité :
- * on demande une référence au nom invalide, qui ne peut rien créer. 422 : demande examinée,
- * donc droit d'écriture ; 403 ou 404 : refusée avant cela. Dans le doute : lecture seule.
+ * on demande une référence au nom invalide, qui ne peut rien créer. 422 (409 sur un dépôt vide) :
+ * demande examinée, donc droit d'écriture ; 403 ou 404 : refusée avant cela. Dans le doute : lecture seule.
  */
 async function canWrite(send) {
   try {
     await send('POST', '/git/refs', { ref: 'lignee-test-droits', sha: '0'.repeat(40) });
     return false;
   } catch (e) {
-    return e.code === 'conflict';
+    return e.code === 'conflict' || e.code === 'empty';
   }
 }
 
 /**
  * Cherche les sauvegardes Lignée du dépôt, à la racine d'abord. Renvoie { name, read, files,
  * backups: [{ path, name, people, unions }], write, head, branch, api, send }.
+ * Avec `forSave`, un dépôt vide ou sans sauvegarde convient : head et backups sont alors vides.
  * Échoue avec une erreur portant `code` : invalid, notFound, badToken, forbidden, empty, noBackup ou failed.
  */
-export async function openRepo(input, token) {
+export async function openRepo(input, token, forSave = false) {
   const target = parseRepo(input);
   if (!target) throw fail('invalid');
   const { api, send, raw } = client(target, token);
-  const head = await headCommit(api);
+  const head = await headCommit(api).catch((e) => {
+    if (forSave && e.code === 'empty') return '';
+    throw e;
+  });
   const read = (file) => raw(file, head);
-  const { tree } = await (await api(`/git/trees/${head}?recursive=1`)).json();
+  const { tree } = head ? await (await api(`/git/trees/${head}?recursive=1`)).json() : { tree: [] };
 
   const blobs = tree.filter((x) => x.type === 'blob');
   const depth = (x) => x.path.split('/').length;
@@ -100,7 +106,7 @@ export async function openRepo(input, token) {
     }
     if (backup && backup.people.length) backups.push({ path: file.path, ...backup });
   });
-  if (!backups.length) throw fail('noBackup');
+  if (!backups.length && !forSave) throw fail('noBackup');
   backups.sort((a, b) => a.path.localeCompare(b.path));
 
   // Les noms de fichiers peuvent différer par la forme de leurs accents
@@ -158,9 +164,16 @@ export async function attachPhotos(repo, backup) {
  * Envoie la sauvegarde `text` (photos en data URL) vers target.path, en un commit sur la branche par
  * défaut. Seules les nouvelles photos sont transférées ; celles que l'arbre ne cite plus quittent le
  * dépôt, en restant dans son historique. Refuse d'écraser un dépôt modifié depuis sa lecture (`conflict`).
+ * Un dépôt vide reçoit d'abord un premier commit, seule écriture que l'API accepte sur lui.
  */
 export async function pushBackup(repo, target, text, message) {
-  if (await headCommit(repo.api) !== repo.head) throw fail('conflict');
+  if (!repo.head) {
+    const path = target.path.split('/').map(encodeURIComponent).join('/');
+    const { commit } = await repo.send('PUT', `/contents/${path}`, { message, content: btoa(EMPTY_BACKUP) });
+    repo.head = commit.sha;
+  } else if (await headCommit(repo.api) !== repo.head) {
+    throw fail('conflict');
+  }
   const backup = JSON.parse(text);
   const folder = target.path.replace(/\.json$/i, '/');
   const photos = new Map();

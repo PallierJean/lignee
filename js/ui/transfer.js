@@ -10,7 +10,7 @@ import { openRepo, attachPhotos } from '../services/github.js';
 import { afterData } from './render.js';
 import { toast } from './toast.js';
 import { newTree } from './trees.js';
-import { linkRepo } from './repo-link.js';
+import { linkRepo, connectTree, savedRepo } from './repo-link.js';
 import { t } from '../i18n.js';
 
 const inClaude = () => !!(window.claude && window.claude.use);
@@ -34,6 +34,8 @@ export function openTransfer() {
   if (!S.pending) $('#importInfo').innerHTML = '';
   $('#importFile').value = '';
   $('#repoToken').value = '';
+  const known = savedRepo();
+  if (known) $('#repoUrl').value = known.name;
   setTimeout(() => {
     const close = $('#transfer .icon-btn');
     if (close) close.focus();
@@ -225,6 +227,24 @@ export async function importRepo(button) {
     info.innerHTML = `<p>${t('tr.repoPick')}</p><div class="row-btns import-actions">`
       + repo.backups.map((b, i) => `<button class="btn" type="button" data-act="import-repo-pick" data-i="${i}">${esc(b.path)}</button>`).join('')
       + '</div>';
+  } catch (e) {
+    repoFailed(e);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+/** Relie l'arbre ouvert au dépôt indiqué, sans rien importer : le bouton de sauvegarde apparaît. */
+export async function connectRepo(button) {
+  const info = $('#importInfo');
+  S.pending = null;
+  button.disabled = true;
+  info.innerHTML = `<p>${t('tr.repoLoading')}</p>`;
+  const token = $('#repoToken').value.trim();
+  $('#repoToken').value = '';
+  try {
+    await connectTree($('#repoUrl').value, token);
+    info.innerHTML = `<p class="okmsg">${t('tr.repoConnected', esc(treeName()))}</p>`;
   } catch (e) {
     repoFailed(e);
   } finally {
