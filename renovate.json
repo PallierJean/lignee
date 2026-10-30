@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "timezone": "Europe/Paris",
+  "schedule": ["before 6am on monday"],
+  "minimumReleaseAge": "7 days",
+  "semanticCommitType": "ci",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Outils de version figés dans le workflow (npx -p paquet@version)",
+      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
+      "matchStrings": ["-p (?<depName>@?[a-z0-9/-]+)@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "datasourceTemplate": "npm"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Les outils de version évoluent ensemble",
+      "matchPackageNames": ["semantic-release", "@semantic-release/**", "conventional-changelog-conventionalcommits"],
+      "groupName": "outils de version"
+    },
+    {
+      "description": "La version 10 casse les notes de version de semantic-release",
+      "matchPackageNames": ["conventional-changelog-conventionalcommits"],
+      "allowedVersions": "<10"
+    }
+  ]
+}
