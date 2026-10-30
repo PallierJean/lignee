@@ -6,6 +6,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -34,7 +35,7 @@ jobs:
   release:
     name: Version
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -57,3 +58,30 @@ jobs:
           -p @semantic-release/npm@13.2.0
           -p conventional-changelog-conventionalcommits@9.3.1
           semantic-release
+
+  # Site GitHub Pages, une fois le dépôt public. Après la version, pour afficher le bon numéro.
+  # Seuls les fichiers de l'application sont publiés, avec la famille d'exemple.
+  pages:
+    name: Site
+    needs: [test, release]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && !github.event.repository.private
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Préparer le site
+        run: sh scripts/build-site.sh
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v5

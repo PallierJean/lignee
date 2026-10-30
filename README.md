@@ -18,6 +18,7 @@ lignee/
 ├── .gitignore                  Exclut data/arbres/ (vos données) du dépôt
 ├── .github/workflows/ci.yml    Intégration continue : tests, puis version automatique
 ├── .releaserc.json             Réglages du calcul des versions
+├── scripts/build-site.sh       Prépare le site GitHub Pages
 ├── renovate.json               Mises à jour automatiques proposées par Renovate
 ├── CHANGELOG.md                Historique des versions (généré)
 ├── server.js                   Serveur local : sert l'application, écrit data/arbres/
@@ -392,3 +393,14 @@ est ajouté par GitHub : faites `git pull` avant de repartir de `main`. La versi
 des outils de version et de Node (`renovate.json`). Rien n'est fusionné sans validation, et une version
 doit avoir au moins sept jours pour être proposée. Le preset `conventional-changelog-conventionalcommits`
 reste en 9.x, la version 10 étant incompatible.
+
+## Site GitHub Pages
+
+À chaque push sur `main` d'un dépôt public, la CI publie l'application sur
+<https://pallierjean.github.io/lignee/>, en mode navigateur : chaque visiteur garde ses arbres dans son
+propre navigateur, et rien n'est envoyé au site. Pensez à exporter une sauvegarde `.json` : effacer les données du
+navigateur efface l'arbre. La place y est limitée (souvent 5 Mo), photos et documents compris.
+
+`scripts/build-site.sh` prépare le dossier `_site/` : seuls les fichiers de l'application et la famille
+d'exemple y figurent, jamais `data/arbres/`, avec la politique de sécurité dans la page. Une seule
+activation : Settings > Pages > Source : GitHub Actions, puis Actions > CI > Run workflow.
