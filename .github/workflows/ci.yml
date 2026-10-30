@@ -1,0 +1,29 @@
+# Intégration continue : tous les tests à chaque push sur main et sur chaque pull request.
+# L'application n'a aucune dépendance : pas d'installation, Node (.nvmrc) suffit.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# Un nouveau push sur la même branche annule la vérification devenue inutile
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Lancer les tests avec la couverture
+        run: npm run test:coverage
