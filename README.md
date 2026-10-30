@@ -15,7 +15,7 @@ lignee/
 ├── index.html                  Structure de la page
 ├── package.json                Scripts npm start et npm test, version de Node (26 ou plus)
 ├── .nvmrc                      Version de Node pour nvm (26)
-├── .gitignore                  Exclut data/arbres/ (vos données) du dépôt
+├── .gitignore                  Exclut vos arbres et photos du dépôt
 ├── .github/workflows/ci.yml    Intégration continue : tests, puis version automatique
 ├── .releaserc.json             Réglages du calcul des versions
 ├── scripts/build-site.sh       Prépare le site GitHub Pages
@@ -105,11 +105,11 @@ lignee/
 │       ├── spouse-pick.js      Choix d'un conjoint existant
 │       └── toast.js            Messages
 ├── test/                       Tests (node --test), un fichier par module
-│   ├── setup.js                Faux navigateur minimal (window, localStorage, document)
+│   ├── setup.js                Faux navigateur minimal (éléments, événements, localStorage)
 │   └── helpers.js              Famille d'exemple, arbre en mémoire
 └── data/
-    ├── arbres/                         Vos arbres, un fichier .json chacun (créés par server.js)
-    └── exemple-famille-bertrand.json   Famille d'exemple, à importer
+    └── arbres/                         Vos arbres, un fichier .json chacun (créés par server.js)
+        └── exemple-famille-bertrand.json   Famille d'exemple, seul fichier de ce dossier dans git
 ```
 
 ## Langue
@@ -137,7 +137,7 @@ python3 -m http.server 8000
 Puis ouvrez <http://localhost:8000>.
 
 Pour voir l'application avec des données, cliquez sur « Importer / exporter » et
-importez `data/exemple-famille-bertrand.json`, dans l'arbre ouvert ou dans un nouvel
+importez `data/arbres/exemple-famille-bertrand.json`, dans l'arbre ouvert ou dans un nouvel
 arbre. Le bandeau « Retirer les exemples » efface ensuite cette famille d'un clic.
 
 ## Plusieurs arbres
@@ -349,10 +349,12 @@ les noms de lieux vers OpenStreetMap. L'application n'a pas de comptes : ne l'ex
 
 ```bash
 npm test               # tous les tests (Node 26 ou plus, aucune dépendance)
-npm run test:coverage  # avec la couverture du code
+npm run test:coverage  # avec la couverture du code, 85 % de lignes au minimum
 ```
 
-Les tests utilisent `node:test`. Chaque fichier de `test/` couvre un module : dates,
+Les tests utilisent `node:test`. `test/setup.js` fournit un faux navigateur minimal : l'interface s'exécute
+réellement et les tests vérifient le HTML produit, sans dépendance. Le stockage en mode fichier est testé
+contre le vrai serveur. La CI échoue sous 85 % de lignes couvertes. Chaque fichier de `test/` couvre un module : dates,
 GEDCOM (dont un aller-retour export / import de la famille d'exemple), modèle et liens
 de parenté, mise en page (numéros Sosa, pas de chevauchement), sauvegarde .json,
 analyse, annuler / rétablir, doublons, frise, lieux, livret, roue d'ascendance, galerie,
