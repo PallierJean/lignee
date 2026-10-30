@@ -96,6 +96,7 @@ lignee/
 │       ├── form.js             Formulaire
 │       ├── registre.js         Registre par nom de famille
 │       ├── search.js           Recherche rapide de l'en-tête
+│       ├── repo-link.js        Bandeau du dépôt GitHub lié et envoi de l'arbre
 │       ├── transfer.js         Fenêtre Importer / exporter
 │       ├── print.js            Impression : arbre, roue (une ou plusieurs feuilles), livret (A4)
 │       ├── booklet.js          Pages du livret de famille
@@ -410,6 +411,17 @@ comme dans `data/arbres/` (`principal.json` et `principal/photos/`) ou à côté
 photos sont intégrées à l'arbre, en data URL. Un dépôt public se lit sans rien de plus. Un dépôt privé demande un
 [jeton à portée limitée](https://github.com/settings/personal-access-tokens/new) sur ce seul dépôt, avec la
 permission Contents en lecture : il n'est jamais enregistré et ne part que vers `api.github.com`.
+
+Pour sauvegarder un arbre sur GitHub, indiquez l'adresse d'un dépôt, même vide, et un jeton avec la permission
+Contents en lecture et écriture, puis cliquez sur « Connecter l'arbre ouvert ». Le bandeau
+« ATTENTION : LECTURE ET ÉCRITURE » apparaît, avec le bouton « Sauvegarder sur GitHub » : le `.json` et les photos
+partent en un seul commit sur la branche par défaut, et une photo retirée de l'arbre quitte le dépôt (elle reste
+dans son historique). Remplacer une sauvegarde que ce navigateur n'a pas écrite demande une confirmation.
+L'envoi est refusé si le dépôt a changé depuis sa lecture.
+
+Le site retient le dépôt de chaque arbre, jamais le jeton : il reste en mémoire jusqu'à la fermeture de la page.
+Après un rechargement, le bandeau propose de reconnecter l'arbre avec le jeton. Une importation avec « Charger le
+dépôt » relie aussi l'arbre créé, ou vide avant l'import ; avec un jeton en lecture, le bandeau indique « Lecture seule ».
 
 `scripts/build-site.sh` prépare le dossier `_site/` : seuls les fichiers de l'application et la famille
 d'exemple y figurent, jamais vos arbres de `data/arbres/`, avec la politique de sécurité dans la page. Une seule

@@ -1,28 +1,41 @@
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
-import { parseRepo, openRepo, attachPhotos } from '../js/services/github.js';
-import { readImportFile, importGo, importRepo, pickRepoBackup, openTransfer, closeTransfer } from '../js/ui/transfer.js';
+import { parseRepo, openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
+import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner } from '../js/ui/repo-link.js';
+import { readImportFile, importGo, importRepo, pickRepoBackup, connectRepo, openTransfer, closeTransfer } from '../js/ui/transfer.js';
 import { photoOf } from '../js/model/people.js';
+import { REPO_KEY } from '../js/config.js';
 import { resetApp, html } from './helpers.js';
 
 const el = (id) => document.getElementById(id);
 const nativeFetch = globalThis.fetch;
 const backup = (extra = {}) => JSON.stringify({ format: 'lignee', name: 'Famille', people: [{ id: 'a', given: 'Ana', photo: 'photos/Ané.jpg', ...extra }], unions: [] });
 let calls;
+let head;
 
-/** Faux GitHub : `files` associe un chemin à son contenu. */
-function serve(files, status) {
+/** Faux GitHub : `files` associe un chemin à son contenu ; `writable` : le jeton peut écrire. */
+function serve(files, status, writable = false) {
   calls = [];
   const paths = Object.keys(files);
   globalThis.fetch = async (url, init = {}) => {
-    calls.push({ url, auth: init.headers && init.headers.Authorization });
+    const method = init.method || 'GET';
+    calls.push({ url, method, auth: init.headers && init.headers.Authorization, body: init.body && JSON.parse(init.body) });
     if (status) return new Response('', { status });
+    if (method !== 'GET') {
+      if (url.endsWith('/git/refs') && method === 'POST') return new Response('', { status: writable ? (head ? 422 : 409) : 403 });
+      if (url.includes('/contents/')) return Response.json({ commit: { sha: 'premier' } });
+      if (url.includes('/git/refs/heads/')) return Response.json({});
+      return Response.json({ sha: url.split('/').pop() + '-sha' });
+    }
+    if (url.endsWith('/commits/HEAD')) return head ? new Response(head + '\n') : new Response('', { status: 409 });
+    if (url.endsWith('/compte/depot')) return Response.json({ default_branch: 'main' });
+    if (url.includes('/git/commits/')) return Response.json({ tree: { sha: 'arbre' } });
     if (url.includes('/git/trees/')) {
       return Response.json({ tree: [...paths.map((path) => ({ type: 'blob', path, sha: 'sha-' + paths.indexOf(path) })), { type: 'tree', path: 'x' }] });
     }
     const sha = url.match(/\/git\/blobs\/sha-(\d+)$/);
-    const path = sha ? paths[sha[1]] : decodeURIComponent(url.split('/HEAD/')[1]);
+    const path = sha ? paths[sha[1]] : decodeURIComponent(url.split(`/${head}/`)[1]);
     return path in files ? new Response(files[path]) : new Response('', { status: 404 });
   };
 }
@@ -30,6 +43,10 @@ function serve(files, status) {
 beforeEach(() => {
   resetApp();
   S.pending = null;
+  head = 'c0';
+  localStorage.clear();
+  S.repoLink = null;
+  S.repoSavedAt = '';
   el('repoUrl').value = 'compte/depot';
   el('repoToken').value = '';
 });
@@ -58,7 +75,7 @@ describe('lecture du dépôt', () => {
     serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img', 'package.json': '{}' });
     const repo = await openRepo('compte/depot', '');
     assert.equal(repo.backups.length, 1);
-    assert.ok(calls.some((c) => c.url.startsWith('https://raw.githubusercontent.com/compte/depot/HEAD/principal.json')));
+    assert.ok(calls.some((c) => c.url.startsWith('https://raw.githubusercontent.com/compte/depot/c0/principal.json')));
     assert.ok(!calls.some((c) => c.url.endsWith('package.json')));
     assert.ok(calls.every((c) => !c.auth));
   });
@@ -78,7 +95,8 @@ describe('lecture du dépôt', () => {
     serve({ 'principal.json': backup(), ['principal/photos/Ané.jpg'.normalize('NFD')]: 'img' });
     const repo = await openRepo('compte/depot', '');
     const count = await attachPhotos(repo, repo.backups[0]);
-    assert.deepEqual(count, { found: 1, missing: 0 });
+    assert.equal(count.found, 1);
+    assert.equal(count.missing, 0);
     assert.equal(repo.backups[0].people[0].data.photo, 'data:image/jpeg;base64,' + btoa('img'));
   });
 
@@ -88,13 +106,14 @@ describe('lecture du dépôt', () => {
     const repo = await openRepo('compte/depot', '');
     const count = await attachPhotos(repo, repo.backups[0]);
     const p = repo.backups[0].people[0].data;
-    assert.deepEqual(count, { found: 2, missing: 1 });
+    assert.equal(count.found, 2);
+    assert.equal(count.missing, 1);
     assert.match(p.sources[0].photo, /^data:image\/png;base64,/);
     assert.deepEqual(p.media, []);
   });
 
   test('erreurs de GitHub', async () => {
-    const codes = { 401: 'badToken', 403: 'forbidden', 404: 'notFound', 409: 'empty', 429: 'forbidden', 500: 'failed' };
+    const codes = { 401: 'badToken', 403: 'forbidden', 404: 'notFound', 409: 'empty', 422: 'conflict', 429: 'forbidden', 500: 'failed' };
     for (const [status, code] of Object.entries(codes)) {
       serve({}, +status);
       await assert.rejects(openRepo('compte/depot', ''), { code });
@@ -172,5 +191,252 @@ describe('fenêtre d’import', () => {
   test('le fichier local garde son fonctionnement', async () => {
     await readImportFile({ files: [{ name: 'a.json', text: async () => backup({ photo: '' }) }] });
     assert.ok(html('importInfo').includes('a.json'));
+  });
+});
+
+describe('droits du jeton', () => {
+  const files = { 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' };
+
+  test('sans jeton : aucune demande d’écriture', async () => {
+    serve(files, 0, true);
+    assert.equal((await openRepo('compte/depot', '')).write, false);
+    assert.ok(calls.every((c) => c.method === 'GET'));
+  });
+
+  test('jeton en lecture : refusé, donc lecture seule', async () => {
+    serve(files);
+    assert.equal((await openRepo('compte/depot', 'jeton')).write, false);
+  });
+
+  test('jeton en écriture : le test ne demande qu’une référence invalide', async () => {
+    serve(files, 0, true);
+    const repo = await openRepo('compte/depot', 'jeton');
+    assert.equal(repo.write, true);
+    assert.equal(repo.branch, 'main');
+    const writes = calls.filter((c) => c.method !== 'GET');
+    assert.equal(writes.length, 1);
+    assert.ok(!writes[0].body.ref.startsWith('refs/'));
+  });
+});
+
+describe('bandeaux', () => {
+  async function load(writable, token = 'jeton') {
+    serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' }, 0, writable);
+    el('repoToken').value = token;
+    await importRepo(el('repoLoad'));
+    await importGo(true);
+  }
+
+  test('lecture seule : bandeau sans envoi, jeton oublié', async () => {
+    await load(false);
+    renderRepoBanner();
+    assert.equal(el('repoBanner').hidden, false);
+    assert.ok(html('repoBanner').includes('Lecture seule'));
+    assert.ok(!html('repoBanner').includes('repo-save'));
+    assert.ok(!('repo' in S.repoLink));
+    calls.length = 0;
+    await saveRepo();
+    assert.equal(calls.length, 0);
+  });
+
+  test('écriture : bandeau d’alerte, confirmation puis envoi', async () => {
+    await load(true);
+    renderRepoBanner();
+    assert.ok(html('repoBanner').includes('ATTENTION : LECTURE ET ÉCRITURE'));
+    assert.ok(html('repoBanner').includes('data-act="repo-save"'));
+    assert.ok(!html('repoBanner').includes('data-act="repo-save-yes"'));
+    await saveRepo();
+    assert.ok(calls.some((c) => c.url.endsWith('/git/refs/heads/main') && c.method === 'PATCH'));
+    assert.match(el('toast').textContent, /sauvegardé/);
+    assert.ok(html('repoBanner').includes('Dernière sauvegarde'));
+  });
+
+  test('dépôt changé entretemps : rien n’est écrit, message affiché', async () => {
+    await load(true);
+    head = 'c1';
+    calls.length = 0;
+    await saveRepo();
+    assert.ok(calls.every((c) => c.method === 'GET'));
+    assert.ok(html('repoBanner').includes('a changé'));
+  });
+
+  test('un autre arbre ouvert : ni bandeau ni envoi', async () => {
+    await load(true);
+    S.tree = 'autre';
+    renderRepoBanner();
+    assert.equal(el('repoBanner').hidden, true);
+    calls.length = 0;
+    await saveRepo();
+    assert.equal(calls.length, 0);
+  });
+
+  test('ajout à un arbre déjà rempli : pas de lien', async () => {
+    S.people.set('z', { given: 'Zoé' });
+    serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' }, 0, true);
+    el('repoToken').value = 'jeton';
+    await importRepo(el('repoLoad'));
+    await importGo(false);
+    assert.equal(S.repoLink, null);
+  });
+
+  test('fenêtre fermée avant l’import : le jeton d’écriture est oublié', async () => {
+    serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' }, 0, true);
+    el('repoToken').value = 'jeton';
+    await importRepo(el('repoLoad'));
+    closeTransfer();
+    await importGo(true);
+    assert.equal(S.repoLink, null);
+  });
+
+  test('déconnecter oublie le dépôt', async () => {
+    await load(true);
+    forgetRepo();
+    assert.equal(S.repoLink, null);
+    assert.equal(el('repoBanner').hidden, true);
+  });
+});
+
+describe('envoi vers le dépôt', () => {
+  const data = 'data:image/jpeg;base64,' + btoa('img');
+  const other = 'data:image/png;base64,' + btoa('neuf');
+  const send = (people) => JSON.stringify({ format: 'lignee', name: 'F', people, unions: [] });
+
+  async function opened() {
+    serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img', 'principal/photos/vieille.jpg': 'x' }, 0, true);
+    const repo = await openRepo('compte/depot', 'jeton');
+    const { photos } = await attachPhotos(repo, repo.backups[0]);
+    return { repo, target: { path: 'principal.json', photos } };
+  }
+
+  const treeEntries = () => calls.find((c) => c.url.endsWith('/git/trees')).body;
+  const json = () => JSON.parse(treeEntries().tree.find((x) => x.path === 'principal.json').content);
+
+  test('photo inchangée : ni renvoyée ni dupliquée, le chemin revient dans le JSON', async () => {
+    const { repo, target } = await opened();
+    calls.length = 0;
+    await pushBackup(repo, target, send([{ id: 'a', photo: data }]), 'msg');
+    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')));
+    assert.equal(json().people[0].photo, 'photos/Ané.jpg');
+    assert.equal(treeEntries().base_tree, 'arbre');
+    assert.deepEqual(calls.find((c) => c.url.endsWith('/git/commits')).body.parents, ['c0']);
+    assert.equal(repo.head, 'commits-sha');
+  });
+
+  test('nouvelle photo transférée, photo retirée supprimée, sources comprises', async () => {
+    const { repo, target } = await opened();
+    calls.length = 0;
+    await pushBackup(repo, target, send([{ id: 'a', sources: [{ photo: other }] }]), 'msg');
+    const blob = calls.find((c) => c.url.endsWith('/git/blobs')).body;
+    assert.deepEqual(blob, { content: btoa('neuf'), encoding: 'base64' });
+    const ref = json().people[0].sources[0].photo;
+    assert.match(ref, /^photos\/photo_.+\.png$/);
+    const entries = treeEntries().tree;
+    assert.ok(entries.some((x) => x.path === 'principal/' + ref && x.sha === 'blobs-sha'));
+    assert.ok(entries.some((x) => x.path === 'principal/photos/Ané.jpg' && x.sha === null));
+    assert.ok(!entries.some((x) => x.path.endsWith('vieille.jpg')), 'fichier jamais chargé : conservé');
+  });
+
+  test('second envoi : la photo ajoutée n’est pas retransférée', async () => {
+    const { repo, target } = await opened();
+    await pushBackup(repo, target, send([{ id: 'a', photo: other }]), 'msg');
+    head = repo.head;
+    calls.length = 0;
+    await pushBackup(repo, target, send([{ id: 'a', photo: other }]), 'msg');
+    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')));
+  });
+});
+
+describe('connecter l’arbre ouvert', () => {
+  const connect = async (files, writable = true, token = 'jeton') => {
+    serve(files, 0, writable);
+    el('repoToken').value = token;
+    await connectRepo(el('repoConnect'));
+  };
+
+  beforeEach(() => {
+    S.trees.get(S.tree).name = 'Agathé Famille';
+    S.people.set('a', { given: 'Agathe', photo: 'data:image/jpeg;base64,' + btoa('img') });
+  });
+
+  test('dépôt vide : premier commit, puis fichier nommé d’après l’arbre et photo en fichier', async () => {
+    head = '';
+    await connect({});
+    assert.equal(el('repoToken').value, '');
+    assert.equal(S.repoLink.path, 'agathe-famille.json');
+    calls.length = 0;
+    await saveRepo();
+    const first = calls.find((c) => c.method === 'PUT');
+    assert.ok(first.url.endsWith('/contents/agathe-famille.json'));
+    assert.deepEqual(calls.find((c) => c.url.endsWith('/git/commits')).body.parents, ['premier']);
+    const { tree } = calls.find((c) => c.url.endsWith('/git/trees')).body;
+    const json = JSON.parse(tree.find((x) => x.path === 'agathe-famille.json').content);
+    assert.match(json.people[0].photo, /^photos\/photo_.+\.jpg$/);
+    assert.ok(tree.some((x) => x.path === 'agathe-famille/' + json.people[0].photo));
+    assert.equal(S.repoError, '');
+  });
+
+  test('sans jeton ou jeton en lecture : refus clair, pas de lien', async () => {
+    await connect({ 'x.json': backup() }, true, '');
+    assert.ok(html('importInfo').includes('Indiquez un jeton'));
+    await connect({ 'x.json': backup() }, false);
+    assert.ok(html('importInfo').includes('ne permet pas d’écrire'));
+    assert.equal(S.repoLink, null);
+  });
+
+  test('sauvegarde déjà présente : confirmation au premier envoi seulement', async () => {
+    await connect({ 'agathe.json': backup({ photo: '' }) });
+    assert.equal(S.repoLink.path, 'agathe.json');
+    calls.length = 0;
+    await saveRepo();
+    assert.ok(calls.every((c) => c.method === 'GET'));
+    assert.ok(html('repoBanner').includes('data-act="repo-save-yes"'));
+    await saveRepo(true);
+    assert.ok(calls.some((c) => c.method === 'PATCH'));
+    head = S.repoLink.repo.head;
+    calls.length = 0;
+    await saveRepo();
+    assert.ok(calls.some((c) => c.method === 'PATCH'));
+  });
+
+  test('plusieurs sauvegardes : celle de l’arbre, sinon un nouveau fichier', async () => {
+    await connect({ 'agathe-famille.json': backup(), 'autre.json': backup() });
+    assert.equal(S.repoLink.path, 'agathe-famille.json');
+    forgetRepo();
+    await connect({ 'a.json': backup(), 'b.json': backup() });
+    assert.equal(S.repoLink.path, 'agathe-famille.json');
+    assert.equal(S.repoLink.mustConfirm, false);
+  });
+
+  test('rechargement : dépôt retenu sans le jeton, reconnexion sans confirmation', async () => {
+    head = '';
+    await connect({});
+    await saveRepo();
+    head = S.repoLink.repo.head;
+    assert.ok(!localStorage.getItem(REPO_KEY).includes('jeton'));
+    assert.equal(JSON.parse(localStorage.getItem(REPO_KEY))[S.tree].name, 'compte/depot');
+    S.repoLink = null; // page rechargée
+    renderRepoBanner();
+    assert.ok(html('repoBanner').includes('data-act="repo-reconnect"'));
+    openTransfer();
+    assert.equal(el('repoUrl').value, 'compte/depot');
+    await connect({ 'agathe-famille.json': backup({ photo: '' }) });
+    assert.equal(S.repoLink.mustConfirm, false);
+  });
+
+  test('dépôt modifié ailleurs depuis la dernière sauvegarde : confirmation demandée', async () => {
+    head = '';
+    await connect({});
+    await saveRepo();
+    S.repoLink = null;
+    head = 'ailleurs';
+    await connect({ 'agathe-famille.json': backup({ photo: '' }) });
+    assert.equal(S.repoLink.mustConfirm, true);
+  });
+
+  test('déconnecter oublie aussi le dépôt retenu', async () => {
+    await connect({});
+    forgetRepo();
+    renderRepoBanner();
+    assert.equal(el('repoBanner').hidden, true);
   });
 });

@@ -1,4 +1,5 @@
 /** En-tête (arbre ouvert, résumé, état de l'enregistrement), bandeau et barre d'outils de l'arbre. */
+import { renderRepoBanner } from './repo-link.js';
 import { S, isLoading, treeName } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { yearOf } from '../utils/dates.js';
@@ -111,4 +112,5 @@ export function renderHeader() {
   $('#btnNew').hidden = !S.canWrite;
   $('#importSection').hidden = !S.canWrite;
   renderBanner();
+  renderRepoBanner();
 }

@@ -10,6 +10,7 @@ import { openRepo, attachPhotos } from '../services/github.js';
 import { afterData } from './render.js';
 import { toast } from './toast.js';
 import { newTree } from './trees.js';
+import { linkRepo, connectTree, savedRepo } from './repo-link.js';
 import { t } from '../i18n.js';
 
 const inClaude = () => !!(window.claude && window.claude.use);
@@ -22,6 +23,8 @@ const fileBase = () => ['lignee', norm(treeName()).replace(/[^a-z0-9]+/g, '-').r
 
 /* Dépôt GitHub en cours de lecture, quand il faut choisir entre plusieurs sauvegardes */
 let openedRepo = null;
+/* Dépôt d'où vient l'import en attente : { repo, backup, photos } */
+let pendingRepo = null;
 
 export function openTransfer() {
   $('#transfer').hidden = false;
@@ -31,6 +34,8 @@ export function openTransfer() {
   if (!S.pending) $('#importInfo').innerHTML = '';
   $('#importFile').value = '';
   $('#repoToken').value = '';
+  const known = savedRepo();
+  if (known) $('#repoUrl').value = known.name;
   setTimeout(() => {
     const close = $('#transfer .icon-btn');
     if (close) close.focus();
@@ -40,7 +45,8 @@ export function openTransfer() {
 export function closeTransfer() {
   $('#transfer').hidden = true;
   $('#repoToken').value = '';
-  openedRepo = null; // il garde le jeton pour lire les photos
+  openedRepo = null; // ils gardent le jeton pour lire les photos
+  pendingRepo = null;
 }
 
 /* ---------- Export ---------- */
@@ -193,9 +199,11 @@ function repoFailed(e) {
 /** Charge les photos de la sauvegarde choisie et la propose à l'import. */
 async function offerRepoBackup(repo, backup) {
   $('#importInfo').innerHTML = `<p>${t('tr.repoLoading')}</p>`;
-  const { found, missing } = await attachPhotos(repo, backup);
+  const { found, missing, photos } = await attachPhotos(repo, backup);
+  pendingRepo = { repo, backup, photos };
   backup.fileName = backup.path.split('/').pop().replace(/\.json$/i, '');
-  const note = found || missing ? `<p>${t('tr.repoPhotos', found, missing)}</p>` : '';
+  const note = (found || missing ? `<p>${t('tr.repoPhotos', found, missing)}</p>` : '')
+    + `<p>${t(repo.write ? 'tr.repoMode.write' : 'tr.repoMode.read')}</p>`;
   offerImport(backup, repo.name + ' / ' + backup.path, note);
 }
 
@@ -204,6 +212,7 @@ export async function importRepo(button) {
   const info = $('#importInfo');
   S.pending = null;
   openedRepo = null;
+  pendingRepo = null;
   button.disabled = true;
   info.innerHTML = `<p>${t('tr.repoLoading')}</p>`;
   const token = $('#repoToken').value.trim();
@@ -218,6 +227,24 @@ export async function importRepo(button) {
     info.innerHTML = `<p>${t('tr.repoPick')}</p><div class="row-btns import-actions">`
       + repo.backups.map((b, i) => `<button class="btn" type="button" data-act="import-repo-pick" data-i="${i}">${esc(b.path)}</button>`).join('')
       + '</div>';
+  } catch (e) {
+    repoFailed(e);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+/** Relie l'arbre ouvert au dépôt indiqué, sans rien importer : le bouton de sauvegarde apparaît. */
+export async function connectRepo(button) {
+  const info = $('#importInfo');
+  S.pending = null;
+  button.disabled = true;
+  info.innerHTML = `<p>${t('tr.repoLoading')}</p>`;
+  const token = $('#repoToken').value.trim();
+  $('#repoToken').value = '';
+  try {
+    await connectTree($('#repoUrl').value, token);
+    info.innerHTML = `<p class="okmsg">${t('tr.repoConnected', esc(treeName()))}</p>`;
   } catch (e) {
     repoFailed(e);
   } finally {
@@ -276,6 +303,9 @@ export async function importGo(asNew) {
     if (S.mode !== 'db') await saveLocal();
     commitAction();
 
+    // Un arbre qui contenait déjà d'autres personnes ne repart pas vers le dépôt
+    if (pendingRepo && pendingRepo.backup === result && (asNew || wasEmpty)) linkRepo(pendingRepo.repo, result, pendingRepo.photos);
+    pendingRepo = null;
     S.pending = null;
     const n = result.people.length;
     info.innerHTML = `<p class="okmsg">${t('tr.doneInfo', n)}</p>`;
