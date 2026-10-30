@@ -1,5 +1,11 @@
 # Historique des versions
 
+## [1.2.0](https://github.com/PallierJean/lignee/compare/v1.1.0...v1.2.0) (2026-10-30)
+
+### Features
+
+* ouvrir la famille d'exemple à la première visite ([23ea7af](https://github.com/PallierJean/lignee/commit/23ea7af33cb54cc5a8719d197e39739f931f69b9))
+
 ## [1.1.0](https://github.com/PallierJean/lignee/compare/v1.0.0...v1.1.0) (2026-10-30)
 
 ### Features
