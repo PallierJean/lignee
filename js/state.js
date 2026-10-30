@@ -36,6 +36,9 @@ export const S = {
 
   edit: null,            // brouillon du formulaire en cours, ou null
   confirmDel: false,     // confirmation de suppression affichée
+  repoLink: null,        // dépôt GitHub lié à un arbre ; jamais enregistré, le jeton reste en mémoire
+  repoConfirm: false,    // confirmation d'envoi vers le dépôt affichée
+  repoError: '',         // échec du dernier envoi
   confirmEx: false,      // confirmation de retrait des exemples affichée
   query: '',             // recherche du registre
 

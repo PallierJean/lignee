@@ -16,6 +16,7 @@ import { openMedia, closeMedia, placePin, cancelPin, addTag, removeTag } from '.
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
+import { confirmRepoPush, pushRepo, forgetRepo } from './ui/repo-link.js';
 import { openPrint, closePrint, updatePrintInfo, printTree, printFamilyBook } from './ui/print.js';
 import {
   openTrees, closeTrees, switchTree, newTree, askTree, cancelTreeEdit, submitRename, confirmDeleteTree,
@@ -193,6 +194,10 @@ const CLICK_ACTIONS = {
   },
   'copy-export': () => copyExport(),
   'import-repo': (el) => importRepo(el),
+  'repo-push-ask': () => confirmRepoPush(true),
+  'repo-push-no': () => confirmRepoPush(false),
+  'repo-push-yes': once(() => pushRepo()),
+  'repo-forget': () => forgetRepo(),
   'import-repo-pick': once((el) => pickRepoBackup(+el.dataset.i)),
   'import-go': once(() => importGo(false)),
   'import-new': once(() => importGo(true)),

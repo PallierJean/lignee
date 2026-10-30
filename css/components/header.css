@@ -110,3 +110,19 @@
   font-weight: 400;
   color: var(--muted);
 }
+
+/* Dépôt GitHub lié : écriture possible, à ne pas confondre avec la lecture seule */
+.repo-banner {
+  display: block;
+}
+
+.repo-banner.write {
+  border: 2px solid var(--danger);
+  background: var(--danger-soft);
+}
+
+.repo-alert {
+  color: var(--danger);
+  font-size: 1.35rem;
+  font-weight: 700;
+}

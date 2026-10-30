@@ -96,6 +96,7 @@ lignee/
 │       ├── form.js             Formulaire
 │       ├── registre.js         Registre par nom de famille
 │       ├── search.js           Recherche rapide de l'en-tête
+│       ├── repo-link.js        Bandeau du dépôt GitHub lié et envoi de l'arbre
 │       ├── transfer.js         Fenêtre Importer / exporter
 │       ├── print.js            Impression : arbre, roue (une ou plusieurs feuilles), livret (A4)
 │       ├── booklet.js          Pages du livret de famille
@@ -410,6 +411,14 @@ comme dans `data/arbres/` (`principal.json` et `principal/photos/`) ou à côté
 photos sont intégrées à l'arbre, en data URL. Un dépôt public se lit sans rien de plus. Un dépôt privé demande un
 [jeton à portée limitée](https://github.com/settings/personal-access-tokens/new) sur ce seul dépôt, avec la
 permission Contents en lecture : il n'est jamais enregistré et ne part que vers `api.github.com`.
+
+Avec la permission Contents en lecture et écriture, l'arbre peut repartir vers le dépôt. Le site le détecte et
+l'annonce par un bandeau : « Lecture seule », ou « ATTENTION : LECTURE ET ÉCRITURE » avec le bouton « Envoyer vers
+GitHub ». Après confirmation, le `.json` et les photos partent en un seul commit sur la branche par défaut, et une
+photo retirée de l'arbre quitte le dépôt (elle reste dans son historique). L'envoi est refusé si le dépôt a changé
+depuis son chargement. Le lien n'existe que pour un arbre créé par l'import, ou vide avant lui, et jusqu'à la
+fermeture de la page : un jeton d'écriture reste en mémoire pendant ce temps. Après un rechargement, chargez le
+dépôt de nouveau. Les modifications non envoyées restent dans l'ancien arbre du navigateur.
 
 `scripts/build-site.sh` prépare le dossier `_site/` : seuls les fichiers de l'application et la famille
 d'exemple y figurent, jamais vos arbres de `data/arbres/`, avec la politique de sécurité dans la page. Une seule
