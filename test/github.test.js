@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
 import { parseRepo, openRepo, attachPhotos } from '../js/services/github.js';
-import { readImportFile, importGo, importRepo, pickRepoBackup, openTransfer } from '../js/ui/transfer.js';
+import { readImportFile, importGo, importRepo, pickRepoBackup, openTransfer, closeTransfer } from '../js/ui/transfer.js';
 import { photoOf } from '../js/model/people.js';
 import { resetApp, html } from './helpers.js';
 
@@ -147,6 +147,26 @@ describe('fenêtre d’import', () => {
     globalThis.fetch = async () => { throw new TypeError('réseau'); };
     await importRepo(button);
     assert.ok(html('importInfo').includes('n’a pas pu être lu'));
+  });
+
+  test('jeton effacé dès sa lecture, même en cas d’échec', async () => {
+    serve({}, 401);
+    el('repoToken').value = ' jeton ';
+    await importRepo(el('repoLoad'));
+    assert.equal(calls[0].auth, 'Bearer jeton');
+    assert.equal(el('repoToken').value, '');
+  });
+
+  test('fermer la fenêtre : jeton saisi et dépôt ouvert oubliés', async () => {
+    serve({ 'a.json': backup(), 'b.json': backup({ photo: '' }) });
+    el('repoToken').value = 'jeton';
+    await importRepo(el('repoLoad'));
+    closeTransfer();
+    await pickRepoBackup(0);
+    assert.equal(S.pending, null);
+    el('repoToken').value = 'jeton';
+    closeTransfer();
+    assert.equal(el('repoToken').value, '');
   });
 
   test('le fichier local garde son fonctionnement', async () => {

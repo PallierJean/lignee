@@ -20,6 +20,9 @@ const fileBase = () => ['lignee', norm(treeName()).replace(/[^a-z0-9]+/g, '-').r
 
 /* ---------- Ouverture / fermeture ---------- */
 
+/* Dépôt GitHub en cours de lecture, quand il faut choisir entre plusieurs sauvegardes */
+let openedRepo = null;
+
 export function openTransfer() {
   $('#transfer').hidden = false;
   $('#exportHint').textContent = '';
@@ -36,6 +39,8 @@ export function openTransfer() {
 
 export function closeTransfer() {
   $('#transfer').hidden = true;
+  $('#repoToken').value = '';
+  openedRepo = null; // il garde le jeton pour lire les photos
 }
 
 /* ---------- Export ---------- */
@@ -180,9 +185,6 @@ export async function readImportFile(input) {
   offerImport(result, file.name);
 }
 
-/* Dépôt GitHub en cours de lecture, quand il faut choisir entre plusieurs sauvegardes */
-let openedRepo = null;
-
 function repoFailed(e) {
   S.pending = null;
   $('#importInfo').innerHTML = `<p class="err">${t('tr.repoErr.' + (e.code || 'failed'))}</p>`;
@@ -192,7 +194,6 @@ function repoFailed(e) {
 async function offerRepoBackup(repo, backup) {
   $('#importInfo').innerHTML = `<p>${t('tr.repoLoading')}</p>`;
   const { found, missing } = await attachPhotos(repo, backup);
-  $('#repoToken').value = '';
   backup.fileName = backup.path.split('/').pop().replace(/\.json$/i, '');
   const note = found || missing ? `<p>${t('tr.repoPhotos', found, missing)}</p>` : '';
   offerImport(backup, repo.name + ' / ' + backup.path, note);
@@ -205,8 +206,10 @@ export async function importRepo(button) {
   openedRepo = null;
   button.disabled = true;
   info.innerHTML = `<p>${t('tr.repoLoading')}</p>`;
+  const token = $('#repoToken').value.trim();
+  $('#repoToken').value = ''; // effacé dès sa lecture, même si le chargement échoue
   try {
-    const repo = await openRepo($('#repoUrl').value, $('#repoToken').value.trim());
+    const repo = await openRepo($('#repoUrl').value, token);
     if (repo.backups.length === 1) {
       await offerRepoBackup(repo, repo.backups[0]);
       return;
