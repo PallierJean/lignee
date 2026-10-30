@@ -16,6 +16,7 @@ lignee/
 ├── package.json                Scripts npm start et npm test, version de Node (26 ou plus)
 ├── .nvmrc                      Version de Node pour nvm (26)
 ├── .gitignore                  Exclut data/arbres/ (vos données) du dépôt
+├── .github/workflows/ci.yml    Intégration continue : tests à chaque push
 ├── server.js                   Serveur local : sert l'application, écrit data/arbres/
 ├── assets/
 │   └── favicon.svg             Icône de l'onglet
@@ -360,3 +361,8 @@ traductions (mêmes clés en français et en anglais, aucune clé manquante) et 
 (API, photos, chemins refusés, mises à niveau), lancé sur un dossier temporaire :
 vos données ne sont jamais touchées. Les tests marqués « todo » décrivent des défauts
 connus, pas encore corrigés : ils s'affichent sans faire échouer la suite.
+
+## Intégration continue
+
+GitHub Actions (`.github/workflows/ci.yml`) lance `npm run test:coverage` à chaque push sur `main`
+et sur chaque pull request, avec la version de Node de `.nvmrc`. Résultats : onglet Actions du dépôt.
