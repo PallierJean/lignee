@@ -182,21 +182,22 @@ const CLICK_ACTIONS = {
   'ex-no': () => A.confirmRemoveExamples(false),
   'ex-yes': once(() => A.removeExamples()),
 
-  // Importer / exporter
-  'transfer-open': () => openTransfer(),
+  // Importer, exporter
+  'import-open': () => openTransfer('import'),
+  'export-open': () => openTransfer('export'),
   'transfer-close': () => closeTransfer(),
   'export-ged': () => exportGedcom(),
   'export-json': () => exportBackup(),
   'export-csv': () => exportCsv(),
   'registre-csv': () => {
-    openTransfer();
+    openTransfer('export');
     exportCsv();
   },
   'copy-export': () => copyExport(),
   'import-repo': (el) => importRepo(el),
   'repo-connect': (el) => connectRepo(el),
   'repo-reconnect': () => {
-    openTransfer();
+    openTransfer('import');
     setTimeout(() => document.getElementById('repoToken').focus(), 40);
   },
   'repo-save': once(() => saveRepo(false)),

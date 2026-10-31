@@ -1,4 +1,4 @@
-/** Fenêtre « Importer / exporter » : GEDCOM, sauvegarde Lignée et dépôt GitHub. */
+/** Fenêtres « Importer » et « Exporter » : GEDCOM, sauvegarde Lignée et dépôt GitHub. */
 import { S, services, treeName } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { pool, norm } from '../utils/helpers.js';
@@ -26,8 +26,12 @@ let openedRepo = null;
 /* Dépôt d'où vient l'import en attente : { repo, backup, photos } */
 let pendingRepo = null;
 
-export function openTransfer() {
+/** Ouvre la fenêtre sur l'import ou l'export, jamais les deux à la fois. */
+export function openTransfer(mode) {
   $('#transfer').hidden = false;
+  $('#trTitle').textContent = t(mode === 'import' ? 'btn.import' : 'btn.export');
+  $('#exportSection').hidden = mode === 'import';
+  $('#importSection').hidden = mode !== 'import';
   $('#exportHint').textContent = '';
   $('#exportText').hidden = true;
   $('#copyRow').hidden = true;

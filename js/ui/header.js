@@ -110,7 +110,7 @@ export function renderHeader() {
   renderSummary();
   renderStatus();
   $('#btnNew').hidden = !S.canWrite;
-  $('#importSection').hidden = !S.canWrite;
+  $('#btnImport').hidden = !S.canWrite;
   renderBanner();
   renderRepoBanner();
 }

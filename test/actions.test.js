@@ -468,7 +468,7 @@ describe('événements de la page', () => {
   });
 
   test('fenêtres : ouverture, fermeture, fond, Échap, photo', () => {
-    for (const [open, id] of [['transfer-open', 'transfer'], ['print-open', 'printDlg'], ['trees-open', 'treesDlg']]) {
+    for (const [open, id] of [['import-open', 'transfer'], ['export-open', 'transfer'], ['print-open', 'printDlg'], ['trees-open', 'treesDlg']]) {
       click({ act: open });
       assert.equal(el(id).hidden, false, id);
       key('Escape');

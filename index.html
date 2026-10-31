@@ -64,7 +64,8 @@
       <div class="top-actions">
         <span class="pill" id="status"><i></i><span>Connexion…</span></span>
         <button class="btn lang" type="button" data-act="lang" id="btnLang" title="Switch to English" aria-label="Switch to English">EN</button>
-        <button class="btn" type="button" data-act="transfer-open" data-i18n="btn.transfer">Importer / exporter</button>
+        <button class="btn" type="button" id="btnImport" data-act="import-open" data-i18n="btn.import">Importer</button>
+        <button class="btn" type="button" data-act="export-open" data-i18n="btn.export">Exporter</button>
         <button class="btn primary" type="button" data-act="new" id="btnNew" data-i18n="btn.new">Ajouter une personne</button>
       </div>
     </header>
@@ -149,15 +150,14 @@
     </main>
   </div>
 
-  <!-- Fenêtre Importer / exporter -->
+  <!-- Fenêtre Importer ou Exporter -->
   <div class="overlay" id="transfer" hidden>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="trTitle">
       <div class="sheet-head">
-        <h2 id="trTitle" data-i18n="btn.transfer">Importer / exporter</h2>
+        <h2 id="trTitle"></h2>
         <button class="icon-btn" type="button" data-act="transfer-close" aria-label="Fermer" data-i18n-attr="aria-label:close">×</button>
       </div>
-      <section>
-        <h3 data-i18n="tr.export">Exporter</h3>
+      <section id="exportSection">
         <p data-i18n="tr.exportText">Le format GEDCOM est accepté par Geneanet, Ancestris, Gramps, Heredis et MyHeritage. La sauvegarde Lignée permet de tout restaurer ici.</p>
         <div class="row-btns">
           <button class="btn primary" type="button" data-act="export-ged" data-i18n="tr.exportGed">Exporter en GEDCOM</button>
@@ -171,7 +171,6 @@
         </div>
       </section>
       <section id="importSection">
-        <h3 data-i18n="tr.import">Importer</h3>
         <p data-i18n="tr.importText">Ajoutez un arbre existant (fichier .ged) ou restaurez une sauvegarde Lignée (.json). Les personnes importées s’ajoutent à celles déjà présentes.</p>
         <label class="fld"><span data-i18n="tr.file">Fichier à importer</span><input type="file" id="importFile" accept=".ged,.GED,.json,.txt"></label>
         <h3 data-i18n="tr.repo">Depuis un dépôt GitHub</h3>
@@ -206,7 +205,7 @@
           </label>
           <button class="btn primary" type="submit" data-i18n="ts.create">Créer l’arbre</button>
         </form>
-        <p class="hint" data-i18n="ts.hint">L’arbre créé est vide. Pour y reprendre un fichier GEDCOM ou une sauvegarde, utilisez « Importer / exporter ».</p>
+        <p class="hint" data-i18n="ts.hint">L’arbre créé est vide. Pour y reprendre un fichier GEDCOM ou une sauvegarde, utilisez « Importer ».</p>
       </section>
     </div>
   </div>

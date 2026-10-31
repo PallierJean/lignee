@@ -39,7 +39,7 @@ lignee/
 │       ├── form.css            Formulaire d'ajout et de modification
 │       ├── registre.css        Liste par nom de famille
 │       ├── search.css          Recherche rapide et suggestions
-│       ├── modal.css           Fenêtre Importer / exporter
+│       ├── modal.css           Fenêtres Importer et Exporter
 │       ├── person.css          Fiche d'une personne en fenêtre
 │       ├── print.css           Fenêtre Imprimer, feuille imprimée
 │       ├── trees.css           Bouton « Arbre », fenêtre Mes arbres
@@ -97,7 +97,7 @@ lignee/
 │       ├── registre.js         Registre par nom de famille
 │       ├── search.js           Recherche rapide de l'en-tête
 │       ├── repo-link.js        Bandeau du dépôt GitHub lié et envoi de l'arbre
-│       ├── transfer.js         Fenêtre Importer / exporter
+│       ├── transfer.js         Fenêtres Importer et Exporter
 │       ├── print.js            Impression : arbre, roue (une ou plusieurs feuilles), livret (A4)
 │       ├── booklet.js          Pages du livret de famille
 │       ├── analyse.js          Onglet Analyse
@@ -138,7 +138,7 @@ python3 -m http.server 8000
 
 Puis ouvrez <http://localhost:8000>.
 
-Pour voir l'application avec des données, cliquez sur « Importer / exporter » et
+Pour voir l'application avec des données, cliquez sur « Importer » et
 importez `data/arbres/exemple-famille-bertrand.json`, dans l'arbre ouvert ou dans un nouvel
 arbre. Le bandeau « Retirer les exemples » efface ensuite cette famille d'un clic.
 
@@ -406,7 +406,7 @@ navigateur efface l'arbre. La place y est limitée (souvent 5 Mo), photos et doc
 À la première visite, quand ce navigateur ne contient aucun arbre, la famille d'exemple s'ouvre sous le nom
 « Famille Bertrand (exemple) ». Elle ne remplace jamais un arbre existant, et le bandeau « Retirer les exemples » l'efface.
 
-« Importer / exporter » charge aussi un dépôt GitHub contenant une sauvegarde `.json` et ses photos, disposées
+« Importer » charge aussi un dépôt GitHub contenant une sauvegarde `.json` et ses photos, disposées
 comme dans `data/arbres/` (`principal.json` et `principal/photos/`) ou à côté du fichier (`photos/`). Les
 photos sont intégrées à l'arbre, en data URL. Un dépôt public se lit sans rien de plus. Un dépôt privé demande un
 [jeton à portée limitée](https://github.com/settings/personal-access-tokens/new) sur ce seul dépôt, avec la

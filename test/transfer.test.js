@@ -28,6 +28,25 @@ beforeEach(() => {
   globalThis.URL.revokeObjectURL = () => {};
 });
 
+describe('fenêtres séparées', () => {
+  test('Importer et Exporter n’affichent chacun que leur partie', () => {
+    openTransfer('import');
+    assert.equal(el('importSection').hidden, false);
+    assert.equal(el('exportSection').hidden, true);
+    assert.equal(el('trTitle').textContent, 'Importer');
+    openTransfer('export');
+    assert.equal(el('importSection').hidden, true);
+    assert.equal(el('exportSection').hidden, false);
+    assert.equal(el('trTitle').textContent, 'Exporter');
+  });
+
+  test('lecture seule : pas de bouton Importer', () => {
+    S.canWrite = false;
+    afterData();
+    assert.equal(el('btnImport').hidden, true);
+  });
+});
+
 describe('exports', () => {
   test('téléchargement direct hors de claude.ai', async () => {
     openTransfer();
