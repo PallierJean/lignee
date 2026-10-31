@@ -8,11 +8,13 @@
 import { convertPhotos } from './storage.js';
 import { parseBackup } from './backup.js';
 import { isPhotoFile, isPhotoData, photoLabel } from '../model/people.js';
-import { pool } from '../utils/helpers.js';
+import { pool, sleep } from '../utils/helpers.js';
 
 const API = 'https://api.github.com/repos/';
 const RAW = 'https://raw.githubusercontent.com/';
 const MAX_BACKUPS = 20; // fichiers .json lus au plus pour trouver les sauvegardes
+const HEAD_READS = 6; // lectures du dernier commit avant de conclure qu'il a changé
+const HEAD_WAIT = 400; // ms entre deux lectures
 const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
 const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
 
@@ -57,6 +59,15 @@ function client({ owner, repo }, token) {
 }
 
 const headCommit = async (api) => (await (await api('/commits/HEAD', 'application/vnd.github.sha')).text()).trim();
+
+/** Vrai si le dépôt est toujours à `commit`. GitHub peut relire l'ancien commit juste après un envoi : on insiste un peu. */
+async function stillAt(api, commit) {
+  for (let i = 0; i < HEAD_READS; i++) {
+    if (i) await sleep(HEAD_WAIT);
+    if (await headCommit(api) === commit) return true;
+  }
+  return false;
+}
 
 /**
  * Vrai si le jeton peut écrire. GitHub ne donne pas les droits d'un jeton à accès limité :
@@ -171,7 +182,7 @@ export async function pushBackup(repo, target, text, message) {
     const path = target.path.split('/').map(encodeURIComponent).join('/');
     const { commit } = await repo.send('PUT', `/contents/${path}`, { message, content: btoa(EMPTY_BACKUP) });
     repo.head = commit.sha;
-  } else if (await headCommit(repo.api) !== repo.head) {
+  } else if (!await stillAt(repo.api, repo.head)) {
     throw fail('conflict');
   }
   const backup = JSON.parse(text);
