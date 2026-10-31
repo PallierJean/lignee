@@ -174,12 +174,11 @@
         <p data-i18n="tr.importText">Ajoutez un arbre existant (fichier .ged) ou restaurez une sauvegarde Lignée (.json). Les personnes importées s’ajoutent à celles déjà présentes.</p>
         <label class="fld"><span data-i18n="tr.file">Fichier à importer</span><input type="file" id="importFile" accept=".ged,.GED,.json,.txt"></label>
         <h3 data-i18n="tr.repo">Depuis un dépôt GitHub</h3>
-        <p data-i18n="tr.repoText">Connectez l’arbre ouvert à un dépôt, même vide, pour le sauvegarder avec ses photos (jeton en écriture requis), ou chargez une sauvegarde Lignée qui s’y trouve. Le jeton n’est jamais enregistré.</p>
+        <p data-i18n="tr.repoText">Indiquez un dépôt : Lignée charge la sauvegarde qu’il contient ou, avec un jeton en écriture, y sauvegarde l’arbre ouvert et ses photos. Le jeton n’est jamais enregistré.</p>
         <label class="fld"><span data-i18n="tr.repoUrl">Adresse du dépôt</span><input type="text" id="repoUrl" placeholder="https://github.com/compte/depot" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:tr.repoPlaceholder"></label>
-        <label class="fld"><span data-i18n="tr.repoToken">Jeton (dépôt privé)</span><input type="password" id="repoToken" autocomplete="new-password" spellcheck="false"></label>
+        <label class="fld"><span data-i18n="tr.repoToken">Jeton (dépôt privé ou sauvegarde)</span><input type="password" id="repoToken" autocomplete="new-password" spellcheck="false"></label>
         <div class="row-btns">
-          <button class="btn primary" type="button" data-act="repo-connect" data-i18n="tr.repoConnect">Connecter l’arbre ouvert</button>
-          <button class="btn" type="button" data-act="import-repo" data-i18n="tr.repoLoad">Charger le dépôt</button>
+          <button class="btn primary" type="button" data-act="repo-connect" data-i18n="tr.repoConnect">Connecter le dépôt</button>
         </div>
         <div id="importInfo"></div>
       </section>

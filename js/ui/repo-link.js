@@ -7,7 +7,7 @@ import { REPO_KEY } from '../config.js';
 import { $, esc } from '../utils/dom.js';
 import { norm } from '../utils/helpers.js';
 import { buildPortableBackup } from '../services/storage.js';
-import { pushBackup, attachPhotos, openRepo } from '../services/github.js';
+import { pushBackup, attachPhotos } from '../services/github.js';
 import { toast } from './toast.js';
 import { t } from '../i18n.js';
 
@@ -49,19 +49,24 @@ export function linkRepo(repo, backup, photos) {
   S.repoLink = { tree: S.tree, name: repo.name, path: backup.path };
 }
 
-/**
- * Relie l'arbre ouvert au dépôt indiqué, vide ou non. Reprend la sauvegarde déjà suivie, celle qui
- * porte le nom de l'arbre ou la seule du dépôt ; sinon un nouveau fichier, nommé d'après l'arbre.
- * Remplacer une sauvegarde qu'on n'a pas écrite soi-même demandera une confirmation.
- */
-export async function connectTree(input, token) {
-  if (!token) throw Object.assign(new Error('needToken'), { code: 'needToken' });
-  const repo = await openRepo(input, token, true);
-  if (!repo.write) throw Object.assign(new Error('readOnly'), { code: 'readOnly' });
-
+/** Fichiers de l'arbre ouvert dans ce dépôt : celui déjà suivi, celui qui porte son nom. */
+function treePaths(repo) {
   const known = savedRepo();
   const slug = norm(treeName()).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'arbre';
-  const paths = [known && known.name === repo.name ? known.path : '', `${slug}.json`];
+  return [known && known.name === repo.name ? known.path : '', `${slug}.json`];
+}
+
+/** Vrai si le dépôt contient déjà la sauvegarde de l'arbre ouvert. */
+export const holdsTree = (repo) => repo.backups.some((b) => treePaths(repo).includes(b.path));
+
+/**
+ * Relie l'arbre ouvert au dépôt, vide ou non. Reprend la sauvegarde déjà suivie, celle qui porte
+ * le nom de l'arbre ou la seule du dépôt ; sinon un nouveau fichier, nommé d'après l'arbre.
+ * Remplacer une sauvegarde qu'on n'a pas écrite soi-même demandera une confirmation.
+ */
+export async function connectTree(repo) {
+  const known = savedRepo();
+  const paths = treePaths(repo);
   const backup = repo.backups.find((b) => paths.includes(b.path))
     || (repo.backups.length === 1 ? repo.backups[0] : null);
   const path = backup ? backup.path : paths[0] || paths[1];

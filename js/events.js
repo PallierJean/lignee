@@ -8,7 +8,7 @@ import { situationOptions } from './ui/form.js';
 import { t } from './i18n.js';
 import * as A from './actions.js';
 import {
-  openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo, importRepo, pickRepoBackup, connectRepo,
+  openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo,
 } from './ui/transfer.js';
 import { renderRegistre } from './ui/registre.js';
 import { startLocate } from './ui/analyse.js';
@@ -194,8 +194,8 @@ const CLICK_ACTIONS = {
     exportCsv();
   },
   'copy-export': () => copyExport(),
-  'import-repo': (el) => importRepo(el),
   'repo-connect': (el) => connectRepo(el),
+  'repo-connect-open': once(connectOpenedRepo),
   'repo-reconnect': () => {
     openTransfer('import');
     setTimeout(() => document.getElementById('repoToken').focus(), 40);

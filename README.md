@@ -413,14 +413,16 @@ navigateur efface l'arbre. La place y est limitée (souvent 5 Mo), photos et doc
 À la première visite, quand ce navigateur ne contient aucun arbre, la famille d'exemple s'ouvre sous le nom
 « Famille Bertrand (exemple) ». Elle ne remplace jamais un arbre existant, et le bandeau « Retirer les exemples » l'efface.
 
-« Importer » charge aussi un dépôt GitHub contenant une sauvegarde `.json` et ses photos, disposées
+« Importer » ouvre aussi un dépôt GitHub, avec un seul bouton « Connecter le dépôt ». Il charge un dépôt contenant une sauvegarde `.json` et ses photos, disposées
 comme dans `data/arbres/` (`principal.json` et `principal/photos/`) ou à côté du fichier (`photos/`). Les
 photos sont intégrées à l'arbre, en data URL. Un dépôt public se lit sans rien de plus. Un dépôt privé demande un
 [jeton à portée limitée](https://github.com/settings/personal-access-tokens/new) sur ce seul dépôt, avec la
 permission Contents en lecture : il n'est jamais enregistré et ne part que vers `api.github.com`.
 
 Pour sauvegarder un arbre sur GitHub, indiquez l'adresse d'un dépôt, même vide, et un jeton avec la permission
-Contents en lecture et écriture, puis cliquez sur « Connecter l'arbre ouvert ». Le bandeau
+Contents en lecture et écriture, puis cliquez sur « Connecter le dépôt » : l'arbre ouvert est relié directement. Si le
+dépôt contient une autre sauvegarde et que l'arbre ouvert n'est pas vide, Lignée propose de la charger ou de relier
+quand même l'arbre, qui ne la remplacera qu'après confirmation. Le bandeau
 « ATTENTION : LECTURE ET ÉCRITURE » apparaît, avec le bouton « Sauvegarder sur GitHub » : le `.json` et les photos
 partent en un seul commit sur la branche par défaut, et une photo retirée de l'arbre quitte le dépôt (elle reste
 dans son historique). Remplacer une sauvegarde que ce navigateur n'a pas écrite demande une confirmation.
