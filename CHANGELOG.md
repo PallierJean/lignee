@@ -1,5 +1,19 @@
 # Historique des versions
 
+## [1.4.0](https://github.com/PallierJean/lignee/compare/v1.3.0...v1.4.0) (2026-10-31)
+
+### Features
+
+* séparer les fenêtres Importer et Exporter ([cb34301](https://github.com/PallierJean/lignee/commit/cb34301c033c8af3c61d488f049336664c2a954a))
+
+### Bug Fixes
+
+* ne plus prendre une lecture retardée de GitHub pour un conflit ([71aa908](https://github.com/PallierJean/lignee/commit/71aa908e5cc1b53ca29648b885a3610a63d7162f))
+* nommer les photos d'après la personne ([b37a057](https://github.com/PallierJean/lignee/commit/b37a0570960585d680eeef4ffebc1707db2bdeea))
+* nommer les photos NOM-Prénom-<uuid> ([3f8d754](https://github.com/PallierJean/lignee/commit/3f8d754c62db6438d8a8f1b32631169916499479))
+* partager le statut de couple avec le partenaire ([988b3d2](https://github.com/PallierJean/lignee/commit/988b3d2f384655758d6f4836d6b38bda0a3b943a))
+* recentrer l'arbre et la roue dans toutes les vues ([75be4c8](https://github.com/PallierJean/lignee/commit/75be4c865b863f441b9cec826727810e1601fbb6))
+
 ## [1.3.0](https://github.com/PallierJean/lignee/compare/v1.2.0...v1.3.0) (2026-10-30)
 
 ### Features
