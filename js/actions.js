@@ -71,15 +71,16 @@ export function setGenerations(kind, n) {
 /** Zoom avant (+1) ou arrière (-1), en gardant le centre de la vue. */
 export function zoomBy(step) {
   const canvas = $('#canvas');
-  const cx = (canvas.scrollLeft + canvas.clientWidth / 2) / S.zoom;
-  const cy = (canvas.scrollTop + canvas.clientHeight / 2) / S.zoom;
+  // Centre de la vue dans l'arbre : les marges de défilement valent une demi-vue
+  const cx = canvas.scrollLeft / S.zoom;
+  const cy = canvas.scrollTop / S.zoom;
   const i = Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(S.zoom) + step));
   S.zoom = ZOOMS[i];
   savePrefs();
   renderControls();
   renderTree();
-  canvas.scrollLeft = cx * S.zoom - canvas.clientWidth / 2;
-  canvas.scrollTop = cy * S.zoom - canvas.clientHeight / 2;
+  canvas.scrollLeft = cx * S.zoom;
+  canvas.scrollTop = cy * S.zoom;
 }
 
 /** Bascule entre la vue centrée sur une personne et l'arbre complet, à plat. */
@@ -100,7 +101,7 @@ export function toggleFan() {
   S.scrollPending = true;
   renderControls();
   renderTree();
-  if (!S.fan) requestAnimationFrame(scrollToFocus);
+  requestAnimationFrame(scrollToFocus);
 }
 
 /** Affiche ou retire le halo de la lignée directe. */

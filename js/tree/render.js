@@ -156,8 +156,11 @@ export function renderTree() {
   sizer.hidden = false;
 
   // Taille de la zone de défilement (zoomée) et de l'arbre (non zoomé)
+  const canvas = $('#canvas');
   sizer.style.width = Math.ceil(L.W * S.zoom) + 'px';
   sizer.style.height = Math.ceil(L.H * S.zoom) + 'px';
+  // Marges de défilement : même au bord de l'arbre, ou si tout tient à l'écran, on peut centrer
+  sizer.style.margin = `${canvas.clientHeight / 2}px ${canvas.clientWidth / 2}px`;
   tree.style.width = L.W + 'px';
   tree.style.height = L.H + 'px';
   tree.style.transform = `scale(${S.zoom})`;
@@ -216,6 +219,16 @@ export function renderTree() {
 
 /** Fait défiler la toile pour centrer la personne centrale. */
 export function scrollToFocus() {
+  if (S.fan) {
+    const canvas = $('#canvas');
+    canvas.scrollTo({
+      left: (canvas.scrollWidth - canvas.clientWidth) / 2,
+      top: (canvas.scrollHeight - canvas.clientHeight) / 2,
+      behavior: reduced ? 'auto' : 'smooth',
+    });
+    S.scrollPending = false;
+    return;
+  }
   const L = S.lastLayout;
   if (L) scrollToNode(L.nodes.find((x) => x.focus));
 }
@@ -230,8 +243,8 @@ function scrollToNode(n) {
   if (!n) return;
   const canvas = $('#canvas');
   canvas.scrollTo({
-    left: Math.max(0, (n.x + CW / 2) * S.zoom - canvas.clientWidth / 2),
-    top: Math.max(0, (n.y + CH / 2) * S.zoom - canvas.clientHeight * 0.55),
+    left: (n.x + CW / 2) * S.zoom,
+    top: (n.y + CH / 2) * S.zoom + canvas.clientHeight / 2 - canvas.clientHeight * 0.55,
     behavior: reduced || S.firstScroll ? 'auto' : 'smooth',
   });
   S.firstScroll = false;
