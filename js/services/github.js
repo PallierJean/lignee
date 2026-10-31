@@ -8,7 +8,7 @@
 import { convertPhotos } from './storage.js';
 import { parseBackup } from './backup.js';
 import { isPhotoFile, isPhotoData, photoLabel } from '../model/people.js';
-import { pool, rid } from '../utils/helpers.js';
+import { pool } from '../utils/helpers.js';
 
 const API = 'https://api.github.com/repos/';
 const RAW = 'https://raw.githubusercontent.com/';
@@ -185,7 +185,7 @@ export async function pushBackup(repo, target, text, message) {
       let known = target.photos.get(photo);
       if (!known) {
         const [, type, content] = photo.match(/^data:(image\/\w+);base64,(.*)$/s);
-        const ref = `photos/${rid(photoLabel(p))}.${EXT[type]}`;
+        const ref = `photos/${photoLabel(p)}-${crypto.randomUUID()}.${EXT[type]}`;
         const { sha } = await repo.send('POST', '/git/blobs', { content, encoding: 'base64' });
         known = { ref, path: folder + ref };
         entries.push({ path: known.path, mode: '100644', type: 'blob', sha });

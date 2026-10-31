@@ -2,7 +2,7 @@
  * Serveur local de Lignée : sert l'application et enregistre chaque arbre
  * dans data/arbres/<id>.json (format de sauvegarde Lignée, avec son nom).
  * Les photos de l'arbre sont des fichiers dans data/arbres/<id>/photos/,
- * nommés nom_prénom_<uuid>.jpg ; la fiche garde « photos/<fichier> ».
+ * nommés NOM-Prénom-<uuid>.jpg ; la fiche garde « photos/<fichier> ».
  *
  *   node server.js            → http://localhost:8000
  *   PORT=9000 node server.js  → autre port
@@ -259,7 +259,7 @@ export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'a
       send(res, 400, 'Ce contenu n’est pas une image');
       return;
     }
-    const file = safeName(o.label, 'photo') + '_' + randomUUID() + PHOTO_EXT[m[1]];
+    const file = safeName(o.label, 'photo') + '-' + randomUUID() + PHOTO_EXT[m[1]];
     await enqueue(async () => {
       await fs.mkdir(photoDir(id), { recursive: true });
       await fs.writeFile(path.join(photoDir(id), file), Buffer.from(m[2], 'base64'));
