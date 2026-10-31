@@ -7,7 +7,7 @@
  */
 import { convertPhotos } from './storage.js';
 import { parseBackup } from './backup.js';
-import { isPhotoFile, isPhotoData } from '../model/people.js';
+import { isPhotoFile, isPhotoData, photoLabel } from '../model/people.js';
 import { pool, rid } from '../utils/helpers.js';
 
 const API = 'https://api.github.com/repos/';
@@ -179,13 +179,13 @@ export async function pushBackup(repo, target, text, message) {
   const photos = new Map();
   const entries = [];
 
-  const store = async (photo) => {
+  const store = async (photo, p) => {
     if (!isPhotoData(photo)) return photo;
     if (!photos.has(photo)) {
       let known = target.photos.get(photo);
       if (!known) {
         const [, type, content] = photo.match(/^data:(image\/\w+);base64,(.*)$/s);
-        const ref = `photos/${rid('photo')}.${EXT[type]}`;
+        const ref = `photos/${rid(photoLabel(p))}.${EXT[type]}`;
         const { sha } = await repo.send('POST', '/git/blobs', { content, encoding: 'base64' });
         known = { ref, path: folder + ref };
         entries.push({ path: known.path, mode: '100644', type: 'blob', sha });
@@ -196,7 +196,7 @@ export async function pushBackup(repo, target, text, message) {
   };
 
   const people = [];
-  for (const p of backup.people) people.push(await convertPhotos(p, store));
+  for (const p of backup.people) people.push(await convertPhotos(p, (photo) => store(photo, p)));
   backup.people = people;
 
   const kept = new Set([...photos.values()].map((x) => x.path));

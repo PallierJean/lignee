@@ -210,6 +210,12 @@ export function longName(p) {
 }
 
 export const isPhotoData = (s) => /^data:image\/(jpeg|png|webp|gif);base64,/.test(String(s || ''));
+/** Début du nom de fichier d'une photo : « pallier_jean », « photo » pour une fiche sans nom. */
+export function photoLabel(p) {
+  const name = norm([surname(p) || String(p.maidenName || '').trim(), given(p)].join(' ')).normalize('NFC');
+  return name.replace(/[^\p{L}\p{M}\p{N}]+/gu, '_').replace(/^_|_$/g, '') || 'photo';
+}
+
 export const isPhotoFile = (s) => /^photos\/[^/\\]+\.(jpg|png|webp|gif)$/.test(String(s || ''));
 
 /**
