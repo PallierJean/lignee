@@ -1,5 +1,11 @@
 # Historique des versions
 
+## [1.5.0](https://github.com/PallierJean/lignee/compare/v1.4.0...v1.5.0) (2026-10-31)
+
+### Features
+
+* réunir la connexion et le chargement du dépôt en un seul bouton ([ccde1e2](https://github.com/PallierJean/lignee/commit/ccde1e2e6a85c31496b7abc57ae9ee94a1b8581a))
+
 ## [1.4.0](https://github.com/PallierJean/lignee/compare/v1.3.0...v1.4.0) (2026-10-31)
 
 ### Features
