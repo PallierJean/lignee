@@ -5,6 +5,8 @@ import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { bindEvents } from '../js/events.js';
 import { afterData } from '../js/ui/render.js';
+import { renderTree } from '../js/tree/render.js';
+import { CW } from '../js/config.js';
 import { resetHistory, canUndo } from '../js/services/history.js';
 import { example, loadTree, person, resetApp, html } from './helpers.js';
 
@@ -59,6 +61,26 @@ describe('navigation et affichage', () => {
     A.zoomBy(1);
     assert.ok(S.zoom > zoom);
     A.recenter();
+  });
+
+  test('recentrer : la personne centrale, même au bord de l’arbre ; la roue aussi', () => {
+    const canvas = el('canvas');
+    const moves = [];
+    canvas.scrollTo = (x) => moves.push(x);
+    S.fan = false;
+    renderTree();
+    assert.equal(el('sizer').style.margin, `${canvas.clientHeight / 2}px ${canvas.clientWidth / 2}px`);
+    const n = S.lastLayout.nodes.find((x) => x.focus);
+    A.recenter();
+    assert.equal(moves[0].left, (n.x + CW / 2) * S.zoom);
+    S.fan = true;
+    canvas.scrollWidth = 1000;
+    canvas.scrollHeight = 900;
+    A.recenter();
+    assert.equal(moves[1].left, 100);
+    assert.equal(moves[1].top, 150);
+    S.fan = false;
+    delete canvas.scrollTo;
   });
 
   test('bascules : arbre complet, roue, lignée, langue', () => {
