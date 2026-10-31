@@ -105,10 +105,10 @@ describe('sécurité et conflits', () => {
 describe('photos', () => {
   test('enregistrée dans data/arbres/<id>/photos/, conservée au renommage, supprimée quand plus citée', async () => {
     await put('t1', backup('Mon arbre'));
-    const res = await api('t1/photos', { method: 'POST', body: JSON.stringify({ label: 'dupont_jean', data: PNG }) });
+    const res = await api('t1/photos', { method: 'POST', body: JSON.stringify({ label: 'DUPONT-Jean', data: PNG }) });
     assert.equal(res.status, 201);
     const { photo } = await res.json();
-    assert.match(photo, /^photos\/dupont_jean_[0-9a-f-]{36}\.png$/);
+    assert.match(photo, /^photos\/DUPONT-Jean-[0-9a-f-]{36}\.png$/);
     const file = path.join(dataDir, 't1', photo);
     assert.ok(await exists(file));
 

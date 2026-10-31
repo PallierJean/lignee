@@ -57,7 +57,7 @@ describe('mode fichier, sur le vrai serveur', () => {
     await opSet('people', 'b', { given: 'Bob', surname: 'Roux' });
     await opUpdate('people', 'b', { occupation: 'Tisserand' });
     const stored = await storePhoto(PNG, S.people.get('b'));
-    assert.match(stored, /^photos\/roux_bob_/);
+    assert.match(stored, /^photos\/ROUX-Bob-/);
     await opUpdate('people', 'b', { photo: stored, sources: [{ id: 's', photo: PNG }, { id: 't' }], media: [{ id: 'm', photo: PNG }] });
     assert.equal(await storePhotos(), 1);
     const p = S.people.get('b');
