@@ -3,7 +3,7 @@ import { test, describe, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
 import { parseRepo, openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
 import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner } from '../js/ui/repo-link.js';
-import { readImportFile, importGo, importRepo, pickRepoBackup, connectRepo, openTransfer, closeTransfer } from '../js/ui/transfer.js';
+import { readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo, openTransfer, closeTransfer } from '../js/ui/transfer.js';
 import { photoOf } from '../js/model/people.js';
 import { REPO_KEY } from '../js/config.js';
 import { resetApp, html } from './helpers.js';
@@ -135,8 +135,8 @@ describe('fenêtre d’import', () => {
   test('aperçu, jeton effacé, puis import avec la photo affichable', async () => {
     serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' });
     el('repoToken').value = 'jeton';
-    const button = el('repoLoad');
-    await importRepo(button);
+    const button = el('repoConnect');
+    await connectRepo(button);
     assert.equal(button.disabled, false);
     assert.equal(el('repoToken').value, '');
     assert.ok(html('importInfo').includes('data-act="import-new"'));
@@ -149,7 +149,7 @@ describe('fenêtre d’import', () => {
 
   test('plusieurs sauvegardes : on choisit', async () => {
     serve({ 'a.json': backup(), 'b.json': backup({ given: 'Bob', photo: '' }) });
-    await importRepo(el('repoLoad'));
+    await connectRepo(el('repoConnect'));
     assert.ok(html('importInfo').includes('data-act="import-repo-pick"'));
     assert.equal(S.pending, null);
     await pickRepoBackup(1);
@@ -159,19 +159,19 @@ describe('fenêtre d’import', () => {
 
   test('erreur affichée, nouvelle tentative possible', async () => {
     serve({}, 404);
-    const button = el('repoLoad');
-    await importRepo(button);
+    const button = el('repoConnect');
+    await connectRepo(button);
     assert.ok(html('importInfo').includes('Dépôt introuvable'));
     assert.equal(button.disabled, false);
     globalThis.fetch = async () => { throw new TypeError('réseau'); };
-    await importRepo(button);
+    await connectRepo(button);
     assert.ok(html('importInfo').includes('n’a pas pu être lu'));
   });
 
   test('jeton effacé dès sa lecture, même en cas d’échec', async () => {
     serve({}, 401);
     el('repoToken').value = ' jeton ';
-    await importRepo(el('repoLoad'));
+    await connectRepo(el('repoConnect'));
     assert.equal(calls[0].auth, 'Bearer jeton');
     assert.equal(el('repoToken').value, '');
   });
@@ -179,7 +179,7 @@ describe('fenêtre d’import', () => {
   test('fermer la fenêtre : jeton saisi et dépôt ouvert oubliés', async () => {
     serve({ 'a.json': backup(), 'b.json': backup({ photo: '' }) });
     el('repoToken').value = 'jeton';
-    await importRepo(el('repoLoad'));
+    await connectRepo(el('repoConnect'));
     closeTransfer();
     await pickRepoBackup(0);
     assert.equal(S.pending, null);
@@ -223,7 +223,7 @@ describe('bandeaux', () => {
   async function load(writable, token = 'jeton') {
     serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' }, 0, writable);
     el('repoToken').value = token;
-    await importRepo(el('repoLoad'));
+    await connectRepo(el('repoConnect'));
     await importGo(true);
   }
 
@@ -274,7 +274,7 @@ describe('bandeaux', () => {
     S.people.set('z', { given: 'Zoé' });
     serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' }, 0, true);
     el('repoToken').value = 'jeton';
-    await importRepo(el('repoLoad'));
+    await connectRepo(el('repoConnect'));
     await importGo(false);
     assert.equal(S.repoLink, null);
   });
@@ -282,7 +282,7 @@ describe('bandeaux', () => {
   test('fenêtre fermée avant l’import : le jeton d’écriture est oublié', async () => {
     serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' }, 0, true);
     el('repoToken').value = 'jeton';
-    await importRepo(el('repoLoad'));
+    await connectRepo(el('repoConnect'));
     closeTransfer();
     await importGo(true);
     assert.equal(S.repoLink, null);
@@ -390,15 +390,53 @@ describe('connecter l’arbre ouvert', () => {
   });
 
   test('sans jeton ou jeton en lecture : refus clair, pas de lien', async () => {
-    await connect({ 'x.json': backup() }, true, '');
-    assert.ok(html('importInfo').includes('Indiquez un jeton'));
-    await connect({ 'x.json': backup() }, false);
-    assert.ok(html('importInfo').includes('ne permet pas d’écrire'));
+    await connect({}, true, '');
+    assert.ok(html('importInfo').includes('indiquez un jeton'));
+    await connect({}, false);
+    assert.ok(html('importInfo').includes('ne permet pas d’y écrire'));
+    assert.equal(S.repoLink, null);
+  });
+
+  test('sauvegarde et accès en lecture : proposée à l’import, sans autre choix', async () => {
+    await connect({ 'x.json': backup({ photo: '' }) }, false);
+    assert.equal(S.pending.people[0].data.given, 'Ana');
+    assert.ok(!html('importInfo').includes('repo-connect-open'));
+    await connect({ 'x.json': backup({ photo: '' }) }, true, '');
+    assert.ok(html('importInfo').includes('data-act="import-go"'));
+    assert.ok(!html('importInfo').includes('repo-connect-open'));
+    assert.equal(S.repoLink, null);
+  });
+
+  test('arbre ouvert vide : la sauvegarde est proposée, rien n’est relié ni écrasable', async () => {
+    S.people.clear();
+    await connect({ 'agathe-famille.json': backup({ photo: '' }) });
+    assert.equal(S.repoLink, null);
+    assert.ok(html('importInfo').includes('data-act="import-go"'));
+    assert.ok(!html('importInfo').includes('repo-connect-open'));
+  });
+
+  test('sauvegarde au nom de l’arbre : reliée sans question', async () => {
+    await connect({ 'agathe-famille.json': backup({ photo: '' }) });
+    assert.equal(S.repoLink.path, 'agathe-famille.json');
+    assert.equal(S.pending, null);
+    assert.ok(html('importInfo').includes('est connecté'));
+  });
+
+  test('autre sauvegarde et arbre rempli : le choix reste possible, importer ne relie rien', async () => {
+    await connect({ 'x.json': backup({ photo: '' }) });
+    assert.equal(S.repoLink, null);
+    assert.ok(html('importInfo').includes('data-act="import-new"'));
+    assert.ok(html('importInfo').includes('Connecter plutôt « Agathé Famille »'));
+    await importGo(false);
+    assert.equal(S.repoLink, null);
+    await connectOpenedRepo(); // déjà importée
     assert.equal(S.repoLink, null);
   });
 
   test('sauvegarde déjà présente : confirmation au premier envoi seulement', async () => {
     await connect({ 'agathe.json': backup({ photo: '' }) });
+    await connectOpenedRepo();
+    assert.equal(S.pending, null);
     assert.equal(S.repoLink.path, 'agathe.json');
     calls.length = 0;
     await saveRepo();
@@ -417,6 +455,9 @@ describe('connecter l’arbre ouvert', () => {
     assert.equal(S.repoLink.path, 'agathe-famille.json');
     forgetRepo();
     await connect({ 'a.json': backup(), 'b.json': backup() });
+    assert.equal(S.repoLink, null);
+    assert.ok(html('importInfo').includes('data-act="import-repo-pick"'));
+    await connectOpenedRepo();
     assert.equal(S.repoLink.path, 'agathe-famille.json');
     assert.equal(S.repoLink.mustConfirm, false);
   });
