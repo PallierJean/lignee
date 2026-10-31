@@ -165,7 +165,7 @@ chaque modification. Au premier lancement de `server.js`, les arbres déjà gard
 dans le navigateur (à la même adresse) y sont recopiés automatiquement.
 
 Les photos n'y sont pas intégrées : chacune est un fichier
-`data/arbres/<id de l'arbre>/photos/nom_prénom_<uuid>.jpg` (même identifiant que le
+`data/arbres/<id de l'arbre>/photos/NOM-Prénom-<uuid>.jpg` (même identifiant que le
 fichier `<id>.json`), et la fiche garde `"photo": "photos/<fichier>"`. Les documents des
 sources et les images de la galerie suivent la même règle. Renommer l'arbre
 ne déplace rien. Une
