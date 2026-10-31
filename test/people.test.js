@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   maiden, birthSurname, fullName, longName, surnameLine, situationLabel, situationText,
   childrenOf, partnersOf, siblingsOf, isDead, lifeYears, cardDates, ageInfo, matchesWords, queryWords,
-  defaultFocus, isPhotoData, isPhotoFile,
+  defaultFocus, isPhotoData, isPhotoFile, photoLabel,
 } from '../js/model/people.js';
 import { example, loadTree, person } from './helpers.js';
 
@@ -121,6 +121,11 @@ describe('photos', () => {
   test('formats reconnus', () => {
     assert.ok(isPhotoData('data:image/jpeg;base64,AAAA'));
     assert.ok(!isPhotoData('data:text/html;base64,AAAA'));
+    assert.equal(photoLabel({ surname: 'Pallier', given: 'Jean' }), 'pallier_jean');
+    assert.equal(photoLabel({ surname: "d'Aubigné", given: 'Jean-Luc  Émile' }), 'd_aubigne_jean_luc_emile');
+    assert.equal(photoLabel({ maidenName: 'Faure', given: 'Anne' }), 'faure_anne');
+    assert.equal(photoLabel({ surname: 'Иванов' }), 'иванов');
+    assert.equal(photoLabel({}), 'photo');
     assert.ok(isPhotoFile('photos/DUPONT-Jean-1.jpg'));
     assert.ok(!isPhotoFile('photos/../secret.jpg'));
     assert.ok(!isPhotoFile('photos/a.exe'));

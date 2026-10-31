@@ -325,11 +325,11 @@ describe('envoi vers le dépôt', () => {
   test('nouvelle photo transférée, photo retirée supprimée, sources comprises', async () => {
     const { repo, target } = await opened();
     calls.length = 0;
-    await pushBackup(repo, target, send([{ id: 'a', sources: [{ photo: other }] }]), 'msg');
+    await pushBackup(repo, target, send([{ id: 'a', surname: 'Pallier', given: 'Jean', sources: [{ photo: other }] }]), 'msg');
     const blob = calls.find((c) => c.url.endsWith('/git/blobs')).body;
     assert.deepEqual(blob, { content: btoa('neuf'), encoding: 'base64' });
     const ref = json().people[0].sources[0].photo;
-    assert.match(ref, /^photos\/photo_.+\.png$/);
+    assert.match(ref, /^photos\/pallier_jean_.+\.png$/);
     const entries = treeEntries().tree;
     assert.ok(entries.some((x) => x.path === 'principal/' + ref && x.sha === 'blobs-sha'));
     assert.ok(entries.some((x) => x.path === 'principal/photos/Ané.jpg' && x.sha === null));
@@ -370,7 +370,7 @@ describe('connecter l’arbre ouvert', () => {
     assert.deepEqual(calls.find((c) => c.url.endsWith('/git/commits')).body.parents, ['premier']);
     const { tree } = calls.find((c) => c.url.endsWith('/git/trees')).body;
     const json = JSON.parse(tree.find((x) => x.path === 'agathe-famille.json').content);
-    assert.match(json.people[0].photo, /^photos\/photo_.+\.jpg$/);
+    assert.match(json.people[0].photo, /^photos\/agathe_.+\.jpg$/);
     assert.ok(tree.some((x) => x.path === 'agathe-famille/' + json.people[0].photo));
     assert.equal(S.repoError, '');
   });
