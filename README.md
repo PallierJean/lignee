@@ -396,6 +396,13 @@ reste en 9.x, la version 10 étant incompatible.
 Les actions GitHub sont figées sur l'empreinte exacte de leur version. Le tableau de bord de Renovate est
 une issue ouverte en permanence : y cocher une mise à jour la lance sans attendre le lundi.
 
+## Tests sur le vrai GitHub
+
+`npm run test:github` vérifie l'import et la sauvegarde sur un vrai dépôt de test : détection des jetons, envoi, relecture,
+photos et conflits. Il lit `.env.test`, ignoré par Git, qui contient `LIGNEE_TEST_REPO`, `LIGNEE_TEST_READ_TOKEN` et
+`LIGNEE_TEST_WRITE_TOKEN`. Les jetons ne doivent jamais entrer dans le dépôt, qui est public : limitez-les au dépôt de test.
+Sans ce fichier, `npm test` et la CI ignorent ces tests. Le cas du dépôt vide ne se rejoue pas, car le premier envoi le remplit.
+
 ## Site GitHub Pages
 
 À chaque push sur `main` d'un dépôt public, la CI publie l'application sur
