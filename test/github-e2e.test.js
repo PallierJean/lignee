@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { test, describe, after } from 'node:test';
 import { Buffer } from 'node:buffer';
 import { openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
+import { sleep } from '../js/utils/helpers.js';
 
 const { LIGNEE_TEST_REPO: REPO, LIGNEE_TEST_READ_TOKEN: READ, LIGNEE_TEST_WRITE_TOKEN: WRITE } = process.env;
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
@@ -16,9 +17,20 @@ const backup = (people) => JSON.stringify({ format: 'lignee', version: 1, name: 
 const people = (photo) => [{ id: 'a', given: 'Zoé', notes: 'accents éàü — “ok” 👍', ...(photo ? { photo } : {}) }];
 const paths = (repo) => [...repo.files.keys()];
 
-/** État relu du dépôt, comme après un rechargement de la page. */
-async function reopen(token = WRITE) {
-  const repo = await openRepo(REPO, token, true);
+let last = ''; // dernier commit envoyé
+
+const push = async (repo, target, text, message) => {
+  await pushBackup(repo, target, text, message);
+  last = repo.head;
+};
+
+/** État relu du dépôt, comme après un rechargement de la page. GitHub peut relire l'ancien commit juste après un envoi. */
+async function reopen() {
+  let repo = await openRepo(REPO, WRITE, true);
+  for (let i = 0; last && repo.head !== last && i < 25; i++) {
+    await sleep(200);
+    repo = await openRepo(REPO, WRITE, true);
+  }
   const saved = repo.backups.find((b) => b.path === path);
   const { photos } = saved ? await attachPhotos(repo, saved) : { photos: new Map() };
   return { repo, saved, target: { path, photos } };
@@ -54,7 +66,7 @@ describe('vrai GitHub', { skip: !(REPO && READ && WRITE) && 'jetons absents : vo
   test('envoi : JSON et photo en fichiers, contenu identique à la relecture', async () => {
     const { repo, target } = await reopen();
     const before = repo.head;
-    await pushBackup(repo, target, backup(people(PNG)), 'test: envoi');
+    await push(repo, target, backup(people(PNG)), 'test: envoi');
     assert.notEqual(repo.head, before);
 
     const { saved, target: again, repo: next } = await reopen();
@@ -71,7 +83,7 @@ describe('vrai GitHub', { skip: !(REPO && READ && WRITE) && 'jetons absents : vo
   test('après rechargement : photo inchangée pas retransférée, chemin conservé', async () => {
     const { repo, target } = await reopen();
     const [known] = target.photos.values();
-    await pushBackup(repo, target, backup([{ ...people(PNG)[0], occupation: 'Médecin' }]), 'test: reconnexion');
+    await push(repo, target, backup([{ ...people(PNG)[0], occupation: 'Médecin' }]), 'test: reconnexion');
     const { saved, target: again } = await reopen();
     assert.equal(saved.people[0].data.occupation, 'Médecin');
     assert.deepEqual([...again.photos.values()].map((x) => x.path), [known.path]);
@@ -80,7 +92,7 @@ describe('vrai GitHub', { skip: !(REPO && READ && WRITE) && 'jetons absents : vo
   test('photo remplacée : l’ancienne quitte le dépôt, sans doublon', async () => {
     const { repo, target } = await reopen();
     const [old] = target.photos.values();
-    await pushBackup(repo, target, backup(people(PNG2)), 'test: remplacement');
+    await push(repo, target, backup(people(PNG2)), 'test: remplacement');
     const { saved, repo: next, target: again } = await reopen();
     assert.equal(saved.people[0].data.photo, PNG2);
     assert.ok(!paths(next).includes(old.path));
@@ -90,7 +102,7 @@ describe('vrai GitHub', { skip: !(REPO && READ && WRITE) && 'jetons absents : vo
   test('personne sans photo : seule la fiche compte, la photo retirée disparaît', async () => {
     const { repo, target } = await reopen();
     const [old] = target.photos.values();
-    await pushBackup(repo, target, backup([{ id: 'b', given: 'Sans photo' }, ...people('')]), 'test: sans photo');
+    await push(repo, target, backup([{ id: 'b', given: 'Sans photo' }, ...people('')]), 'test: sans photo');
     const { saved, repo: next } = await reopen();
     assert.equal(saved.people.length, 2);
     assert.ok(!paths(next).includes(old.path));
@@ -99,7 +111,7 @@ describe('vrai GitHub', { skip: !(REPO && READ && WRITE) && 'jetons absents : vo
   test('dépôt modifié entretemps : refus, rien n’est écrit', async () => {
     const stale = await reopen();
     const fresh = await reopen();
-    await pushBackup(fresh.repo, fresh.target, backup(people('')), 'test: autre appareil');
+    await push(fresh.repo, fresh.target, backup(people('')), 'test: autre appareil');
     await assert.rejects(pushBackup(stale.repo, stale.target, backup([{ id: 'x', given: 'Écrase' }]), 'test: refusé'), { code: 'conflict' });
     const { saved } = await reopen();
     assert.equal(saved.people[0].data.given, 'Zoé');
