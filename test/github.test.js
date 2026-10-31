@@ -346,6 +346,20 @@ describe('envoi vers le dépôt', () => {
   });
 });
 
+describe('lecture juste après un envoi', () => {
+  const send = (given) => JSON.stringify({ format: 'lignee', name: 'F', people: [{ id: 'a', given }], unions: [] });
+
+  test('GitHub relit encore l’ancien commit : pas de faux conflit', async () => {
+    serve({ 'principal.json': backup({ photo: '' }) }, 0, true);
+    const repo = await openRepo('compte/depot', 'jeton');
+    const target = { path: 'principal.json', photos: new Map() };
+    await pushBackup(repo, target, send('Un'), 'msg');
+    setTimeout(() => { head = repo.head; }, 100);
+    await pushBackup(repo, target, send('Deux'), 'msg');
+    assert.deepEqual(calls.findLast((c) => c.url.endsWith('/git/commits')).body.parents, ['commits-sha']);
+  });
+});
+
 describe('connecter l’arbre ouvert', () => {
   const connect = async (files, writable = true, token = 'jeton') => {
     serve(files, 0, writable);
