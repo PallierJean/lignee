@@ -7,7 +7,7 @@ import { S, savePrefs } from './state.js';
 import { $ } from './utils/dom.js';
 import { rid, pool } from './utils/helpers.js';
 import { isImpossibleDate } from './utils/dates.js';
-import { P, photoOf, photoSrc, partnersOf, childrenOf, unionBetween, reindex, birthSurname, eventsOf, sourcesOf, mediaList, unionType, DATED_SITUATIONS } from './model/people.js';
+import { P, photoOf, photoSrc, partnersOf, childrenOf, unionBetween, reindex, birthSurname, eventsOf, sourcesOf, mediaList, unionType, isDead, DATED_SITUATIONS } from './model/people.js';
 import { opSet, opUpdate, opDelete, storePhoto, beginAction, commitAction, undoAction, redoAction } from './services/storage.js';
 import { relationship } from './model/kinship.js';
 import { mergedData } from './model/duplicates.js';
@@ -555,8 +555,13 @@ export async function submitEdit() {
       const current = partnersOf(id).pop();
       // Le conjoint n'est pas forcément remarié : pour le couple, « remarié » vaut « marié »
       const shared = data.situation === 'remarried' ? 'married' : data.situation;
-      // Union de type non précisé : la situation le donne (mêmes codes)
-      if (current && current.uid && !S.unions.get(current.uid).type) await opUpdate('unions', current.uid, { type: shared });
+      // Union de type non précisé ou statut changé : la situation donne le type (mêmes codes)
+      if (current && current.uid) {
+        const { type } = S.unions.get(current.uid);
+        const changed = !previous || previous.situation !== data.situation;
+        const same = type === shared || (type === 'religious' && shared === 'married');
+        if (!type || (changed && !same)) await opUpdate('unions', current.uid, { type: shared });
+      }
       let date = data.situationDate;
       if (DATED_SITUATIONS.has(data.situation)) {
         const u = current && current.uid && S.unions.get(current.uid);
@@ -572,8 +577,20 @@ export async function submitEdit() {
       const spouse = current && P(current.id);
       const spouseCurrent = spouse && partnersOf(current.id).pop();
       if (spouseCurrent && spouseCurrent.id === id
-        && (spouse.situation !== shared || (spouse.situationDate || '') !== date) && spouse.situation !== 'remarried') {
+        && (spouse.situation !== shared || (spouse.situationDate || '') !== date)
+        && !(spouse.situation === 'remarried' && shared === 'married')) {
         await opUpdate('people', current.id, { situation: shared, situationDate: date, updatedAt: Date.now() });
+      }
+    } else if (!data.situation || data.situation === 'single') {
+      // Sans statut de couple : la personne reprend celui de l'union en cours
+      reindex();
+      const current = partnersOf(id).pop();
+      const u = current && current.uid && S.unions.get(current.uid);
+      const type = u && !u.end && !isDead(P(current.id)) && partnersOf(current.id).pop().id === id ? unionType(u) : '';
+      const shared = type === 'religious' ? 'married' : type;
+      if (COUPLE_SITUATIONS.has(shared)) {
+        if (!u.type) await opUpdate('unions', current.uid, { type: shared });
+        await opUpdate('people', id, { situation: shared, situationDate: DATED_SITUATIONS.has(shared) ? String(u.date || '').trim() : '' });
       }
     }
 
