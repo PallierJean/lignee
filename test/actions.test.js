@@ -5,6 +5,7 @@ import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { bindEvents } from '../js/events.js';
 import { afterData } from '../js/ui/render.js';
+import { currentSituation } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
 import { CW } from '../js/config.js';
 import { resetHistory, canUndo } from '../js/services/history.js';
@@ -257,6 +258,90 @@ describe('formulaire', () => {
     fill({ 'f-situ': 'widowed' });
     await A.submitEdit();
     assert.equal(S.unions.get('u').end, 'death');
+  });
+
+  describe('le couple partage son statut', () => {
+    const couple = (a = {}, b = {}, union = {}) => {
+      loadTree([person('a', { given: 'A', sex: 'F', ...a }), person('b', { given: 'B', sex: 'M', ...b })], [{ id: 'u', a: 'a', b: 'b', date: '', place: '', ...union }]);
+      S.focus = 'a';
+    };
+    const setSituation = async (id, situation) => {
+      A.startEdit(id);
+      fill({ 'f-situ': situation });
+      await A.submitEdit();
+    };
+
+    test('union sans type : concubinage pour les deux', async () => {
+      couple();
+      await setSituation('a', 'cohabiting');
+      assert.equal(S.unions.get('u').type, 'cohabiting');
+      assert.equal(S.people.get('b').situation, 'cohabiting');
+    });
+
+    test('union déjà mariée : passer en concubinage change l’union et le conjoint', async () => {
+      couple({ situation: 'married' }, { situation: 'married' }, { type: 'married' });
+      await setSituation('a', 'cohabiting');
+      assert.equal(S.unions.get('u').type, 'cohabiting');
+      assert.equal(S.people.get('b').situation, 'cohabiting');
+      assert.equal(currentSituation('a'), 'cohabiting');
+      assert.equal(currentSituation('b'), 'cohabiting');
+    });
+
+    test('conjoint remarié : il suit aussi le concubinage, mais reste remarié si le couple est marié', async () => {
+      couple({}, { situation: 'remarried' }, { type: 'married' });
+      await setSituation('a', 'cohabiting');
+      assert.equal(S.people.get('b').situation, 'cohabiting');
+      couple({}, { situation: 'remarried' }, { type: 'married' });
+      await setSituation('a', 'married');
+      assert.equal(S.people.get('b').situation, 'remarried');
+    });
+
+    test('sans changement de statut, un type d’union religieux est conservé', async () => {
+      couple({ situation: 'married' }, { situation: 'married' }, { type: 'religious' });
+      await setSituation('a', 'married');
+      assert.equal(S.unions.get('u').type, 'religious');
+    });
+
+    test('nouveau partenaire d’une personne en concubinage : même statut', async () => {
+      loadTree([person('a', { given: 'A', sex: 'F', situation: 'cohabiting' })]);
+      S.focus = 'a';
+      A.startAdd('spouse', 'a');
+      fill({ 'f-given': 'Paul' });
+      await A.submitEdit();
+      const [id, paul] = [...S.people].find(([, p]) => p.given === 'Paul');
+      assert.equal(paul.situation, 'cohabiting');
+      assert.equal(currentSituation(id), 'cohabiting');
+      assert.equal(S.unions.values().next().value.type, 'cohabiting');
+    });
+
+    test('partenaire déjà présent, sans statut, relié dans son formulaire : même statut', async () => {
+      loadTree([person('a', { given: 'A', sex: 'F', situation: 'cohabiting' }), person('b', { given: 'B', sex: 'M' })]);
+      S.focus = 'b';
+      A.startEdit('b');
+      A.addDraftUnion('a');
+      fill({});
+      await A.submitEdit();
+      assert.equal(S.people.get('b').situation, 'cohabiting');
+    });
+
+    test('union terminée ou conjoint décédé : le statut n’est pas repris', async () => {
+      couple({ situation: 'cohabiting' }, {}, { type: 'cohabiting', end: 'separation' });
+      await setSituation('b', '');
+      assert.equal(S.people.get('b').situation, '');
+      couple({ situation: 'cohabiting', deathDate: '2000', deceased: true }, {}, { type: 'cohabiting' });
+      await setSituation('b', '');
+      assert.equal(S.people.get('b').situation, '');
+    });
+
+    test('le conjoint a une union plus récente : il ne change pas', async () => {
+      loadTree([person('a', { given: 'A', sex: 'F' }), person('b', { given: 'B', sex: 'M', situation: 'married' }), person('c', { given: 'C', sex: 'F' })], [
+        { id: 'u1', a: 'a', b: 'b', date: '1950', place: '' },
+        { id: 'u2', a: 'b', b: 'c', date: '1980', place: '', type: 'married' },
+      ]);
+      S.focus = 'a';
+      await setSituation('a', 'cohabiting');
+      assert.equal(S.people.get('b').situation, 'married');
+    });
   });
 });
 
