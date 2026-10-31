@@ -10,6 +10,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --import ./test/setup.js --test",
+    "test:github": "node --env-file=.env.test --import ./test/setup.js --test test/github-e2e.test.js",
     "test:coverage": "node --import ./test/setup.js --test --experimental-test-coverage --test-coverage-exclude=test/** --test-coverage-lines=85"
   }
 }
