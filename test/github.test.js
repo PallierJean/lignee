@@ -132,16 +132,16 @@ describe('lecture du dépôt', () => {
 });
 
 describe('fenêtre d’import', () => {
-  test('aperçu, jeton effacé, puis import avec la photo affichable', async () => {
+  test('dépôt ouvert dans un nouvel arbre, jeton effacé, photo affichable', async () => {
     serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' });
     el('repoToken').value = 'jeton';
     const button = el('repoConnect');
     await connectRepo(button);
     assert.equal(button.disabled, false);
     assert.equal(el('repoToken').value, '');
-    assert.ok(html('importInfo').includes('data-act="import-new"'));
+    assert.ok(html('importInfo').includes('Import terminé'));
     assert.ok(html('importInfo').includes('1 photo chargée'));
-    await importGo(false);
+    assert.equal(S.pending, null);
     assert.ok(photoOf(S.people.get('a')).startsWith('data:image/jpeg'));
     openTransfer();
     assert.equal(el('repoToken').value, '');
@@ -153,7 +153,8 @@ describe('fenêtre d’import', () => {
     assert.ok(html('importInfo').includes('data-act="import-repo-pick"'));
     assert.equal(S.pending, null);
     await pickRepoBackup(1);
-    assert.equal(S.pending.people[0].data.given, 'Bob');
+    assert.equal(S.pending, null);
+    assert.equal([...S.people.values()][0].given, 'Bob');
     await pickRepoBackup(1); // déjà choisie
   });
 
@@ -268,15 +269,6 @@ describe('bandeaux', () => {
     calls.length = 0;
     await saveRepo();
     assert.equal(calls.length, 0);
-  });
-
-  test('ajout à un arbre déjà rempli : pas de lien', async () => {
-    S.people.set('z', { given: 'Zoé' });
-    serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' }, 0, true);
-    el('repoToken').value = 'jeton';
-    await connectRepo(el('repoConnect'));
-    await importGo(false);
-    assert.equal(S.repoLink, null);
   });
 
   test('fenêtre fermée avant l’import : le jeton d’écriture est oublié', async () => {
@@ -397,21 +389,48 @@ describe('connecter l’arbre ouvert', () => {
     assert.equal(S.repoLink, null);
   });
 
-  test('sauvegarde et accès en lecture : proposée à l’import, sans autre choix', async () => {
+  test('accès en lecture : nouvel arbre, l’arbre ouvert ne reçoit rien', async () => {
+    const opened = S.tree;
+    const before = S.trees.size;
     await connect({ 'x.json': backup({ photo: '' }) }, false);
-    assert.equal(S.pending.people[0].data.given, 'Ana');
+    assert.notEqual(S.tree, opened);
+    assert.equal(S.trees.size, before + 1);
+    assert.equal(S.trees.get(S.tree).name, 'Famille');
+    assert.deepEqual([...S.people.values()].map((p) => p.given), ['Ana']);
     assert.ok(!html('importInfo').includes('repo-connect-open'));
-    await connect({ 'x.json': backup({ photo: '' }) }, true, '');
-    assert.ok(html('importInfo').includes('data-act="import-go"'));
-    assert.ok(!html('importInfo').includes('repo-connect-open'));
-    assert.equal(S.repoLink, null);
+    assert.equal(S.repoLink.tree, S.tree);
+    assert.ok(!('repo' in S.repoLink));
   });
 
-  test('arbre ouvert vide : la sauvegarde est proposée, rien n’est relié ni écrasable', async () => {
+  test('famille d’exemple ouverte, jeton en écriture : nouvel arbre relié au dépôt', async () => {
+    const opened = S.tree;
+    S.people.clear();
+    S.people.set('e', { given: 'Exemple', example: true });
+    await connect({ 'x.json': backup({ photo: '' }) });
+    assert.notEqual(S.tree, opened);
+    assert.deepEqual([...S.people.values()].map((p) => p.given), ['Ana']);
+    assert.ok(!html('importInfo').includes('repo-connect-open'));
+    assert.equal(S.repoLink.tree, S.tree);
+    assert.equal(S.repoLink.path, 'x.json');
+  });
+
+  test('famille d’exemple ouverte, dépôt vide : elle ne part pas, un nouvel arbre est relié', async () => {
+    const opened = S.tree;
+    S.people.clear();
+    S.people.set('e', { given: 'Exemple', example: true });
+    await connect({});
+    assert.notEqual(S.tree, opened);
+    assert.equal(S.people.size, 0);
+    assert.equal(S.trees.get(S.tree).name, 'depot');
+    assert.equal(S.repoLink.tree, S.tree);
+  });
+
+  test('arbre ouvert vide : la sauvegarde s’ouvre dans un nouvel arbre', async () => {
+    const opened = S.tree;
     S.people.clear();
     await connect({ 'agathe-famille.json': backup({ photo: '' }) });
-    assert.equal(S.repoLink, null);
-    assert.ok(html('importInfo').includes('data-act="import-go"'));
+    assert.notEqual(S.tree, opened);
+    assert.equal(S.people.size, 1);
     assert.ok(!html('importInfo').includes('repo-connect-open'));
   });
 
@@ -422,15 +441,19 @@ describe('connecter l’arbre ouvert', () => {
     assert.ok(html('importInfo').includes('est connecté'));
   });
 
-  test('autre sauvegarde et arbre rempli : le choix reste possible, importer ne relie rien', async () => {
+  test('autre sauvegarde et arbre personnel : nouvel arbre ou connexion, jamais d’ajout', async () => {
+    const opened = S.tree;
     await connect({ 'x.json': backup({ photo: '' }) });
+    assert.equal(S.tree, opened);
     assert.equal(S.repoLink, null);
     assert.ok(html('importInfo').includes('data-act="import-new"'));
+    assert.ok(!html('importInfo').includes('data-act="import-go"'));
     assert.ok(html('importInfo').includes('Connecter plutôt « Agathé Famille »'));
-    await importGo(false);
-    assert.equal(S.repoLink, null);
+    await importGo(true);
+    assert.notEqual(S.tree, opened);
+    assert.equal(S.repoLink.tree, S.tree);
     await connectOpenedRepo(); // déjà importée
-    assert.equal(S.repoLink, null);
+    assert.equal(S.repoLink.tree, S.tree);
   });
 
   test('sauvegarde déjà présente : confirmation au premier envoi seulement', async () => {
