@@ -162,12 +162,12 @@ export async function copyExport() {
 /* ---------- Import ---------- */
 
 /** Met en attente ce qui a été lu et propose de l'importer. */
-function offerImport(result, source, note = '', extra = '') {
+function offerImport(result, source, note = '', actions = null) {
   S.pending = result;
   $('#importInfo').innerHTML = `<p>${t('tr.found', result.people.length, result.unions.length, esc(source))}</p>${note}`
     + '<div class="row-btns import-actions">'
-    + `<button class="btn primary" type="button" data-act="import-go">${t('tr.addTo', esc(treeName()))}</button>`
-    + `<button class="btn" type="button" data-act="import-new">${t('tr.newTree')}</button>${extra}`
+    + (actions || `<button class="btn primary" type="button" data-act="import-go">${t('tr.addTo', esc(treeName()))}</button>`
+      + `<button class="btn" type="button" data-act="import-new">${t('tr.newTree')}</button>`)
     + '</div>';
 }
 
@@ -200,11 +200,14 @@ function repoFailed(e) {
   $('#importInfo').innerHTML = `<p class="err">${t('tr.repoErr.' + (e.code || 'failed'))}</p>`;
 }
 
+/** Vrai si l'arbre ouvert contient autre chose que la famille d'exemple. */
+const ownTree = () => [...S.people.values()].some((p) => !p.example);
+
 /** Autre choix quand le dépôt contient une autre sauvegarde : y relier l'arbre ouvert, s'il a du contenu. */
-const connectChoice = (repo) => (repo.write && S.people.size
+const connectChoice = (repo) => (repo.write && ownTree()
   ? `<button class="btn" type="button" data-act="repo-connect-open">${t('tr.repoConnectTree', esc(treeName()))}</button>` : '');
 
-/** Charge les photos de la sauvegarde choisie et la propose à l'import. */
+/** Charge les photos de la sauvegarde choisie et l'ouvre dans un nouvel arbre, sauf si un choix reste à faire. */
 async function offerRepoBackup(repo, backup) {
   $('#importInfo').innerHTML = `<p>${t('tr.repoLoading')}</p>`;
   const { found, missing, photos } = await attachPhotos(repo, backup);
@@ -212,17 +215,23 @@ async function offerRepoBackup(repo, backup) {
   backup.fileName = backup.path.split('/').pop().replace(/\.json$/i, '');
   const note = (found || missing ? `<p>${t('tr.repoPhotos', found, missing)}</p>` : '')
     + `<p>${t(repo.write ? 'tr.repoMode.write' : 'tr.repoMode.read')}</p>`;
-  offerImport(backup, repo.name + ' / ' + backup.path, note, connectChoice(repo));
+  const choice = connectChoice(repo);
+  offerImport(backup, repo.name + ' / ' + backup.path, note, `<button class="btn primary" type="button" data-act="import-new">${t('tr.newTree')}</button>${choice}`);
+  if (choice) return;
+  await importGo(true);
+  if (!S.pending) $('#importInfo').innerHTML += note;
 }
 
+/** Relie l'arbre ouvert au dépôt. La famille d'exemple n'y part pas : un nouvel arbre prend sa place. */
 async function connectOpenTree(repo) {
+  if (S.people.size && !ownTree() && !(await newTree(repo.name.split('/').pop()))) return;
   await connectTree(repo);
   $('#importInfo').innerHTML = `<p class="okmsg">${t('tr.repoConnected', esc(treeName()))}</p>`;
 }
 
 /**
  * Lit le dépôt indiqué et fait ce que le jeton et son contenu permettent : relier l'arbre ouvert s'il
- * n'y a rien à charger ou s'il y a déjà sa sauvegarde ; sinon proposer celle du dépôt, sans encore l'importer.
+ * n'y a rien à charger ou s'il y a déjà sa sauvegarde ; sinon ouvrir celle du dépôt dans un nouvel arbre.
  */
 export async function connectRepo(button) {
   const info = $('#importInfo');
@@ -236,7 +245,7 @@ export async function connectRepo(button) {
   try {
     const repo = await openRepo($('#repoUrl').value, token, true);
     if (!repo.backups.length && !repo.write) throw Object.assign(new Error('needWrite'), { code: token ? 'readOnly' : 'needToken' });
-    if (repo.write && (!repo.backups.length || (S.people.size && holdsTree(repo)))) {
+    if (repo.write && (!repo.backups.length || (ownTree() && holdsTree(repo)))) {
       await connectOpenTree(repo);
       return;
     }
