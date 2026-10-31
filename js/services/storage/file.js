@@ -6,7 +6,7 @@
 import { S, treeName } from '../../state.js';
 import { t } from '../../i18n.js';
 import { buildBackup, parseBackup } from '../backup.js';
-import { given, surname, sourcesOf, mediaList, isPhotoData, isPhotoFile, photoSrc } from '../../model/people.js';
+import { sourcesOf, mediaList, isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
 import { pool } from '../../utils/helpers.js';
 import { toast } from '../../ui/toast.js';
 import { ensureTree, sortTrees } from './trees.js';
@@ -104,12 +104,11 @@ export async function loadFileTree() {
  */
 export async function storePhoto(photo, p) {
   if (S.mode !== 'file' || !isPhotoData(photo)) return photo;
-  const label = [surname(p) || String(p.maidenName || '').trim().toUpperCase(), given(p)].filter(Boolean).join('-');
   try {
     const res = await fetch(API + encodeURIComponent(S.tree) + '/photos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label, data: photo }),
+      body: JSON.stringify({ label: photoLabel(p), data: photo }),
     });
     if (!res.ok) throw new Error(res.status + ' ' + (await res.text()));
     return (await res.json()).photo;
