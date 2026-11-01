@@ -58,6 +58,18 @@ describe('navigation et affichage', () => {
     assert.equal(el('paneRegistre').hidden, false);
     A.setGenerations('up', 7);
     assert.equal(S.up, 7);
+    const shown = (up) => {
+      A.setGenerations('up', up);
+      return [...el('segUp').innerHTML.matchAll(/data-n="(\d)"[^>]*>([^<]+)</g)].map((m) => m[2]).join(' ');
+    };
+    assert.equal(shown(0), '0 1 2 3 4 …');
+    assert.equal(shown(3), '0 1 2 3 4 …');
+    assert.equal(shown(4), '… 1 2 3 4 5 …');
+    assert.equal(shown(5), '… 2 3 4 5 6 …');
+    assert.equal(shown(6), '… 3 4 5 6 7');
+    assert.equal(shown(7), '… 3 4 5 6 7');
+    assert.match(el('segUp').innerHTML, /data-n="6"[^>]*>…</); // recule d'un cran
+    A.setGenerations('up', 7);
     const zoom = S.zoom;
     A.zoomBy(1);
     assert.ok(S.zoom > zoom);
