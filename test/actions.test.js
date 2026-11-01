@@ -93,6 +93,14 @@ describe('navigation et affichage', () => {
     assert.deepEqual([S.full, S.fan], [true, false]);
     A.toggleLine();
     assert.equal(S.line, false);
+    A.togglePanel();
+    assert.equal(S.panel, false);
+    assert.equal(el('main').className, 'main side-off');
+    assert.equal(el('btnPanel').attrs['aria-pressed'], 'false');
+    A.setTab('registre'); // un onglet demandé rouvre le panneau
+    assert.equal(S.panel, true);
+    assert.equal(el('main').className, 'main');
+    A.setTab('fiche');
     A.toggleLang();
     assert.equal(el('btnLang').textContent, 'FR');
     A.toggleLang();

@@ -109,6 +109,7 @@ const CLICK_ACTIONS = {
   full: () => A.toggleFull(),
   fan: () => A.toggleFan(),
   line: () => A.toggleLine(),
+  panel: () => A.togglePanel(),
   lang: () => A.toggleLang(),
   undo: () => A.undo(),
   redo: () => A.redo(),
@@ -329,6 +330,12 @@ export function bindEvents() {
       ev.preventDefault();
       if (key === 'y' || ev.shiftKey) A.redo();
       else A.undo();
+      return;
+    }
+    // Ctrl+B (Cmd+B sur Mac) : panneau, comme la barre latérale de VS Code
+    if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && key === 'b' && !typing(ev.target) && !dialogOpen) {
+      ev.preventDefault();
+      A.togglePanel();
       return;
     }
     // Raccourcis : « / » ou Ctrl+K (Cmd+K sur Mac) pour rechercher

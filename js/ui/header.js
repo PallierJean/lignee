@@ -19,6 +19,8 @@ export function renderControls() {
   $('#btnFull').setAttribute('aria-pressed', String(S.full && !S.fan));
   $('#btnFan').setAttribute('aria-pressed', String(S.fan));
   $('#btnLine').setAttribute('aria-pressed', String(S.line));
+  $('#btnPanel').setAttribute('aria-pressed', String(S.panel));
+  $('#main').className = S.panel ? 'main' : 'main side-off';
   $('#zoomVal').textContent = t('percent', Math.round(S.zoom * 100));
   $('#undoCtl').hidden = !S.canWrite;
   $('#btnUndo').disabled = !canUndo();

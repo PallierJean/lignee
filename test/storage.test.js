@@ -140,12 +140,15 @@ describe('mode navigateur', () => {
     S.focus = 'a';
     S.up = 6;
     S.fan = true;
+    S.panel = false;
     savePrefs();
     S.up = 3;
     S.fan = false;
     S.focus = null;
+    S.panel = true;
     loadPrefs();
-    assert.deepEqual([S.up, S.fan, S.focus], [6, true, 'a']);
+    assert.deepEqual([S.up, S.fan, S.focus, S.panel], [6, true, 'a', false]);
+    S.panel = true;
   });
 
   test('stockage illisible ou plein', () => {

@@ -22,6 +22,14 @@
   gap: 12px;
 }
 
+.main.side-off {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.main.side-off .side {
+  display: none;
+}
+
 /* Les deux panneaux : arbre (.stage) et fiche/registre (.side) */
 .stage,
 .side {
