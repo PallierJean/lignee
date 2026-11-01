@@ -1,5 +1,11 @@
 # Historique des versions
 
+## [1.6.1](https://github.com/PallierJean/lignee/compare/v1.6.0...v1.6.1) (2026-11-01)
+
+### Bug Fixes
+
+* ne plus afficher de trait orphelin avec 0 ascendant ([03cc42b](https://github.com/PallierJean/lignee/commit/03cc42b899a8db907b2612a58dd204b7b3cb723d))
+
 ## [1.6.0](https://github.com/PallierJean/lignee/compare/v1.5.0...v1.6.0) (2026-11-01)
 
 ### Features
