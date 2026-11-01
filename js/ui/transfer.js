@@ -219,7 +219,7 @@ async function offerRepoBackup(repo, backup) {
   offerImport(backup, repo.name + ' / ' + backup.path, note, `<button class="btn primary" type="button" data-act="import-new">${t('tr.newTree')}</button>${choice}`);
   if (choice) return;
   await importGo(true);
-  if (!S.pending) $('#importInfo').innerHTML += note;
+  if (!S.pending && missing) toast(t('tr.repoPhotos', found, missing));
 }
 
 /** Relie l'arbre ouvert au dépôt. La famille d'exemple n'y part pas : un nouvel arbre prend sa place. */
@@ -340,6 +340,7 @@ export async function importGo(asNew) {
     S.scrollPending = true;
     afterData();
     toast(t('tr.done'));
+    if (asNew) closeTransfer();
   } catch (e) {
     if (S.mode !== 'db') await Promise.resolve(saveLocal()).catch(() => {}); // message déjà affiché
     commitAction();
