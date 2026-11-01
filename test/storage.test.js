@@ -148,6 +148,11 @@ describe('mode navigateur', () => {
     S.panel = true;
     loadPrefs();
     assert.deepEqual([S.up, S.fan, S.focus, S.panel], [6, true, 'a', false]);
+    S.up = 0;
+    savePrefs();
+    S.up = 3;
+    loadPrefs();
+    assert.equal(S.up, 0);
     S.panel = true;
   });
 
