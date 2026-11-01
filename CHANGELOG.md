@@ -1,5 +1,19 @@
 # Historique des versions
 
+## [1.6.0](https://github.com/PallierJean/lignee/compare/v1.5.0...v1.6.0) (2026-11-01)
+
+### Features
+
+* afficher les ascendants de 0 à 7 dans une fenêtre glissante ([b3f5ffc](https://github.com/PallierJean/lignee/commit/b3f5ffc1fb3d4f52c205ae753d3a36d9a9fde12b))
+* masquer ou afficher le panneau de la fiche ([3aa1025](https://github.com/PallierJean/lignee/commit/3aa1025b6406347eb5cc3a1cd36e80b2926124ee))
+* pouvoir fermer les bandeaux d'exemple et de mode local ([4fd5b26](https://github.com/PallierJean/lignee/commit/4fd5b264522afb5b3d881972858a72f8cec48da3))
+
+### Bug Fixes
+
+* fermer la fenêtre d'import une fois le nouvel arbre ouvert ([765b2e8](https://github.com/PallierJean/lignee/commit/765b2e8e496829f6373d11dd64255863ad1e230a))
+* ouvrir un dépôt GitHub dans un nouvel arbre ([cba9db0](https://github.com/PallierJean/lignee/commit/cba9db02d1e760e53c2f9db794d8cccfd521ccfb))
+* réduire le bandeau du dépôt à une ligne ([84e4157](https://github.com/PallierJean/lignee/commit/84e415727d54a83f0be73ebfd5a33d1ce9646d69))
+
 ## [1.5.0](https://github.com/PallierJean/lignee/compare/v1.4.0...v1.5.0) (2026-10-31)
 
 ### Features
