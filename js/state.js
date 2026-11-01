@@ -24,6 +24,7 @@ export const S = {
   fan: false,            // roue d'ascendance à la place de l'arbre
   line: true,            // halo sur la lignée directe de la personne centrale
   panel: true,           // panneau fiche/registre affiché
+  closed: {},            // bandeaux fermés : ex (famille d'exemple), local (mode local)
   tab: 'fiche',          // onglet du panneau : 'fiche' | 'registre' | 'analyse'
   analyse: 'kin',        // vue de l'onglet Analyse : voir VIEWS dans ui/analyse.js
   timeFamily: false,     // frise : la famille proche plutôt que la personne seule
@@ -87,6 +88,7 @@ export function loadPrefs() {
     S.fan = v.fan === true;
     S.line = v.line !== false;
     S.panel = v.panel !== false;
+    if (v.closed && typeof v.closed === 'object') S.closed = v.closed;
   } catch (e) {
     /* stockage indisponible : on garde les valeurs par défaut */
   }
@@ -96,7 +98,7 @@ export function savePrefs() {
   try {
     if (S.focus) S.foci[S.tree] = S.focus;
     else delete S.foci[S.tree];
-    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, panel: S.panel, tree: S.tree, foci: S.foci }));
+    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci }));
   } catch (e) {
     /* stockage indisponible : préférences non mémorisées */
   }

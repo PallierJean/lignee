@@ -89,8 +89,9 @@ function renderStatus() {
 function renderBanner() {
   const banner = $('#banner');
   const examples = [...S.people.values()].filter((p) => p.example).length;
+  const closeBtn = (kind) => `<button class="icon-btn" type="button" data-act="banner-close" data-kind="${kind}" aria-label="${t('close')}" title="${t('close')}">×</button>`;
 
-  if (examples) {
+  if (examples && !S.closed.ex) {
     let actions = '';
     if (S.canWrite) {
       actions = S.confirmEx
@@ -101,10 +102,10 @@ function renderBanner() {
     }
     banner.hidden = false;
     banner.innerHTML = `<p>${t('ex.banner')}</p>`
-      + `<div class="acts">${actions}</div>`;
-  } else if (S.mode === 'local') {
+      + `<div class="acts">${actions}${closeBtn('ex')}</div>`;
+  } else if (S.mode === 'local' && !S.closed.local) {
     banner.hidden = false;
-    banner.innerHTML = `<p>${t('local.banner')}</p>`;
+    banner.innerHTML = `<p>${t('local.banner')}</p><div class="acts">${closeBtn('local')}</div>`;
   } else {
     banner.hidden = true;
   }
