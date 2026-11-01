@@ -739,6 +739,13 @@ export async function mergePeople(keep, drop) {
 
 /* ---------- Famille d'exemple ---------- */
 
+/** Ferme un bandeau d'information, durablement sur ce navigateur. */
+export function closeBanner(kind) {
+  S.closed[kind] = true;
+  savePrefs();
+  renderHeader();
+}
+
 export function confirmRemoveExamples(show) {
   S.confirmEx = show;
   renderHeader();

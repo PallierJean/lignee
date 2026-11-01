@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
+import * as A from '../js/actions.js';
+import { renderHeader } from '../js/ui/header.js';
 import { renderAll, afterData } from '../js/ui/render.js';
 import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
 import { openMedia, closeMedia, placePin, addTag, removeTag, cancelPin } from '../js/ui/media.js';
@@ -36,6 +38,18 @@ describe('rendu général', () => {
     assert.ok(html('reglist').includes('Camille'));
     assert.equal(el('tab-fiche').getAttribute('aria-selected'), 'true');
     assert.ok(el('banner').innerHTML.includes('Famille d’exemple'));
+  });
+
+  test('bandeaux fermés : exemple puis mode local, l’arbre garde ses exemples', () => {
+    S.mode = 'local';
+    A.closeBanner('ex');
+    assert.ok(el('banner').innerHTML.includes('Mode local'));
+    A.closeBanner('local');
+    assert.equal(el('banner').hidden, true);
+    assert.equal(S.people.size, 16);
+    S.closed = {};
+    renderHeader();
+    assert.ok(el('banner').innerHTML.includes('data-act="banner-close"'));
   });
 
   test('fiche : faits, proches et actions', () => {

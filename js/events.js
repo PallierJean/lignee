@@ -179,6 +179,7 @@ const CLICK_ACTIONS = {
   'delete-yes': once(() => A.doDelete(S.focus)),
 
   // Famille d'exemple
+  'banner-close': (el) => A.closeBanner(el.dataset.kind),
   'ex-ask': () => A.confirmRemoveExamples(true),
   'ex-no': () => A.confirmRemoveExamples(false),
   'ex-yes': once(() => A.removeExamples()),
