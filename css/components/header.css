@@ -113,7 +113,17 @@
 
 /* Dépôt GitHub lié : écriture possible, à ne pas confondre avec la lecture seule */
 .repo-banner {
-  display: block;
+  justify-content: flex-start;
+  gap: 4px 12px;
+  padding: 6px 12px;
+}
+
+.repo-banner p {
+  max-width: none;
+}
+
+.repo-banner .acts {
+  margin-left: auto;
 }
 
 .repo-banner.write {
@@ -123,6 +133,5 @@
 
 .repo-alert {
   color: var(--danger);
-  font-size: 1.35rem;
   font-weight: 700;
 }
