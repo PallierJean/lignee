@@ -73,7 +73,7 @@
     <div class="banner" id="banner" hidden></div>
     <div class="banner repo-banner" id="repoBanner" hidden></div>
 
-    <main class="main">
+    <main class="main" id="main">
       <!-- Arbre -->
       <section class="stage" aria-label="Arbre généalogique" data-i18n-attr="aria-label:stage.label">
         <div class="stage-bar">
@@ -106,6 +106,10 @@
             <span id="zoomVal">100 %</span>
             <button class="zbtn" type="button" data-act="zoom" data-d="1" aria-label="Agrandir" data-i18n-attr="aria-label:ctl.zoomIn">+</button>
             <button class="btn small" type="button" data-act="center" data-i18n="ctl.center">Recentrer</button>
+            <button class="btn small toggle panel-btn" type="button" id="btnPanel" data-act="panel" aria-pressed="true"
+              title="Afficher ou masquer le panneau (Ctrl+B)" aria-label="Afficher ou masquer le panneau (Ctrl+B)" data-i18n-attr="title:ctl.panelTitle; aria-label:ctl.panelTitle">
+              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor"/><rect x="9.5" y="3" width="4.5" height="10" fill="currentColor"/></svg>
+            </button>
           </div>
         </div>
         <div class="canvas" id="canvas">

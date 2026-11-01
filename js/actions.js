@@ -51,6 +51,7 @@ export function setFocus(id, fromList) {
 
 export function setTab(tab) {
   S.tab = tab;
+  if (!S.panel) togglePanel();
   renderSide();
   if (tab === 'registre' && !narrow()) {
     const search = $('#q');
@@ -110,6 +111,15 @@ export function toggleLine() {
   savePrefs();
   renderControls();
   renderTree();
+}
+
+/** Affiche ou masque le panneau fiche/registre : l'arbre prend toute la largeur. */
+export function togglePanel() {
+  S.panel = !S.panel;
+  savePrefs();
+  renderControls();
+  renderTree(); // ses marges suivent la largeur de la toile
+  requestAnimationFrame(recenter);
 }
 
 export function recenter() {
