@@ -83,12 +83,12 @@ export function renderRepoBanner() {
     el.hidden = true;
     return;
   }
-  const forget = `<button class="btn" type="button" data-act="repo-forget">${t('repo.forget')}</button>`;
+  const forget = `<button class="btn small" type="button" data-act="repo-forget">${t('repo.forget')}</button>`;
   el.hidden = false;
   if (known) {
     el.className = 'banner repo-banner read';
     el.innerHTML = `<p>${t('repo.reconnect', esc(known.name))}</p><div class="acts">`
-      + `<button class="btn primary" type="button" data-act="repo-reconnect">${t('repo.reconnectBtn')}</button>${forget}</div>`;
+      + `<button class="btn small primary" type="button" data-act="repo-reconnect">${t('repo.reconnectBtn')}</button>${forget}</div>`;
     return;
   }
   const name = esc(link.name);
@@ -99,11 +99,11 @@ export function renderRepoBanner() {
   }
   const actions = S.repoConfirm
     ? `<span>${t('repo.confirm', esc(link.path))}</span>`
-      + `<button class="btn danger" type="button" data-act="repo-save-yes">${t('repo.saveYes')}</button>`
-      + `<button class="btn" type="button" data-act="repo-save-no">${t('cancel')}</button>`
-    : `<button class="btn danger" type="button" data-act="repo-save">${t('repo.save')}</button>${forget}`;
+      + `<button class="btn small danger" type="button" data-act="repo-save-yes">${t('repo.saveYes')}</button>`
+      + `<button class="btn small" type="button" data-act="repo-save-no">${t('cancel')}</button>`
+    : `<button class="btn small danger" type="button" data-act="repo-save">${t('repo.save')}</button>${forget}`;
   el.className = 'banner repo-banner write';
-  el.innerHTML = `<p class="repo-alert">${t('repo.writeTitle')}</p><p>${t('repo.write', name)}</p>`
+  el.innerHTML = `<p class="repo-alert">${t('repo.writeTitle')}</p><p title="${t('repo.write', name)}">${t('repo.writeShort', name)}</p>`
     + (S.repoSavedAt ? `<p>${t('repo.savedAt', esc(S.repoSavedAt))}</p>` : '')
     + (S.repoError ? `<p class="err">${S.repoError}</p>` : '')
     + `<div class="acts">${actions}</div>`;
