@@ -67,6 +67,21 @@ describe('vue centrée sur une personne', () => {
     assert.ok(!ids.includes('p_ex_05'));
   });
 
+  test('aucun ascendant : ni parents, ni fratrie, ni trait vers eux', () => {
+    loadTree([
+      person('pere', { given: 'Père' }),
+      person('moi', { given: 'Moi', fatherId: 'pere' }),
+      person('frere', { given: 'Frère', fatherId: 'pere' }),
+    ]);
+    S.focus = 'moi';
+    assert.ok(cards(buildLayout()).some((n) => n.id === 'frere'));
+    S.up = 0;
+    const layout = buildLayout();
+    assert.deepEqual(cards(layout).map((n) => n.id), ['moi']);
+    assert.ok(!layout.nodes.some((n) => n.rel === 'sibling' || n.rel === 'father' || n.rel === 'mother'));
+    assert.equal(layout.edges.filter((e) => !e.dash).length, 0);
+  });
+
   test('emplacements vides seulement en écriture', () => {
     loadTree([person('solo', { given: 'Seul' })]);
     S.focus = 'solo';
