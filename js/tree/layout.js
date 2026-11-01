@@ -130,7 +130,8 @@ export function buildLayout() {
   // Frères et sœurs (hors conjoints déjà affichés), puis l'emplacement « Ajouter un frère ou une sœur »,
   // à gauche de la personne centrale et de ses conjoints, reliés aux parents affichés
   const shown = new Set(partnersOf(focus).map((x) => x.id));
-  const sibs = siblingsOf(focus).filter((s) => !shown.has(s.id) && !seen.has(s.id));
+  // Sans ascendants, pas de fratrie : elle se relie aux parents, alors absents
+  const sibs = S.up ? siblingsOf(focus).filter((s) => !shown.has(s.id) && !seen.has(s.id)) : [];
   const sibPh = S.canWrite && [anc.f, anc.m].some((x) => x && !x.ph);
   const sibSlots = sibs.length + (sibPh ? 1 : 0);
   const Y0 = PAD + maxGen * rowH;                      // ligne de la personne centrale
