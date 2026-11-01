@@ -139,12 +139,18 @@ describe('fenêtre d’import', () => {
     await connectRepo(button);
     assert.equal(button.disabled, false);
     assert.equal(el('repoToken').value, '');
-    assert.ok(html('importInfo').includes('Import terminé'));
-    assert.ok(html('importInfo').includes('1 photo chargée'));
+    assert.equal(el('transfer').hidden, true);
     assert.equal(S.pending, null);
     assert.ok(photoOf(S.people.get('a')).startsWith('data:image/jpeg'));
     openTransfer();
     assert.equal(el('repoToken').value, '');
+  });
+
+  test('photo introuvable : signalée alors que la fenêtre se ferme', async () => {
+    serve({ 'principal.json': backup() });
+    await connectRepo(el('repoConnect'));
+    assert.equal(el('transfer').hidden, true);
+    assert.match(el('toast').textContent, /1 introuvable/);
   });
 
   test('plusieurs sauvegardes : on choisit', async () => {

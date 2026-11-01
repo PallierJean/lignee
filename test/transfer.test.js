@@ -117,6 +117,7 @@ describe('imports', () => {
     await importGo(true);
     assert.equal(S.people.size, 1);
     assert.equal(S.trees.get(S.tree).name, 'dupont');
+    assert.equal(el('transfer').hidden, true);
   });
 
   test('fichier illisible ou vide', async () => {
