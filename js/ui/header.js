@@ -4,23 +4,27 @@ import { S, isLoading, treeName } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { yearOf } from '../utils/dates.js';
 import { surname } from '../model/people.js';
+import { generationSpan } from '../tree/full-layout.js';
 import { t } from '../i18n.js';
 import { canUndo, canRedo } from '../services/history.js';
 
-const UP_MAX = 7; // générations d'ascendants au plus
+const UP_MIN = 2; // au moins : les emplacements « ajouter un parent » vont jusque-là
 const UP_SHOWN = 4; // valeurs visibles à la fois
 
 /** Boutons du nombre de générations et niveau de zoom. */
 export function renderControls() {
   const off = S.full || S.fan ? ' disabled' : '';
   // Fenêtre glissante : part de 0 et se décale quand le choix atteint son bord ; « … » avance ou recule d'un cran
-  const first = Math.min(Math.max(S.up - UP_SHOWN + 2, 0), UP_MAX - UP_SHOWN + 1);
-  const last = first + UP_SHOWN - 1;
+  const max = Math.max(generationSpan(), UP_MIN);
+  const up = Math.min(S.up, max); // S.up reste tel quel : il resservira dans un arbre plus profond
+  const count = Math.min(UP_SHOWN, max + 1);
+  const first = Math.min(Math.max(up - count + 2, 0), max - count + 1);
+  const last = first + count - 1;
   const upButton = (n, label, cls = '') =>
-    `<button type="button"${cls} data-act="up" data-n="${n}" aria-pressed="${!off && S.up === n}" aria-label="${t('gen.up', n)}"${off}>${label}</button>`;
-  const shown = Array.from({ length: UP_SHOWN }, (_, i) => upButton(first + i, first + i));
-  if (first > 0) shown.unshift(upButton(S.up - 1, '…', ' class="seg-more"'));
-  if (last < UP_MAX) shown.push(upButton(S.up + 1, '…', ' class="seg-more"'));
+    `<button type="button"${cls} data-act="up" data-n="${n}" aria-pressed="${!off && up === n}" aria-label="${t('gen.up', n)}"${off}>${label}</button>`;
+  const shown = Array.from({ length: count }, (_, i) => upButton(first + i, first + i));
+  if (first > 0) shown.unshift(upButton(up - 1, '…', ' class="seg-more"'));
+  if (last < max) shown.push(upButton(up + 1, '…', ' class="seg-more"'));
   $('#segUp').innerHTML = shown.join('');
   $('#segDown').innerHTML = [0, 1, 2, 3].map((n) =>
     `<button type="button" data-act="down" data-n="${n}" aria-pressed="${!off && S.down === n}" aria-label="${t('gen.down', n)}"${off}>${n}</button>`,
