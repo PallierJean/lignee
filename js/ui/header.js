@@ -8,7 +8,7 @@ import { t } from '../i18n.js';
 import { canUndo, canRedo } from '../services/history.js';
 
 const UP_MAX = 7; // générations d'ascendants au plus
-const UP_SHOWN = 5; // valeurs visibles à la fois
+const UP_SHOWN = 4; // valeurs visibles à la fois
 
 /** Boutons du nombre de générations et niveau de zoom. */
 export function renderControls() {
