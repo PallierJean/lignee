@@ -6,6 +6,7 @@ import { S } from '../state.js';
 import { longDate } from '../utils/dates.js';
 import { t } from '../i18n.js';
 import { P, longName, fullName, isDead, partnersOf, childrenOf, unionTypeLabel, unionEndText, photoOf, coupleName } from './people.js';
+import { occupationLabel } from './occupations.js';
 
 const clean = (x) => String(x || '').trim();
 const fact = (date, place) => [longDate(date), clean(place)].filter(Boolean).join(', ');
@@ -28,7 +29,7 @@ export function extract(id, unions = true) {
   add(t('birth'), fact(p.birthDate, p.birthPlace));
   add(t('father'), P(p.fatherId) ? fullName(P(p.fatherId)) : '');
   add(t('mother'), P(p.motherId) ? longName(P(p.motherId)) : '');
-  add(t('f.occupation'), clean(p.occupation));
+  add(t('f.occupation'), occupationLabel(p));
   if (unions) partnersOf(id).forEach((x) => add(t('union'), unionLine(id, x)));
   if (isDead(p)) add(t('death'), fact(p.deathDate, p.deathPlace) || t('fiche.unknownDate'));
   return { id, name: longName(p), photo: photoOf(p), rows };

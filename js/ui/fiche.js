@@ -7,6 +7,7 @@ import {
   P, given, surname, maiden, fullName, photoOf, photoSrc, avatarOf, lifeYears, ageInfo,
   partnersOf, childrenOf, siblingsOf, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, unionTypeLabel, unionCauseText, unionEndText,
 } from '../model/people.js';
+import { occupationLabel } from '../model/occupations.js';
 
 /** Vignettes de la galerie ; un clic ouvre la visionneuse. */
 export function mediaGrid(items) {
@@ -100,7 +101,7 @@ export function ficheHTML(id) {
         <p class="eyebrow"><i class="sx ${esc(p.sex || 'U')}"></i>${sexWord}${p.example ? ` <span class="tag">${t('example')}</span>` : ''}</p>
         <h2 class="name">${esc(given(p))} <span class="sur">${esc(surname(p) || maiden(p))}</span></h2>
         ${maiden(p) && surname(p) ? `<p class="maiden">${t('nee')} <span class="sur">${esc(maiden(p))}</span></p>` : ''}
-        ${p.occupation ? `<p class="occ">${esc(p.occupation)}</p>` : ''}
+        ${p.occupation ? `<p class="occ">${esc(occupationLabel(p))}</p>` : ''}
       </div>
     </div>
     <dl class="facts">
