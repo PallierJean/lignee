@@ -54,7 +54,7 @@ const OCCUPATIONS = [
   ['Instituteur', 'Institutrice', 'Primary school teacher'],
   ['Jardinier', 'Jardinière', 'Gardener'],
   ['Journalier', 'Journalière', 'Day labourer'],
-  ['Juriste contrats', 'Juriste contrats', 'Contracts lawyer'],
+  ['Avocat en droit des contrats', 'Avocate en droit des contrats', 'Contracts lawyer'],
   ['Laboureur', 'Laboureuse', 'Ploughman'],
   ['Maçon', 'Maçonne', 'Mason'],
   ['Maréchal-ferrant', 'Maréchale-ferrante', 'Farrier'],
