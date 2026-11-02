@@ -236,6 +236,8 @@ export function buildGedcom() {
       out.push('1 MARR');
       // TYPE pour les autres logiciels ; _UTYPE, propre à Lignée, garde le code exact
       if (typeLabel) out.push('2 TYPE ' + gv(typeLabel), '2 _UTYPE ' + unionType(f.u));
+      if (f.u.cause) out.push('2 _UCAUSE ' + f.u.cause);
+      if (xref.has(f.u.formerId)) out.push('2 _UFORMER ' + xref.get(f.u.formerId));
       if (f.u.date) out.push('2 DATE ' + gv(toGedDate(f.u.date)));
       if (f.u.place) out.push('2 PLAC ' + gv(f.u.place));
       out.push(...marrCites);
@@ -462,6 +464,8 @@ export function parseGedcom(text) {
           b: wife,
           type: unionTypeOf(marr),
           ...unionEndOf(f),
+          ...(marr && first(marr, '_UCAUSE') ? { cause: val(first(marr, '_UCAUSE')) } : {}),
+          ...(marr && idMap.has(val(first(marr, '_UFORMER'))) ? { formerId: idMap.get(val(first(marr, '_UFORMER'))) } : {}),
           date: marr ? fromGedDate(val(first(marr, 'DATE'))) : '',
           place: marr ? val(first(marr, 'PLAC')) : '',
           createdAt: now,

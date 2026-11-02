@@ -15,8 +15,9 @@
  *   ou vide pour la fiche en général.
  *   media (facultatif) : galerie [{ id, photo, title, date, note, tags: [{ id, x, y }] }] ;
  *   tags : personnes identifiées sur l'image (x, y en pourcentage).
- * Une union : { a, b, type?, date, place, end?, endDate?, createdAt, example? } ; type : code de
- * UNION_TYPES ; end : fin de l'union, code de UNION_ENDS (absent tant qu'elle dure).
+ * Une union : { a, b, type?, date, place, end?, endDate?, cause?, formerId?, createdAt, example? } ;
+ * type : code de UNION_TYPES ; end : fin de l'union, code de UNION_ENDS (absent tant qu'elle dure) ;
+ * cause : pour un remariage, code de REMARRIAGE_CAUSES ; formerId : le conjoint décédé d'un veuvage.
  */
 import { S, idx } from '../state.js';
 import { yearOf, shortDate, longDate, fullDate, dateBounds } from '../utils/dates.js';
@@ -74,6 +75,21 @@ export function situationLabel(code, sex) {
   return m + ' / ' + f;
 }
 
+/** « Non précisée », accordé au sexe ; « Non précisé(e) » s'il n'est pas précisé. */
+export function situationNoneLabel(sex) {
+  return t('situ.none')[sex === 'M' ? 0 : sex === 'F' ? 1 : 2];
+}
+
+/** Situation que donne une union (Veuf, Divorcé, Remarié, Pacsé…) ; vide si son type ne dit rien. */
+export function situationOfUnion(type, end) {
+  const ended = { death: 'widowed', divorce: 'divorced', separation: 'separated' }[end];
+  if (ended) return ended;
+  if (type === 'religious') return 'married';
+  return ['married', 'remarried', 'pacs', 'cohabiting'].includes(type) ? type : '';
+}
+
+const diedBefore = (a, b) => isDead(a) && yearOf(a.deathDate) && yearOf(b.deathDate) && yearOf(a.deathDate) < yearOf(b.deathDate);
+
 /**
  * Situation du moment, d'après la dernière union : Veuve, Divorcé, Séparée, Mariée, Remarié…
  * Sans union renseignée, c'est la situation saisie sur la fiche.
@@ -85,11 +101,13 @@ export function currentSituation(id) {
   if (!p || !last) return (p && p.situation) || '';
   const u = S.unions.get(last.uid);
   const partner = P(last.id);
-  const end = u.end || (partner && isDead(partner) && !isDead(p) ? 'death' : '');
-  if (end) return { death: 'widowed', divorce: 'divorced', separation: 'separated' }[end] || p.situation || '';
+  let end = u.end || (partner && isDead(partner) && !isDead(p) ? 'death' : '');
+  // Union close par le décès de la personne elle-même : elle n'est pas veuve
+  if (end === 'death' && isDead(p) && !(partner && diedBefore(partner, p))) end = '';
+  if (end) return situationOfUnion('', end) || p.situation || '';
   const type = unionType(u);
-  if (type === 'married' || type === 'religious') {
-    const before = list.slice(0, -1).some((x) => ['married', 'religious'].includes(unionType(S.unions.get(x.uid))));
+  if (MARRIAGE_TYPES.includes(type)) {
+    const before = list.slice(0, -1).some((x) => MARRIAGE_TYPES.includes(unionType(S.unions.get(x.uid))));
     return before || p.situation === 'remarried' ? 'remarried' : 'married';
   }
   return type === 'pacs' || type === 'cohabiting' ? type : p.situation || '';
@@ -112,7 +130,12 @@ export function situationText(p, id) {
 /* ---------- Événements et sources ---------- */
 
 /** Types d'union ; libellés dans i18n.js (« ut.<type> »). */
-export const UNION_TYPES = ['married', 'religious', 'pacs', 'cohabiting', 'other'];
+export const UNION_TYPES = ['married', 'remarried', 'religious', 'pacs', 'cohabiting', 'other'];
+
+const MARRIAGE_TYPES = ['married', 'remarried', 'religious'];
+
+/** Causes d'un remariage ; libellés dans i18n.js (« urc.<code> », « urt.<code> »). */
+export const REMARRIAGE_CAUSES = ['divorce', 'widowed'];
 
 /**
  * Type d'une union : celui enregistré, sinon la situation d'un conjoint (Marié, Pacsé, En concubinage,
@@ -125,7 +148,7 @@ export function unionType(u) {
     const situation = P(id) && P(id).situation;
     if (['married', 'remarried', 'pacs', 'cohabiting'].includes(situation)) {
       const last = partnersOf(id).pop();
-      if (last && last.id === other) return situation === 'remarried' ? 'married' : situation;
+      if (last && last.id === other) return situation;
     }
   }
   return '';
@@ -138,6 +161,24 @@ export const UNION_ENDS = ['death', 'divorce', 'separation'];
 export function unionEndText(u) {
   if (!u || !UNION_ENDS.includes(u.end)) return '';
   return [t('ue.' + u.end), longDate(u.endDate)].filter(Boolean).join(', ');
+}
+
+/** « après le décès de Marc PALLIER », ou vide si ce n'est pas un remariage à la cause connue. */
+export function unionCauseText(u) {
+  if (!u || u.type !== 'remarried' || !REMARRIAGE_CAUSES.includes(u.cause)) return '';
+  const former = u.cause === 'widowed' && P(u.formerId);
+  return t('urt.' + u.cause, former ? fullName(former) : '');
+}
+
+/**
+ * Date de fin par défaut d'une union : la mort du premier des deux conjoints.
+ * null si les deux sont en vie ; vide si la date du décès n'est pas connue.
+ */
+export function unionDeathEnd(a, b) {
+  const dead = [a, b].filter((p) => p && isDead(p));
+  if (!dead.length) return null;
+  const dates = dead.map((p) => String(p.deathDate || '').trim()).filter(Boolean);
+  return dates.sort((x, y) => (yearOf(x) || 9999) - (yearOf(y) || 9999))[0] || '';
 }
 
 /** Libellé du type d'une union, ou vide s'il n'est pas connu. */
@@ -412,10 +453,15 @@ export function siblingsOf(id) {
 }
 
 export function unionBetween(a, b) {
-  for (const u of S.unions.values()) {
-    if ((u.a === a && u.b === b) || (u.a === b && u.b === a)) return true;
+  return !!unionIdBetween(a, b);
+}
+
+/** Id de l'union entre deux personnes, ou vide. */
+export function unionIdBetween(a, b) {
+  for (const [uid, u] of S.unions) {
+    if ((u.a === a && u.b === b) || (u.a === b && u.b === a)) return uid;
   }
-  return false;
+  return '';
 }
 
 function ancestorCount(id, gen, limit) {

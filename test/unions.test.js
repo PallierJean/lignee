@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
 import { S } from '../js/state.js';
 import { familyBook } from '../js/model/family-book.js';
-import { currentSituation, situationText, unionEndText } from '../js/model/people.js';
+import { currentSituation, situationNoneLabel, situationText, unionEndText } from '../js/model/people.js';
 import { buildGedcom, parseGedcom } from '../js/services/gedcom.js';
 import { findIssues } from '../js/model/checks.js';
 import { buildLayout } from '../js/tree/layout.js';
@@ -45,6 +45,23 @@ describe('parcours d’unions', () => {
     assert.equal(currentSituation('c'), 'married');
     loadTree([person('a'), person('b', { deathDate: '1990' })], [{ id: 'u', a: 'a', b: 'b', type: 'married', date: '1950', place: '' }]);
     assert.equal(currentSituation('a'), 'widowed');
+  });
+
+  test('non précisé, accordé au sexe', () => {
+    assert.equal(situationNoneLabel('M'), 'Non précisé');
+    assert.equal(situationNoneLabel('F'), 'Non précisée');
+    assert.equal(situationNoneLabel('U'), 'Non précisé(e)');
+  });
+
+  test('GEDCOM : remariage, cause et conjoint décédé', () => {
+    loadTree([person('a', { given: 'A' }), person('b', { given: 'B', deceased: true }), person('c', { given: 'C' })], [
+      { id: 'u', a: 'a', b: 'c', type: 'remarried', cause: 'widowed', formerId: 'b', date: '1960', place: '' },
+    ]);
+    const { people, unions } = parseGedcom(buildGedcom());
+    const [u] = unions.map((x) => x.data);
+    assert.equal(u.type, 'remarried');
+    assert.equal(u.cause, 'widowed');
+    assert.equal(people.find((p) => p.id === u.formerId).data.given, 'B');
   });
 
   test('sans union : la situation saisie', () => {
