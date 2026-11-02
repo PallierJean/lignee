@@ -60,6 +60,7 @@ lignee/
 │   ├── model/
 │   │   ├── people.js           Noms, âges, parents, conjoints, enfants, événements, sources, galerie
 │   │   ├── kinship.js          Lien de parenté entre deux personnes
+│   │   ├── occupations.js      Traduction des professions à l'affichage
 │   │   ├── checks.js           Vérification de cohérence
 │   │   ├── duplicates.js       Doublons probables, fiche fusionnée
 │   │   ├── stats.js            Statistiques de l'arbre
@@ -120,7 +121,9 @@ Le bouton FR / EN de l'en-tête passe toute l'interface en français ou en angla
 le choix est mémorisé dans le navigateur. Les textes sont dans `js/i18n.js` : `t('clé')`
 dans le code, attributs `data-i18n`, `data-i18n-html` et `data-i18n-attr` dans `index.html`.
 Les dates se saisissent dans les deux langues (« vers 1850 » ou « about 1850 ») et
-s'affichent dans la langue choisie. Les données saisies (noms, lieux, notes) ne sont pas traduites.
+s'affichent dans la langue choisie. Les données saisies (noms, lieux, notes) ne sont pas traduites,
+sauf les professions connues du dictionnaire de `js/model/occupations.js`, traduites à l'affichage :
+la valeur enregistrée, le formulaire et les exports gardent le texte saisi.
 
 ## Lancer l'application
 
