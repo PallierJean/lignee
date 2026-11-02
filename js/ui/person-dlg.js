@@ -7,6 +7,7 @@ import {
   P, given, surname, maiden, fullName, photoOf, avatarOf, lifeYears, ageInfo, isDead,
   partnersOf, childrenOf, siblingsOf, situationText, eventsOf, eventLabel, sourcesOf, mediaOf, unionTypeLabel, unionEndText,
 } from '../model/people.js';
+import { occupationLabel } from '../model/occupations.js';
 import { sourcesHTML, mediaGrid } from './fiche.js';
 
 let opener = null; // élément à qui rendre la main à la fermeture
@@ -98,7 +99,7 @@ function personHTML(id) {
         <h2 class="pd-name" id="pdName">${esc(given(p) || '—')} <span class="sur">${esc(surname(p) || maiden(p))}</span></h2>
         ${maiden(p) && surname(p) ? `<p class="pd-maiden">${t('nee')} <span class="sur">${esc(maiden(p))}</span></p>` : ''}
         ${head ? `<p class="pd-years">${esc(head)}</p>` : ''}
-        ${p.occupation || situation ? `<p class="pd-occ">${esc([p.occupation, situation].filter(Boolean).join(' · '))}</p>` : ''}
+        ${p.occupation || situation ? `<p class="pd-occ">${esc([occupationLabel(p), situation].filter(Boolean).join(' · '))}</p>` : ''}
       </div>
     </header>
     <div class="pd-body" id="pdBody">

@@ -5,6 +5,7 @@ import { t } from '../i18n.js';
 import {
   P, given, fullName, longName, lifeYears, byBirth, isDead, ageInfo, partnersOf, childrenOf, eventsOf, eventLabel, sourcesOf, SOURCE_KINDS, unionTypeLabel, unionEndText,
 } from './people.js';
+import { occupationLabel } from './occupations.js';
 import { generationMap } from '../tree/full-layout.js';
 
 const clean = (x) => String(x || '').trim();
@@ -35,7 +36,7 @@ export function personStory(id) {
   const parents = [father, mother].filter(Boolean).map(fullName);
   // Sans naissance ni parents, le nom seul répéterait le titre de la fiche
   if (birth || parents.length) out.push(t('nar.born', given(p) || longName(p), p.sex, birth, parents));
-  if (clean(p.occupation)) out.push(t('nar.occupation', clean(p.occupation)));
+  if (clean(p.occupation)) out.push(t('nar.occupation', occupationLabel(p)));
   for (const { id: other, uid } of partnersOf(id)) {
     const u = uid ? S.unions.get(uid) : null;
     out.push(t('nar.union', fullName(P(other)), [u && whenText(u.date), u && atPlace(u.place)].filter(Boolean).join(' '), unionTypeLabel(u)));
