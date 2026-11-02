@@ -3,9 +3,8 @@
  * Chaque élément cliquable porte un attribut data-act qui désigne l'action à lancer.
  */
 import { S } from './state.js';
-import { avatarOf, birthSurname, DATED_SITUATIONS } from './model/people.js';
+import { avatarOf, birthSurname, DATED_SITUATIONS, situationOfUnion } from './model/people.js';
 import { situationOptions } from './ui/form.js';
-import { t } from './i18n.js';
 import * as A from './actions.js';
 import {
   openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo,
@@ -40,7 +39,47 @@ function updateSituationLabels(sex) {
   const select = document.getElementById('f-situ');
   if (!select) return;
   const situation = select.value;
-  select.innerHTML = `<option value="">${t('f.situNone')}</option>` + situationOptions({ situation, sex });
+  select.innerHTML = situationOptions({ situation, sex });
+}
+
+/** Formulaire : indice de la dernière union, celle qui donne la situation (-1 s'il n'y en a pas). */
+const lastUnionRow = () => (S.edit ? S.edit.unions.findLastIndex((u) => !u.removed) : -1);
+
+/** Formulaire : la cause ne s'affiche que pour un remariage, le conjoint décédé que pour un veuvage. */
+function updateUnionCause(i) {
+  const remarried = document.getElementById('u-type-' + i).value === 'remarried';
+  document.getElementById('u-cause-row-' + i).hidden = !remarried;
+  document.getElementById('u-former-row-' + i).hidden = document.getElementById('u-cause-' + i).value !== 'widowed';
+}
+
+/** Formulaire : la situation suit la dernière union. */
+function situationFromUnion(i) {
+  if (i !== lastUnionRow()) return;
+  const select = document.getElementById('f-situ');
+  const type = document.getElementById('u-type-' + i).value;
+  let end = document.getElementById('u-end-' + i).value;
+  // Union close par le décès de la personne elle-même : elle n'est pas veuve
+  if (end === 'death' && (document.getElementById('f-ddate').value.trim() || document.getElementById('f-deceased').checked)) end = '';
+  const code = situationOfUnion(type, end);
+  if (!code || (code === 'married' && select.value === 'remarried' && type !== 'remarried' && !end)) return;
+  select.value = code;
+  document.getElementById('f-situdate-row').hidden = !DATED_SITUATIONS.has(code);
+  document.getElementById('f-situdate').value = DATED_SITUATIONS.has(code) ? document.getElementById('u-date-' + i).value : '';
+}
+
+/** Formulaire : la dernière union suit la situation. */
+function unionFromSituation(code) {
+  const i = lastUnionRow();
+  if (i < 0) return;
+  const type = document.getElementById('u-type-' + i);
+  const end = { widowed: 'death', divorced: 'divorce', separated: 'separation' }[code];
+  if (end) document.getElementById('u-end-' + i).value = end;
+  else if (code && code !== 'single') {
+    document.getElementById('u-end-' + i).value = '';
+    document.getElementById('u-enddate-' + i).value = '';
+    if (!(type.value === 'religious' && ['married', 'remarried'].includes(code))) type.value = code;
+    updateUnionCause(i);
+  }
 }
 
 /**
@@ -272,6 +311,12 @@ export function bindEvents() {
     if (el.id === 'f-father' || el.id === 'f-mother') updateNames(true);
     if (el.id === 'f-situ') {
       document.getElementById('f-situdate-row').hidden = !DATED_SITUATIONS.has(el.value);
+      unionFromSituation(el.value);
+    }
+    const row = /^u-(type|end|cause|date)-(\d+)$/.exec(el.id || '');
+    if (row) {
+      updateUnionCause(+row[2]);
+      situationFromUnion(+row[2]);
     }
     if (el.id === 'importFile') readImportFile(el);
     if (el.closest('#printDlg')) updatePrintInfo();

@@ -5,8 +5,8 @@ import { esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { longDate } from '../utils/dates.js';
 import {
-  P, fullName, lifeYears, cmpName, avatarOf, photoSrc, birthSurname, SITUATIONS, DATED_SITUATIONS, situationLabel,
-  EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, eventLabel,
+  P, fullName, lifeYears, cmpName, avatarOf, photoSrc, birthSurname, SITUATIONS, DATED_SITUATIONS, situationLabel, situationNoneLabel,
+  EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, REMARRIAGE_CAUSES, eventLabel, isDead, partnersOf,
 } from '../model/people.js';
 
 const TITLE_PREFIX = {
@@ -59,9 +59,20 @@ export function personOptions(selected, exclude = new Set()) {
 
 /** Options de la situation familiale, accordées au sexe choisi. */
 export function situationOptions(d) {
-  return SITUATIONS
+  return `<option value="">${esc(situationNoneLabel(d.sex))}</option>` + SITUATIONS
     .map(([code]) => `<option value="${code}"${d.situation === code ? ' selected' : ''}>${esc(situationLabel(code, d.sex))}</option>`)
     .join('');
+}
+
+/** Conjoint décédé d'un veuvage : les autres conjoints du couple, les morts seulement s'il y en a. */
+function formerOptions(e, u) {
+  const ids = new Set([...(e.id ? partnersOf(e.id) : []), ...partnersOf(u.other)].map((x) => x.id));
+  ids.delete(e.id);
+  ids.delete(u.other);
+  const dead = [...ids].filter((k) => isDead(P(k)));
+  const shown = new Set(dead.length ? dead : ids);
+  if (u.formerId) shown.add(u.formerId);
+  return personOptions(u.formerId, new Set([...S.people.keys()].filter((k) => !shown.has(k))));
 }
 
 /** Lignes d'événements du formulaire. */
@@ -168,7 +179,11 @@ export function formHTML() {
   const unionRows = e.unions.map((u, i) => (u.removed ? '' : `
     <div class="urow">
       <div class="uname"><b>×</b>${esc(fullName(P(u.other)))}</div>
-      <label class="fld"><span>${t('f.unionType')}</span><select id="u-type-${i}"><option value="">${t('f.situNone')}</option>${UNION_TYPES.map((c) => `<option value="${c}"${u.type === c ? ' selected' : ''}>${esc(t('ut.' + c))}</option>`).join('')}</select></label>
+      <label class="fld"><span>${t('f.unionType')}</span><select id="u-type-${i}"><option value="">${t('f.unionTypeNone')}</option>${UNION_TYPES.map((c) => `<option value="${c}"${u.type === c ? ' selected' : ''}>${esc(t('ut.' + c))}</option>`).join('')}</select></label>
+      <div class="row2" id="u-cause-row-${i}"${u.type === 'remarried' ? '' : ' hidden'}>
+        <label class="fld"><span>${t('f.unionCause')}</span><select id="u-cause-${i}"><option value="">${t('f.unionCauseNone')}</option>${REMARRIAGE_CAUSES.map((c) => `<option value="${c}"${u.cause === c ? ' selected' : ''}>${esc(t('urc.' + c))}</option>`).join('')}</select></label>
+        <label class="fld" id="u-former-row-${i}"${u.cause === 'widowed' ? '' : ' hidden'}><span>${t('f.unionFormer')}</span><select id="u-former-${i}"><option value="">${t('f.unionFormerNone')}</option>${formerOptions(e, u)}</select></label>
+      </div>
       <div class="row2">
         <label class="fld"><span>${t('f.unionDate')}</span><input id="u-date-${i}" value="${esc(u.date)}" placeholder="18/09/1923"></label>
         <label class="fld"><span>${t('f.place')}</span><input id="u-place-${i}" value="${esc(u.place)}" list="dl-places"></label>
@@ -210,7 +225,7 @@ export function formHTML() {
     <label class="check"><input type="checkbox" id="f-deceased"${d.deceased ? ' checked' : ''}> ${t('f.deceased')}</label>
     <label class="fld"><span>${t('f.occupation')}</span><input id="f-occ" value="${esc(d.occupation)}"></label>
     <div class="row2">
-      <label class="fld"><span>${t('situation')}</span><select id="f-situ"><option value="">${t('f.situNone')}</option>${situationOptions(d)}</select></label>
+      <label class="fld"><span>${t('situation')}</span><select id="f-situ">${situationOptions(d)}</select></label>
       <label class="fld" id="f-situdate-row"${DATED_SITUATIONS.has(d.situation) ? '' : ' hidden'}><span>${t('f.situDate')}</span><input id="f-situdate" value="${esc(d.situationDate)}" placeholder="${t('f.situDatePlaceholder')}"></label>
     </div>
 
@@ -286,6 +301,8 @@ export function captureDraft() {
       u.type = document.getElementById('u-type-' + i).value;
       u.end = document.getElementById('u-end-' + i).value;
       u.endDate = document.getElementById('u-enddate-' + i).value;
+      u.cause = value('u-cause-' + i);
+      u.formerId = value('u-former-' + i);
     }
   });
   e.events.forEach((x, i) => {
