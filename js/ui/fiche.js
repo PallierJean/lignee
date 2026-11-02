@@ -5,7 +5,7 @@ import { longDate } from '../utils/dates.js';
 import { t } from '../i18n.js';
 import {
   P, given, surname, maiden, fullName, photoOf, photoSrc, avatarOf, lifeYears, ageInfo,
-  partnersOf, childrenOf, siblingsOf, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, unionTypeLabel, unionEndText,
+  partnersOf, childrenOf, siblingsOf, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, unionTypeLabel, unionCauseText, unionEndText,
 } from '../model/people.js';
 
 /** Vignettes de la galerie ; un clic ouvre la visionneuse. */
@@ -50,7 +50,7 @@ function unionText(partner) {
   if (!partner.uid) return t('fiche.commonKids');
   const u = S.unions.get(partner.uid) || {};
   const d = longDate(u.date);
-  const parts = [unionTypeLabel(u), d, String(u.place || '').trim()].filter(Boolean);
+  const parts = [unionTypeLabel(u), unionCauseText(u), d, String(u.place || '').trim()].filter(Boolean);
   const end = unionEndText(u);
   return '× ' + (parts.join(', ') || t('fiche.union')) + (end ? ' · ' + t('ue.ended', end) : '');
 }

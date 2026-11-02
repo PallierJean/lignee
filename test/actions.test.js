@@ -5,7 +5,7 @@ import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { bindEvents } from '../js/events.js';
 import { afterData } from '../js/ui/render.js';
-import { currentSituation } from '../js/model/people.js';
+import { currentSituation, unionCauseText } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
 import { CW } from '../js/config.js';
 import { resetHistory, canUndo } from '../js/services/history.js';
@@ -33,7 +33,8 @@ function fill(values) {
     }[id]] ?? '';
   }
   S.edit.unions.forEach((u, i) => Object.assign(el('u-date-' + i), { value: u.date }) && Object.assign(el('u-place-' + i), { value: u.place })
-    && Object.assign(el('u-type-' + i), { value: u.type || '' }) && Object.assign(el('u-end-' + i), { value: u.end || '' }) && Object.assign(el('u-enddate-' + i), { value: u.endDate || '' }));
+    && Object.assign(el('u-type-' + i), { value: u.type || '' }) && Object.assign(el('u-end-' + i), { value: u.end || '' }) && Object.assign(el('u-enddate-' + i), { value: u.endDate || '' })
+    && Object.assign(el('u-cause-' + i), { value: u.cause || '' }) && Object.assign(el('u-former-' + i), { value: u.formerId || '' }));
   S.edit.events.forEach((x, i) => {
     for (const [k, id] of [['type', 'ev-type-'], ['date', 'ev-date-'], ['place', 'ev-place-'], ['note', 'ev-note-']]) el(id + i).value = x[k];
   });
@@ -43,6 +44,7 @@ function fill(values) {
   S.edit.media.forEach((x, i) => {
     for (const [k, id] of [['title', 'med-title-'], ['date', 'med-date-'], ['note', 'med-note-']]) el(id + i).value = x[k];
   });
+  for (const [id, value] of Object.entries(values)) if (id.startsWith('u-')) el(id).value = value;
 }
 
 describe('navigation et affichage', () => {
@@ -271,7 +273,7 @@ describe('formulaire', () => {
     A.startEdit('a');
     fill({ 'f-situ': 'remarried', 'f-situdate': '1990' });
     await A.submitEdit();
-    assert.equal(S.unions.get('u').type, 'married');
+    assert.equal(S.unions.get('u').type, 'remarried');
     assert.equal(S.unions.get('u').date, '1990');
     assert.equal(S.people.get('b').situation, 'married', 'le conjoint est marié, pas remarié');
     A.startEdit('a');
@@ -350,7 +352,77 @@ describe('formulaire', () => {
       assert.equal(S.people.get('b').situation, '');
       couple({ situation: 'cohabiting', deathDate: '2000', deceased: true }, {}, { type: 'cohabiting' });
       await setSituation('b', '');
-      assert.equal(S.people.get('b').situation, '');
+      assert.equal(S.people.get('b').situation, 'widowed', 'veuve, pas en concubinage');
+    });
+
+    test('type d’union changé dans le bloc : la situation suit, le conjoint aussi', async () => {
+      couple({ situation: 'married' }, { situation: 'married' }, { type: 'married' });
+      A.startEdit('a');
+      fill({ 'u-type-0': 'cohabiting' });
+      await A.submitEdit();
+      assert.equal(S.people.get('a').situation, 'cohabiting');
+      assert.equal(S.people.get('b').situation, 'cohabiting');
+    });
+
+    test('divorce saisi dans le bloc : les deux conjoints sont divorcés', async () => {
+      couple({ situation: 'married' }, { situation: 'married' }, { type: 'married' });
+      A.startEdit('a');
+      fill({ 'u-end-0': 'divorce', 'u-enddate-0': '1980' });
+      await A.submitEdit();
+      assert.equal(S.people.get('a').situation, 'divorced');
+      assert.equal(S.people.get('b').situation, 'divorced');
+    });
+
+    test('décès : l’union s’arrête, le conjoint survivant est veuf, le défunt reste marié', async () => {
+      couple({ situation: 'married' }, { situation: 'married' }, { type: 'married' });
+      A.startEdit('a');
+      fill({ 'f-ddate': '1999' });
+      await A.submitEdit();
+      assert.equal(S.unions.get('u').end, 'death');
+      assert.equal(S.unions.get('u').endDate, '1999');
+      assert.equal(currentSituation('a'), 'married');
+      assert.equal(S.people.get('b').situation, 'widowed');
+      assert.equal(currentSituation('b'), 'widowed');
+    });
+
+    test('une union divorcée ne passe pas en veuvage au décès', async () => {
+      couple({}, {}, { type: 'married', end: 'divorce', endDate: '1980' });
+      A.startEdit('a');
+      fill({ 'f-ddate': '1999' });
+      await A.submitEdit();
+      assert.equal(S.unions.get('u').end, 'divorce');
+      assert.equal(S.unions.get('u').endDate, '1980');
+    });
+
+    test('remariage : la cause et le conjoint décédé ferment l’union précédente', async () => {
+      loadTree([person('a', { given: 'A', sex: 'F' }), person('b', { given: 'B', sex: 'M', deceased: true }), person('c', { given: 'C', sex: 'M' })], [
+        { id: 'u1', a: 'a', b: 'b', type: 'married', date: '1950', place: '', end: 'separation' },
+        { id: 'u2', a: 'a', b: 'c', date: '1960', place: '' },
+      ]);
+      S.focus = 'a';
+      A.startEdit('a');
+      fill({ 'u-type-1': 'remarried', 'u-cause-1': 'widowed', 'u-former-1': 'b' });
+      await A.submitEdit();
+      assert.equal(S.unions.get('u2').type, 'remarried');
+      assert.equal(S.unions.get('u2').cause, 'widowed');
+      assert.equal(S.unions.get('u2').formerId, 'b');
+      assert.equal(S.unions.get('u1').end, 'separation', 'une fin renseignée est gardée');
+      assert.equal(S.people.get('a').situation, 'remarried');
+      assert.equal(S.people.get('c').situation, 'married', 'premier mariage du conjoint');
+      assert.equal(unionCauseText(S.unions.get('u2')), 'après le décès de B');
+    });
+
+    test('remariage après divorce : la fin de l’union précédente est renseignée', async () => {
+      loadTree([person('a', { given: 'A', sex: 'F' }), person('b', { given: 'B', sex: 'M' }), person('c', { given: 'C', sex: 'M' })], [
+        { id: 'u1', a: 'a', b: 'b', type: 'married', date: '1950', place: '' },
+        { id: 'u2', a: 'a', b: 'c', date: '1960', place: '' },
+      ]);
+      S.focus = 'a';
+      A.startEdit('a');
+      fill({ 'u-type-1': 'remarried', 'u-cause-1': 'divorce' });
+      await A.submitEdit();
+      assert.equal(S.unions.get('u1').end, 'divorce');
+      assert.equal(S.unions.get('u2').formerId, '');
     });
 
     test('le conjoint a une union plus récente : il ne change pas', async () => {
@@ -548,6 +620,20 @@ describe('événements de la page', () => {
     change({ id: 'f-father', value: '' });
     change({ id: 'f-situ', value: 'married' });
     assert.equal(el('f-situdate-row').hidden, false);
+    A.addDraftUnion(camille);
+    change({ id: 'f-situ', value: 'remarried' });
+    assert.equal(el('u-type-0').value, 'remarried');
+    assert.equal(el('u-cause-row-0').hidden, false);
+    el('u-cause-0').value = 'widowed';
+    change({ id: 'u-cause-0', value: 'widowed' });
+    assert.equal(el('u-former-row-0').hidden, false);
+    el('u-type-0').value = 'pacs';
+    change({ id: 'u-type-0', value: 'pacs' });
+    assert.equal(el('f-situ').value, 'pacs');
+    assert.equal(el('u-cause-row-0').hidden, true);
+    el('u-end-0').value = 'divorce';
+    change({ id: 'u-end-0', value: 'divorce' });
+    assert.equal(el('f-situ').value, 'divorced');
     change({ id: 'kinB', value: camille });
     assert.equal(S.kinB, camille);
     A.cancelEdit();
