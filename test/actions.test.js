@@ -60,23 +60,43 @@ describe('navigation et affichage', () => {
     assert.equal(el('paneRegistre').hidden, false);
     A.setGenerations('up', 7);
     assert.equal(S.up, 7);
-    const shown = (up) => {
-      A.setGenerations('up', up);
-      return [...el('segUp').innerHTML.matchAll(/data-n="(\d)"[^>]*>([^<]+)</g)].map((m) => m[2]).join(' ');
-    };
-    assert.equal(shown(0), '0 1 2 3 …');
-    assert.equal(shown(2), '0 1 2 3 …');
-    assert.equal(shown(3), '… 1 2 3 4 …');
-    assert.equal(shown(4), '… 2 3 4 5 …');
-    assert.equal(shown(5), '… 3 4 5 6 …');
-    assert.equal(shown(6), '… 4 5 6 7');
-    assert.equal(shown(7), '… 4 5 6 7');
-    assert.match(el('segUp').innerHTML, /data-n="6"[^>]*>…</); // recule d'un cran
     A.setGenerations('up', 7);
     const zoom = S.zoom;
     A.zoomBy(1);
     assert.ok(S.zoom > zoom);
     A.recenter();
+  });
+
+  test('ascendants : fenêtre de quatre valeurs, jusqu’à l’écart de générations de l’arbre', () => {
+    const shown = (up) => {
+      A.setGenerations('up', up);
+      return [...el('segUp').innerHTML.matchAll(/data-n="(\d+)"[^>]*>([^<]+)</g)].map((m) => m[2]).join(' ');
+    };
+    const chain = (n) => Array.from({ length: n }, (_, i) => person('g' + i, { fatherId: i + 1 < n ? 'g' + (i + 1) : null }));
+    loadTree(chain(9)); // huit générations d'écart
+    S.focus = 'g0';
+    assert.equal(shown(0), '0 1 2 3 …');
+    assert.equal(shown(2), '0 1 2 3 …');
+    assert.equal(shown(3), '… 1 2 3 4 …');
+    assert.equal(shown(5), '… 3 4 5 6 …');
+    assert.equal(shown(6), '… 4 5 6 7 …');
+    assert.equal(shown(7), '… 5 6 7 8');
+    assert.equal(shown(8), '… 5 6 7 8');
+    assert.match(el('segUp').innerHTML, /data-n="7"[^>]*>…</); // recule d'un cran
+
+    loadTree(chain(5)); // S.up garde 8, le choix affiché s'arrête à l'arbre
+    A.setGenerations('up', 8);
+    assert.equal(S.up, 8);
+    assert.match(el('segUp').innerHTML, /data-n="4"[^>]*aria-pressed="true"/);
+    assert.equal(shown(8), '… 1 2 3 4');
+    assert.match(el('segUp').innerHTML, /data-n="3"[^>]*>…</);
+
+    loadTree(chain(4));
+    assert.equal(shown(3), '0 1 2 3');
+    loadTree([person('seul')]); // de quoi ajouter parents et grands-parents
+    assert.equal(shown(3), '0 1 2');
+    loadTree([]);
+    assert.equal(shown(3), '0 1 2');
   });
 
   test('recentrer : la personne centrale, même au bord de l’arbre ; la roue aussi', () => {
