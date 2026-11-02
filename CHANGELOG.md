@@ -1,5 +1,16 @@
 # Historique des versions
 
+## [1.7.0](https://github.com/PallierJean/lignee/compare/v1.6.1...v1.7.0) (2026-11-02)
+
+### Features
+
+* synchroniser la situation et les unions, ajouter le remariage ([e96c2a9](https://github.com/PallierJean/lignee/commit/e96c2a99d0178121c810d8d018d137bdabd2d892))
+* traduire les professions connues au changement de langue ([5b4f61a](https://github.com/PallierJean/lignee/commit/5b4f61a9b12915ef72007c8452cc2b35b4ac7d87))
+
+### Bug Fixes
+
+* traduire Contracts lawyer par avocat en droit des contrats ([efa5f3a](https://github.com/PallierJean/lignee/commit/efa5f3ab93f10a921b637e745f83b9148b584025))
+
 ## [1.6.1](https://github.com/PallierJean/lignee/compare/v1.6.0...v1.6.1) (2026-11-01)
 
 ### Bug Fixes
