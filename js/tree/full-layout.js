@@ -114,6 +114,9 @@ export function generationMap() {
   return out;
 }
 
+/** Écart en générations entre la ligne la plus ancienne et la plus récente de l'arbre. */
+export const generationSpan = () => Math.max(0, ...generationMap().values());
+
 /** Ordre de parcours : chaque personne, ses conjoints, ses parents encore non vus, puis ses enfants. */
 function visitOrder(comp, gen) {
   const order = new Map();
