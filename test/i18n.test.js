@@ -45,11 +45,13 @@ test('les clés t(\'…\') du code existent', () => {
 });
 
 test('clés construites : situations familiales et qualificatifs de date', async () => {
-  const { SITUATIONS, EVENT_TYPES, SOURCE_KINDS, UNION_TYPES } = await import('../js/model/people.js');
+  const { SITUATIONS, EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, REMARRIAGE_CAUSES } = await import('../js/model/people.js');
   const keys = [
     ...SITUATIONS.map(([c]) => 'situ.' + c),
     ...EVENT_TYPES.map((c) => 'ev.' + c),
     ...UNION_TYPES.map((c) => 'ut.' + c),
+    ...REMARRIAGE_CAUSES.flatMap((c) => ['urc.' + c, 'urt.' + c]),
+    'situ.none',
     ...['death', 'divorce', 'separation'].map((c) => 'ue.' + c),
     'chk.unionEndBeforeStart',
     ...SOURCE_KINDS.map((c) => 'src.' + c),
