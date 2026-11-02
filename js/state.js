@@ -78,7 +78,7 @@ export const treeName = () => (S.trees.get(S.tree) || {}).name || '';
 export function loadPrefs() {
   try {
     const v = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
-    if (v.up >= 0 && v.up <= 7) S.up = v.up;
+    if (Number.isInteger(v.up) && v.up >= 0) S.up = v.up;
     if (v.down >= 0 && v.down <= 3) S.down = v.down;
     if (ZOOMS.includes(v.zoom)) S.zoom = v.zoom;
     if (typeof v.tree === 'string') S.tree = v.tree;

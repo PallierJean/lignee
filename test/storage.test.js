@@ -153,6 +153,11 @@ describe('mode navigateur', () => {
     S.up = 3;
     loadPrefs();
     assert.equal(S.up, 0);
+    S.up = 12; // au-delà de 7 pour un arbre profond
+    savePrefs();
+    S.up = 3;
+    loadPrefs();
+    assert.equal(S.up, 12);
     S.panel = true;
   });
 
