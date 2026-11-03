@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, readFile, readdir, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createServer, safeName } from '../server.js';
+import { createServer, safeName, matchidClient } from '../server.js';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 const exists = (f) => access(f).then(() => true, () => false);
@@ -179,35 +179,121 @@ describe('fichiers de l’application', () => {
 });
 
 describe('décès de l’INSEE', () => {
+  /** Serveur avec un faux client matchID ; `url(chemin)` vise ce serveur. */
+  async function withDeaths(deaths, run) {
+    const srv = createServer({ dataDir, tokenFile: path.join(dataDir, 'matchid.json'), deaths });
+    await new Promise((resolve) => srv.listen(0, '127.0.0.1', resolve));
+    const url = (rel) => `http://127.0.0.1:${srv.address().port}/${rel}`;
+    try {
+      await run(url);
+    } finally {
+      srv.close();
+    }
+  }
+  const postJSON = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
   test('seuls les champs prévus et bien formés partent ; panne relayée', async () => {
     const asked = [];
-    let fail = false;
-    const srv = createServer({
-      dataDir,
-      searchDeaths: async (params) => {
+    let fail = null;
+    await withDeaths({
+      search: async (params) => {
         asked.push(params);
-        if (fail) throw Object.assign(new Error('Service des décès indisponible'), { status: 502 });
+        if (fail) throw fail;
         return [{ first: ['Lucien'], last: 'Bertrand' }];
       },
-    });
-    await new Promise((resolve) => srv.listen(0, '127.0.0.1', resolve));
-    const url = (q) => `http://127.0.0.1:${srv.address().port}/api/insee?${q}`;
-    try {
-      const res = await fetch(url('lastName=Bertrand&firstName=Lucien&sex=M&birthDate=12%2F03%2F1920&q=secret&token=x'));
+    }, async (url) => {
+      const q = (s) => url('api/insee?' + s);
+      const res = await fetch(q('lastName=Bertrand&firstName=Lucien&sex=M&birthDate=12%2F03%2F1920&q=secret&token=x'));
       assert.equal(res.status, 200);
       assert.deepEqual(await res.json(), [{ first: ['Lucien'], last: 'Bertrand' }]);
       assert.deepEqual(asked, [{ lastName: 'Bertrand', firstName: 'Lucien', sex: 'M', birthDate: '12/03/1920' }]);
-      assert.equal((await fetch(url('lastName=Roche&birthDate=1925-1935'))).status, 200);
-      assert.equal((await fetch(url('firstName=Lucien'))).status, 400, 'nom manquant');
-      assert.equal((await fetch(url('lastName=Bertrand&birthDate=hier'))).status, 400);
-      assert.equal((await fetch(url('lastName=%3Cscript%3E'))).status, 400);
-      assert.equal((await fetch(url('lastName=Bertrand&sex=X'))).status, 400);
-      assert.equal((await fetch(url('lastName=Bertrand'), { method: 'POST' })).status, 405);
+      assert.equal((await fetch(q('lastName=Roche&birthDate=1925-1935'))).status, 200);
+      assert.equal((await fetch(q('firstName=Lucien'))).status, 400, 'nom manquant');
+      assert.equal((await fetch(q('lastName=Bertrand&birthDate=hier'))).status, 400);
+      assert.equal((await fetch(q('lastName=%3Cscript%3E'))).status, 400);
+      assert.equal((await fetch(q('lastName=Bertrand&sex=X'))).status, 400);
+      assert.equal((await fetch(q('lastName=Bertrand'), { method: 'POST' })).status, 405);
       assert.equal(asked.length, 2);
-      fail = true;
-      assert.equal((await fetch(url('lastName=Bertrand'))).status, 502);
+      fail = Object.assign(new Error('Service des décès indisponible'), { status: 502 });
+      assert.equal((await fetch(q('lastName=Bertrand'))).status, 502);
+      fail = Object.assign(new Error('Connexion'), { status: 401, body: { error: 'login' } });
+      const login = await fetch(q('lastName=Bertrand'));
+      assert.equal(login.status, 401);
+      assert.deepEqual(await login.json(), { error: 'login' });
+    });
+  });
+
+  test('connexion : adresse et code vérifiés, jeton jamais servi', async () => {
+    const calls = [];
+    await withDeaths({
+      status: async () => ({ connected: false, user: '', expires: '' }),
+      register: async (email) => (calls.push(['register', email]), { sent: true }),
+      auth: async (email, code) => (calls.push(['auth', email, code]), { connected: true, user: email, expires: '' }),
+    }, async (url) => {
+      assert.deepEqual(await (await fetch(url('api/insee/status'))).json(), { connected: false, user: '', expires: '' });
+      assert.equal((await postJSON(url('api/insee/register'), { email: 'pas-une-adresse' })).status, 400);
+      assert.equal((await postJSON(url('api/insee/register'), { email: 'lucien@exemple.fr' })).status, 200);
+      assert.equal((await postJSON(url('api/insee/auth'), { email: 'lucien@exemple.fr', code: 'a b' })).status, 400);
+      assert.equal((await postJSON(url('api/insee/auth'), { email: 'lucien@exemple.fr', code: 'ab12CD' })).status, 200);
+      assert.equal((await fetch(url('api/insee/register'))).status, 405);
+      assert.deepEqual(calls, [['register', 'lucien@exemple.fr'], ['auth', 'lucien@exemple.fr', 'ab12CD']]);
+    });
+    // Le jeton est dans le dossier de l'application : le serveur refuse de le servir
+    const root = await mkdtemp(path.join(tmpdir(), 'lignee-root-'));
+    await mkdir(path.join(root, 'data'), { recursive: true });
+    await writeFile(path.join(root, 'data', 'matchid.json'), '{"access_token":"secret"}');
+    const srv = createServer({ root, dataDir, deaths: {} });
+    await new Promise((resolve) => srv.listen(0, '127.0.0.1', resolve));
+    try {
+      const res = await fetch(`http://127.0.0.1:${srv.address().port}/data/matchid.json`);
+      assert.equal(res.status, 403);
+      assert.ok(!(await res.text()).includes('secret'));
     } finally {
       srv.close();
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test('client matchID : jeton envoyé, gardé, renouvelé ; usage anonyme épuisé -> connexion', async () => {
+    const tokenFile = path.join(dataDir, 'jeton-test.json');
+    const client = matchidClient(tokenFile);
+    const realFetch = globalThis.fetch;
+    const seen = [];
+    let anonymousLeft = 1;
+    globalThis.fetch = async (url, init = {}) => {
+      const auth = (init.headers || {}).Authorization || '';
+      seen.push([String(url).replace('https://deces.matchid.io/deces/api/v1', ''), auth]);
+      const json = (status, o) => ({ ok: status < 300, status, json: async () => o });
+      if (String(url).includes('/search')) {
+        if (!auth && anonymousLeft-- <= 0) return json(422, { message: 'No token provided and temporary anonymous usage expired, please register with email' });
+        return json(200, { response: { persons: [{ name: { first: ['Lucien'], last: 'Bertrand' }, sex: 'M', birth: { date: '19200312', location: { city: ['Tulle'], departmentCode: '19', country: 'France' } }, death: { date: '19950704', certificateId: '412', location: { city: 'Limoges', departmentCode: '87', country: 'France' } } }] } });
+      }
+      if (String(url).endsWith('/register')) return json(200, { valid: true, msg: 'ok' });
+      if (String(url).includes('/auth?refresh')) return json(200, { access_token: 'jeton-2', expiration_date: new Date(Date.now() + 30 * 86400000).toISOString() });
+      if (String(url).endsWith('/auth')) {
+        const { password } = JSON.parse(init.body);
+        return password === 'BON' ? json(200, { access_token: 'jeton-1', expiration_date: new Date(Date.now() + 3600000).toISOString() }) : json(401, { msg: 'Mauvais code' });
+      }
+      return json(404, {});
+    };
+    try {
+      const [act] = await client.search({ lastName: 'Bertrand' });
+      assert.deepEqual(act, {
+        first: ['Lucien'], last: 'Bertrand', sex: 'M', birthDate: '19200312', birth: { city: 'Tulle', dept: '19', country: 'France' },
+        deathDate: '19950704', death: { city: 'Limoges', dept: '87', country: 'France' }, certificate: '412',
+      });
+      await assert.rejects(client.search({ lastName: 'Bertrand' }), (e) => e.status === 401 && e.body.error === 'login');
+      assert.deepEqual(await client.register('lucien@exemple.fr'), { sent: true });
+      await assert.rejects(client.auth('lucien@exemple.fr', 'FAUX'), /Mauvais code/);
+      assert.equal((await client.auth('lucien@exemple.fr', 'BON')).connected, true);
+      assert.equal((await client.status()).user, 'lucien@exemple.fr');
+      // Le jeton expire dans moins d'un jour : renouvelé avant la recherche, puis envoyé
+      await client.search({ lastName: 'Bertrand' });
+      assert.deepEqual(seen.slice(-2), [['/auth?refresh=true', 'Bearer jeton-1'], ['/search?lastName=Bertrand', 'Bearer jeton-2']]);
+      assert.equal(JSON.parse(await readFile(tokenFile, 'utf8')).access_token, 'jeton-2');
+    } finally {
+      globalThis.fetch = realFetch;
+      await rm(tokenFile, { force: true });
     }
   });
 });

@@ -66,13 +66,38 @@ export function forgetInsee() {
   writeAll(store);
 }
 
-/** Vérifie les fiches `ids` une à une ; une panne réseau arrête la vérification. */
+/** Erreur d'une réponse du serveur ; `login` : matchID demande une connexion. */
+async function failure(res) {
+  const text = await res.text().catch(() => '');
+  return Object.assign(new Error(text.startsWith('{') ? '' : text), { login: res.status === 401 });
+}
+
+/** Connexion à matchID : { connected, user, expires }. */
+export async function inseeStatus() {
+  const res = await fetch('api/insee/status', { cache: 'no-store' });
+  if (!res.ok) throw await failure(res);
+  return res.json();
+}
+
+async function post(route, body) {
+  const res = await fetch('api/insee/' + route, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) throw await failure(res);
+  return res.json();
+}
+
+/** matchID envoie un code à cette adresse. */
+export const inseeRegister = (email) => post('register', { email });
+
+/** Code reçu par e-mail : le serveur garde le jeton. */
+export const inseeAuth = (email, code) => post('auth', { email, code });
+
+/** Vérifie les fiches `ids` une à une ; une panne, ou une connexion demandée, arrête la vérification. */
 export async function checkInsee(ids, onProgress) {
   for (const [i, id] of ids.entries()) {
     const q = inseeQuery(id);
     if (q) {
       const res = await fetch('api/insee?' + new URLSearchParams(q));
-      if (!res.ok) throw new Error(String(res.status));
+      if (!res.ok) throw await failure(res);
       keep(id, { sig: inseeSignature(q), acts: (await res.json()).slice(0, KEPT) });
     }
     onProgress(i + 1, ids.length);
