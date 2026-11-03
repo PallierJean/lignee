@@ -808,16 +808,27 @@ export async function mergePeople(keep, drop) {
   }
 }
 
-/** Renomme un lieu partout où il est cité (naissances, décès, événements, unions) ; s'annule en une fois. */
+/**
+ * Renomme un lieu partout où il est cité (naissances, décès, événements, unions) ; s'annule en une fois.
+ * Une fiche en cours de saisie suit aussi : l'enregistrer ne remet pas l'ancien lieu.
+ */
 export async function renamePlace(from, to) {
   to = String(to || '').trim();
-  if (!S.canWrite || S.busy || !to || to === from) return;
-  if (S.edit) {
-    toast(t('finishFirst'));
+  if (!S.canWrite || S.busy) return;
+  if (!to || to === from) {
+    toast(t('pl.unchanged'));
     return;
   }
   const patches = renamePatches(from, to);
   if (!patches.length) return;
+  if (S.edit) {
+    captureDraft(); // le formulaire reste dans la page, masqué : sa saisie d'abord, puis le nouveau lieu
+    const same = (x) => String(x || '').trim() === from;
+    const d = S.edit.draft;
+    if (same(d.birthPlace)) d.birthPlace = to;
+    if (same(d.deathPlace)) d.deathPlace = to;
+    for (const x of [...S.edit.unions, ...S.edit.events]) if (same(x.place)) x.place = to;
+  }
   S.busy = true;
   beginAction('hist.place');
   try {
@@ -826,6 +837,7 @@ export async function renamePlace(from, to) {
     commitAction();
     S.busy = false;
     afterData();
+    if (S.edit) renderFiche(true); // le formulaire masqué reprend son brouillon, avec le nouveau lieu
   }
   toast(t('pl.renamed', patches.length));
 }
