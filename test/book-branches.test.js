@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
 import { S } from '../js/state.js';
-import { bookChapters, branchOf, branchTimeline } from '../js/model/book-branches.js';
+import { bookChapters, branchOf, branchTimeline, directLine } from '../js/model/book-branches.js';
 import { fullBookHTML } from '../js/ui/booklet.js';
 import { loadTree, person } from './helpers.js';
 
@@ -23,6 +23,17 @@ function family() {
 }
 
 describe('livre de famille complet', () => {
+  test('lignée directe avec numéros Sosa, implexe au plus petit numéro', () => {
+    loadTree([
+      person('gp'),
+      person('f', { fatherId: 'gp' }),
+      person('m', { fatherId: 'gp' }),
+      person('a', { fatherId: 'f', motherId: 'm' }),
+      person('x'),
+    ]);
+    assert.deepEqual(directLine('a'), [{ id: 'a', sosa: 1 }, { id: 'f', sosa: 2 }, { id: 'm', sosa: 3 }, { id: 'gp', sosa: 4 }]);
+  });
+
   test('branche d’un numéro Sosa : le grand-parent dont il descend', () => {
     assert.deepEqual([1, 2, 3, 4, 7, 8, 9, 10, 15, 16, 31, 32, 63].map(branchOf), [1, 2, 3, 4, 7, 4, 4, 5, 7, 4, 7, 4, 7]);
   });
