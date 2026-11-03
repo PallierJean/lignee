@@ -294,6 +294,10 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
 - « Livret de famille », sur chaque fiche, imprime le livret de la personne, sur le modèle de celui
   remis en mairie : la personne, chaque union avec ses enfants directs, chacun en extrait
   (naissance, parents, profession, unions, décès ; sans les unions pour les enfants). Document de famille, sans valeur officielle.
+- « Disposition », dans la fenêtre Imprimer (arbre complet) : « Standard » reprend « Tout l'arbre » ;
+  « Compacte » rétrécit les fiches, resserre les écarts et empile en colonne, sous leurs parents, les
+  frères et sœurs sans conjoint ni enfant. L'arbre devient bien moins large que haut : le texte est
+  environ 1,5 fois plus grand sur la même feuille. Les prénoms longs y sont plus souvent coupés.
 - « Découpage », dans la fenêtre Imprimer, répartit l'arbre ou la roue sur plusieurs feuilles
   A4, A3, A2, A1 ou A0. En « Automatique » (par défaut), le nombre de feuilles dépend du dessin et du
   format : juste assez pour des prénoms de 2,5 mm au moins (2 mm pour le plus petit texte de

@@ -123,6 +123,35 @@ describe('arbre complet', () => {
   test('null pour un arbre vide', () => {
     loadTree([]);
     assert.equal(buildFullLayout(), null);
+    assert.equal(buildFullLayout({ compact: true }), null);
+  });
+
+  test('compact : frères et sœurs sans descendance en colonne, les autres comme d’habitude', () => {
+    loadTree([
+      person('f', { sex: 'M' }), person('m', { sex: 'F' }),
+      person('k1', { fatherId: 'f', motherId: 'm' }), person('k2', { fatherId: 'f', motherId: 'm' }),
+      person('k3', { fatherId: 'f', motherId: 'm' }),
+      person('k4', { fatherId: 'f', motherId: 'm', sex: 'M' }), person('w', { sex: 'F' }),
+      person('g', { fatherId: 'k4', motherId: 'w' }),
+    ], [{ a: 'f', b: 'm' }, { a: 'k4', b: 'w' }]);
+    S.focus = 'g';
+    const standard = buildFullLayout();
+    const layout = buildFullLayout({ compact: true });
+    assert.deepEqual([layout.cw, layout.gens, standard.cw, standard.gens], [128, 3, CW, 3]);
+    const at = new Map(cards(layout).map((n) => [n.id, n]));
+    // k1, k2, k3 : une colonne, une fiche sous l'autre
+    assert.equal(new Set(['k1', 'k2', 'k3'].map((id) => at.get(id).x)).size, 1);
+    const ys = ['k1', 'k2', 'k3'].map((id) => at.get(id).y).sort((a, b) => a - b);
+    assert.ok(ys[1] - ys[0] >= CH && ys[2] - ys[1] >= CH);
+    // k4 a un conjoint et un enfant : pas dans la pile, sur la ligne de la pile
+    assert.equal(at.get('k4').y, ys[0]);
+    assert.notEqual(at.get('k4').x, at.get('k1').x);
+    // La génération suivante passe sous la pile
+    assert.ok(at.get('g').y >= ys[2] + CH);
+    assert.ok(layout.W < standard.W);
+    // Chaque fiche empilée est reliée par un trait sur sa gauche
+    const tick = (n) => layout.edges.some((e) => e.d.includes(`,${n.y + CH / 2}H${n.x}`));
+    assert.ok(['k1', 'k2', 'k3'].every((id) => tick(at.get(id))));
   });
 });
 
