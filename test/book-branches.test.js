@@ -60,6 +60,20 @@ describe('livre de famille complet', () => {
     assert.deepEqual(rows.map((r) => r.year), rows.map((r) => r.year).toSorted((a, b) => a - b));
   });
 
+  test('frise : une union entre deux membres de la branche n’apparaît qu’une fois', () => {
+    family();
+    const rows = branchTimeline(['ffa', 'ff', 'fm']).filter((r) => r.kind === 'union');
+    assert.equal(rows.length, 1);
+  });
+
+  test('chaque bloc de frise et d’album est un seul élément, pour être mesuré', async () => {
+    family();
+    const out = await fullBookHTML('Famille PALLIER');
+    for (const cls of ['bk-timeline', 'bk-album']) {
+      assert.match(out, new RegExp(`<div class="bk-block">(<h3 class="bk-sub">[^<]*</h3>)?<(table|div) class="${cls}"`));
+    }
+  });
+
   test('pages : couverture, sommaire des branches, frise et album', async () => {
     family();
     const out = await fullBookHTML('Famille PALLIER');

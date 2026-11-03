@@ -160,12 +160,13 @@ const chunks = (list, n) => Array.from({ length: Math.ceil(list.length / n) }, (
 const branchHeadHTML = (ch, n) => `<div class="bk-chapter"><span class="bk-num">${n}</span>`
   + `<div><h2>${esc(ch.title)}</h2>${ch.sub ? `<p>${esc(ch.sub)}</p>` : ''}</div></div>`;
 
-const timelineHTML = (rows, first) => (first ? `<h3 class="bk-sub">${esc(t('bb.timeline'))}</h3>` : '')
-  + '<table class="bk-timeline">' + rows.map((r) => `<tr class="${r.kind}"><th>${r.year}</th><td>${esc(r.label)}</td></tr>`).join('') + '</table>';
+// Un bloc est un seul élément : la répartition mesure chaque enfant de la boîte de mesure
+const timelineHTML = (rows, first) => '<div class="bk-block">' + (first ? `<h3 class="bk-sub">${esc(t('bb.timeline'))}</h3>` : '')
+  + '<table class="bk-timeline">' + rows.map((r) => `<tr class="${r.kind}"><th>${r.year}</th><td>${esc(r.label)}</td></tr>`).join('') + '</table></div>';
 
-const albumHTML = (items, first) => (first ? `<h3 class="bk-sub">${esc(t('bb.album'))}</h3>` : '')
+const albumHTML = (items, first) => '<div class="bk-block">' + (first ? `<h3 class="bk-sub">${esc(t('bb.album'))}</h3>` : '')
   + '<div class="bk-album">' + items.map(({ m }) => `<figure><img src="${esc(photoSrc(m.photo))}" alt="">`
-    + `${m.title || m.date ? `<figcaption>${esc([m.title, m.date].filter(Boolean).join(' · '))}</figcaption>` : ''}</figure>`).join('') + '</div>';
+    + `${m.title || m.date ? `<figcaption>${esc([m.title, m.date].filter(Boolean).join(' · '))}</figcaption>` : ''}</figure>`).join('') + '</div></div>';
 
 /** Le livre complet : couverture, sommaire, puis un chapitre par branche, avec frise et album. */
 export async function fullBookHTML(title) {
