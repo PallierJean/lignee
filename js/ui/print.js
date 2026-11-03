@@ -180,6 +180,15 @@ function gridFor({ W, H }) {
 const gridInfo = (grid) => t('pr.tileInfo', grid.cols, grid.rows, $('#prFormat').value, grid.orient === 'landscape',
   t('decimal', (14 * grid.mm).toFixed(1)), OVERLAP);
 
+/**
+ * Règle @page de la feuille. Firefox mettrait en page sur cette taille sans réduire si son papier
+ * est différent, et couperait la droite : là, le dessin suit le papier choisi dans sa fenêtre.
+ */
+const sheetRule = (w, h) => (navigator.userAgent.includes('Firefox/') ? `@page { margin: ${MARGIN}mm; }` : pageRule(w, h, MARGIN));
+
+/** Hauteur sur la feuille prévue, sans dépasser le papier réel : le navigateur peut en imposer un autre. */
+const fitHeight = (mm) => `min(${mm}mm, calc(100vh - 1mm))`;
+
 /** Mini-carte de l'assemblage dans le pied de feuille : la feuille en cours est remplie. */
 function locator(grid, tile) {
   const cell = Math.min(3.2, (FOOT - 1.5) / grid.rows);
@@ -209,7 +218,7 @@ function tileHTML(grid, tile, drawing, title) {
       + label(tile.x + vw / 2, y + band / 2, t('pr.tileGlue', next.down), 0) : '');
   const arrows = [['←', next.left], ['↑', next.up], ['↓', next.down], ['→', next.right]]
     .filter(([, code]) => code).map(([sym, code]) => `${sym} ${code}`).join('   ');
-  return `<section class="tile" style="height:${h + FOOT - 1}mm">`
+  return `<section class="tile" style="height:${fitHeight(h + FOOT - 1)}">`
     + `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${tile.x} ${tile.y} ${vw} ${vh}" width="${w}mm" height="${h}mm">${drawing}${marks}</svg>`
     + `<div class="tile-foot" style="height:${FOOT - 1}mm"><b>${sheetCode(tile.row, tile.col)}</b>${locator(grid, tile)}`
     + `<span class="tile-next">${esc(arrows)}</span><span class="tile-title">${esc(title)}</span></div></section>`;
@@ -230,7 +239,7 @@ function planHTML(grid, drawing, { W, H }, title, legend) {
       + ` font-size="${size}" fill="${C.accent}" stroke="#fff" stroke-width="${1.2 / fit}" paint-order="stroke">${sheetCode(tile.row, tile.col)}</text>`;
   }).join('');
   const last = sheetCode(grid.rows - 1, grid.cols - 1);
-  return `<section class="tile tile-plan" style="height:${h + FOOT - 1}mm"><h1>${esc(t('pr.planTitle'))}</h1><p class="plan-sub">${esc(title)}</p>`
+  return `<section class="tile tile-plan" style="height:${fitHeight(h + FOOT - 1)}"><h1>${esc(t('pr.planTitle'))}</h1><p class="plan-sub">${esc(title)}</p>`
     + `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W * fit}mm" height="${H * fit}mm">${drawing}${cells}</svg>`
     + `<ol><li>${esc(t('pr.planStep1', last))}</li><li>${esc(t('pr.planStep2'))}</li><li>${esc(t('pr.planStep3'))}</li></ol>`
     + `<p class="plan-sub">${esc(legend)}</p></section>`;
@@ -249,6 +258,7 @@ export function updatePrintInfo() {
   fillTiles();
   $('#prPaper').hidden = content === 'book';
   $('#prTilesRow').hidden = content === 'book';
+  $('#prPaperHint').hidden = content === 'book';
   if (content === 'book') {
     info.textContent = t('pr.bookInfo', S.people.size);
     return;
@@ -313,7 +323,7 @@ export async function printTree() {
   }
   style.textContent = content === 'book'
     ? pageRule(210, 297, 0) // les marges sont dans les pages du livret
-    : grid ? pageRule(grid.pageW, grid.pageH, MARGIN) : pageRule(page.w, page.h, MARGIN);
+    : grid ? sheetRule(grid.pageW, grid.pageH) : sheetRule(page.w, page.h);
 
   const focus = P(S.focus);
   const legend = [
@@ -328,7 +338,7 @@ export async function printTree() {
   area.classList.toggle('book', content === 'book');
   area.classList.toggle('tiles', !!grid);
   if (grid) {
-    area.style.width = grid.w + 'mm';
+    area.style.width = `min(${grid.w}mm, 100%)`;
     area.style.height = '';
     const { W, H } = fan || layout;
     const drawing = `<svg x="0" y="0" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`
@@ -340,8 +350,8 @@ export async function printTree() {
     area.style.height = '';
     area.innerHTML = await bookletHTML(title);
   } else {
-    area.style.width = (page.w - 2 * MARGIN - 1) + 'mm';
-    area.style.height = (page.h - 2 * MARGIN - 1) + 'mm';
+    area.style.width = `min(${page.w - 2 * MARGIN - 1}mm, 100%)`;
+    area.style.height = fitHeight(page.h - 2 * MARGIN - 1);
     area.innerHTML = `<header style="height:${HEAD}mm"><h1>${esc(title)}</h1><p>${esc(legend)}</p></header>`
       + `<div class="print-tree">${fan ? fanSVG(FAN_COLORS, page.scale) : treeSVG(layout, page.scale)}</div>`;
   }

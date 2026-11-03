@@ -309,7 +309,8 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
   des réglages de la fenêtre d'impression. L'arbre
   et la roue sont redessinés en SVG, à l'échelle d'une feuille
   A3, A2, A1 ou A0, et l'application ouvre l'impression du navigateur : « Enregistrer au format PDF » donne
-  un PDF vectoriel au bon format (règle `@page`).
+  un PDF vectoriel au bon format (règle `@page`). Firefox suit le papier choisi dans sa propre
+  fenêtre : prenez-y le même format et la même orientation, sinon le dessin est réduit pour tenir sur la feuille.
 
 ## Annuler / rétablir
 
