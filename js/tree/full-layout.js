@@ -12,14 +12,27 @@
  *    au-dessus de leurs enfants, puis les enfants sous leurs parents, sans chevauchement.
  *
  * Renvoie { nodes, edges, marks, W, H } comme buildLayout(), sans emplacements vides.
+ *
+ * Variante compacte (impression) : fiches plus étroites, écarts réduits, et les frères et sœurs
+ * sans conjoint ni enfant empilés en colonne sous leurs parents, reliés par un trait sur leur gauche.
+ * Elle renvoie aussi cw (largeur des fiches) et gens (nombre de générations).
  */
 import { CW, CH, HG, VG, SG, PAD } from '../config.js';
 import { S } from '../state.js';
 import { P, partnersOf, childrenOf } from '../model/people.js';
 
-const BLOCK_GAP = HG * 2;    // écart entre deux frères et sœurs
-const FAMILY_GAP = CW / 2;   // écart entre deux fratries différentes
-const GROUP_GAP = CW;        // écart entre deux familles sans lien
+const STANDARD = {
+  cw: CW,                    // largeur d'une fiche
+  sg: SG,                    // écart entre deux conjoints
+  blockGap: HG * 2,          // écart entre deux frères et sœurs
+  familyGap: CW / 2,         // écart entre deux fratries différentes
+  groupGap: CW,              // écart entre deux familles sans lien
+  stack: false,              // empiler les frères et sœurs sans descendance
+};
+const COMPACT = { cw: 128, sg: 18, blockGap: 14, familyGap: 30, groupGap: 60, stack: true };
+const STACK_GAP = 8;         // écart vertical entre deux fiches empilées
+const SPINE = 9;             // trait d'une pile : à gauche des fiches
+let K = STANDARD;            // mesures de la mise en page en cours
 const PASSES = 6;            // passes de centrage
 const LANE = 16;             // écart entre deux barres horizontales superposées
 const BUS_MARGIN = 22;       // espace entre une fiche et la barre la plus proche
@@ -165,7 +178,7 @@ function blockOrder(members) {
 function gapsOf(blocks) {
   return blocks.map((b, i) => {
     const c = blocks[i + 1];
-    return c && b.fam && b.fam === c.fam ? BLOCK_GAP : FAMILY_GAP;
+    return c && b.fam && b.fam === c.fam ? K.blockGap : K.familyGap;
   });
 }
 
@@ -231,10 +244,11 @@ function layoutComponent(comp) {
     // Fratrie du bloc : celle du premier membre dont les parents sont connus
     const withParents = ids.find((x) => parentsOf(x).length);
     const fam = withParents ? parentsOf(withParents).slice().sort().join('|') : '';
-    const block = { ids, g, fam, w: ids.length * CW + (ids.length - 1) * SG, left: 0, rank: Math.min(...ids.map((x) => order.get(x))) };
-    ids.forEach((x, i) => blockOf.set(x, { block, i }));
+    const block = { ids, g, fam, w: ids.length * K.cw + (ids.length - 1) * K.sg, left: 0, rank: Math.min(...ids.map((x) => order.get(x))) };
+    ids.forEach((x, i) => blockOf.set(x, { block, i, k: 0 }));
     (rows[g] = rows[g] || []).push(block);
   }
+  if (K.stack) for (const row of rows) if (row) stackLeaves(row, blockOf);
   const ordered = rows.filter(Boolean);
   for (const row of ordered) {
     row.sort((a, b) => a.rank - b.rank);
@@ -243,9 +257,9 @@ function layoutComponent(comp) {
 
   const center = (id) => {
     const o = blockOf.get(id);
-    return o.block.left + o.i * (CW + SG) + CW / 2;
+    return o.block.left + o.i * (K.cw + K.sg) + K.cw / 2;
   };
-  const offsetIn = (id) => blockOf.get(id).i * (CW + SG) + CW / 2;
+  const offsetIn = (id) => blockOf.get(id).i * (K.cw + K.sg) + K.cw / 2;
   const mean = (xs) => xs.reduce((s, x) => s + x, 0) / xs.length;
 
   // Familles : parents (1 ou 2) et leurs enfants
@@ -324,6 +338,25 @@ function layoutComponent(comp) {
   return { rows: ordered, blockOf, families, anchorOf, center, gen, minLeft, width: maxRight - minLeft, height: rows.length };
 }
 
+/** Pile d'une ligne : les frères et sœurs sans conjoint ni enfant d'une même fratrie, en une colonne. */
+function stackLeaves(row, blockOf) {
+  const leaves = new Map();
+  for (const b of row) {
+    const id = b.ids[0];
+    if (b.ids.length !== 1 || !b.fam || childrenOf(id).length || partnersOf(id).length) continue;
+    if (!leaves.has(b.fam)) leaves.set(b.fam, []);
+    leaves.get(b.fam).push(b);
+  }
+  for (const group of leaves.values()) {
+    if (group.length < 2) continue;
+    const ids = group.sort((a, b) => a.rank - b.rank).map((b) => b.ids[0]);
+    const stack = { ids, g: group[0].g, fam: group[0].fam, w: K.cw, left: 0, rank: group[0].rank, stack: true };
+    ids.forEach((x, k) => blockOf.set(x, { block: stack, i: 0, k }));
+    row.splice(row.indexOf(group[0]), 1, stack);
+    for (const b of group.slice(1)) row.splice(row.indexOf(b), 1);
+  }
+}
+
 /** Numéros Sosa des ancêtres de la personne centrale (le plus petit en cas d'implexe). */
 function sosaMap() {
   const out = new Map();
@@ -343,8 +376,17 @@ function sosaMap() {
   return out;
 }
 
-export function buildFullLayout() {
+export function buildFullLayout({ compact = false } = {}) {
   if (!S.people.size) return null;
+  K = compact ? COMPACT : STANDARD;
+  try {
+    return fullLayout();
+  } finally {
+    K = STANDARD;
+  }
+}
+
+function fullLayout() {
   const nodes = [];
   const edges = [];
   const marks = [];
@@ -359,8 +401,8 @@ export function buildFullLayout() {
   let X = PAD;
   const placed = comps.map((c) => {
     const dx = X - c.minLeft;
-    X += c.width + GROUP_GAP;
-    const xOf = (id) => c.center(id) + dx - CW / 2;
+    X += c.width + K.groupGap;
+    const xOf = (id) => c.center(id) + dx - K.cw / 2;
     const byGen = new Map();
     for (const f of c.families.values()) {
       const [a, b] = f.parents;
@@ -368,8 +410,20 @@ export function buildFullLayout() {
         && Math.abs(c.blockOf.get(a).i - c.blockOf.get(b).i) === 1;
       const starts = adjacent
         ? [{ x: c.anchorOf(f) + dx, g: c.gen.get(a), mid: true }]
-        : f.parents.map((q) => ({ x: xOf(q) + CW / 2, g: c.gen.get(q) }));
-      const kids = f.kids.map((k) => ({ x: xOf(k) + CW / 2, g: c.gen.get(k) }));
+        : f.parents.map((q) => ({ x: xOf(q) + K.cw / 2, g: c.gen.get(q) }));
+      // Une pile d'enfants n'a qu'un point d'attache : son trait, à gauche des fiches
+      const kids = [];
+      const stacks = new Map();
+      for (const k of f.kids) {
+        const o = c.blockOf.get(k);
+        if (!o.block.stack) kids.push({ x: xOf(k) + K.cw / 2, g: c.gen.get(k) });
+        else if (stacks.has(o.block)) stacks.get(o.block).ks.push(o.k);
+        else {
+          const kid = { x: xOf(k) - SPINE, g: c.gen.get(k), ks: [o.k] };
+          stacks.set(o.block, kid);
+          kids.push(kid);
+        }
+      }
       const xs = [...starts, ...kids].map((p) => p.x);
       const g = Math.max(...f.parents.map((q) => c.gen.get(q)));
       const item = { starts, kids, g, x0: Math.min(...xs), x1: Math.max(...xs) };
@@ -380,7 +434,7 @@ export function buildFullLayout() {
       items.sort((p, q) => p.x0 - q.x0 || p.x1 - q.x1);
       const lanes = [];
       for (const it of items) {
-        let lane = lanes.findIndex((end) => end < it.x0 - BLOCK_GAP);
+        let lane = lanes.findIndex((end) => end < it.x0 - K.blockGap);
         if (lane < 0) lane = lanes.length;
         lanes[lane] = it.x1;
         it.lane = lane;
@@ -390,14 +444,19 @@ export function buildFullLayout() {
     return { c, xOf, byGen };
   });
 
-  // Hauteur de chaque intervalle entre deux générations, selon le nombre de voies
+  // Hauteur de chaque intervalle entre deux générations, selon le nombre de voies,
+  // et de chaque ligne, selon sa plus haute pile
   const maxRows = Math.max(...comps.map((c) => c.height));
   const gapOf = (g) => Math.max(VG, 2 * BUS_MARGIN + ((lanesAt[g] || 1) - 1) * LANE);
+  const depth = [];
+  for (const c of comps) for (const row of c.rows) for (const b of row) depth[b.g] = Math.max(depth[b.g] || 1, b.stack ? b.ids.length : 1);
+  const rowH = (g) => (depth[g] || 1) * (CH + STACK_GAP) - STACK_GAP;
   const rowY = [PAD];
-  for (let g = 1; g < maxRows; g++) rowY[g] = rowY[g - 1] + CH + gapOf(g - 1);
+  for (let g = 1; g < maxRows; g++) rowY[g] = rowY[g - 1] + rowH(g - 1) + gapOf(g - 1);
+  const stackY = (g, k) => rowY[g] + k * (CH + STACK_GAP);
 
   for (const { c, xOf, byGen } of placed) {
-    const yOf = (id) => rowY[c.gen.get(id)];
+    const yOf = (id) => stackY(c.gen.get(id), c.blockOf.get(id).k);
 
     // Fiches et unions
     for (const row of c.rows) {
@@ -410,10 +469,10 @@ export function buildFullLayout() {
             const o = c.blockOf.get(pt.id);
             if (!o || o.block !== b || o.i >= i) continue;
             const my = yOf(id) + CH / 2;
-            const x1 = xOf(pt.id) + CW;
+            const x1 = xOf(pt.id) + K.cw;
             const x2 = xOf(id);
             edges.push({ d: `M${x1},${my}H${x2}`, dash: !pt.uid });
-            marks.push({ x: x2 - SG / 2, y: my, dash: !pt.uid });
+            marks.push({ x: x2 - K.sg / 2, y: my, dash: !pt.uid });
           }
         });
       }
@@ -421,20 +480,26 @@ export function buildFullLayout() {
 
     // Filiation : les voies sont réparties dans l'intervalle, la première en haut
     for (const [g, items] of byGen) {
-      const base = rowY[g] + CH;
+      const base = rowY[g] + rowH(g);
       const n = lanesAt[g];
       const top = base + (gapOf(g) - (n - 1) * LANE) / 2;
       for (const it of items) {
         const busY = top + it.lane * LANE;
         let d = `M${it.x0},${busY}H${it.x1}`;
         for (const s of it.starts) d += `M${s.x},${s.mid ? rowY[s.g] + CH / 2 : rowY[s.g] + CH}V${busY}`;
-        for (const k of it.kids) d += `M${k.x},${busY}V${rowY[k.g]}`;
+        for (const k of it.kids) {
+          if (!k.ks) d += `M${k.x},${busY}V${rowY[k.g]}`;
+          else {
+            const mids = k.ks.map((i) => stackY(k.g, i) + CH / 2);
+            d += `M${k.x},${busY}V${Math.max(...mids)}` + mids.map((y) => `M${k.x},${y}H${k.x + SPINE}`).join('');
+          }
+        }
         edges.push({ d, dash: false });
       }
     }
   }
 
-  const W = X - GROUP_GAP + PAD;
-  const H = rowY[maxRows - 1] + CH + PAD;
-  return { nodes, edges, marks, W, H };
+  const W = X - K.groupGap + PAD;
+  const H = rowY[maxRows - 1] + rowH(maxRows - 1) + PAD;
+  return { nodes, edges, marks, W, H, cw: K.cw, gens: maxRows };
 }

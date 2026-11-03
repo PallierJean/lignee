@@ -110,24 +110,26 @@ function sexMark(sex) {
   return `<rect x="12" y="17" width="6" height="6" fill="${C.ink}" fill-opacity=".6" transform="rotate(45 15 20)"/>`;
 }
 
-function cardSVG(n) {
+/** Fiche de l'arbre, de largeur `w` (plus étroite en disposition compacte). */
+function cardSVG(n, w) {
   const p = P(n.id);
   const sosa = n.sosa ? String(n.sosa) : '';
   const inLine = S.line && n.sosa && !n.focus;
   const sosaW = sosa ? sosa.length * 6.4 + 8 : 0;
-  const name = fit(given(p) || '—', `700 14px ${FONT.body}`, CW - 26 - 11 - (sosa ? sosaW + 6 : 0));
-  const sur = fit((surnameLine(p) || t('card.noSurname')).toUpperCase(), `400 11.5px ${FONT.body}`, CW - 22, 1.04);
-  const married = ['married', 'remarried'].includes(currentSituation(n.id));
-  const dx = married ? 24 : 0; // place des anneaux devant les dates
-  const dates = fit(cardDates(p) || t('card.noDates'), `400 11.5px ${FONT.mono}`, CW - 22 - dx);
+  const name = fit(given(p) || '—', `700 14px ${FONT.body}`, w - 26 - 11 - (sosa ? sosaW + 6 : 0));
+  const sur = fit((surnameLine(p) || t('card.noSurname')).toUpperCase(), `400 11.5px ${FONT.body}`, w - 22, 1.04);
+  // Anneaux devant les dates, s'il y a la place : sur une fiche étroite, l'union se lit au « × » entre conjoints
+  const married = w >= CW && ['married', 'remarried'].includes(currentSituation(n.id));
+  const dx = married ? 24 : 0;
+  const dates = fit(cardDates(p) || t('card.noDates'), `400 11.5px ${FONT.mono}`, w - 22 - dx);
   return `<g transform="translate(${n.x},${n.y})">`
-    + `<rect x=".5" y=".5" width="${CW - 1}" height="${CH - 1}" rx="6" fill="${n.focus ? C.focus : C.card}"`
+    + `<rect x=".5" y=".5" width="${w - 1}" height="${CH - 1}" rx="6" fill="${n.focus ? C.focus : C.card}"`
     + ` stroke="${n.focus ? C.accent : inLine ? C.halo : C[p.sex] || C.line}" stroke-width="${n.focus ? 2 : inLine ? 3 : 1.2}"/>`
     + sexMark(p.sex)
     + `<text x="26" y="25" font-family='${FONT.body}' font-size="14" font-weight="700" fill="${C.ink}">${esc(name)}</text>`
     + (sosa
-      ? `<rect x="${CW - 11 - sosaW}" y="12" width="${sosaW}" height="16" rx="3" fill="${C.card}" stroke="${C.line}"/>`
-        + `<text x="${CW - 11 - sosaW / 2}" y="24" text-anchor="middle" font-family='${FONT.mono}' font-size="10.5" fill="${C.muted}">${sosa}</text>`
+      ? `<rect x="${w - 11 - sosaW}" y="12" width="${sosaW}" height="16" rx="3" fill="${C.card}" stroke="${C.line}"/>`
+        + `<text x="${w - 11 - sosaW / 2}" y="24" text-anchor="middle" font-family='${FONT.mono}' font-size="10.5" fill="${C.muted}">${sosa}</text>`
       : '')
     + `<text x="11" y="44" font-family='${FONT.body}' font-size="11.5" letter-spacing="1.04" fill="${C.ink}">${esc(sur)}</text>`
     + (married ? `<path d="${RINGS_PATH}" transform="translate(11,56)" fill="none" stroke="${C.muted}" stroke-width="1.5"/>` : '')
@@ -147,16 +149,23 @@ function treeSVG(L, scale) {
     + `<text x="${m.x}" y="${m.y}" dy="0.36em" text-anchor="middle" font-family='${FONT.mono}' font-size="12" fill="${C.muted}">×</text>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${L.W} ${L.H}" width="${L.W * scale}" height="${L.H * scale}">`
     + `<g fill="none" stroke="${C.edge}" stroke-width="1.3">${edges}</g>${marks}`
-    + L.nodes.map(cardSVG).join('')
+    + L.nodes.map((n) => cardSVG(n, L.cw)).join('')
     + '</svg>';
 }
 
 /* ---------- Fenêtre ---------- */
 
-const generationCount = (L) => new Set(L.nodes.map((n) => n.y)).size;
+const generationCount = (L) => L.gens;
 
 /** Contenu choisi : 'tree', 'fan' ou 'book'. */
 const printContent = () => $('#prContent').value;
+
+/** Arbre complet, dans la disposition choisie : refait seulement quand elle change. */
+function treeLayout() {
+  const compact = $('#prLayout').value === 'compact';
+  if (!layout || layout.compact !== compact) layout = { ...buildFullLayout({ compact }), compact };
+  return layout;
+}
 
 /** Remplit la liste du découpage dans la langue choisie, sans perdre le choix. */
 function fillTiles() {
@@ -250,6 +259,7 @@ export function updatePrintInfo() {
   const field = $('#prTitleText');
   if (field.value === shownTitle) field.value = defaultTitle();
   shownTitle = defaultTitle();
+  if (layout) treeLayout();
   if (!layout) {
     info.textContent = t('pr.empty');
     return;
@@ -258,6 +268,7 @@ export function updatePrintInfo() {
   fillTiles();
   $('#prPaper').hidden = content === 'book';
   $('#prTilesRow').hidden = content === 'book';
+  $('#prLayoutRow').hidden = content !== 'tree';
   $('#prPaperHint').hidden = content === 'book';
   if (content === 'book') {
     info.textContent = t('pr.bookInfo', S.people.size);
@@ -289,7 +300,8 @@ export function updatePrintInfo() {
 }
 
 export function openPrint() {
-  layout = S.people.size ? buildFullLayout() : null;
+  layout = null;
+  if (S.people.size) treeLayout();
   $('#printDlg').hidden = false;
   fillTiles();
   shownTitle = defaultTitle();
@@ -308,6 +320,7 @@ export function closePrint() {
 /** Prépare la feuille (page, titre, arbre) puis ouvre la fenêtre d'impression du navigateur. */
 export async function printTree() {
   if (!layout) return;
+  treeLayout();
   const title = $('#prTitleText').value.trim();
   customTitle = title === defaultTitle() ? '' : title;
   const content = printContent();
