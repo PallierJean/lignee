@@ -104,6 +104,33 @@ describe('impression', () => {
     assert.match(el('printInfo').textContent, /très petit/);
   });
 
+  test('formats A1 et A0 ; le message propose le plus petit format lisible', async () => {
+    const people = [person('a'), person('b')];
+    for (let i = 0; i < 30; i++) people.push(person('k' + i, { fatherId: 'a', motherId: 'b' }));
+    loadTree(people);
+    S.focus = 'a';
+    const suggested = (format) => {
+      open('tree', format, '1');
+      return /format (A\d)/.exec(el('printInfo').textContent)?.[1];
+    };
+    assert.deepEqual(['A3', 'A2', 'A1', 'A0'].map(suggested), ['A1', 'A1', undefined, undefined]);
+    assert.doesNotMatch(el('printInfo').textContent, /très petit/);
+    for (const [format, size] of [['A1', /841mm 594mm/], ['A0', /1189mm 841mm/]]) {
+      open('tree', format, '1', 'landscape');
+      await go();
+      assert.match(el('printPageStyle').textContent, size);
+    }
+  });
+
+  test('plus grand que A0 : pas de format à proposer', () => {
+    const people = [person('a'), person('b')];
+    for (let i = 0; i < 200; i++) people.push(person('k' + i, { fatherId: 'a', motherId: 'b' }));
+    loadTree(people);
+    S.focus = 'a';
+    open('tree', 'A0', '1');
+    assert.match(el('printInfo').textContent, /grand pour une seule feuille/);
+  });
+
   test('roue d’ascendance, sur une ou plusieurs feuilles', async () => {
     open('fan', 'A3', '1');
     assert.match(el('printInfo').textContent, /génération/);
