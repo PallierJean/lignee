@@ -1,6 +1,7 @@
 /** Lieux de l'arbre et déplacements d'une génération à l'autre. */
 import { S } from '../state.js';
 import { P, eventsOf } from './people.js';
+import { departmentCode } from './departments.js';
 
 const clean = (x) => String(x || '').trim();
 
@@ -58,6 +59,22 @@ export function placeUses() {
   }
   for (const u of S.unions.values()) add(u.place, u.a);
   return [...uses.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+}
+
+/** Rang d'un département : 01 … 19, 2A, 2B, 21 … 95, 971 … ; un département inconnu ou absent vient après. */
+function departmentRank(dept) {
+  const code = departmentCode(dept);
+  if (!code) return [1, clean(dept)];
+  return [0, code === '2A' ? '020A' : code === '2B' ? '020B' : code.padStart(3, '0')];
+}
+
+/** Lieux cités, rangés par département, puis par ville, puis par lieu-dit (sans lieu-dit d'abord). */
+export function placesByDepartment() {
+  const cmp = (a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' });
+  const keyed = placeUses().map((u) => ({ u, pl: parsePlace(u.name), rank: departmentRank(parsePlace(u.name).dept) }));
+  keyed.sort((a, b) => a.rank[0] - b.rank[0] || cmp(a.rank[1], b.rank[1])
+    || cmp(a.pl.city, b.pl.city) || cmp(a.pl.hamlet, b.pl.hamlet) || cmp(a.u.name, b.u.name));
+  return keyed.map((x) => x.u);
 }
 
 /** Migrations : lieu de naissance d'un parent -> celui de son enfant : [{ from, to, n }]. */

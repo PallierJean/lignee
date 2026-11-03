@@ -11,7 +11,7 @@ import { findDuplicates } from '../model/duplicates.js';
 import { timelineOf } from '../model/timeline.js';
 import { personOptions, placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
-import { placeUses, parsePlace } from '../model/places.js';
+import { placesByDepartment, parsePlace } from '../model/places.js';
 import { loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText } from '../model/communes.js';
 import { mediaGrid } from './fiche.js';
 
@@ -87,9 +87,9 @@ function checksView() {
 
 /* ---------- Lieux ---------- */
 
-/** Lieux cités, avec leur nombre d'usages ; chacun se corrige partout en une fois. */
+/** Lieux cités, par département, ville et lieu-dit, avec leur nombre d'usages ; chacun se corrige partout en une fois. */
 function placesView() {
-  const uses = placeUses();
+  const uses = placesByDepartment();
   if (!uses.length) return `<p class="nofocus">${t('map.empty')}</p>`;
   if (!communesLoaded()) loadCommunes().then(renderAnalyse); // départements des villes, puis on redessine
   const rows = uses.map((u, i) => {

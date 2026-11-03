@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
-import { placeUses, migrations } from '../js/model/places.js';
+import { placeUses, placesByDepartment, migrations } from '../js/model/places.js';
 import { knownPlaces, locatePlaces } from '../js/services/geocode.js';
 import { GEO_KEY } from '../js/config.js';
 import { loadTree, person } from './helpers.js';
@@ -15,6 +15,30 @@ describe('lieux', () => {
     ]);
     assert.deepEqual(placeUses().map((x) => [x.name, x.n]), [['Lyon', 3], ['Paris', 2]]);
     assert.deepEqual(migrations(), [{ from: 'Lyon', to: 'Paris', n: 2 }]);
+  });
+
+  test('rangement par département, ville puis lieu-dit', () => {
+    loadTree([
+      person('a', { birthPlace: 'Roussely, Orgnac-sur-Vézère (19)', deathPlace: 'Limoges (87)' }),
+      person('b', { birthPlace: 'Orgnac-sur-Vézère (19)', deathPlace: 'Ajaccio (2A)' }),
+      person('c', { birthPlace: 'Bressouneix, Orgnac-sur-Vézère (19)', deathPlace: 'Brive-la-Gaillarde (Corrèze)' }),
+      person('d', { birthPlace: 'Paris', deathPlace: 'Bastia (2B)' }),
+      person('e', { birthPlace: 'Manosque (04)', deathPlace: 'Saint-Denis (974)' }),
+      person('f', { birthPlace: 'Brest (29)', deathPlace: 'Limoges (87)' }),
+    ]);
+    assert.deepEqual(placesByDepartment().map((x) => x.name), [
+      'Manosque (04)',
+      'Brive-la-Gaillarde (Corrèze)',
+      'Orgnac-sur-Vézère (19)',
+      'Bressouneix, Orgnac-sur-Vézère (19)',
+      'Roussely, Orgnac-sur-Vézère (19)',
+      'Ajaccio (2A)',
+      'Bastia (2B)',
+      'Brest (29)',
+      'Limoges (87)',
+      'Saint-Denis (974)',
+      'Paris',
+    ]);
   });
 
   test('localisation : cache, lieu introuvable, panne', async () => {
