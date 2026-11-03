@@ -11,6 +11,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegistre } from './ui/registre.js';
 import { startLocate, placeRowValue } from './ui/analyse.js';
+import { departmentName } from './model/departments.js';
 import { openMedia, closeMedia, placePin, cancelPin, addTag, removeTag } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
@@ -332,6 +333,10 @@ export function bindEvents() {
   document.addEventListener('input', (ev) => {
     if (ev.target.id === 'find') onFindInput();
     if (ev.target.id === 'f-spouse') onSpouseInput();
+    if (ev.target.id.endsWith('-dept')) {
+      const label = document.getElementById(ev.target.id + 'name');
+      if (label) label.textContent = departmentName(ev.target.value);
+    }
     if (ev.target.id === 'q') {
       S.query = ev.target.value;
       renderRegistre();

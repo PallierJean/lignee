@@ -210,6 +210,7 @@ la sauvegarde .json la conserve.
 Les lieux (`birthPlace`, `deathPlace`, lieu d'un événement ou d'une union) restent un texte, au
 format « Lieu-dit, Ville (Département) » : `Roussely, Orgnac-sur-Vézère (19)`. Le formulaire les
 saisit en trois champs (ville, lieu-dit, département) et recompose ce texte (`model/places.js`) ;
+sous le département, le nom suit le numéro saisi (« 19 » : Corrèze, `model/departments.js`) ;
 le GEDCOM, la carte et la recherche le lisent tel quel.
 
 `surname` est le nom d'usage. `maidenName` est le nom de jeune fille d'une femme

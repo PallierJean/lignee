@@ -4,6 +4,10 @@ import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { parsePlace, formatPlace, renamePatches, placeUses } from '../js/model/places.js';
 import { resetHistory } from '../js/services/history.js';
+import { departmentName, DEPARTMENTS } from '../js/model/departments.js';
+import { fire } from './setup.js';
+import { bindEvents } from '../js/events.js';
+import { placeFields } from '../js/ui/form.js';
 import { loadTree, person, resetApp, html } from './helpers.js';
 
 const el = (id) => document.getElementById(id);
@@ -21,6 +25,26 @@ describe('lieux en trois parties', () => {
     assert.equal(formatPlace({ city: 'Brive', dept: '19' }), 'Brive (19)');
     assert.equal(formatPlace({}), '');
     for (const s of ['Roussely, Orgnac-sur-Vézère (19)', 'Paris', 'Brive (19)']) assert.equal(formatPlace(parsePlace(s)), s);
+  });
+
+  test('nom du département d’après son numéro', () => {
+    assert.equal(Object.keys(DEPARTMENTS).length, 103); // 01 à 95 (avec 20), 2A, 2B, outre-mer
+    assert.deepEqual(['19', '9', '09', '2a', '2B', '87', '974', ' 16 ', 'Aude', '99', ''].map(departmentName),
+      ['Corrèze', 'Ariège', 'Ariège', 'Corse-du-Sud', 'Haute-Corse', 'Haute-Vienne', 'La Réunion', 'Charente', '', '', '']);
+    assert.match(placeFields('f-bplace', 'Roussely, Orgnac-sur-Vézère (19)'), /<small class="dept-name" id="f-bplace-deptname">Corrèze<\/small>/);
+    assert.match(placeFields('f-bplace', 'Hounoux (Aude)'), /id="f-bplace-deptname"><\/small>/);
+  });
+
+  test('le nom suit la saisie du numéro', () => {
+    bindEvents();
+    const input = el('f-dplace-dept');
+    input.id = 'f-dplace-dept';
+    input.value = '87';
+    fire('input', { target: input });
+    assert.equal(el('f-dplace-deptname').textContent, 'Haute-Vienne');
+    input.value = '8';
+    fire('input', { target: input });
+    assert.equal(el('f-dplace-deptname').textContent, 'Ardennes');
   });
 
   test('renommage partout : naissance, décès, événements, unions ; annulable', async () => {

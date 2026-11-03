@@ -5,6 +5,7 @@ import { esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { longDate } from '../utils/dates.js';
 import { placeUses, parsePlace, formatPlace } from '../model/places.js';
+import { DEPARTMENTS, departmentName } from '../model/departments.js';
 import {
   P, fullName, lifeYears, cmpName, avatarOf, photoSrc, birthSurname, SITUATIONS, DATED_SITUATIONS, situationLabel, situationNoneLabel,
   EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, REMARRIAGE_CAUSES, eventLabel, isDead, partnersOf,
@@ -79,8 +80,10 @@ function formerOptions(e, u) {
 /** Lieu en trois champs : ville, lieu-dit et département ; `id` en préfixe (« f-bplace-city »). */
 export function placeFields(id, value) {
   const pl = parsePlace(value);
+  // Sous le département, son nom d'après le numéro (mis à jour à la saisie, voir events.js)
+  const extra = (k) => (k === 'dept' ? `<small class="dept-name" id="${id}-deptname">${esc(departmentName(pl.dept))}</small>` : '');
   const field = (k, cls = '') => `<label class="fld${cls}"><span>${t('f.place_' + k)}</span>`
-    + `<input id="${id}-${k}" value="${esc(pl[k])}" list="dl-place-${k}"></label>`;
+    + `<input id="${id}-${k}" value="${esc(pl[k])}" list="dl-place-${k}">${extra(k)}</label>`;
   return `<div class="place3">${field('city', ' city')}${field('hamlet')}${field('dept')}</div>`;
 }
 
@@ -274,7 +277,8 @@ export function formHTML() {
       <button class="btn primary" type="submit" id="f-submit">${t('save')}</button>
       <button class="btn" type="button" data-act="cancel-edit">${t('cancel')}</button>
     </div>
-    ${Object.entries(parts).map(([k, set]) => `<datalist id="dl-place-${k}">${[...set].sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>`).join('')}
+    ${['hamlet', 'city'].map((k) => `<datalist id="dl-place-${k}">${[...parts[k]].sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>`).join('')}
+    <datalist id="dl-place-dept">${[...parts.dept].filter((x) => !departmentName(x)).sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}${Object.entries(DEPARTMENTS).map(([code, name]) => `<option value="${code}" label="${esc(name)}"></option>`).join('')}</datalist>
     <datalist id="dl-surnames">${[...surnames].sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>
   </form>`;
 }
