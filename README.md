@@ -361,7 +361,8 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).
-- **Lieux** : chaque lieu cité, avec son nombre de mentions. On corrige la ville, le lieu-dit ou le
+- **Lieux** : chaque lieu cité, avec son nombre de mentions, rangé par numéro de département, puis par
+  ville, puis par lieu-dit (les lieux sans département à la fin). On corrige la ville, le lieu-dit ou le
   département, puis « Renommer partout » : naissances, décès, événements et unions suivent, en une
   seule action annulable. Donner le nom d'un lieu existant réunit les deux.
 - **Carte** : lieux et migrations (du lieu de naissance d'un parent à celui de son enfant).

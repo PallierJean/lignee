@@ -6,7 +6,7 @@ import { loadCommunes, cityDepartments, placeDepartmentIssue } from '../js/model
 import { departmentCode } from '../js/model/departments.js';
 import { findIssues } from '../js/model/checks.js';
 import { departmentFromCity, departmentHint } from '../js/ui/form.js';
-import { placeUses } from '../js/model/places.js';
+import { placesByDepartment } from '../js/model/places.js';
 import { example, loadTree, person, resetApp, html } from './helpers.js';
 
 const el = (id) => document.getElementById(id);
@@ -84,7 +84,7 @@ describe('ville et département', () => {
     A.setAnalyseView('places');
     const out = html('paneAnalyse');
     assert.match(out, /Confolens est en Charente \(16\) : le département est corrigé ci-dessous/);
-    const i = placeUses().findIndex((u) => u.name === 'Confolens (87)');
+    const i = placesByDepartment().findIndex((u) => u.name === 'Confolens (87)');
     assert.match(out, new RegExp(`id="pl-${i}-dept" value="16"`));
   });
 });
