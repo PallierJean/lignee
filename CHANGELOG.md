@@ -1,5 +1,16 @@
 # Historique des versions
 
+## [1.10.0](https://github.com/PallierJean/lignee/compare/v1.9.0...v1.10.0) (2026-11-03)
+
+### Features
+
+* afficher le nom du département d'après son numéro ([5f27cc3](https://github.com/PallierJean/lignee/commit/5f27cc30b1ab7e84acdb355eb0f1d32128003e06))
+* déduire le département de la ville et signaler les écarts ([9b4feed](https://github.com/PallierJean/lignee/commit/9b4feedb9d4bd39e20674665cdddc39f76f36b14))
+
+### Bug Fixes
+
+* renommer un lieu même pendant la saisie d'une fiche ([d427ca0](https://github.com/PallierJean/lignee/commit/d427ca0f21ea0dc35c188ede27758129b2bddf71))
+
 ## [1.9.0](https://github.com/PallierJean/lignee/compare/v1.8.0...v1.9.0) (2026-11-03)
 
 ### Features
