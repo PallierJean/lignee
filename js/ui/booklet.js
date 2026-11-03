@@ -7,8 +7,9 @@ import { S } from '../state.js';
 import { esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { yearOf, longDate } from '../utils/dates.js';
-import { P, photoOf } from '../model/people.js';
+import { P, photoOf, photoSrc } from '../model/people.js';
 import { bookSections } from '../model/narrative.js';
+import { bookChapters } from '../model/book-branches.js';
 import { familyBook, familyBookName } from '../model/family-book.js';
 import { fanSVG, fanSize } from '../tree/fan.js';
 
@@ -75,13 +76,13 @@ async function paginate(blocks) {
   return pages;
 }
 
-function coverHTML(title, sections) {
+function coverHTML(title, gens, kicker = t('pr.bookKicker')) {
   const size = P(S.focus) ? fanSize(S.focus, COVER_GENS) : { gens: 0 };
   const fan = size.gens > 0 ? fanSVG(FAN_COLORS, (COVER_FAN * MM) / size.W, S.focus, COVER_GENS) : '';
   const years = [...S.people.values()].map((p) => yearOf(p.birthDate)).filter(Boolean);
-  const facts = [t('pr.people', S.people.size), t('pr.gens', sections.length), years.length ? t('sum.since', Math.min(...years)) : '']
+  const facts = [t('pr.people', S.people.size), t('pr.gens', gens), years.length ? t('sum.since', Math.min(...years)) : '']
     .filter(Boolean).join('  ·  ');
-  return `<section class="bk-page bk-cover"><div class="bk-frame">${MARK}<p class="bk-kicker">${t('pr.bookKicker')}</p>`
+  return `<section class="bk-page bk-cover"><div class="bk-frame">${MARK}<p class="bk-kicker">${esc(kicker)}</p>`
     + `<h1>${esc(title)}</h1><div class="bk-fan">${fan}</div><p class="bk-facts">${esc(facts)}</p>`
     + `<p class="bk-date">${esc(t('pr.printed', today()))}</p></div></section>`;
 }
@@ -145,6 +146,41 @@ export async function bookletHTML(title) {
     return `<li><span>${esc(t('stat.gen', b.chapter.gen))}${when ? ` <small>${esc(when)}</small>` : ''}</span><i></i><b>${i + FIRST}</b></li>`;
   }));
   const toc = `<h2 class="bk-toc-title">${t('pr.bookToc')}</h2><ol class="bk-toc">${lines.join('')}</ol>`;
-  return coverHTML(title, sections) + pageHTML(toc, 2, title)
+  return coverHTML(title, sections.length) + pageHTML(toc, 2, title)
+    + pages.map((page, i) => pageHTML(page.map((b) => b.html).join(''), i + FIRST, title)).join('');
+}
+
+/* ---------- Livre de famille complet ---------- */
+
+const TIMELINE_ROWS = 22;  // lignes de frise par bloc : un bloc tient sur une page
+const ALBUM_ITEMS = 6;     // images par bloc d'album
+
+const chunks = (list, n) => Array.from({ length: Math.ceil(list.length / n) }, (_, i) => list.slice(i * n, i * n + n));
+
+const branchHeadHTML = (ch, n) => `<div class="bk-chapter"><span class="bk-num">${n}</span>`
+  + `<div><h2>${esc(ch.title)}</h2>${ch.sub ? `<p>${esc(ch.sub)}</p>` : ''}</div></div>`;
+
+const timelineHTML = (rows, first) => (first ? `<h3 class="bk-sub">${esc(t('bb.timeline'))}</h3>` : '')
+  + '<table class="bk-timeline">' + rows.map((r) => `<tr class="${r.kind}"><th>${r.year}</th><td>${esc(r.label)}</td></tr>`).join('') + '</table>';
+
+const albumHTML = (items, first) => (first ? `<h3 class="bk-sub">${esc(t('bb.album'))}</h3>` : '')
+  + '<div class="bk-album">' + items.map(({ m }) => `<figure><img src="${esc(photoSrc(m.photo))}" alt="">`
+    + `${m.title || m.date ? `<figcaption>${esc([m.title, m.date].filter(Boolean).join(' · '))}</figcaption>` : ''}</figure>`).join('') + '</div>';
+
+/** Le livre complet : couverture, sommaire, puis un chapitre par branche, avec frise et album. */
+export async function fullBookHTML(title) {
+  const chapters = bookChapters(S.focus);
+  const blocks = chapters.flatMap((ch, i) => [
+    { html: branchHeadHTML(ch, i + 1), chapter: ch, glue: true },
+    ...ch.people.map((x) => ({ html: entryHTML(x) })),
+    ...chunks(ch.timeline, TIMELINE_ROWS).map((rows, k) => ({ html: timelineHTML(rows, !k) })),
+    ...chunks(ch.album, ALBUM_ITEMS).map((items, k) => ({ html: albumHTML(items, !k) })),
+  ]);
+  const pages = await paginate(blocks);
+  const FIRST = 3;
+  const lines = pages.flatMap((page, i) => page.filter((b) => b.chapter).map((b) => `<li><span>${esc(b.chapter.title)}`
+    + `${b.chapter.sub ? ` <small>${esc(b.chapter.sub)}</small>` : ''}</span><i></i><b>${i + FIRST}</b></li>`));
+  const toc = `<h2 class="bk-toc-title">${t('pr.bookToc')}</h2><ol class="bk-toc">${lines.join('')}</ol>`;
+  return coverHTML(title, bookSections().length, t('bb.kicker')) + pageHTML(toc, 2, title)
     + pages.map((page, i) => pageHTML(page.map((b) => b.html).join(''), i + FIRST, title)).join('');
 }
