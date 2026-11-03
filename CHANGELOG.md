@@ -1,5 +1,17 @@
 # Historique des versions
 
+## [1.11.0](https://github.com/PallierJean/lignee/compare/v1.10.0...v1.11.0) (2026-11-03)
+
+### Features
+
+* ranger la vue Lieux par département, ville puis lieu-dit ([d074fcf](https://github.com/PallierJean/lignee/commit/d074fcf2f414a17f5ddf253a5c828d89a8721794))
+* vérifier les fiches dans le fichier des décès de l'INSEE ([c7c6d32](https://github.com/PallierJean/lignee/commit/c7c6d32a058a752c15a62ec3366b06d925931fb9))
+
+### Bug Fixes
+
+* garder le choix « Ce n'est pas un doublon » après rechargement ([e8347ac](https://github.com/PallierJean/lignee/commit/e8347ac783ab73a786042cea41129c11aaa089db))
+* texte d'aide de la vue Lieux, rangée par département ([f5d39b5](https://github.com/PallierJean/lignee/commit/f5d39b5aa9182a09a95b14cc54418a5540f979ce))
+
 ## [1.10.0](https://github.com/PallierJean/lignee/compare/v1.9.0...v1.10.0) (2026-11-03)
 
 ### Features
