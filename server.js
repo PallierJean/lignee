@@ -20,6 +20,10 @@
  *
  * GET renvoie un ETag ; PUT avec If-Match refuse d'écraser (409) un arbre modifié entre-temps.
  *
+ * GET    /api/insee?lastName=&firstName=&sex=&birthDate=
+ *                                   : décès du fichier de l'INSEE (depuis 1970), cherchés chez
+ *                                     matchID (deces.matchid.io) ; seuls ces quatre champs partent
+ *
  * Aucune dépendance. Le serveur n'écoute que sur cet ordinateur (127.0.0.1) et refuse les
  * requêtes venues d'un autre site (en-têtes Host et Origin).
  * Importé comme module, il fournit createServer() (utilisé par les tests).
@@ -138,6 +142,29 @@ async function removePhotos(dir, files) {
   }
 }
 
+/* ---------- Décès de l'INSEE (matchID) ---------- */
+
+const MATCHID = 'https://deces.matchid.io/deces/api/v1/search';
+const INSEE_FIELDS = { lastName: /^[\p{L}' -]{1,60}$/u, firstName: /^[\p{L}' -]{1,60}$/u, sex: /^[MF]$/, birthDate: /^(\d{2}\/\d{2}\/\d{4}|\d{4}(-\d{4})?)$/ };
+
+/** Lieu d'un décès ou d'une naissance chez matchID -> { city, dept, country }. */
+const placeOf = (l = {}) => ({
+  city: [].concat(l.city || [])[0] || '', dept: l.departmentCode || '', country: l.country || '',
+});
+
+/** Cherche chez matchID ; renvoie [{ first, last, sex, birthDate, birth, deathDate, death, certificate }]. */
+export async function matchidSearch(params) {
+  const res = await fetch(MATCHID + '?' + new URLSearchParams(params), { signal: AbortSignal.timeout(20000) });
+  if (!res.ok) throw Object.assign(new Error('Service des décès indisponible'), { status: 502 });
+  const persons = ((await res.json()).response || {}).persons || [];
+  return persons.map((p) => ({
+    first: [].concat((p.name || {}).first || []), last: (p.name || {}).last || '', sex: p.sex || '',
+    birthDate: (p.birth || {}).date || '', birth: placeOf((p.birth || {}).location),
+    deathDate: (p.death || {}).date || '', death: placeOf((p.death || {}).location),
+    certificate: (p.death || {}).certificateId || '',
+  }));
+}
+
 /* ---------- Données : un fichier par arbre dans dataDir ---------- */
 
 function paths(dataDir) {
@@ -171,7 +198,7 @@ function paths(dataDir) {
  * Serveur HTTP de Lignée (sans l'écoute) : l'application dans `root`,
  * les arbres dans `dataDir`.
  */
-export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'arbres') } = {}) {
+export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'arbres'), searchDeaths = matchidSearch } = {}) {
   const { treeFile, photoDir, readTree, treeIds } = paths(dataDir);
 
   // Les écritures passent l'une après l'autre, dans l'ordre d'arrivée
@@ -316,6 +343,20 @@ export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'a
     send(res, 405, 'Méthode non autorisée');
   }
 
+  /** Décès de l'INSEE pour un nom : seuls les champs prévus, bien formés, sont transmis. */
+  async function insee(res, query) {
+    const asked = new URLSearchParams(query);
+    const params = {};
+    for (const [k, re] of Object.entries(INSEE_FIELDS)) {
+      const v = (asked.get(k) || '').trim();
+      if (!v) continue;
+      if (!re.test(v)) return send(res, 400, 'Champ invalide : ' + k);
+      params[k] = v;
+    }
+    if (!params.lastName) return send(res, 400, 'Nom manquant');
+    send(res, 200, JSON.stringify(await searchDeaths(params)), TYPES['.json']);
+  }
+
   /* ---------- Fichiers de l'application ---------- */
 
   async function serveFile(req, res) {
@@ -345,6 +386,9 @@ export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'a
       const route = pathname.match(/^\/api\/trees\/?(.*)$/);
       if (route) {
         await api(req, res, route[1], query);
+      } else if (pathname === '/api/insee') {
+        if (req.method === 'GET') await insee(res, query);
+        else send(res, 405, 'Méthode non autorisée');
       } else if (req.method === 'GET' || req.method === 'HEAD') {
         await serveFile(req, res);
       } else {

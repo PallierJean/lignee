@@ -178,6 +178,40 @@ describe('fichiers de l’application', () => {
   });
 });
 
+describe('décès de l’INSEE', () => {
+  test('seuls les champs prévus et bien formés partent ; panne relayée', async () => {
+    const asked = [];
+    let fail = false;
+    const srv = createServer({
+      dataDir,
+      searchDeaths: async (params) => {
+        asked.push(params);
+        if (fail) throw Object.assign(new Error('Service des décès indisponible'), { status: 502 });
+        return [{ first: ['Lucien'], last: 'Bertrand' }];
+      },
+    });
+    await new Promise((resolve) => srv.listen(0, '127.0.0.1', resolve));
+    const url = (q) => `http://127.0.0.1:${srv.address().port}/api/insee?${q}`;
+    try {
+      const res = await fetch(url('lastName=Bertrand&firstName=Lucien&sex=M&birthDate=12%2F03%2F1920&q=secret&token=x'));
+      assert.equal(res.status, 200);
+      assert.deepEqual(await res.json(), [{ first: ['Lucien'], last: 'Bertrand' }]);
+      assert.deepEqual(asked, [{ lastName: 'Bertrand', firstName: 'Lucien', sex: 'M', birthDate: '12/03/1920' }]);
+      assert.equal((await fetch(url('lastName=Roche&birthDate=1925-1935'))).status, 200);
+      assert.equal((await fetch(url('firstName=Lucien'))).status, 400, 'nom manquant');
+      assert.equal((await fetch(url('lastName=Bertrand&birthDate=hier'))).status, 400);
+      assert.equal((await fetch(url('lastName=%3Cscript%3E'))).status, 400);
+      assert.equal((await fetch(url('lastName=Bertrand&sex=X'))).status, 400);
+      assert.equal((await fetch(url('lastName=Bertrand'), { method: 'POST' })).status, 405);
+      assert.equal(asked.length, 2);
+      fail = true;
+      assert.equal((await fetch(url('lastName=Bertrand'))).status, 502);
+    } finally {
+      srv.close();
+    }
+  });
+});
+
 test('safeName : noms de fichier sûrs', () => {
   assert.equal(safeName('a/b\\c:d*e?f"g<h>i|j', 'x'), 'a-b-c-d-e-f-g-h-i-j');
   assert.equal(safeName('  ..caché  ', 'x'), 'caché');

@@ -69,6 +69,7 @@ lignee/
 │   │   ├── timeline.js         Frise chronologique
 │   │   ├── history-data.js     Repères historiques de la frise
 │   │   ├── places.js           Lieux cités, migrations
+│   │   ├── insee.js            Rapprochement avec le fichier des décès de l'INSEE
 │   │   ├── narrative.js        Récit du livret de famille de l'arbre
 │   │   └── family-book.js      Livret de famille d'une personne
 │   ├── services/
@@ -83,7 +84,8 @@ lignee/
 │   │   ├── backup.js           Sauvegarde complète au format JSON
 │   │   ├── csv.js              Export du registre en CSV
 │   │   ├── history.js          Historique annuler / rétablir
-│   │   └── geocode.js          Coordonnées des lieux (OpenStreetMap, sur demande)
+│   │   ├── geocode.js          Coordonnées des lieux (OpenStreetMap, sur demande)
+│   │   └── insee.js            Vérification des fiches chez matchID, résultats gardés
 │   ├── tree/
 │   │   ├── layout.js           Calcul des positions de l'arbre
 │   │   ├── full-layout.js      Arbre complet, à plat, par génération
@@ -358,6 +360,17 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
 - **Doublons** : fiches au même prénom usuel et au même nom, sans date contradictoire. La fusion
   reporte enfants, unions et identifications sur la fiche gardée ; elle s'annule. « Ce n'est pas
   un doublon » ne vaut que jusqu'au rechargement de la page.
+- **INSEE** (avec `npm start` seulement) : rapproche les fiches du fichier des décès de l'INSEE
+  (décès survenus en France depuis 1970), que publie matchID. « Vérifier » interroge, une fiche par
+  seconde, les fiches nouvelles ou dont le nom, le prénom, le sexe ou la naissance a changé ; les
+  autres gardent leur résultat (clé `lignee.insee.v1` de ce navigateur, par arbre). Ne partent que le
+  nom de naissance, le premier prénom, le sexe et la date de naissance ; ni les personnes mortes avant
+  1970 ou nées avant 1870, ni les vivants de moins de 75 ans. L'acte retenu est « certain » (même
+  date de naissance exacte, sans homonyme), « probable » ou une simple piste (`model/insee.js`).
+  La vue liste les écarts (date ou lieu de naissance ou de décès, personne marquée vivante), ce qui
+  complète la fiche, les prénoms de l'état civil et le numéro de l'acte de décès ; « Reporter »
+  écrit une valeur dans la fiche, en une action annulable. Les prénoms et le nom ne sont que
+  signalés : l'INSEE les écrit sans accents.
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).
@@ -380,7 +393,8 @@ porte la version de l'arbre reçue au chargement : si l'arbre a changé ailleurs
 modifié), il est refusé plutôt que d'écraser ces changements, et un message demande de recharger.
 
 Seules sorties vers Internet : les polices (Google Fonts, à chaque ouverture) et, sur clic,
-les noms de lieux vers OpenStreetMap. L'application n'a pas de comptes : ne l'exposez pas sur un réseau.
+les noms de lieux vers OpenStreetMap et, par le serveur local (`GET /api/insee`), le nom de
+naissance, le premier prénom, le sexe et la naissance des fiches vérifiées vers matchID. L'application n'a pas de comptes : ne l'exposez pas sur un réseau.
 
 ## Tests
 
