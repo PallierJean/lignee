@@ -27,7 +27,6 @@ export function resetApp() {
     canWrite: true, writeKnown: false, pending: null, confirmDel: false, confirmEx: false, query: '', kinA: '', kinB: '',
     kinShow: false, calMonth: null, timeFamily: false, treeEdit: null, up: 3, down: 2, zoom: 1, lastLayout: null,
   });
-  S.dupIgnored = new Set();
   localStorage.clear();
 }
 
