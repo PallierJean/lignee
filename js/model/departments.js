@@ -1,4 +1,6 @@
 /** Départements français : numéro -> nom, pour nommer le département d'un lieu (« 19 » : Corrèze). */
+import { norm } from '../utils/helpers.js';
+
 export const DEPARTMENTS = {
   '01': 'Ain', '02': 'Aisne', '03': 'Allier', '04': 'Alpes-de-Haute-Provence', '05': 'Hautes-Alpes',
   '06': 'Alpes-Maritimes', '07': 'Ardèche', '08': 'Ardennes', '09': 'Ariège', '10': 'Aube',
@@ -27,4 +29,14 @@ export const DEPARTMENTS = {
 export function departmentName(code) {
   const c = String(code || '').trim().toUpperCase();
   return DEPARTMENTS[/^\d$/.test(c) ? '0' + c : c] || '';
+}
+
+const BY_NAME = new Map(Object.entries(DEPARTMENTS).map(([code, name]) => [norm(name).replace(/[^a-z]/g, ''), code]));
+
+/** Numéro du département saisi, par son numéro ou son nom (« 9 », « Corrèze », « correze ») ; vide sinon. */
+export function departmentCode(value) {
+  const c = String(value || '').trim().toUpperCase();
+  const code = /^\d$/.test(c) ? '0' + c : c;
+  if (DEPARTMENTS[code]) return code;
+  return BY_NAME.get(norm(value).replace(/[^a-z]/g, '')) || '';
 }
