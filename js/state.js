@@ -28,7 +28,6 @@ export const S = {
   tab: 'fiche',          // onglet du panneau : 'fiche' | 'registre' | 'analyse'
   analyse: 'kin',        // vue de l'onglet Analyse : voir VIEWS dans ui/analyse.js
   timeFamily: false,     // frise : la famille proche plutôt que la personne seule
-  dupIgnored: new Set(), // paires de doublons écartées pendant cette session
   calMonth: null,        // mois affiché dans les éphémérides (1 à 12), null = mois en cours
   kinA: '',              // personnes comparées dans le lien de parenté
   kinB: '',

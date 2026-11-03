@@ -7,7 +7,8 @@ import { bindEvents } from '../js/events.js';
 import { afterData } from '../js/ui/render.js';
 import { currentSituation, unionCauseText } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
-import { CW } from '../js/config.js';
+import { CW, DUP_KEY } from '../js/config.js';
+import { ignoredPairs } from '../js/services/dup-ignore.js';
 import { parsePlace } from '../js/model/places.js';
 import { resetHistory, canUndo } from '../js/services/history.js';
 import { example, loadTree, person, resetApp, html } from './helpers.js';
@@ -513,7 +514,11 @@ describe('suppression, exemples, fusion', () => {
     await A.undo();
     assert.ok(S.people.has('d'));
     A.ignoreDuplicate('a|b');
-    assert.ok(S.dupIgnored.has('a|b'));
+    assert.ok(ignoredPairs().has('a|b'));
+    assert.deepEqual(JSON.parse(localStorage.getItem(DUP_KEY)), { principal: ['a|b'] }, 'gardé après rechargement');
+    S.tree = 'autre';
+    assert.equal(ignoredPairs().size, 0, 'propre à chaque arbre');
+    S.tree = 'principal';
   });
 
   test('annuler pendant une saisie : refusé', async () => {

@@ -14,6 +14,7 @@ import { mergedData } from './model/duplicates.js';
 import { renamePatches } from './model/places.js';
 import { matchDeath, deathDifferences } from './model/insee.js';
 import { inseeResults, ignoreInsee } from './services/insee.js';
+import { ignorePair } from './services/dup-ignore.js';
 import { renderTree, scrollToFocus, scrollToPerson } from './tree/render.js';
 import { renderAll, renderSide, renderFiche, afterData } from './ui/render.js';
 import { renderHeader, renderControls } from './ui/header.js';
@@ -739,8 +740,9 @@ export async function doDelete(id) {
 
 /* ---------- Doublons ---------- */
 
+/** « Ce n'est pas un doublon » : la paire n'est plus proposée, même après rechargement. */
 export function ignoreDuplicate(key) {
-  S.dupIgnored.add(key);
+  ignorePair(key);
   renderSide();
 }
 
