@@ -67,6 +67,38 @@ describe('lieux en trois parties', () => {
     assert.equal(S.unions.get('u').place, 'Mezieres (87)');
   });
 
+  test('renommage pendant une saisie : appliqué, et la fiche en cours suit', async () => {
+    resetApp();
+    resetHistory();
+    loadTree([
+      person('a', { birthPlace: 'Estivaux (19)', events: [{ id: 'e', type: 'census', place: 'Estivaux (19)' }] }),
+      person('b', { sex: 'F', deathPlace: 'Estivaux (19)' }),
+    ], [{ id: 'u', a: 'a', b: 'b', place: 'Estivaux (19)' }]);
+    S.focus = 'a';
+    A.startEdit('a');
+    // Le formulaire, tel que le navigateur le garde : ses champs de lieu remplis
+    for (const id of ['f-bplace', 'ev-place-0', 'u-place-0']) {
+      el(id + '-city').value = 'Estivaux';
+      el(id + '-hamlet').value = '';
+      el(id + '-dept').value = '19';
+    }
+    A.setTab('analyse');
+    await A.renamePlace('Estivaux (19)', 'Estivaux, Orgnac (19)');
+    assert.equal(S.people.get('b').deathPlace, 'Estivaux, Orgnac (19)');
+    assert.equal(S.edit.draft.birthPlace, 'Estivaux, Orgnac (19)');
+    assert.equal(S.edit.events[0].place, 'Estivaux, Orgnac (19)');
+    assert.equal(S.edit.unions[0].place, 'Estivaux, Orgnac (19)');
+  });
+
+  test('rien de changé : un message, aucune écriture', async () => {
+    resetApp();
+    resetHistory();
+    loadTree([person('a', { birthPlace: 'Paris' })]);
+    await A.renamePlace('Paris', ' Paris ');
+    assert.match(el('toast').textContent, /Rien à renommer/);
+    assert.equal(S.people.get('a').birthPlace, 'Paris');
+  });
+
   test('vue Lieux : une ligne par lieu, renommage depuis ses trois champs', async () => {
     resetApp();
     resetHistory();
