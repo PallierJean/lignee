@@ -8,10 +8,26 @@ import { S } from '../state.js';
 import { t, getLang } from '../i18n.js';
 import { yearOf } from '../utils/dates.js';
 import { P, partnersOf, childrenOf, mediaOf, maiden, surname } from './people.js';
-import { directLine } from './completeness.js';
 import { timelineOf } from './timeline.js';
 import { HISTORY } from './history-data.js';
 import { personEntry, withPartners } from './narrative.js';
+
+/** Lignée directe : la personne et ses ancêtres, avec leur numéro Sosa (le plus petit en cas d'implexe). */
+export function directLine(focus) {
+  const out = new Map();
+  let level = [[focus, 1]];
+  while (level.length) {
+    const next = [];
+    for (const [id, sosa] of level) {
+      if (out.has(id) || !S.people.has(id)) continue;
+      out.set(id, sosa);
+      const p = P(id);
+      next.push([p.fatherId, 2 * sosa], [p.motherId, 2 * sosa + 1]);
+    }
+    level = next.filter(([id]) => id);
+  }
+  return [...out].map(([id, sosa]) => ({ id, sosa }));
+}
 
 /** Branche d'un numéro Sosa : 4 à 7 (le grand-parent dont il descend), ou lui-même en dessous de 4. */
 export const branchOf = (sosa) => (sosa < 4 ? sosa : sosa >> (Math.floor(Math.log2(sosa)) - 2));
