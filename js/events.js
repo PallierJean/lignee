@@ -10,7 +10,7 @@ import {
   openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo,
 } from './ui/transfer.js';
 import { renderRegistre } from './ui/registre.js';
-import { startLocate, placeRowValue } from './ui/analyse.js';
+import { startLocate, placeRowValue, startInsee, restartInsee } from './ui/analyse.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import { openMedia, closeMedia, placePin, cancelPin, addTag, removeTag } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
@@ -165,6 +165,10 @@ const CLICK_ACTIONS = {
   'time-scope': (el) => A.setTimeScope(el.dataset.family === 'true'),
   'map-locate': () => startLocate(),
   'place-rename': (el) => A.renamePlace(el.dataset.from, placeRowValue(+el.dataset.i)),
+  'insee-check': () => startInsee(),
+  'insee-forget': () => restartInsee(),
+  'insee-apply': once((el) => A.applyInsee(el.dataset.id, el.dataset.i === undefined ? undefined : +el.dataset.i)),
+  'insee-ignore': (el) => A.ignoreInseeOf(el.dataset.id),
 
   // Galerie
   'media-open': (el) => openMedia(el.dataset.owner, el.dataset.id),

@@ -11,11 +11,15 @@ import { findDuplicates } from '../model/duplicates.js';
 import { timelineOf } from '../model/timeline.js';
 import { personOptions, placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
-import { placesByDepartment, parsePlace } from '../model/places.js';
+import { placesByDepartment, parsePlace, formatPlace } from '../model/places.js';
 import { loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText } from '../model/communes.js';
 import { mediaGrid } from './fiche.js';
+import { toast } from './toast.js';
+import { longDate } from '../utils/dates.js';
+import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText } from '../model/insee.js';
+import { inseeAvailable, inseePending, inseeResults, checkInsee, forgetInsee } from '../services/insee.js';
 
-const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['stats', 'an.stats'],
+const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['insee', 'an.insee'], ['stats', 'an.stats'],
   ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery']];
 
 const name = (id) => esc(fullName(P(id)));
@@ -107,6 +111,95 @@ function placesView() {
 
 /** Nouveau texte saisi pour le lieu de la ligne `i`. */
 export const placeRowValue = (i) => placeValue('pl-' + i);
+
+/* ---------- Décès de l'INSEE ---------- */
+
+let inseeBusy = null; // { done, total } pendant une vérification
+
+const actDay = (s) => esc(longDate(actDateText(s)));
+
+/** Acte en une ligne : prénoms, nom, naissance, décès, numéro. */
+function actLine(a) {
+  const where = (l) => esc(l.city ? formatPlace({ city: l.city, dept: l.dept }) : l.country);
+  return t('ins.act', esc(a.first.join(' ')), esc(a.last), actDay(a.birthDate), where(a.birth), actDay(a.deathDate), where(a.death), esc(a.certificate));
+}
+
+function diffLine(id, x, k) {
+  const shown = (v) => (x.field.endsWith('Date') ? esc(longDate(v)) : esc(v));
+  // Les prénoms complets s'ajoutent à ceux de la fiche : rien à barrer
+  const values = x.field === 'deceased' ? ''
+    : `${x.tree && x.field !== 'given' ? `<s>${shown(x.tree)}</s> → ` : ''}<b>${shown(x.insee)}</b>`;
+  const apply = x.patch && S.canWrite
+    ? ` <button class="btn small" type="button" data-act="insee-apply" data-id="${esc(id)}" data-i="${k}">${t('ins.apply')}</button>` : '';
+  return `<li>${t('ins.f.' + x.field)}${values ? ' : ' + values : ''}${apply}</li>`;
+}
+
+function inseeRow(id, m, diffs) {
+  const p = P(id);
+  const level = `<span class="n">${t('ins.' + m.level)}${m.others ? ' · ' + t('ins.others', m.others) : ''}</span>`;
+  const all = S.canWrite && diffs.filter((x) => x.patch).length > 1
+    ? `<button class="btn small" type="button" data-act="insee-apply" data-id="${esc(id)}">${t('ins.applyAll')}</button>` : '';
+  return `<li class="chk${diffs.some((x) => x.kind === 'fix') ? '' : ' info'}"><p>${personLink(id)} <small>${esc(lifeYears(p))}</small> ${level}</p>`
+    + (diffs.length ? `<ul class="ins-diffs">${diffs.map((x, k) => diffLine(id, x, k)).join('')}</ul>` : '')
+    + `<p class="hint">${actLine(m.act)}</p>`
+    + `<div class="row-btns">${all}<button class="btn small quiet" type="button" data-act="insee-ignore" data-id="${esc(id)}">${t('ins.ignore')}</button></div></li>`;
+}
+
+function inseeView() {
+  if (!inseeAvailable()) return `<p class="nofocus">${t('ins.server')}</p><p class="hint an-hint">${t('ins.scope')}</p>`;
+  const pending = inseePending();
+  const results = inseeResults();
+  const groups = { fix: [], add: [], leads: [] };
+  const same = []; // fiches conformes : prénoms complets de l'état civil et numéro d'acte, pour mémoire
+  for (const id of S.people.keys()) {
+    const entry = results[id];
+    if (!entry || entry.ignored || entry.sig !== inseeSignature(inseeQuery(id))) continue;
+    const m = matchDeath(id, entry.acts);
+    if (!m) continue;
+    const diffs = m.level === 'lead' ? [] : deathDifferences(id, m.act);
+    if (m.level === 'lead') groups.leads.push(inseeRow(id, m, diffs));
+    else if (diffs.some((x) => x.kind === 'fix')) groups.fix.push(inseeRow(id, m, diffs));
+    else if (diffs.some((x) => x.patch)) groups.add.push(inseeRow(id, m, diffs));
+    else same.push(`<li>${personLink(id)} <small>${esc(lifeYears(P(id)))}</small><br><small class="hint">${actLine(m.act)}</small></li>`);
+  }
+  let html = `<p class="hint an-hint">${t('ins.scope')}</p>`;
+  if (inseeBusy) html += `<p class="hint an-hint">${t('ins.progress', inseeBusy.done, inseeBusy.total)}</p>`;
+  else if (pending.length) html += `<div class="row-btns reg-tools"><button class="btn small" type="button" data-act="insee-check">${t('ins.check', pending.length)}</button></div>`;
+  html += `<p class="hint an-hint">${t('ins.privacy')}</p>`;
+  const part = (key, sym) => (groups[key].length
+    ? `<section class="rel"><h3><span aria-hidden="true">${sym}</span> ${t('ins.' + key)} <span class="n">${groups[key].length}</span></h3><ul class="chks">${groups[key].join('')}</ul></section>` : '');
+  html += part('fix', '!') + part('add', '+') + part('leads', '?');
+  if (same.length) html += `<details class="ins-same"><summary class="okmsg">✓ ${t('ins.same', same.length)}</summary><ul class="ins-diffs">${same.join('')}</ul></details>`;
+  if (Object.keys(results).length && !inseeBusy) {
+    html += `<div class="row-btns reg-tools"><button class="btn small quiet" type="button" data-act="insee-forget">${t('ins.forget')}</button></div>`;
+  }
+  return html;
+}
+
+/** Vérifie les fiches nouvelles ou modifiées, puis redessine la vue. */
+export async function startInsee() {
+  if (inseeBusy) return;
+  const people = inseePending();
+  if (!people.length) return;
+  inseeBusy = { done: 0, total: people.length };
+  renderAnalyse();
+  try {
+    await checkInsee(people, (done, total) => {
+      inseeBusy = { done, total };
+      if (S.tab === 'analyse' && S.analyse === 'insee') renderAnalyse();
+    });
+  } catch (e) {
+    toast(t('ins.failed'), true);
+  }
+  inseeBusy = null;
+  renderAnalyse();
+}
+
+/** Oublie les vérifications : toutes les fiches seront revérifiées. */
+export function restartInsee() {
+  forgetInsee();
+  renderAnalyse();
+}
 
 /* ---------- Statistiques ---------- */
 
@@ -231,7 +324,7 @@ export function renderAnalyse() {
   if (!S.kinA && P(S.focus)) S.kinA = S.focus;
   const seg = VIEWS.map(([view, label]) => `<button type="button" data-act="analyse-view" data-view="${view}" aria-pressed="${S.analyse === view}">${t(label)}</button>`).join('');
   const body = {
-    kin: kinView, checks: checksView, places: placesView, dups: dupsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
+    kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
   }[S.analyse]();
   $('#paneAnalyse').innerHTML = `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`;
 }

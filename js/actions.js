@@ -12,6 +12,8 @@ import { opSet, opUpdate, opDelete, storePhoto, beginAction, commitAction, undoA
 import { relationship } from './model/kinship.js';
 import { mergedData } from './model/duplicates.js';
 import { renamePatches } from './model/places.js';
+import { matchDeath, deathDifferences } from './model/insee.js';
+import { inseeResults, ignoreInsee } from './services/insee.js';
 import { renderTree, scrollToFocus, scrollToPerson } from './tree/render.js';
 import { renderAll, renderSide, renderFiche, afterData } from './ui/render.js';
 import { renderHeader, renderControls } from './ui/header.js';
@@ -840,6 +842,45 @@ export async function renamePlace(from, to) {
     if (S.edit) renderFiche(true); // le formulaire masqué reprend son brouillon, avec le nouveau lieu
   }
   toast(t('pl.renamed', patches.length));
+}
+
+/* ---------- Décès de l'INSEE ---------- */
+
+/** Écarts reportables d'une fiche avec son acte INSEE (correspondance sûre ou probable). */
+export function inseeDifferences(id) {
+  const entry = inseeResults()[id];
+  const m = entry && matchDeath(id, entry.acts);
+  return m && m.level !== 'lead' ? deathDifferences(id, m.act) : [];
+}
+
+/** Reporte dans la fiche l'écart n° `i` de son acte INSEE, ou tous (`i` absent). */
+export async function applyInsee(id, i) {
+  if (!S.canWrite || S.busy) return;
+  if (S.edit) {
+    toast(t('finishFirst'));
+    return;
+  }
+  const diffs = inseeDifferences(id).filter((x, k) => x.patch && (i === undefined || k === i));
+  if (!diffs.length) return;
+  const patch = Object.assign({}, ...diffs.map((x) => x.patch));
+  const dies = patch.deceased && !isDead(P(id));
+  S.busy = true;
+  beginAction('hist.insee');
+  try {
+    await opUpdate('people', id, patch);
+    if (dies || patch.deathDate) await closeUnionsAtDeath(id);
+  } finally {
+    commitAction();
+    S.busy = false;
+    afterData();
+  }
+  toast(t('ins.applied', diffs.length));
+}
+
+/** N'affiche plus les écarts INSEE de cette fiche. */
+export function ignoreInseeOf(id) {
+  ignoreInsee(id);
+  renderSide();
 }
 
 /* ---------- Famille d'exemple ---------- */

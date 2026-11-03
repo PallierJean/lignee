@@ -75,6 +75,35 @@
   border-left-color: var(--danger);
 }
 
+.chk.info {
+  border-left-color: var(--line);
+}
+
+/* Écarts avec l'acte INSEE : une ligne par information, « Reporter » au bout */
+.ins-diffs {
+  margin: 6px 0 4px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ins-diffs li {
+  overflow-wrap: anywhere;
+}
+
+.ins-diffs s {
+  color: var(--muted);
+}
+
+.ins-same {
+  margin-top: 12px;
+}
+
+.ins-same summary {
+  cursor: pointer;
+}
+
 .chk p {
   margin: 0;
   overflow-wrap: anywhere;
