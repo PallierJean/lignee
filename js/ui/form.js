@@ -5,7 +5,8 @@ import { esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { longDate } from '../utils/dates.js';
 import { placeUses, parsePlace, formatPlace } from '../model/places.js';
-import { DEPARTMENTS, departmentName } from '../model/departments.js';
+import { DEPARTMENTS, departmentName, departmentCode } from '../model/departments.js';
+import { loadCommunes, cityDepartments, departmentsText } from '../model/communes.js';
 import {
   P, fullName, lifeYears, cmpName, avatarOf, photoSrc, birthSurname, SITUATIONS, DATED_SITUATIONS, situationLabel, situationNoneLabel,
   EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, REMARRIAGE_CAUSES, eventLabel, isDead, partnersOf,
@@ -85,6 +86,35 @@ export function placeFields(id, value) {
   const field = (k, cls = '') => `<label class="fld${cls}"><span>${t('f.place_' + k)}</span>`
     + `<input id="${id}-${k}" value="${esc(pl[k])}" list="dl-place-${k}">${extra(k)}</label>`;
   return `<div class="place3">${field('city', ' city')}${field('hamlet')}${field('dept')}</div>`;
+}
+
+/** Texte sous le département `id` (préfixe de placeFields) : son nom, ou l'écart avec la ville. */
+export function departmentHint(id) {
+  const value = (k) => (document.getElementById(id + '-' + k) || {}).value || '';
+  const name = departmentName(value('dept'));
+  const expected = cityDepartments(value('city'));
+  const code = departmentCode(value('dept'));
+  if (code && expected.length && !expected.includes(code)) return t('pl.deptConflict', value('city').trim(), departmentsText(expected));
+  return name;
+}
+
+/**
+ * La ville prime : quand elle n'existe que dans un département, celui-ci est rempli ou corrigé.
+ * Dans plusieurs départements, le texte sous le champ les cite, sans rien changer.
+ */
+export async function departmentFromCity(id) {
+  await loadCommunes();
+  const city = document.getElementById(id + '-city');
+  const dept = document.getElementById(id + '-dept');
+  const label = document.getElementById(id + '-deptname');
+  if (!city || !dept || !label) return;
+  const expected = cityDepartments(city.value);
+  if (expected.length === 1 && departmentCode(dept.value) !== expected[0]) {
+    dept.value = expected[0];
+    label.textContent = `${departmentName(expected[0])} · ${t('pl.fromCity')}`;
+  } else if (expected.length > 1 && !expected.includes(departmentCode(dept.value))) {
+    label.textContent = t('pl.severalDepts', departmentsText(expected));
+  } else label.textContent = departmentHint(id);
 }
 
 /** Lieu saisi dans les trois champs de placeFields(), en un seul texte. */

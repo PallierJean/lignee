@@ -10,6 +10,7 @@ import { S, services, loadPrefs } from './state.js';
 import { bindEvents } from './events.js';
 import { applyStatic } from './i18n.js';
 import { renderAll, afterData } from './ui/render.js';
+import { loadCommunes } from './model/communes.js';
 import { loadLocal, seedExample, loadFile, subscribe } from './services/storage.js';
 
 /** Service fourni par claude.ai, ou null hors de claude.ai. */
@@ -69,6 +70,9 @@ async function init() {
       }
     }
   }
+
+  // 3. Communes de France, chargées après l'ouverture : la cohérence vérifie alors le département des lieux
+  loadCommunes().then(() => renderAll()).catch(() => {});
 
   // 3. Téléchargement de fichiers dans claude.ai
   services.downloads = await useService('downloads');
