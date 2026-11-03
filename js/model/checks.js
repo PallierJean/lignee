@@ -8,17 +8,33 @@
  */
 import { S } from '../state.js';
 import { dateBounds, isImpossibleDate, yearsBetween } from '../utils/dates.js';
-import { P, eventsOf } from './people.js';
+import { norm } from '../utils/helpers.js';
+import { P, eventsOf, isDead, partnersOf, childrenOf } from './people.js';
 
 const MIN_PARENT = 12;   // âge minimal d'un parent ou à l'union
 const MAX_MOTHER = 55;   // âge à la naissance d'un enfant
 const MAX_FATHER = 80;
 const MAX_AGE = 120;     // âge au décès
+const MAX_LIVING = 110;  // âge d'une personne sans décès connu
+const MIN_TWO_GENS = 34; // écart minimal entre un grand-parent et son petit-enfant
 const POSTHUMOUS = 10000; // un père peut mourir jusqu'à un an (aaaammjj) avant la naissance
 
 // Événements normalement postérieurs au décès, ou sans date attendue par rapport à lui
 const AFTER_DEATH = new Set(['burial', 'cremation', 'will', 'other']);
 const BURIALS = new Set(['burial', 'cremation']);
+// Situations qui supposent une union enregistrée (« en couple » peut viser un conjoint absent de l'arbre)
+const WITH_UNION = new Set(['married', 'remarried', 'pacs', 'separated', 'divorced', 'widowed']);
+
+/** Nom pour comparer : sans casse, accents, espaces ni tirets. */
+const nameKey = (s) => norm(s).replace(/[^a-z]/g, '');
+
+/** Nom de naissance, s'il est connu : pour une femme mariée sans nom de jeune fille, le nom porté peut être celui du mari. */
+function birthName(id) {
+  const p = P(id);
+  if (p.sex === 'F' && p.maidenName) return p.maidenName;
+  if (p.sex === 'F' && partnersOf(id).length) return '';
+  return p.surname || '';
+}
 
 /** Boucles dans les liens de parenté : une personne qui serait son propre ancêtre. */
 export function findCycles() {
@@ -78,6 +94,43 @@ export function findIssues(now = new Date()) {
         else if (yearsBetween(pb.hi, birth.lo) > maxAge) add('parentTooOld', 'warn', [id, p[key]], yearsBetween(pb.hi, birth.lo));
       }
       if (birth && pd && birth.lo > pd.hi + grace) add('bornAfterDeath', 'error', [id, p[key]]);
+      if (parent.sex === (key === 'fatherId' ? 'F' : 'M')) add(key === 'fatherId' ? 'fatherSex' : 'motherSex', 'error', [id, p[key]]);
+      // Deux générations : grand-parent et petit-enfant
+      for (const gkey of ['fatherId', 'motherId']) {
+        const g = P(parent[gkey]);
+        const gb = g && parent[gkey] !== id && dateBounds(g.birthDate);
+        if (birth && gb && yearsBetween(gb.lo, birth.hi) >= 0 && yearsBetween(gb.lo, birth.hi) < MIN_TWO_GENS) {
+          add('twoGensTooClose', 'warn', [id, parent[gkey], p[key]], yearsBetween(gb.lo, birth.hi));
+        }
+      }
+    }
+
+    // Un seul parent connu, dont l'unique conjoint pourrait être l'autre
+    for (const [key, missing, sex] of [['fatherId', 'motherId', 'M'], ['motherId', 'fatherId', 'F']]) {
+      if (!P(p[key]) || p[missing]) continue;
+      const partners = partnersOf(p[key]);
+      const other = partners.length === 1 && P(partners[0].id);
+      if (!other || partners[0].id === id || other.sex === sex) continue;
+      const ob = dateBounds(other.birthDate);
+      if (birth && ob && ob.lo > birth.hi) continue;
+      add(missing === 'motherId' ? 'motherMissing' : 'fatherMissing', 'warn', [id, partners[0].id, p[key]]);
+    }
+
+    if (WITH_UNION.has(p.situation) && !partnersOf(id).length) add('situationNoUnion', 'warn', [id]);
+
+    // Personne sans décès connu : d'après sa naissance, ou à défaut celle de son premier enfant
+    if (!isDead(p)) {
+      const kids = childrenOf(id).map((c) => dateBounds(P(c).birthDate)).filter(Boolean);
+      const age = birth ? yearsBetween(birth.hi, today)
+        : kids.length ? yearsBetween(Math.min(...kids.map((k) => k.hi)), today) + MIN_PARENT : 0;
+      if (age > MAX_LIVING) add('livingTooOld', 'warn', [id], age);
+    }
+
+    const father = P(p.fatherId);
+    if (father && father.sex !== 'F' && p.fatherId !== id) {
+      const own = nameKey(birthName(id));
+      const his = nameKey(father.surname);
+      if (own && his && own !== his) add('nameNotFather', 'warn', [id, p.fatherId], birthName(id));
     }
 
     for (const e of events) {

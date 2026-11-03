@@ -328,6 +328,10 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
 - **Cohérence** : erreurs certaines et points à vérifier (limites dans `model/checks.js`). Les dates
   imprécises ne sont signalées que si l'incohérence est certaine ; « vers » compte pour cinq ans
   de marge, et le texte libre n'est pas contrôlé.
+  Les liens sont aussi vérifiés : sexe du père et de la mère, grand-parent et petit-enfant à moins
+  de 34 ans d'écart, parent connu par une union mais non rattaché, marié sans conjoint, personne sans
+  décès de plus de 110 ans (d'après sa naissance ou celle de son premier enfant), nom de naissance
+  différent de celui du père.
 - **Doublons** : fiches au même prénom usuel et au même nom, sans date contradictoire. La fusion
   reporte enfants, unions et identifications sur la fiche gardée ; elle s'annule. « Ce n'est pas
   un doublon » ne vaut que jusqu'au rechargement de la page.

@@ -45,7 +45,7 @@ describe('vérification de cohérence', () => {
 
   test('dates imprécises : seul ce qui est certain est signalé', () => {
     loadTree([
-      person('m', { sex: 'F', birthDate: 'vers 1900' }),
+      person('m', { sex: 'F', birthDate: 'vers 1900', deceased: true }),
       person('a', { motherId: 'm', birthDate: 'vers 1912' }), // écart possible : 2 à 22 ans
       person('b', { birthDate: 'avant 1900', deathDate: '1880' }),
       person('c', { birthDate: 'printemps 1900', deathDate: '1800' }), // texte libre
@@ -56,6 +56,84 @@ describe('vérification de cohérence', () => {
   test('boucle de parenté, soi-même comme parent', () => {
     loadTree([person('a', { fatherId: 'b' }), person('b', { motherId: 'c' }), person('c', { fatherId: 'a' }), person('d', { fatherId: 'd' })]);
     assert.deepEqual(findCycles().map((c) => c.slice().sort()), [['a', 'b', 'c'], ['d']]);
+  });
+
+  test('sexe des parents, filiation trop serrée sur deux générations', () => {
+    loadTree([
+      person('gp', { sex: 'M', birthDate: '1932', deceased: true }),
+      person('p', { sex: 'M', fatherId: 'gp', deceased: true }),
+      person('c', { sex: 'M', fatherId: 'p', motherId: 'm', birthDate: '1964' }),
+      person('m', { sex: 'M', deceased: true }),
+      person('w', { sex: 'F', deceased: true }),
+      person('k', { motherId: 'gp', fatherId: 'w', birthDate: '1990' }),
+    ]);
+    const found = findIssues(NOW).map((x) => [x.code, x.ids[0], x.ids[1], x.n]);
+    assert.deepEqual(found.filter((x) => ['fatherSex', 'motherSex'].includes(x[0])).sort(),
+      [['fatherSex', 'k', 'w', undefined], ['motherSex', 'c', 'm', undefined], ['motherSex', 'k', 'gp', undefined]]);
+    assert.ok(found.some((x) => x[0] === 'twoGensTooClose' && x[1] === 'c' && x[2] === 'gp' && x[3] === 32));
+  });
+
+  test('deux générations à 34 ans ou plus : rien à signaler', () => {
+    loadTree([
+      person('gp', { sex: 'M', birthDate: '1930', deceased: true }),
+      person('p', { sex: 'M', fatherId: 'gp', deceased: true }),
+      person('c', { sex: 'M', fatherId: 'p', birthDate: '1964' }),
+    ]);
+    assert.deepEqual(codes(), []);
+  });
+
+  test('parent non rattaché : l’unique conjoint du parent connu', () => {
+    loadTree([
+      person('f', { sex: 'M', deceased: true }),
+      person('w', { sex: 'F', deceased: true }),
+      person('c', { fatherId: 'f' }),
+      person('m', { sex: 'F', deceased: true }),
+      person('d', { motherId: 'm' }),
+      person('h1', { sex: 'M', deceased: true }),
+      person('h2', { sex: 'M', deceased: true }),
+      person('e', { motherId: 'x' }),
+    ], [{ a: 'f', b: 'w' }, { a: 'm', b: 'h1' }, { a: 'm', b: 'h2' }]);
+    const found = findIssues(NOW).map((x) => [x.code, ...x.ids]);
+    assert.deepEqual(found, [['motherMissing', 'c', 'w', 'f']]); // m a deux conjoints : pas de supposition
+  });
+
+  test('marié sans conjoint ; « en couple » sans conjoint n’est pas signalé', () => {
+    loadTree([
+      person('a', { situation: 'married', deceased: true }),
+      person('b', { situation: 'widowed', deceased: true }),
+      person('c', { situation: 'cohabiting' }),
+      person('d', { situation: 'single' }),
+      person('e', { situation: 'married', deceased: true }),
+      person('f', { deceased: true }),
+    ], [{ a: 'e', b: 'f' }]);
+    assert.deepEqual(findIssues(NOW).map((x) => x.ids[0]).sort(), ['a', 'b']);
+  });
+
+  test('vivant de plus de 110 ans : d’après sa naissance, ou celle de son premier enfant', () => {
+    loadTree([
+      person('a', { birthDate: '1900' }),
+      person('b', { birthDate: '1930' }),
+      person('m', { sex: 'F' }),
+      person('k', { motherId: 'm', birthDate: '1787', deceased: true }),
+      person('n', { sex: 'F' }),
+      person('j', { motherId: 'n', birthDate: '1990' }),
+    ]);
+    const found = findIssues(NOW).filter((x) => x.code === 'livingTooOld').map((x) => [x.ids[0], x.n]);
+    assert.deepEqual(found, [['a', 125], ['m', 250]]);
+  });
+
+  test('nom de naissance différent de celui du père', () => {
+    loadTree([
+      person('f', { sex: 'M', surname: 'Durand', deceased: true }),
+      person('a', { sex: 'M', surname: 'Martin', fatherId: 'f' }),
+      person('b', { sex: 'M', surname: 'DURAND', fatherId: 'f' }),
+      person('c', { sex: 'F', surname: 'Roux', maidenName: 'Durand', fatherId: 'f' }),
+      person('d', { sex: 'F', surname: 'Roux', fatherId: 'f' }), // mariée sans nom de jeune fille : pas de conclusion
+      person('h', { sex: 'M', surname: 'Roux', deceased: true }),
+      person('e', { sex: 'F', surname: 'Petit', fatherId: 'f' }),
+    ], [{ a: 'd', b: 'h' }]);
+    const found = findIssues(NOW).filter((x) => x.code === 'nameNotFather').map((x) => [x.ids[0], x.n]);
+    assert.deepEqual(found, [['a', 'Martin'], ['e', 'Petit']]);
   });
 
   test('unions et événements', () => {
