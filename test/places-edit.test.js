@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
-import { parsePlace, formatPlace, renamePatches, placeUses } from '../js/model/places.js';
+import { parsePlace, formatPlace, renamePatches, placeUses, placesByDepartment } from '../js/model/places.js';
 import { resetHistory } from '../js/services/history.js';
 import { departmentName, DEPARTMENTS } from '../js/model/departments.js';
 import { fire } from './setup.js';
@@ -108,7 +108,7 @@ describe('lieux en trois parties', () => {
     A.setAnalyseView('places');
     assert.match(html('paneAnalyse'), /Villagr de Freyssinet/);
     assert.match(html('paneAnalyse'), /data-act="place-rename"/);
-    const i = placeUses().findIndex((u) => u.name === 'Villagr de Freyssinet');
+    const i = placesByDepartment().findIndex((u) => u.name === 'Villagr de Freyssinet');
     el(`pl-${i}-city`).value = 'Village de Freyssinet';
     el(`pl-${i}-hamlet`).value = '';
     el(`pl-${i}-dept`).value = '19';
