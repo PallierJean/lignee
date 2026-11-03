@@ -1,5 +1,25 @@
 # Historique des versions
 
+## [1.9.0](https://github.com/PallierJean/lignee/compare/v1.8.0...v1.9.0) (2026-11-03)
+
+### Features
+
+* contrôler les liens familiaux dans la cohérence ([8f110e9](https://github.com/PallierJean/lignee/commit/8f110e9eec7b90975b2f71575890b20c074471a9))
+* disposition compacte pour imprimer l'arbre complet ([1e2080d](https://github.com/PallierJean/lignee/commit/1e2080d0b799fbe11c90df026741eb9db408e914))
+* imprimer en A1 et A0 et proposer le format lisible ([5849392](https://github.com/PallierJean/lignee/commit/58493924f06d4c17362a3c902df3d34ad1f63dfd))
+* livre de famille complet, un chapitre par branche ([2460c62](https://github.com/PallierJean/lignee/commit/2460c6237824189396c67de48ef6604f37915697))
+* saisir les lieux en ville, lieu-dit et département et les renommer partout ([dda55cc](https://github.com/PallierJean/lignee/commit/dda55cc002c78436dbfef6c42c5e5acf919b934e))
+* score de complétude des fiches et lignée directe à compléter ([afc8b12](https://github.com/PallierJean/lignee/commit/afc8b12bb9f2c623ed8800aa0010204799eed6e7))
+
+### Bug Fixes
+
+* livre complet, frise qui débordait de la page et unions en double ([2df6364](https://github.com/PallierJean/lignee/commit/2df6364e3f3a67783d7c363b34fd097b1de5ad35))
+* ne plus couper la droite de l'arbre à l'impression ([b1ee8aa](https://github.com/PallierJean/lignee/commit/b1ee8aa3a8be67477220c804f3c87e42d414ec26))
+
+### Reverts
+
+* retirer le score de complétude des fiches ([5ef37a1](https://github.com/PallierJean/lignee/commit/5ef37a19928e2fc92abb4e2860a0f597793e839d))
+
 ## [1.8.0](https://github.com/PallierJean/lignee/compare/v1.7.0...v1.8.0) (2026-11-03)
 
 ### Features
