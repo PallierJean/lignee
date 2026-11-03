@@ -32,6 +32,13 @@ export function directLine(focus) {
 /** Branche d'un numéro Sosa : 4 à 7 (le grand-parent dont il descend), ou lui-même en dessous de 4. */
 export const branchOf = (sosa) => (sosa < 4 ? sosa : sosa >> (Math.floor(Math.log2(sosa)) - 2));
 
+/** Clé d'un fait : une union vue de chaque conjoint (« A × B », « B × A ») est un seul fait. */
+function sameFact(label) {
+  const i = label.lastIndexOf(' · ');
+  const names = label.slice(i + 3).split(' × ');
+  return names.length === 2 ? label.slice(0, i + 3) + names.sort().join(' × ') : label;
+}
+
 /** Frise des personnes `ids` : leurs faits datés, puis les repères historiques de la période. */
 export function branchTimeline(ids) {
   const set = new Set(ids);
@@ -39,7 +46,7 @@ export function branchTimeline(ids) {
   const rows = [];
   for (const id of ids) {
     for (const r of timelineOf(id, true)) {
-      const key = r.year + '|' + r.label;
+      const key = r.year + '|' + sameFact(r.label);
       if (r.kind === 'history' || !set.has(r.id) || seen.has(key)) continue;
       seen.add(key);
       rows.push(r);
