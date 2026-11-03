@@ -11,7 +11,8 @@ import { findDuplicates } from '../model/duplicates.js';
 import { timelineOf } from '../model/timeline.js';
 import { personOptions, placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
-import { placeUses } from '../model/places.js';
+import { placeUses, parsePlace } from '../model/places.js';
+import { loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText } from '../model/communes.js';
 import { mediaGrid } from './fiche.js';
 
 const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['stats', 'an.stats'],
@@ -90,10 +91,17 @@ function checksView() {
 function placesView() {
   const uses = placeUses();
   if (!uses.length) return `<p class="nofocus">${t('map.empty')}</p>`;
-  const rows = uses.map((u, i) => `<li class="chk place-row"><p><b>${esc(u.name)}</b> <span class="n">${t('pl.uses', u.n)}</span></p>`
+  if (!communesLoaded()) loadCommunes().then(renderAnalyse); // départements des villes, puis on redessine
+  const rows = uses.map((u, i) => {
+    // Département contraire à la ville : signalé, et déjà corrigé dans les champs quand la ville est unique
+    const issue = placeDepartmentIssue(u.name);
+    const city = parsePlace(u.name).city;
+    const warn = issue ? `<p class="hint">${esc(issue.fixed ? t('pl.deptFix', city, departmentsText(issue.expected)) : t('pl.deptConflict', city, departmentsText(issue.expected)))}</p>` : '';
+    return `<li class="chk place-row${issue ? ' warn' : ''}"><p><b>${esc(u.name)}</b> <span class="n">${t('pl.uses', u.n)}</span></p>${warn}`
     + (S.canWrite
-      ? `${placeFields('pl-' + i, u.name)}<div class="row-btns"><button class="btn small" type="button" data-act="place-rename" data-i="${i}" data-from="${esc(u.name)}">${t('pl.rename')}</button></div>`
-      : '') + '</li>').join('');
+      ? `${placeFields('pl-' + i, (issue && issue.fixed) || u.name)}<div class="row-btns"><button class="btn small" type="button" data-act="place-rename" data-i="${i}" data-from="${esc(u.name)}">${t('pl.rename')}</button></div>`
+      : '') + '</li>';
+  }).join('');
   return `<p class="hint an-hint">${t('pl.hint')}</p><ul class="chks">${rows}</ul>`;
 }
 

@@ -10,6 +10,9 @@ import { S } from '../state.js';
 import { dateBounds, isImpossibleDate, yearsBetween } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
 import { P, eventsOf, isDead, partnersOf, childrenOf } from './people.js';
+import { placeUses, parsePlace } from './places.js';
+import { placeDepartmentIssue, departmentsText } from './communes.js';
+import { t } from '../i18n.js';
 
 const MIN_PARENT = 12;   // âge minimal d'un parent ou à l'union
 const MAX_MOTHER = 55;   // âge à la naissance d'un enfant
@@ -158,6 +161,12 @@ export function findIssues(now = new Date()) {
       else if (birth && yearsBetween(birth.lo, date.hi) < MIN_PARENT) add('unionTooYoung', 'warn', [id, other], yearsBetween(birth.lo, date.hi));
       if (death && date.lo > death.hi) add('unionAfterDeath', 'error', [id, other]);
     }
+  }
+
+  // Lieux : le département doit être celui de la ville (liste des communes chargée)
+  for (const u of placeUses()) {
+    const issue = placeDepartmentIssue(u.name);
+    if (issue) add('placeDept', 'warn', [...u.ids].slice(0, 1), t('chk.placeDeptDetail', u.name, parsePlace(u.name).city, departmentsText(issue.expected), u.n));
   }
 
   return out.sort((a, b) => (a.level === b.level ? 0 : a.level === 'error' ? -1 : 1));
