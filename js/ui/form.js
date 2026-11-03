@@ -4,6 +4,7 @@ import { narrow } from '../config.js';
 import { esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { longDate } from '../utils/dates.js';
+import { placeUses, parsePlace, formatPlace } from '../model/places.js';
 import {
   P, fullName, lifeYears, cmpName, avatarOf, photoSrc, birthSurname, SITUATIONS, DATED_SITUATIONS, situationLabel, situationNoneLabel,
   EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, REMARRIAGE_CAUSES, eventLabel, isDead, partnersOf,
@@ -75,6 +76,23 @@ function formerOptions(e, u) {
   return personOptions(u.formerId, new Set([...S.people.keys()].filter((k) => !shown.has(k))));
 }
 
+/** Lieu en trois champs : ville, lieu-dit et département ; `id` en préfixe (« f-bplace-city »). */
+export function placeFields(id, value) {
+  const pl = parsePlace(value);
+  const field = (k, cls = '') => `<label class="fld${cls}"><span>${t('f.place_' + k)}</span>`
+    + `<input id="${id}-${k}" value="${esc(pl[k])}" list="dl-place-${k}"></label>`;
+  return `<div class="place3">${field('city', ' city')}${field('hamlet')}${field('dept')}</div>`;
+}
+
+/** Lieu saisi dans les trois champs de placeFields(), en un seul texte. */
+export function placeValue(id) {
+  const part = (k) => {
+    const el = document.getElementById(id + '-' + k);
+    return el ? el.value : '';
+  };
+  return formatPlace({ hamlet: part('hamlet'), city: part('city'), dept: part('dept') });
+}
+
 /** Lignes d'événements du formulaire. */
 function eventRows(e) {
   return e.events.map((x, i) => (x.removed ? '' : `
@@ -83,7 +101,7 @@ function eventRows(e) {
         <label class="fld"><span>${t('f.eventType')}</span><select id="ev-type-${i}">${EVENT_TYPES.map((c) => `<option value="${c}"${x.type === c ? ' selected' : ''}>${esc(t('ev.' + c))}</option>`).join('')}</select></label>
         <label class="fld"><span>${t('f.date')}</span><input id="ev-date-${i}" value="${esc(x.date)}"></label>
       </div>
-      <label class="fld"><span>${t('f.place')}</span><input id="ev-place-${i}" value="${esc(x.place)}" list="dl-places"></label>
+      ${placeFields('ev-place-' + i, x.place)}
       <label class="fld"><span>${t('f.eventNote')}</span><input id="ev-note-${i}" value="${esc(x.note)}"></label>
       <button class="link" type="button" data-act="ev-remove" data-i="${i}">${t('f.eventRemove')}</button>
     </div>`)).join('');
@@ -165,16 +183,17 @@ export function formHTML() {
   // Nom déduit des parents : repère pour ne pas écraser un nom saisi à la main (voir events.js)
   const auto = esc(birthSurname(d.fatherId, d.motherId));
 
-  // Suggestions de saisie : lieux et noms déjà utilisés
-  const places = new Set();
+  // Suggestions de saisie : parties des lieux et noms déjà utilisés
+  const parts = { hamlet: new Set(), city: new Set(), dept: new Set() };
+  for (const { name } of placeUses()) {
+    const pl = parsePlace(name);
+    for (const k of Object.keys(parts)) if (pl[k]) parts[k].add(pl[k]);
+  }
   const surnames = new Set();
   for (const p of S.people.values()) {
-    if (p.birthPlace) places.add(p.birthPlace.trim());
-    if (p.deathPlace) places.add(p.deathPlace.trim());
     if (p.surname) surnames.add(p.surname.trim());
     if (p.maidenName) surnames.add(p.maidenName.trim());
   }
-  for (const u of S.unions.values()) if (u.place) places.add(u.place.trim());
 
   const unionRows = e.unions.map((u, i) => (u.removed ? '' : `
     <div class="urow">
@@ -184,10 +203,8 @@ export function formHTML() {
         <label class="fld"><span>${t('f.unionCause')}</span><select id="u-cause-${i}"><option value="">${t('f.unionCauseNone')}</option>${REMARRIAGE_CAUSES.map((c) => `<option value="${c}"${u.cause === c ? ' selected' : ''}>${esc(t('urc.' + c))}</option>`).join('')}</select></label>
         <label class="fld" id="u-former-row-${i}"${u.cause === 'widowed' ? '' : ' hidden'}><span>${t('f.unionFormer')}</span><select id="u-former-${i}"><option value="">${t('f.unionFormerNone')}</option>${formerOptions(e, u)}</select></label>
       </div>
-      <div class="row2">
-        <label class="fld"><span>${t('f.unionDate')}</span><input id="u-date-${i}" value="${esc(u.date)}" placeholder="18/09/1923"></label>
-        <label class="fld"><span>${t('f.place')}</span><input id="u-place-${i}" value="${esc(u.place)}" list="dl-places"></label>
-      </div>
+      <label class="fld"><span>${t('f.unionDate')}</span><input id="u-date-${i}" value="${esc(u.date)}" placeholder="18/09/1923"></label>
+      ${placeFields('u-place-' + i, u.place)}
       <div class="row2">
         <label class="fld"><span>${t('f.unionEnd')}</span><select id="u-end-${i}"><option value="">${t('f.unionOngoing')}</option>${UNION_ENDS.map((c) => `<option value="${c}"${u.end === c ? ' selected' : ''}>${esc(t('ue.' + c))}</option>`).join('')}</select></label>
         <label class="fld"><span>${t('f.unionEndDate')}</span><input id="u-enddate-${i}" value="${esc(u.endDate || '')}"></label>
@@ -212,16 +229,12 @@ export function formHTML() {
     <label class="fld" id="f-maiden-row"${d.sex === 'F' ? '' : ' hidden'}><span>${t('f.maiden')}</span><input id="f-maiden" value="${esc(d.maidenName)}" data-auto="${auto}" list="dl-surnames" placeholder="${t('f.maidenPlaceholder')}"></label>
 
     <div class="gt"><b>°</b>${t('birth')}</div>
-    <div class="row2">
-      <label class="fld"><span>${t('f.date')}</span><input id="f-bdate" value="${esc(d.birthDate)}" placeholder="${t('f.bdatePlaceholder')}"></label>
-      <label class="fld"><span>${t('f.place')}</span><input id="f-bplace" value="${esc(d.birthPlace)}" list="dl-places"></label>
-    </div>
+    <label class="fld"><span>${t('f.date')}</span><input id="f-bdate" value="${esc(d.birthDate)}" placeholder="${t('f.bdatePlaceholder')}"></label>
+    ${placeFields('f-bplace', d.birthPlace)}
 
     <div class="gt"><b>†</b>${t('death')}</div>
-    <div class="row2">
-      <label class="fld"><span>${t('f.date')}</span><input id="f-ddate" value="${esc(d.deathDate)}" placeholder="${t('f.ddatePlaceholder')}"></label>
-      <label class="fld"><span>${t('f.place')}</span><input id="f-dplace" value="${esc(d.deathPlace)}" list="dl-places"></label>
-    </div>
+    <label class="fld"><span>${t('f.date')}</span><input id="f-ddate" value="${esc(d.deathDate)}" placeholder="${t('f.ddatePlaceholder')}"></label>
+    ${placeFields('f-dplace', d.deathPlace)}
     <label class="check"><input type="checkbox" id="f-deceased"${d.deceased ? ' checked' : ''}> ${t('f.deceased')}</label>
     <label class="fld"><span>${t('f.occupation')}</span><input id="f-occ" value="${esc(d.occupation)}"></label>
     <div class="row2">
@@ -261,7 +274,7 @@ export function formHTML() {
       <button class="btn primary" type="submit" id="f-submit">${t('save')}</button>
       <button class="btn" type="button" data-act="cancel-edit">${t('cancel')}</button>
     </div>
-    <datalist id="dl-places">${[...places].sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>
+    ${Object.entries(parts).map(([k, set]) => `<datalist id="dl-place-${k}">${[...set].sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>`).join('')}
     <datalist id="dl-surnames">${[...surnames].sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>
   </form>`;
 }
@@ -279,9 +292,9 @@ export function captureDraft() {
   d.surname = value('f-surname');
   d.maidenName = value('f-maiden');
   d.birthDate = value('f-bdate');
-  d.birthPlace = value('f-bplace');
+  d.birthPlace = placeValue('f-bplace');
   d.deathDate = value('f-ddate');
-  d.deathPlace = value('f-dplace');
+  d.deathPlace = placeValue('f-dplace');
   d.occupation = value('f-occ');
   d.situation = value('f-situ');
   d.situationDate = value('f-situdate');
@@ -297,7 +310,7 @@ export function captureDraft() {
     const dateInput = document.getElementById('u-date-' + i);
     if (dateInput) {
       u.date = dateInput.value;
-      u.place = document.getElementById('u-place-' + i).value;
+      u.place = placeValue('u-place-' + i);
       u.type = document.getElementById('u-type-' + i).value;
       u.end = document.getElementById('u-end-' + i).value;
       u.endDate = document.getElementById('u-enddate-' + i).value;
@@ -309,7 +322,7 @@ export function captureDraft() {
     if (x.removed || !document.getElementById('ev-date-' + i)) return;
     x.type = value('ev-type-' + i);
     x.date = value('ev-date-' + i);
-    x.place = value('ev-place-' + i);
+    x.place = placeValue('ev-place-' + i);
     x.note = value('ev-note-' + i);
   });
   e.media.forEach((x, i) => {

@@ -11,6 +11,7 @@ import { P, photoOf, photoSrc, partnersOf, childrenOf, unionBetween, unionIdBetw
 import { opSet, opUpdate, opDelete, storePhoto, beginAction, commitAction, undoAction, redoAction } from './services/storage.js';
 import { relationship } from './model/kinship.js';
 import { mergedData } from './model/duplicates.js';
+import { renamePatches } from './model/places.js';
 import { renderTree, scrollToFocus, scrollToPerson } from './tree/render.js';
 import { renderAll, renderSide, renderFiche, afterData } from './ui/render.js';
 import { renderHeader, renderControls } from './ui/header.js';
@@ -805,6 +806,28 @@ export async function mergePeople(keep, drop) {
     S.busy = false;
     afterData();
   }
+}
+
+/** Renomme un lieu partout où il est cité (naissances, décès, événements, unions) ; s'annule en une fois. */
+export async function renamePlace(from, to) {
+  to = String(to || '').trim();
+  if (!S.canWrite || S.busy || !to || to === from) return;
+  if (S.edit) {
+    toast(t('finishFirst'));
+    return;
+  }
+  const patches = renamePatches(from, to);
+  if (!patches.length) return;
+  S.busy = true;
+  beginAction('hist.place');
+  try {
+    for (const x of patches) await opUpdate(x.collection, x.id, x.patch);
+  } finally {
+    commitAction();
+    S.busy = false;
+    afterData();
+  }
+  toast(t('pl.renamed', patches.length));
 }
 
 /* ---------- Famille d'exemple ---------- */
