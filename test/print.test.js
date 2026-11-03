@@ -131,6 +131,26 @@ describe('impression', () => {
     assert.match(el('printInfo').textContent, /grand pour une seule feuille/);
   });
 
+  test('Firefox : pas de taille imposée, le dessin suit le papier ; sa largeur ne dépasse jamais la feuille', async () => {
+    const agent = Object.getOwnPropertyDescriptor(navigator, 'userAgent');
+    Object.defineProperty(navigator, 'userAgent', { value: 'Mozilla/5.0 Firefox/158.0', configurable: true });
+    try {
+      open('tree', 'A1', '1');
+      await go();
+      assert.equal(el('printPageStyle').textContent, '@page { margin: 10mm; }');
+      assert.match(el('printArea').style.width, /^min\(.*100%\)$/);
+      open('tree', 'A1', 'auto');
+      await go();
+      assert.equal(el('printPageStyle').textContent, '@page { margin: 10mm; }');
+    } finally {
+      if (agent) Object.defineProperty(navigator, 'userAgent', agent);
+      else delete navigator.userAgent;
+    }
+    open('tree', 'A1', '1');
+    await go();
+    assert.match(el('printPageStyle').textContent, /size: \d+mm \d+mm/);
+  });
+
   test('roue d’ascendance, sur une ou plusieurs feuilles', async () => {
     open('fan', 'A3', '1');
     assert.match(el('printInfo').textContent, /génération/);
