@@ -62,6 +62,7 @@ lignee/
 │   │   ├── kinship.js          Lien de parenté entre deux personnes
 │   │   ├── occupations.js      Traduction des professions à l'affichage
 │   │   ├── checks.js           Vérification de cohérence
+│   │   ├── completeness.js     Complétude des fiches, lignée directe
 │   │   ├── duplicates.js       Doublons probables, fiche fusionnée
 │   │   ├── stats.js            Statistiques de l'arbre
 │   │   ├── ephemerides.js      Anniversaires du jour et du mois
@@ -332,6 +333,11 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
   de 34 ans d'écart, parent connu par une union mais non rattaché, marié sans conjoint, personne sans
   décès de plus de 110 ans (d'après sa naissance ou celle de son premier enfant), nom de naissance
   différent de celui du père.
+- **Complétude** (`model/completeness.js`) : score de chaque fiche, de 0 à 100 %, d'après la
+  naissance (date, lieu), le décès s'il y a lieu (date, lieu), le père, la mère et une source pour la
+  naissance et le décès ; une date sans le jour compte pour moitié. La vue donne le score moyen, la
+  part des fiches renseignées par critère et les fiches les plus pauvres de la lignée directe de la
+  personne centrale, avec ce qui leur manque. Le score et ce qui manque figurent aussi sur la fiche.
 - **Doublons** : fiches au même prénom usuel et au même nom, sans date contradictoire. La fusion
   reporte enfants, unions et identifications sur la fiche gardée ; elle s'annule. « Ce n'est pas
   un doublon » ne vaut que jusqu'au rechargement de la page.
