@@ -1,5 +1,12 @@
 # Historique des versions
 
+## [1.8.0](https://github.com/PallierJean/lignee/compare/v1.7.0...v1.8.0) (2026-11-03)
+
+### Features
+
+* adapter le choix des ascendants à la profondeur de l'arbre ([b6c316b](https://github.com/PallierJean/lignee/commit/b6c316ba44b7aec9f607c47aa7548e34c49e6078))
+* limiter le sélecteur d'ascendants à quatre valeurs visibles ([1bd11ab](https://github.com/PallierJean/lignee/commit/1bd11ab7343c2ac7f9e3d96999aad88191bcd40d))
+
 ## [1.7.0](https://github.com/PallierJean/lignee/compare/v1.6.1...v1.7.0) (2026-11-02)
 
 ### Features
