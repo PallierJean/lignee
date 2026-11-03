@@ -208,7 +208,7 @@ const FR = {
   'pr.empty': 'L’arbre est vide : il n’y a rien à imprimer pour l’instant.',
   'pr.info': (n, gens, landscape, pct, mm) => `${n} personne${s(n)} sur ${gens} générations, `
     + `en ${landscape ? 'paysage' : 'portrait'}. Fiches à ${pct} % de leur taille à l’écran (prénoms d’environ ${mm} mm).`,
-  'pr.smallA3': ' Le texte sera très petit : préférez le format A2.',
+  'pr.smallFormat': (format) => ` Le texte sera très petit : préférez le format ${format}, ou le découpage en plusieurs feuilles.`,
   'pr.small': ' Le texte sera très petit : l’arbre est grand pour une seule feuille.',
   'pr.familyTitle': (name) => 'Arbre de la famille ' + name,
   'pr.defaultTitle': 'Arbre généalogique',
@@ -832,7 +832,7 @@ const EN = {
   'pr.empty': 'The tree is empty: there is nothing to print yet.',
   'pr.info': (n, gens, landscape, pct, mm) => `${n} ${n === 1 ? 'person' : 'people'} over ${gens} generations, `
     + `${landscape ? 'landscape' : 'portrait'}. Cards at ${pct}% of their on-screen size (given names about ${mm} mm tall).`,
-  'pr.smallA3': ' The text will be very small: A2 is a better choice.',
+  'pr.smallFormat': (format) => ` The text will be very small: choose ${format}, or split across several sheets.`,
   'pr.small': ' The text will be very small: the tree is large for a single sheet.',
   'pr.familyTitle': (name) => name + ' family tree',
   'pr.defaultTitle': 'Family tree',
