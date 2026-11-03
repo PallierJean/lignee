@@ -10,7 +10,7 @@ import {
   openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo,
 } from './ui/transfer.js';
 import { renderRegistre } from './ui/registre.js';
-import { startLocate } from './ui/analyse.js';
+import { startLocate, placeRowValue } from './ui/analyse.js';
 import { openMedia, closeMedia, placePin, cancelPin, addTag, removeTag } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
@@ -163,6 +163,7 @@ const CLICK_ACTIONS = {
   'dup-ignore': (el) => A.ignoreDuplicate(el.dataset.key),
   'time-scope': (el) => A.setTimeScope(el.dataset.family === 'true'),
   'map-locate': () => startLocate(),
+  'place-rename': once((el) => A.renamePlace(el.dataset.from, placeRowValue(+el.dataset.i))),
 
   // Galerie
   'media-open': (el) => openMedia(el.dataset.owner, el.dataset.id),

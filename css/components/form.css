@@ -30,6 +30,17 @@
   gap: 10px;
 }
 
+/* Lieu : ville sur toute la largeur, puis lieu-dit et département */
+.place3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 8em;
+  gap: 10px;
+}
+
+.place3 .city {
+  grid-column: 1 / -1;
+}
+
 .fld {
   display: flex;
   flex-direction: column;

@@ -8,6 +8,7 @@ import { afterData } from '../js/ui/render.js';
 import { currentSituation, unionCauseText } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
 import { CW } from '../js/config.js';
+import { parsePlace } from '../js/model/places.js';
 import { resetHistory, canUndo } from '../js/services/history.js';
 import { example, loadTree, person, resetApp, html } from './helpers.js';
 
@@ -45,6 +46,11 @@ function fill(values) {
     for (const [k, id] of [['title', 'med-title-'], ['date', 'med-date-'], ['note', 'med-note-']]) el(id + i).value = x[k];
   });
   for (const [id, value] of Object.entries(values)) if (id.startsWith('u-')) el(id).value = value;
+  // Lieux : trois champs (ville, lieu-dit, département) par lieu
+  const places = [['f-bplace', values['f-bplace'] ?? S.edit.draft.birthPlace], ['f-dplace', values['f-dplace'] ?? S.edit.draft.deathPlace],
+    ...S.edit.unions.map((u, i) => ['u-place-' + i, values['u-place-' + i] ?? u.place]),
+    ...S.edit.events.map((x, i) => ['ev-place-' + i, x.place])];
+  for (const [id, value] of places) for (const [k, v] of Object.entries(parsePlace(value))) el(id + '-' + k).value = v;
 }
 
 describe('navigation et affichage', () => {
