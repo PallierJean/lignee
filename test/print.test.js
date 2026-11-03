@@ -151,6 +151,30 @@ describe('impression', () => {
     assert.match(el('printPageStyle').textContent, /size: \d+mm \d+mm/);
   });
 
+  test('disposition compacte : plus haute que large qu’en standard, fiches étroites, standard inchangé', async () => {
+    wide();
+    el('prLayout').value = 'standard';
+    open('tree', 'A3', '1');
+    await go();
+    const standard = html('printArea');
+    const ratio = () => { const m = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(html('printArea')); return m[1] / m[2]; };
+    const wideRatio = ratio();
+    assert.match(standard, /width="175"/);
+    el('prLayout').value = 'compact';
+    open('tree', 'A3', '1');
+    assert.equal(el('prLayoutRow').hidden, false);
+    await go();
+    assert.ok(ratio() < wideRatio / 3, `${ratio()} / ${wideRatio}`);
+    assert.match(html('printArea'), /width="127"/);
+    assert.equal((html('printArea').match(/<g transform/g) || []).length, 52);
+    el('prLayout').value = 'standard';
+    open('tree', 'A3', '1');
+    await go();
+    assert.equal(html('printArea'), standard);
+    open('fan', 'A3', '1');
+    assert.equal(el('prLayoutRow').hidden, true);
+  });
+
   test('roue d’ascendance, sur une ou plusieurs feuilles', async () => {
     open('fan', 'A3', '1');
     assert.match(el('printInfo').textContent, /génération/);
