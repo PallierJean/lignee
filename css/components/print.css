@@ -454,6 +454,10 @@
 }
 
 /* Livre complet : frise et album de chaque branche */
+.bk-block {
+  display: flow-root; /* les marges du titre comptent dans la hauteur mesurée */
+}
+
 .bk-measure .bk-sub,
 .print-area .bk-sub {
   margin: 4mm 0 2mm;
