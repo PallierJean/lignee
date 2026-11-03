@@ -1,6 +1,8 @@
 # Données personnelles : arbres et photos, sauf la famille d'exemple (fictive)
 /data/arbres/*
 !/data/arbres/exemple-famille-bertrand.json
+# Jeton d'accès au service des décès (matchID)
+/data/matchid.json
 *.tmp
 
 # Outils

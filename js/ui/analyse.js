@@ -18,7 +18,9 @@ import { mediaGrid } from './fiche.js';
 import { toast } from './toast.js';
 import { longDate } from '../utils/dates.js';
 import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText } from '../model/insee.js';
-import { inseeAvailable, inseePending, inseeResults, checkInsee, forgetInsee } from '../services/insee.js';
+import {
+  inseeAvailable, inseePending, inseeResults, checkInsee, forgetInsee, inseeStatus, inseeRegister, inseeAuth,
+} from '../services/insee.js';
 
 const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['insee', 'an.insee'], ['stats', 'an.stats'],
   ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery']];
@@ -163,7 +165,7 @@ function inseeView() {
     else if (diffs.some((x) => x.patch)) groups.add.push(inseeRow(id, m, diffs));
     else same.push(`<li>${personLink(id)} <small>${esc(lifeYears(P(id)))}</small><br><small class="hint">${actLine(m.act)}</small></li>`);
   }
-  let html = `<p class="hint an-hint">${t('ins.scope')}</p>`;
+  let html = `<p class="hint an-hint">${t('ins.scope')}</p>` + loginBlock();
   if (inseeBusy) html += `<p class="hint an-hint">${t('ins.progress', inseeBusy.done, inseeBusy.total)}</p>`;
   else if (pending.length) html += `<div class="row-btns reg-tools"><button class="btn small" type="button" data-act="insee-check">${t('ins.check', pending.length)}</button></div>`;
   html += `<p class="hint an-hint">${t('ins.privacy')}</p>`;
@@ -190,9 +192,78 @@ export async function startInsee() {
       if (S.tab === 'analyse' && S.analyse === 'insee') renderAnalyse();
     });
   } catch (e) {
-    toast(t('ins.failed'), true);
+    if (e.login) login = { ...login, needed: true };
+    toast(e.login ? t('ins.loginNeeded') : t('ins.failed', e.message), true);
   }
   inseeBusy = null;
+  renderAnalyse();
+}
+
+/* Connexion à matchID : sans compte, il n'accepte que quelques recherches */
+
+let login = { status: null, asked: false, needed: false, email: '', sent: false, busy: false };
+
+/** Bloc de connexion : état de la connexion, ou adresse puis code reçu par e-mail. */
+function loginBlock() {
+  if (!login.asked) {
+    login.asked = true;
+    inseeStatus().then((s) => {
+      login.status = s;
+      if (S.tab === 'analyse' && S.analyse === 'insee') renderAnalyse();
+    }, () => {});
+  }
+  const s = login.status;
+  if (s && s.connected) {
+    return `<p class="hint an-hint">${t('ins.connected', esc(s.user), s.expires ? esc(new Date(s.expires).toLocaleDateString(t('locale'))) : '')}</p>`;
+  }
+  if (!s && !login.needed) return '';
+  const off = login.busy ? ' disabled' : '';
+  const form = login.sent
+    ? `<label class="fld"><span>${t('ins.code', esc(login.email))}</span><input id="insCode" autocomplete="one-time-code" inputmode="text"${off}></label>`
+      + `<div class="row-btns"><button class="btn small" type="button" data-act="insee-auth"${off}>${t('ins.validate')}</button>`
+      + `<button class="btn small quiet" type="button" data-act="insee-restart-login"${off}>${t('ins.otherEmail')}</button></div>`
+    : `<label class="fld"><span>${t('ins.email')}</span><input id="insEmail" type="email" autocomplete="email" value="${esc(login.email)}"${off}></label>`
+      + `<div class="row-btns"><button class="btn small" type="button" data-act="insee-register"${off}>${t('ins.sendCode')}</button></div>`;
+  return `<section class="rel ins-login${login.needed ? ' warn' : ''}"><h3>${t('ins.loginTitle')}</h3><p class="hint an-hint">${t('ins.loginHint')}</p>${form}</section>`;
+}
+
+async function loginStep(run) {
+  login.busy = true;
+  renderAnalyse();
+  try {
+    await run();
+  } catch (e) {
+    toast(t('ins.loginFailed', e.message), true);
+  }
+  login.busy = false;
+  renderAnalyse();
+}
+
+/** Demande à matchID d'envoyer un code à l'adresse saisie. */
+export function inseeSendCode() {
+  const email = String(($('#insEmail') || {}).value || '').trim();
+  if (!email) return;
+  return loginStep(async () => {
+    await inseeRegister(email);
+    login = { ...login, email, sent: true };
+    toast(t('ins.codeSent', email));
+  });
+}
+
+/** Valide le code reçu : la vérification peut reprendre. */
+export function inseeSendAuth() {
+  const code = String(($('#insCode') || {}).value || '').trim();
+  if (!code) return;
+  return loginStep(async () => {
+    login.status = await inseeAuth(login.email, code);
+    login = { ...login, needed: false, sent: false };
+    toast(t('ins.loggedIn'));
+  });
+}
+
+/** Revient à la saisie de l'adresse. */
+export function inseeOtherEmail() {
+  login = { ...login, sent: false };
   renderAnalyse();
 }
 

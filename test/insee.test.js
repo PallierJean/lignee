@@ -5,7 +5,7 @@ import * as A from '../js/actions.js';
 import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, estimatedBirth } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalyse } from '../js/ui/analyse.js';
+import { renderAnalyse, startInsee, inseeSendCode, inseeSendAuth } from '../js/ui/analyse.js';
 import { loadTree, person, resetApp, html } from './helpers.js';
 
 /** Acte de décès fictif, au format renvoyé par server.js. */
@@ -179,6 +179,42 @@ describe('INSEE : vérification et vue', () => {
     A.ignoreInseeOf('l');
     assert.doesNotMatch(html('paneAnalyse'), /À compléter/);
     assert.ok(inseeResults().l.ignored);
+  });
+
+  test('matchID demande une connexion : arrêt, résultats gardés, inscription par code', async () => {
+    S.mode = 'file';
+    loadTree([lucien(), person('m', { given: 'Anne', surname: 'Roche', sex: 'F', birthDate: '1930', deceased: true })]);
+    const posted = [];
+    let connected = false;
+    globalThis.fetch = async (url, init = {}) => {
+      const json = (status, o) => ({ ok: status < 300, status, json: async () => o, text: async () => JSON.stringify(o) });
+      if (url === 'api/insee/status') return json(200, { connected, user: connected ? 'lucien@exemple.fr' : '', expires: '' });
+      if (url === 'api/insee/register' || url === 'api/insee/auth') {
+        posted.push([url, JSON.parse(init.body)]);
+        connected = url.endsWith('auth');
+        return json(200, connected ? { connected: true, user: 'lucien@exemple.fr', expires: '2027-01-01T00:00:00Z' } : { sent: true });
+      }
+      return url.includes('Roche') && !connected ? json(401, { error: 'login' }) : json(200, [act()]);
+    };
+    A.setTab('analyse');
+    A.setAnalyseView('insee');
+    await startInsee();
+    assert.ok(inseeResults().l, 'la fiche vérifiée avant l’arrêt est gardée');
+    assert.deepEqual(inseePending(), ['m']);
+    let out = html('paneAnalyse');
+    assert.match(out, /Connexion à matchID/);
+    assert.match(out, /data-act="insee-register"/);
+
+    document.getElementById('insEmail').value = 'lucien@exemple.fr';
+    await inseeSendCode();
+    assert.match(html('paneAnalyse'), /Code reçu à lucien@exemple\.fr/);
+    document.getElementById('insCode').value = 'ab12CD';
+    await inseeSendAuth();
+    assert.deepEqual(posted, [['api/insee/register', { email: 'lucien@exemple.fr' }], ['api/insee/auth', { email: 'lucien@exemple.fr', code: 'ab12CD' }]]);
+    out = html('paneAnalyse');
+    assert.match(out, /Connecté à matchID \(lucien@exemple\.fr\)/);
+    await startInsee();
+    assert.deepEqual(inseePending(), []);
   });
 
   test('hors du mode fichier : la vue explique qu’il faut le serveur local', () => {

@@ -22,7 +22,11 @@
  *
  * GET    /api/insee?lastName=&firstName=&sex=&birthDate=
  *                                   : décès du fichier de l'INSEE (depuis 1970), cherchés chez
- *                                     matchID (deces.matchid.io) ; seuls ces quatre champs partent
+ *                                     matchID (deces.matchid.io) ; seuls ces quatre champs partent.
+ *                                     401 { error: 'login' } : il faut se connecter à matchID
+ * GET    /api/insee/status          : { connected, user, expires } (connexion à matchID)
+ * POST   /api/insee/register        : { email } — matchID envoie un code à cette adresse
+ * POST   /api/insee/auth            : { email, code } — garde le jeton dans data/matchid.json
  *
  * Aucune dépendance. Le serveur n'écoute que sur cet ordinateur (127.0.0.1) et refuse les
  * requêtes venues d'un autre site (en-têtes Host et Origin).
@@ -144,7 +148,8 @@ async function removePhotos(dir, files) {
 
 /* ---------- Décès de l'INSEE (matchID) ---------- */
 
-const MATCHID = 'https://deces.matchid.io/deces/api/v1/search';
+const MATCHID = 'https://deces.matchid.io/deces/api/v1';
+const DAY = 24 * 3600 * 1000;
 const INSEE_FIELDS = { lastName: /^[\p{L}' -]{1,60}$/u, firstName: /^[\p{L}' -]{1,60}$/u, sex: /^[MF]$/, birthDate: /^(\d{2}\/\d{2}\/\d{4}|\d{4}(-\d{4})?)$/ };
 
 /** Lieu d'un décès ou d'une naissance chez matchID -> { city, dept, country }. */
@@ -152,17 +157,84 @@ const placeOf = (l = {}) => ({
   city: [].concat(l.city || [])[0] || '', dept: l.departmentCode || '', country: l.country || '',
 });
 
-/** Cherche chez matchID ; renvoie [{ first, last, sex, birthDate, birth, deathDate, death, certificate }]. */
-export async function matchidSearch(params) {
-  const res = await fetch(MATCHID + '?' + new URLSearchParams(params), { signal: AbortSignal.timeout(20000) });
-  if (!res.ok) throw Object.assign(new Error('Service des décès indisponible'), { status: 502 });
-  const persons = ((await res.json()).response || {}).persons || [];
-  return persons.map((p) => ({
-    first: [].concat((p.name || {}).first || []), last: (p.name || {}).last || '', sex: p.sex || '',
-    birthDate: (p.birth || {}).date || '', birth: placeOf((p.birth || {}).location),
-    deathDate: (p.death || {}).date || '', death: placeOf((p.death || {}).location),
-    certificate: (p.death || {}).certificateId || '',
-  }));
+const httpError = (status, message, extra = {}) => Object.assign(new Error(message), { status, ...extra });
+
+/**
+ * Client de matchID. Sans jeton, matchID n'accepte que quelques recherches ; l'inscription est
+ * gratuite : un code reçu par e-mail donne un jeton, gardé dans `tokenFile` et renouvelé
+ * la veille de son expiration.
+ */
+export function matchidClient(tokenFile) {
+  const call = (route, init = {}) => fetch(MATCHID + route, { signal: AbortSignal.timeout(20000), ...init });
+  const readToken = () => fs.readFile(tokenFile, 'utf8').then(JSON.parse, () => null);
+  const saveToken = async (t) => {
+    await fs.mkdir(path.dirname(tokenFile), { recursive: true });
+    await fs.writeFile(tokenFile, JSON.stringify(t, null, 2) + '\n', { mode: 0o600 });
+  };
+  const expires = (t) => Date.parse((t && t.expiration_date) || '') || 0;
+
+  /** Jeton valable, renouvelé s'il expire dans moins d'un jour ; null sans connexion. */
+  async function token() {
+    const t = await readToken();
+    if (!t || !t.access_token) return null;
+    if (expires(t) && expires(t) < Date.now()) return null;
+    if (expires(t) && expires(t) - Date.now() < DAY) {
+      const res = await call('/auth?refresh=true', { headers: { Authorization: 'Bearer ' + t.access_token } }).catch(() => null);
+      if (res && res.ok) {
+        const fresh = { ...t, ...(await res.json()) };
+        await saveToken(fresh);
+        return fresh.access_token;
+      }
+    }
+    return t.access_token;
+  }
+
+  /** Message d'erreur de matchID, s'il en donne un. */
+  const reason = async (res) => {
+    const o = await res.json().catch(() => ({}));
+    return String(o.message || o.msg || o.error || '');
+  };
+
+  return {
+    /** Décès trouvés : [{ first, last, sex, birthDate, birth, deathDate, death, certificate }]. */
+    async search(params) {
+      const jwt = await token();
+      const res = await call('/search?' + new URLSearchParams(params), jwt ? { headers: { Authorization: 'Bearer ' + jwt } } : {});
+      if (res.status === 401 || res.status === 422) {
+        const why = await reason(res);
+        if (res.status === 401 || /token|anonymous|register/i.test(why)) throw httpError(401, 'Connexion à matchID nécessaire', { body: { error: 'login' } });
+        throw httpError(502, why || 'Service des décès indisponible');
+      }
+      if (!res.ok) throw httpError(502, 'Service des décès indisponible');
+      const persons = ((await res.json()).response || {}).persons || [];
+      return persons.map((p) => ({
+        first: [].concat((p.name || {}).first || []), last: (p.name || {}).last || '', sex: p.sex || '',
+        birthDate: (p.birth || {}).date || '', birth: placeOf((p.birth || {}).location),
+        deathDate: (p.death || {}).date || '', death: placeOf((p.death || {}).location),
+        certificate: (p.death || {}).certificateId || '',
+      }));
+    },
+    /** Demande à matchID d'envoyer un code à cette adresse. */
+    async register(email) {
+      const res = await call('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: email }) });
+      const o = await res.json().catch(() => ({}));
+      if (!res.ok || o.valid === false) throw httpError(502, String(o.msg || o.message || 'Inscription refusée par matchID'));
+      return { sent: true };
+    },
+    /** Échange le code reçu contre un jeton, gardé dans tokenFile. */
+    async auth(email, code) {
+      const res = await call('/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: email, password: code }) });
+      const o = await res.json().catch(() => ({}));
+      if (!res.ok || !o.access_token) throw httpError(400, String(o.msg || o.message || 'Code refusé par matchID'));
+      await saveToken({ user: email, ...o });
+      return { connected: true, user: email, expires: o.expiration_date || '' };
+    },
+    async status() {
+      const t = await readToken();
+      const ok = !!(t && t.access_token && (!expires(t) || expires(t) > Date.now()));
+      return { connected: ok, user: ok ? t.user || '' : '', expires: ok ? t.expiration_date || '' : '' };
+    },
+  };
 }
 
 /* ---------- Données : un fichier par arbre dans dataDir ---------- */
@@ -198,7 +270,10 @@ function paths(dataDir) {
  * Serveur HTTP de Lignée (sans l'écoute) : l'application dans `root`,
  * les arbres dans `dataDir`.
  */
-export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'arbres'), searchDeaths = matchidSearch } = {}) {
+export function createServer({
+  root = ROOT, dataDir = path.join(root, 'data', 'arbres'), tokenFile = path.join(root, 'data', 'matchid.json'),
+  deaths = matchidClient(tokenFile),
+} = {}) {
   const { treeFile, photoDir, readTree, treeIds } = paths(dataDir);
 
   // Les écritures passent l'une après l'autre, dans l'ordre d'arrivée
@@ -354,7 +429,29 @@ export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'a
       params[k] = v;
     }
     if (!params.lastName) return send(res, 400, 'Nom manquant');
-    send(res, 200, JSON.stringify(await searchDeaths(params)), TYPES['.json']);
+    send(res, 200, JSON.stringify(await deaths.search(params)), TYPES['.json']);
+  }
+
+  const EMAIL = /^[^\s@<>"]{1,64}@[^\s@<>"]{1,190}\.[a-z]{2,}$/i;
+  const CODE = /^[A-Za-z0-9-]{3,64}$/;
+
+  /** Connexion à matchID : état, envoi du code, code reçu. */
+  async function inseeLogin(req, res, step) {
+    if (step === 'status' && req.method === 'GET') return send(res, 200, JSON.stringify(await deaths.status()), TYPES['.json']);
+    if (req.method !== 'POST' || !['register', 'auth'].includes(step)) return send(res, 405, 'Méthode non autorisée');
+    let o;
+    try {
+      o = JSON.parse(await readBody(req));
+    } catch (e) {
+      if (e.status) throw e;
+      return send(res, 400, 'JSON illisible');
+    }
+    const email = String((o && o.email) || '').trim();
+    if (!EMAIL.test(email)) return send(res, 400, 'Adresse e-mail invalide');
+    if (step === 'register') return send(res, 200, JSON.stringify(await deaths.register(email)), TYPES['.json']);
+    const code = String(o.code || '').trim();
+    if (!CODE.test(code)) return send(res, 400, 'Code invalide');
+    send(res, 200, JSON.stringify(await deaths.auth(email, code)), TYPES['.json']);
   }
 
   /* ---------- Fichiers de l'application ---------- */
@@ -364,7 +461,7 @@ export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'a
     let rel = decodeURIComponent(url.pathname);
     if (rel.endsWith('/')) rel += 'index.html';
     const file = path.normalize(path.join(root, rel));
-    if (!file.startsWith(root + path.sep)) {
+    if (!file.startsWith(root + path.sep) || file === path.normalize(tokenFile)) {
       send(res, 403, 'Accès refusé');
       return;
     }
@@ -389,14 +486,18 @@ export function createServer({ root = ROOT, dataDir = path.join(root, 'data', 'a
       } else if (pathname === '/api/insee') {
         if (req.method === 'GET') await insee(res, query);
         else send(res, 405, 'Méthode non autorisée');
+      } else if (/^\/api\/insee\/(status|register|auth)$/.test(pathname)) {
+        await inseeLogin(req, res, pathname.split('/').pop());
       } else if (req.method === 'GET' || req.method === 'HEAD') {
         await serveFile(req, res);
       } else {
         send(res, 405, 'Méthode non autorisée');
       }
     } catch (e) {
-      console.error(e);
-      if (!res.headersSent) send(res, e.status || 500, e.status ? e.message : 'Erreur du serveur');
+      if (!e.status || e.status >= 500) console.error(e.status ? e.message : e);
+      if (res.headersSent) return;
+      if (e.body) send(res, e.status, JSON.stringify(e.body), TYPES['.json']);
+      else send(res, e.status || 500, e.status ? e.message : 'Erreur du serveur');
     }
   });
 }
