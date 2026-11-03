@@ -41,6 +41,15 @@
   grid-column: 1 / -1;
 }
 
+.dept-name {
+  min-height: 1.3em;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .fld {
   display: flex;
   flex-direction: column;
