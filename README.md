@@ -61,6 +61,7 @@ lignee/
 │   │   ├── people.js           Noms, âges, parents, conjoints, enfants, événements, sources, galerie
 │   │   ├── kinship.js          Lien de parenté entre deux personnes
 │   │   ├── occupations.js      Traduction des professions à l'affichage
+│   │   ├── book-branches.js    Livre de famille complet : chapitres par branche
 │   │   ├── checks.js           Vérification de cohérence
 │   │   ├── completeness.js     Complétude des fiches, lignée directe
 │   │   ├── duplicates.js       Doublons probables, fiche fusionnée
@@ -291,6 +292,11 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
 - Le titre proposé dans la fenêtre Imprimer se calcule d'après le père et la mère de la personne
   centrale (nom de naissance de la mère) : « Famille DURAND – ROCHE ». À défaut de parents
   connus, il reprend le nom le plus fréquent de l'arbre. Il reste modifiable.
+- « Livre de famille complet, par branche » (fenêtre Imprimer, `model/book-branches.js`) : pages A4
+  avec couverture et sommaire, puis un chapitre pour la personne centrale (parents, conjoints, enfants),
+  un par grand-parent (Sosa 4 à 7) avec tous ses ancêtres, des plus anciens aux plus récents, et un
+  dernier pour les autres personnes. Chaque branche reprend le récit de chacun, puis sa frise (naissances,
+  unions, décès et repères historiques de la période) et l'album des images de sa galerie.
 - « Livret de famille », sur chaque fiche, imprime le livret de la personne, sur le modèle de celui
   remis en mairie : la personne, chaque union avec ses enfants directs, chacun en extrait
   (naissance, parents, profession, unions, décès ; sans les unions pour les enfants). Document de famille, sans valeur officielle.

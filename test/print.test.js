@@ -175,6 +175,18 @@ describe('impression', () => {
     assert.equal(el('prLayoutRow').hidden, true);
   });
 
+  test('livre de famille complet : pages A4, une branche par chapitre', async () => {
+    loadTree(ex.people, ex.unions);
+    S.focus = camille;
+    open('fullbook');
+    assert.match(el('printInfo').textContent, /un par grand-parent/);
+    assert.equal(el('prPaper').hidden, true);
+    await go();
+    assert.match(el('printPageStyle').textContent, /210mm 297mm/);
+    assert.match(html('printArea'), /Livre de famille/);
+    assert.match(html('printArea'), /Branche /);
+  });
+
   test('roue d’ascendance, sur une ou plusieurs feuilles', async () => {
     open('fan', 'A3', '1');
     assert.match(el('printInfo').textContent, /génération/);
