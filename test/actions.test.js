@@ -556,10 +556,6 @@ describe('événements de la page', () => {
     click({ act: 'line' });
     click({ act: 'lang' });
     click({ act: 'lang' });
-    A.setTab('analyse');
-    click({ act: 'analyse-view', view: 'complete' });
-    assert.match(html('paneAnalyse'), /Fiches les plus pauvres de la lignée directe/);
-    assert.match(html('paneAnalyse'), /Sosa 1/);
     click({ act: 'analyse-view', view: 'cal' });
     click({ act: 'cal-month', d: '1' });
     click({ act: 'time-scope', family: 'true' });

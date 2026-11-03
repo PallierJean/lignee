@@ -8,14 +8,13 @@ import { findIssues } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
 import { datesOfDay, datesOfMonth } from '../model/ephemerides.js';
 import { findDuplicates } from '../model/duplicates.js';
-import { completenessReport, missingText } from '../model/completeness.js';
 import { timelineOf } from '../model/timeline.js';
 import { personOptions, placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
 import { placeUses } from '../model/places.js';
 import { mediaGrid } from './fiche.js';
 
-const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['complete', 'an.complete'], ['dups', 'an.dups'], ['stats', 'an.stats'],
+const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['stats', 'an.stats'],
   ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery']];
 
 const name = (id) => esc(fullName(P(id)));
@@ -83,28 +82,6 @@ function checksView() {
       : '';
   };
   return part('error', '✕') + part('warn', '!') + `<p class="hint an-hint">${t('chk.scope')}</p>`;
-}
-
-/* ---------- Complétude ---------- */
-
-function completeView() {
-  const r = completenessReport(S.focus);
-  let html = `<section class="rel"><h3>${t('cmp.overview')}</h3><dl class="facts">`
-    + `<div><dt>${t('cmp.average')}</dt><dd>${t('percent', r.average)}</dd></div>`
-    + (r.lineAverage !== null ? `<div><dt>${t('cmp.lineAverage', r.lineCount)}</dt><dd>${t('percent', r.lineAverage)}</dd></div>` : '')
-    + `</dl></section>`;
-  html += `<section class="rel"><h3>${t('cmp.criteria')}</h3><div class="bars">`
-    + r.criteria.map((c) => `<div class="bar-row"><span class="bl">${t('cmp.' + c.key)}</span>`
-      + `<span class="bt" title="${t('percent', Math.round(c.pct))}"><i style="width:${c.pct}%"></i></span>`
-      + `<span class="bv">${c.filled} / ${c.total}</span></div>`).join('')
-    + `</div><p class="hint an-hint">${t('cmp.criteriaHint')}</p></section>`;
-  if (r.poorest.length) {
-    html += `<section class="rel"><h3>${t('cmp.poorest')}</h3><ul class="chks">`
-      + r.poorest.map((x) => `<li class="chk cmp"><p><b>${t('percent', x.score)}</b> · ${t('sosaShort', x.sosa)} · ${personLink(x.id)}</p>`
-        + (x.missing.length ? `<p class="hint">${esc(missingText(x))}</p>` : '') + '</li>').join('')
-      + `</ul><p class="hint an-hint">${t('cmp.poorestHint', name(S.focus))}</p></section>`;
-  }
-  return html;
 }
 
 /* ---------- Lieux ---------- */
@@ -246,7 +223,7 @@ export function renderAnalyse() {
   if (!S.kinA && P(S.focus)) S.kinA = S.focus;
   const seg = VIEWS.map(([view, label]) => `<button type="button" data-act="analyse-view" data-view="${view}" aria-pressed="${S.analyse === view}">${t(label)}</button>`).join('');
   const body = {
-    kin: kinView, checks: checksView, complete: completeView, places: placesView, dups: dupsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
+    kin: kinView, checks: checksView, places: placesView, dups: dupsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
   }[S.analyse]();
   $('#paneAnalyse').innerHTML = `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`;
 }
