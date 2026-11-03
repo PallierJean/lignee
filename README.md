@@ -372,6 +372,10 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
   complète la fiche, les prénoms de l'état civil et le numéro de l'acte de décès ; « Reporter »
   écrit une valeur dans la fiche, en une action annulable. Les prénoms et le nom ne sont que
   signalés : l'INSEE les écrit sans accents.
+  Sans compte, matchID n'accepte que quelques recherches puis répond « connexion nécessaire » :
+  la vue propose alors l'inscription gratuite (adresse e-mail, puis code reçu par e-mail). Le jeton
+  est gardé par server.js dans `data/matchid.json` (ignoré par git, jamais servi aux pages) et
+  renouvelé la veille de son expiration ; les fiches déjà vérifiées restent acquises.
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).
@@ -395,7 +399,8 @@ modifié), il est refusé plutôt que d'écraser ces changements, et un message 
 
 Seules sorties vers Internet : les polices (Google Fonts, à chaque ouverture) et, sur clic,
 les noms de lieux vers OpenStreetMap et, par le serveur local (`GET /api/insee`), le nom de
-naissance, le premier prénom, le sexe et la naissance des fiches vérifiées vers matchID. L'application n'a pas de comptes : ne l'exposez pas sur un réseau.
+naissance, le premier prénom, le sexe et la naissance des fiches vérifiées vers matchID (et, pour
+s'y inscrire, l'adresse e-mail saisie). L'application n'a pas de comptes : ne l'exposez pas sur un réseau.
 
 ## Tests
 
