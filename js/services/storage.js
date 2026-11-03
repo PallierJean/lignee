@@ -119,7 +119,6 @@ export async function openTree(id) {
   S.kinShow = false;
   S.kinA = '';
   S.kinB = '';
-  S.dupIgnored = new Set();
   if (S.mode === 'db') refreshDb();
   else if (S.mode === 'file') await loadFileTree();
   else loadLocalTree();

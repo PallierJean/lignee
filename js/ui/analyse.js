@@ -8,6 +8,7 @@ import { findIssues } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
 import { datesOfDay, datesOfMonth } from '../model/ephemerides.js';
 import { findDuplicates } from '../model/duplicates.js';
+import { ignoredPairs } from '../services/dup-ignore.js';
 import { timelineOf } from '../model/timeline.js';
 import { personOptions, placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
@@ -274,7 +275,7 @@ function calView() {
 /* ---------- Doublons ---------- */
 
 function dupsView() {
-  const pairs = findDuplicates(S.dupIgnored);
+  const pairs = findDuplicates(ignoredPairs());
   if (!pairs.length) return `<p class="okmsg an-ok">✓ ${t('dup.none')}</p><p class="hint an-hint">${t('dup.scope')}</p>`;
   const who = (id, n) => `<span><span class="tag-n">${n}</span> ${personLink(id)} <small>${esc(lifeYears(P(id)))}</small></span>`;
   const keep = (a, b, n) => (S.canWrite

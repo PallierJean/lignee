@@ -359,7 +359,8 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
 
 - **Doublons** : fiches au même prénom usuel et au même nom, sans date contradictoire. La fusion
   reporte enfants, unions et identifications sur la fiche gardée ; elle s'annule. « Ce n'est pas
-  un doublon » ne vaut que jusqu'au rechargement de la page.
+  un doublon » est gardé dans ce navigateur, pour chaque arbre (clé `lignee.dups.v1`) : la paire
+  n'est plus proposée, même après rechargement.
 - **INSEE** (avec `npm start` seulement) : rapproche les fiches du fichier des décès de l'INSEE
   (décès survenus en France depuis 1970), que publie matchID. « Vérifier » interroge, une fiche par
   seconde, les fiches nouvelles ou dont le nom, le prénom, le sexe ou la naissance a changé ; les

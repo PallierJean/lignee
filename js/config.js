@@ -25,6 +25,7 @@ export const LANG_KEY = 'lignee.lang.v1';   // langue de l'interface : 'fr' ou '
 export const REPO_KEY = 'lignee.repo.v1';   // dépôt relié à chaque arbre, sans le jeton
 export const GEO_KEY = 'lignee.geo.v1';     // coordonnées des lieux déjà localisés
 export const INSEE_KEY = 'lignee.insee.v1'; // actes de décès de l'INSEE trouvés pour chaque fiche
+export const DUP_KEY = 'lignee.dups.v1';     // paires « Ce n'est pas un doublon », par arbre
 
 // Arbre de départ (et arbre des données créées avant la gestion de plusieurs arbres) ;
 // son nom par défaut est t('ts.default')
