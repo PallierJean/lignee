@@ -2,6 +2,7 @@
 import { S } from '../state.js';
 import { esc } from '../utils/dom.js';
 import { longDate } from '../utils/dates.js';
+import { completeness, missingText } from '../model/completeness.js';
 import { t } from '../i18n.js';
 import {
   P, given, surname, maiden, fullName, photoOf, photoSrc, avatarOf, lifeYears, ageInfo,
@@ -92,6 +93,7 @@ export function ficheHTML(id) {
 
   const photo = photoOf(p);
   const avatar = photo ? '' : avatarOf(p.sex);
+  const score = completeness(id);
 
   let html = `<article class="fiche">
     <div class="fiche-head">
@@ -110,6 +112,7 @@ export function ficheHTML(id) {
       ${eventsOf(p).map((e) => `<div><dt>${esc(eventLabel(e))}</dt><dd>${fact(e.date, e.place)}${e.note ? `<small class="ev-note">${esc(e.note)}</small>` : ''}</dd></div>`).join('')}
       ${age ? `<div><dt>${esc(age.label)}</dt><dd>${esc(age.text)}</dd></div>` : ''}
       ${situationText(p, id) ? `<div><dt>${t('situation')}</dt><dd>${esc(situationText(p, id))}</dd></div>` : ''}
+      <div><dt>${t('cmp.fiche')}</dt><dd>${t('percent', score.score)}${score.missing.length ? `<small class="ev-note">${esc(missingText(score))}</small>` : ''}</dd></div>
     </dl>
 
     <section class="rel">
