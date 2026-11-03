@@ -210,7 +210,13 @@ la sauvegarde .json la conserve.
 Les lieux (`birthPlace`, `deathPlace`, lieu d'un événement ou d'une union) restent un texte, au
 format « Lieu-dit, Ville (Département) » : `Roussely, Orgnac-sur-Vézère (19)`. Le formulaire les
 saisit en trois champs (ville, lieu-dit, département) et recompose ce texte (`model/places.js`) ;
-sous le département, le nom suit le numéro saisi (« 19 » : Corrèze, `model/departments.js`) ;
+sous le département, le nom suit le numéro saisi (« 19 » : Corrèze, `model/departments.js`).
+La ville prime : quand elle n'existe que dans un département, celui-ci est rempli ou corrigé en
+quittant le champ ; la cohérence et la vue Lieux signalent un département contraire à la ville, et
+la vue Lieux propose le lieu corrigé. La liste des communes (actuelles, déléguées et associées, avec
+leur département) est `js/data/communes.js`, chargée après l'ouverture et sans rien envoyer en ligne.
+Elle se régénère depuis le Code officiel géographique de l'INSEE (licence ouverte) :
+`node scripts/build-communes.mjs v_commune_<année>.csv` ;
 le GEDCOM, la carte et la recherche le lisent tel quel.
 
 `surname` est le nom d'usage. `maidenName` est le nom de jeune fille d'une femme

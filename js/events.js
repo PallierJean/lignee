@@ -11,7 +11,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegistre } from './ui/registre.js';
 import { startLocate, placeRowValue } from './ui/analyse.js';
-import { departmentName } from './model/departments.js';
+import { departmentHint, departmentFromCity } from './ui/form.js';
 import { openMedia, closeMedia, placePin, cancelPin, addTag, removeTag } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
@@ -328,6 +328,7 @@ export function bindEvents() {
     if (el.id === 'f-media' && el.files.length) A.addDraftMedia([...el.files]);
     if (el.id === 'tagPerson' && el.value) addTag(el.value);
     if (el.id === 'kinA' || el.id === 'kinB') A.setKin(el.id, el.value);
+    if (el.id && el.id.endsWith('-city')) departmentFromCity(el.id.slice(0, -'-city'.length));
   });
 
   document.addEventListener('input', (ev) => {
@@ -335,7 +336,7 @@ export function bindEvents() {
     if (ev.target.id === 'f-spouse') onSpouseInput();
     if (ev.target.id.endsWith('-dept')) {
       const label = document.getElementById(ev.target.id + 'name');
-      if (label) label.textContent = departmentName(ev.target.value);
+      if (label) label.textContent = departmentHint(ev.target.id.slice(0, -'-dept'.length));
     }
     if (ev.target.id === 'q') {
       S.query = ev.target.value;
