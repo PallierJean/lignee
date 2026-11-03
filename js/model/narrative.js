@@ -61,7 +61,7 @@ export function personSources(id) {
 }
 
 /** Ordre du livret : par naissance, chaque personne suivie de ses conjoints de la même génération. */
-function withPartners(ids) {
+export function withPartners(ids) {
   const here = new Set(ids);
   const seen = new Set();
   const out = [];
@@ -77,6 +77,11 @@ function withPartners(ids) {
   return out;
 }
 
+/** Texte d'une personne dans un livre : { id, name, years, text, sources }. */
+export const personEntry = (id) => ({
+  id, name: longName(P(id)), years: lifeYears(P(id)), text: personStory(id), sources: personSources(id),
+});
+
 /** Sections du livret : [{ gen, people: [{ id, name, text }] }], la plus ancienne d'abord. */
 export function bookSections() {
   const gens = new Map();
@@ -86,8 +91,6 @@ export function bookSections() {
   }
   return [...gens.keys()].sort((a, b) => a - b).map((g, i) => ({
     gen: i + 1,
-    people: withPartners(gens.get(g)).map((id) => ({
-      id, name: longName(P(id)), years: lifeYears(P(id)), text: personStory(id), sources: personSources(id),
-    })),
+    people: withPartners(gens.get(g)).map(personEntry),
   }));
 }

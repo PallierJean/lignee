@@ -14,7 +14,7 @@ import { P, given, surname, surnameLine, cardDates, fullName, parentsName, curre
 import { buildFullLayout } from '../tree/full-layout.js';
 import { fanSVG, fanSize } from '../tree/fan.js';
 import { bestGrid, autoGrid, sheetCode, neighbours, OVERLAP, FOOT } from '../tree/tiles.js';
-import { bookletHTML, familyBookHTML } from './booklet.js';
+import { bookletHTML, familyBookHTML, fullBookHTML } from './booklet.js';
 import { familyBookName } from '../model/family-book.js';
 import { toast } from './toast.js';
 import { t } from '../i18n.js';
@@ -94,7 +94,7 @@ function topSurname() {
 function defaultTitle() {
   const family = parentsName(S.focus) || topSurname();
   if (!family) return t('pr.defaultTitle');
-  return t(printContent() === 'book' ? 'pr.bookFamily' : 'pr.familyTitle', family);
+  return t(isBook(printContent()) ? 'pr.bookFamily' : 'pr.familyTitle', family);
 }
 
 const today = () => {
@@ -157,8 +157,9 @@ function treeSVG(L, scale) {
 
 const generationCount = (L) => L.gens;
 
-/** Contenu choisi : 'tree', 'fan' ou 'book'. */
+/** Contenu choisi : 'tree', 'fan', 'book' (livret) ou 'fullbook' (livre complet par branche). */
 const printContent = () => $('#prContent').value;
+const isBook = (content) => content === 'book' || content === 'fullbook';
 
 /** Arbre complet, dans la disposition choisie : refait seulement quand elle change. */
 function treeLayout() {
@@ -266,12 +267,12 @@ export function updatePrintInfo() {
   }
   const content = printContent();
   fillTiles();
-  $('#prPaper').hidden = content === 'book';
-  $('#prTilesRow').hidden = content === 'book';
+  $('#prPaper').hidden = isBook(content);
+  $('#prTilesRow').hidden = isBook(content);
   $('#prLayoutRow').hidden = content !== 'tree';
-  $('#prPaperHint').hidden = content === 'book';
-  if (content === 'book') {
-    info.textContent = t('pr.bookInfo', S.people.size);
+  $('#prPaperHint').hidden = isBook(content);
+  if (isBook(content)) {
+    info.textContent = content === 'book' ? t('pr.bookInfo', S.people.size) : t('bb.info');
     return;
   }
   if (content === 'fan') {
@@ -326,7 +327,7 @@ export async function printTree() {
   const content = printContent();
   const fan = content === 'fan' ? fanSize() : null;
   const page = pageFor($('#prFormat').value, $('#prOrient').value, fan || layout);
-  const grid = content === 'book' ? null : gridFor(fan || layout);
+  const grid = isBook(content) ? null : gridFor(fan || layout);
 
   let style = $('#printPageStyle');
   if (!style) {
@@ -334,7 +335,7 @@ export async function printTree() {
     style.id = 'printPageStyle';
     document.head.appendChild(style);
   }
-  style.textContent = content === 'book'
+  style.textContent = isBook(content)
     ? pageRule(210, 297, 0) // les marges sont dans les pages du livret
     : grid ? sheetRule(grid.pageW, grid.pageH) : sheetRule(page.w, page.h);
 
@@ -348,7 +349,7 @@ export async function printTree() {
   ].filter(Boolean).join('  ·  ');
 
   const area = $('#printArea');
-  area.classList.toggle('book', content === 'book');
+  area.classList.toggle('book', isBook(content));
   area.classList.toggle('tiles', !!grid);
   if (grid) {
     area.style.width = `min(${grid.w}mm, 100%)`;
@@ -358,10 +359,10 @@ export async function printTree() {
       + (fan ? fanSVG(FAN_COLORS, 1) : treeSVG(layout, 1)) + '</svg>';
     area.innerHTML = planHTML(grid, drawing, fan || layout, title, legend)
       + grid.tiles.map((tile) => tileHTML(grid, tile, drawing, title)).join('');
-  } else if (content === 'book') {
+  } else if (isBook(content)) {
     area.style.width = '';
     area.style.height = '';
-    area.innerHTML = await bookletHTML(title);
+    area.innerHTML = await (content === 'book' ? bookletHTML(title) : fullBookHTML(title));
   } else {
     area.style.width = `min(${page.w - 2 * MARGIN - 1}mm, 100%)`;
     area.style.height = fitHeight(page.h - 2 * MARGIN - 1);
