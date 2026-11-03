@@ -10,12 +10,13 @@ import { datesOfDay, datesOfMonth } from '../model/ephemerides.js';
 import { findDuplicates } from '../model/duplicates.js';
 import { completenessReport, missingText } from '../model/completeness.js';
 import { timelineOf } from '../model/timeline.js';
-import { personOptions } from './form.js';
+import { personOptions, placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
+import { placeUses } from '../model/places.js';
 import { mediaGrid } from './fiche.js';
 
 const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['complete', 'an.complete'], ['dups', 'an.dups'], ['stats', 'an.stats'],
-  ['cal', 'an.cal'], ['time', 'an.time'], ['map', 'an.map'], ['gallery', 'an.gallery']];
+  ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery']];
 
 const name = (id) => esc(fullName(P(id)));
 const decimal = (x) => t('decimal', x.toFixed(1));
@@ -105,6 +106,22 @@ function completeView() {
   }
   return html;
 }
+
+/* ---------- Lieux ---------- */
+
+/** Lieux cités, avec leur nombre d'usages ; chacun se corrige partout en une fois. */
+function placesView() {
+  const uses = placeUses();
+  if (!uses.length) return `<p class="nofocus">${t('map.empty')}</p>`;
+  const rows = uses.map((u, i) => `<li class="chk place-row"><p><b>${esc(u.name)}</b> <span class="n">${t('pl.uses', u.n)}</span></p>`
+    + (S.canWrite
+      ? `${placeFields('pl-' + i, u.name)}<div class="row-btns"><button class="btn small" type="button" data-act="place-rename" data-i="${i}" data-from="${esc(u.name)}">${t('pl.rename')}</button></div>`
+      : '') + '</li>').join('');
+  return `<p class="hint an-hint">${t('pl.hint')}</p><ul class="chks">${rows}</ul>`;
+}
+
+/** Nouveau texte saisi pour le lieu de la ligne `i`. */
+export const placeRowValue = (i) => placeValue('pl-' + i);
 
 /* ---------- Statistiques ---------- */
 
@@ -229,7 +246,7 @@ export function renderAnalyse() {
   if (!S.kinA && P(S.focus)) S.kinA = S.focus;
   const seg = VIEWS.map(([view, label]) => `<button type="button" data-act="analyse-view" data-view="${view}" aria-pressed="${S.analyse === view}">${t(label)}</button>`).join('');
   const body = {
-    kin: kinView, checks: checksView, complete: completeView, dups: dupsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
+    kin: kinView, checks: checksView, complete: completeView, places: placesView, dups: dupsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
   }[S.analyse]();
   $('#paneAnalyse').innerHTML = `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`;
 }

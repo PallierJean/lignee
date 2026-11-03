@@ -207,6 +207,11 @@ dizaines de Ko), et affichée en haut de la fiche. Sans photo, la fiche montre
 sexe n'est pas précisé). Elle n'est pas exportée en GEDCOM ;
 la sauvegarde .json la conserve.
 
+Les lieux (`birthPlace`, `deathPlace`, lieu d'un événement ou d'une union) restent un texte, au
+format « Lieu-dit, Ville (Département) » : `Roussely, Orgnac-sur-Vézère (19)`. Le formulaire les
+saisit en trois champs (ville, lieu-dit, département) et recompose ce texte (`model/places.js`) ;
+le GEDCOM, la carte et la recherche le lisent tel quel.
+
 `surname` est le nom d'usage. `maidenName` est le nom de jeune fille d'une femme
 (facultatif) : affiché « DUPONT née FAURE », cherchable, et listé dans le registre
 sous les deux noms. En GEDCOM, le nom de naissance est exporté en premier `NAME`,
@@ -344,6 +349,9 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).
+- **Lieux** : chaque lieu cité, avec son nombre de mentions. On corrige la ville, le lieu-dit ou le
+  département, puis « Renommer partout » : naissances, décès, événements et unions suivent, en une
+  seule action annulable. Donner le nom d'un lieu existant réunit les deux.
 - **Carte** : lieux et migrations (du lieu de naissance d'un parent à celui de son enfant).
   Le bouton « Localiser » envoie les noms des lieux, et eux seuls, à OpenStreetMap (Nominatim),
   un par seconde. Rien ne part sans ce clic. Les coordonnées sont gardées dans ce navigateur
