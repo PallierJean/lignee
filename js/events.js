@@ -164,7 +164,7 @@ const CLICK_ACTIONS = {
   'dup-ignore': (el) => A.ignoreDuplicate(el.dataset.key),
   'time-scope': (el) => A.setTimeScope(el.dataset.family === 'true'),
   'map-locate': () => startLocate(),
-  'place-rename': once((el) => A.renamePlace(el.dataset.from, placeRowValue(+el.dataset.i))),
+  'place-rename': (el) => A.renamePlace(el.dataset.from, placeRowValue(+el.dataset.i)),
 
   // Galerie
   'media-open': (el) => openMedia(el.dataset.owner, el.dataset.id),
