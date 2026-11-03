@@ -20,7 +20,8 @@ import { toast } from './toast.js';
 import { t } from '../i18n.js';
 
 const MM = 96 / 25.4;                          // pixels CSS par millimètre
-const PAPER = { A4: [210, 297], A3: [297, 420], A2: [420, 594] };
+const PAPER = { A4: [210, 297], A3: [297, 420], A2: [420, 594], A1: [594, 841], A0: [841, 1189] };
+const FORMATS = Object.keys(PAPER);            // du plus petit au plus grand
 const TILE_CHOICES = [1, 2, 3, 4, 5, 6, 8, 10];  // feuilles de large proposées
 
 // Découpage automatique : millimètres par unité du dessin visés pour rester lisible
@@ -28,6 +29,7 @@ const READABLE = { tree: 2.5 / 14, fan: 2 / 8 };  // prénoms de 2,5 mm, plus pe
 const MARGIN = 10;                             // marge de la feuille, en mm
 const HEAD = 16;                               // titre et légende, en mm
 const MAX_SCALE = 1.6;                         // agrandissement maximal d'un petit arbre
+const SMALL_SCALE = 0.45;                      // en dessous, le texte est trop petit sur une feuille
 
 // Couleurs fixes : la feuille est toujours claire, quel que soit le thème de l'écran
 const C = {
@@ -60,6 +62,10 @@ function pageFor(format, orient, L) {
   if (orient === 'portrait') return portrait;
   return landscape.scale >= portrait.scale ? landscape : portrait;
 }
+
+/** Plus petit format supérieur où le dessin reste lisible sur une feuille, ou undefined. */
+const betterFormat = (format, orient, L) =>
+  FORMATS.slice(FORMATS.indexOf(format) + 1).find((f) => pageFor(f, orient, L).scale >= SMALL_SCALE);
 
 const ctx = document.createElement('canvas').getContext('2d');
 
@@ -265,7 +271,10 @@ export function updatePrintInfo() {
   const textMm = t('decimal', (14 * page.scale / MM).toFixed(1));
   const n = S.people.size;
   let text = t('pr.info', n, generationCount(layout), page.orient === 'landscape', pct, textMm);
-  if (page.scale < 0.45) text += t(format === 'A3' ? 'pr.smallA3' : 'pr.small');
+  if (page.scale < SMALL_SCALE) {
+    const better = betterFormat(format, $('#prOrient').value, layout);
+    text += better ? t('pr.smallFormat', better) : t('pr.small');
+  }
   info.textContent = text;
 }
 

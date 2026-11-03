@@ -289,7 +289,7 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
   remis en mairie : la personne, chaque union avec ses enfants directs, chacun en extrait
   (naissance, parents, profession, unions, décès ; sans les unions pour les enfants). Document de famille, sans valeur officielle.
 - « Découpage », dans la fenêtre Imprimer, répartit l'arbre ou la roue sur plusieurs feuilles
-  A4, A3 ou A2. En « Automatique » (par défaut), le nombre de feuilles dépend du dessin et du
+  A4, A3, A2, A1 ou A0. En « Automatique » (par défaut), le nombre de feuilles dépend du dessin et du
   format : juste assez pour des prénoms de 2,5 mm au moins (2 mm pour le plus petit texte de
   la roue), une seule feuille si elle suffit. Sinon, on choisit le nombre de feuilles de large,
   la hauteur s'en déduit, et en
@@ -308,7 +308,7 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
   couples groupés, portraits et sources. Ses pages A4 portent leurs propres marges, indépendantes
   des réglages de la fenêtre d'impression. L'arbre
   et la roue sont redessinés en SVG, à l'échelle d'une feuille
-  A3 ou A2, et l'application ouvre l'impression du navigateur : « Enregistrer au format PDF » donne
+  A3, A2, A1 ou A0, et l'application ouvre l'impression du navigateur : « Enregistrer au format PDF » donne
   un PDF vectoriel au bon format (règle `@page`).
 
 ## Annuler / rétablir
