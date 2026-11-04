@@ -361,7 +361,8 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
   Les liens sont aussi vérifiés : sexe du père et de la mère, grand-parent et petit-enfant à moins
   de 34 ans d'écart, parent connu par une union mais non rattaché, marié sans conjoint, personne sans
   décès de plus de 110 ans (d'après sa naissance ou celle de son premier enfant), nom de naissance
-  différent de celui du père.
+  qui n'est ni celui du père, ni le double nom du père et de la mère (dans un sens ou dans l'autre,
+  espaces et tirets indifférents).
 
 - **Doublons** : fiches au même prénom usuel et au même nom, sans date contradictoire. La fusion
   reporte enfants, unions et identifications sur la fiche gardée ; elle s'annule. « Ce n'est pas

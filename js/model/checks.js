@@ -131,9 +131,12 @@ export function findIssues(now = new Date()) {
 
     const father = P(p.fatherId);
     if (father && father.sex !== 'F' && p.fatherId !== id) {
+      // Le nom du père, ou le double nom du père et de la mère, dans un sens ou dans l'autre
       const own = nameKey(birthName(id));
       const his = nameKey(father.surname);
-      if (own && his && own !== his) add('nameNotFather', 'warn', [id, p.fatherId], birthName(id));
+      const hers = P(p.motherId) ? nameKey(birthName(p.motherId)) : '';
+      const both = hers ? [his + hers, hers + his] : [];
+      if (own && his && own !== his && !both.includes(own)) add('nameNotFather', 'warn', [id, p.fatherId], birthName(id));
     }
 
     for (const e of events) {
