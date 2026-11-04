@@ -378,7 +378,8 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
   reporte enfants, unions et identifications sur la fiche gardée ; elle s'annule. « Ce n'est pas
   un doublon » est gardé dans ce navigateur, pour chaque arbre (clé `lignee.dups.v1`) : la paire
   n'est plus proposée, même après rechargement.
-- **INSEE** (avec `npm start` seulement) : rapproche les fiches du fichier des décès de l'INSEE
+- **INSEE** (avec `npm start` seulement : matchID n'autorise pas les appels venant d'une page web
+  (pas d'en-têtes CORS), le site GitHub Pages ne peut donc pas l'interroger) : rapproche les fiches du fichier des décès de l'INSEE
   (décès survenus en France depuis 1970), que publie matchID. « Vérifier » interroge, une fiche par
   seconde, les fiches nouvelles ou dont le nom, le prénom, le sexe ou la naissance a changé ; les
   autres gardent leur résultat (clé `lignee.insee.v1` de ce navigateur, par arbre). Ne partent que le
