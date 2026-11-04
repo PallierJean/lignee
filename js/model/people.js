@@ -373,7 +373,7 @@ export function ageInfo(p) {
 }
 
 // Âges en dessous desquels l'arbre et la fiche ne proposent pas d'ajout
-export const CHILD_AGE = 18; // un enfant : majorité
+export const CHILD_AGE = 17; // un enfant
 export const UNION_AGE = 15; // un conjoint ou une union : majorité sexuelle (on se mariait jadis dès 15 ans)
 
 /**

@@ -60,7 +60,7 @@ describe('rendu général', () => {
     assert.ok(fiche.includes('data-act="family-book"'));
   });
 
-  test('fiche d’une personne de moins de 18 ans : pas de bouton « Ajouter un enfant »', () => {
+  test('fiche d’une personne de moins de 17 ans : pas de bouton « Ajouter un enfant »', () => {
     const year = new Date().getFullYear();
     const camille = S.focus;
     const before = S.people.get(camille).birthDate;

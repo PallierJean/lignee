@@ -84,7 +84,7 @@ export function ficheHTML(id) {
       .map((pt) => chip(pt.id, '', t('stepOf', P(pt.id).sex === 'F', ofMother))))
     .join('');
   const severalPartners = partners.length > 1;
-  const minor = isMinor(P(id)); // moins de 18 ans : pas d'enfant à ajouter
+  const minor = isMinor(P(id)); // moins de 17 ans : pas d'enfant à ajouter
   const young = isMinor(P(id), undefined, UNION_AGE); // moins de 15 ans : pas de conjoint à ajouter
   const childChip = (k) => {
     const c = P(k);
