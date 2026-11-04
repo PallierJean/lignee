@@ -115,10 +115,16 @@ function personHTML(id) {
       ${p.notes ? `<section><h3>${t('notes')}</h3><p class="pd-notes">${esc(p.notes)}</p></section>` : ''}
     </div>
     <footer class="pd-foot">
+      ${S.canWrite && S.confirmDel === id
+        ? `<div class="confirm"><p>${esc(t('deleteAsk', fullName(p)))}</p>`
+          + `<button class="btn danger" type="button" data-act="delete-yes" data-id="${esc(id)}">${t('delete')}</button>`
+          + `<button class="btn" type="button" data-act="delete-no">${t('cancel')}</button></div>`
+        : ''}
       <span class="pd-meta">${esc(updated)}</span>
       <span class="row-btns">
         <button class="btn" type="button" data-act="family-book" data-id="${esc(id)}">${t('fb.open')}</button>
         ${id !== S.focus ? `<button class="btn" type="button" data-act="person-center" data-id="${esc(id)}">${t('pd.center')}</button>` : ''}
+        ${S.canWrite ? `<button class="btn quiet" type="button" data-act="delete-ask" data-id="${esc(id)}">${t('delete')}</button>` : ''}
         ${S.canWrite ? `<button class="btn primary" type="button" data-act="person-edit" data-id="${esc(id)}">${t('pd.edit')}</button>` : ''}
       </span>
     </footer>`;

@@ -22,6 +22,7 @@ import { blankDraft, captureDraft, focusFirstField } from './ui/form.js';
 import { toast } from './ui/toast.js';
 import { t, getLang, setLang } from './i18n.js';
 import { updatePrintInfo } from './ui/print.js';
+import { renderPersonDlg } from './ui/person-dlg.js';
 import { photoFromFile, DOCUMENT_SIDE } from './utils/image.js';
 
 /** Situations partagées avec le conjoint actuel. */
@@ -697,13 +698,17 @@ export async function submitEdit() {
 
 /* ---------- Suppression ---------- */
 
-export function confirmDelete(show) {
-  S.confirmDel = show;
+/** Affiche (ou retire) la confirmation de suppression de la fiche `id` : panneau ou fenêtre de la personne. */
+export function confirmDelete(show, id = S.focus) {
+  S.confirmDel = show ? id : false;
   renderFiche();
+  renderPersonDlg();
 }
 
+/** Supprime la fiche `id` (personne centrale ou non, même en cours de modification). */
 export async function doDelete(id) {
   if (!S.canWrite || !S.people.has(id)) return;
+  if (S.edit && S.edit.id === id) S.edit = null; // supprimée depuis son formulaire : la saisie est abandonnée
   const p = P(id);
   const kids = childrenOf(id).slice();
   const partners = partnersOf(id);
@@ -725,7 +730,7 @@ export async function doDelete(id) {
     }
     await opDelete('people', id);
     S.confirmDel = false;
-    S.focus = next;
+    if (S.focus === id) S.focus = next; // une autre fiche supprimée : la personne centrale reste
     commitAction();
     S.scrollPending = true;
     savePrefs();

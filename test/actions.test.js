@@ -5,6 +5,7 @@ import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { bindEvents } from '../js/events.js';
 import { afterData } from '../js/ui/render.js';
+import { openPersonDlg } from '../js/ui/person-dlg.js';
 import { currentSituation, unionCauseText } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
 import { CW, DUP_KEY } from '../js/config.js';
@@ -506,6 +507,36 @@ describe('suppression, exemples, fusion', () => {
     await A.undo();
     assert.equal(S.people.get(camille).fatherId, michel);
     await A.doDelete('absent');
+  });
+
+  test('supprimer depuis la fenêtre d’une personne : la personne centrale reste', async () => {
+    const hugo = ex.people.find((p) => p.given === 'Hugo').id;
+    openPersonDlg(hugo);
+    assert.match(html('personCard'), new RegExp(`data-act="delete-ask" data-id="${hugo}"`));
+    A.confirmDelete(true, hugo);
+    assert.match(html('personCard'), new RegExp(`data-act="delete-yes" data-id="${hugo}"`));
+    assert.doesNotMatch(html('paneFiche'), /data-act="delete-yes"/, 'la fiche de Camille ne demande rien');
+    await A.doDelete(hugo);
+    assert.ok(!S.people.has(hugo));
+    assert.equal(S.focus, camille);
+    assert.equal(S.popup, null, 'la fenêtre se ferme');
+    await A.undo();
+    assert.ok(S.people.has(hugo));
+  });
+
+  test('supprimer depuis le formulaire d’une fiche créée au mauvais endroit', async () => {
+    const lea = ex.people.find((p) => p.given === 'Léa').id;
+    A.startEdit(lea);
+    assert.match(html('paneFiche'), /data-act="form-delete-ask"/);
+    assert.match(html('paneFiche'), new RegExp(`id="f-delconfirm" hidden>.*data-act="delete-yes" data-id="${lea}"`, 's'));
+    await A.doDelete(lea);
+    assert.equal(S.edit, null, 'la saisie est abandonnée');
+    assert.ok(!S.people.has(lea));
+    await A.undo();
+    assert.ok(S.people.has(lea));
+    A.startNew();
+    assert.doesNotMatch(html('paneFiche'), /form-delete-ask/, 'rien à supprimer pour une fiche pas encore créée');
+    A.cancelEdit();
   });
 
   test('retirer les exemples, puis annuler', async () => {
