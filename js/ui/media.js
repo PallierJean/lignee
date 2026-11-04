@@ -5,7 +5,7 @@
 import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, fullName, mediaList, photoSrc } from '../model/people.js';
+import { P, fullName, mediaList, photoSrc, peopleNamedIn } from '../model/people.js';
 import { opUpdate, beginAction, commitAction } from '../services/storage.js';
 import { afterData } from './render.js';
 import { personOptions } from './form.js';
@@ -33,13 +33,23 @@ export function renderMedia() {
   const names = tags.filter((x) => P(x.id)).map((x, i) => `<li><span class="tag-n">${i + 1}</span>`
     + `<button class="link" type="button" data-act="media-person" data-id="${esc(x.id)}">${esc(fullName(P(x.id)))}</button>`
     + (S.canWrite ? ` <button class="link" type="button" data-act="tag-remove" data-i="${tags.indexOf(x)}">${t('med.untag')}</button>` : '') + '</li>').join('');
+  // Les personnes nommées dans la légende, pas encore identifiées, en tête de la liste
+  const tagged = new Set(tags.map((x) => x.id));
+  const named = peopleNamedIn([m.title, m.note].join(' ')).filter((id) => !tagged.has(id));
+  const options = named.length
+    ? `<optgroup label="${t('med.named')}">${named.map((id) => `<option value="${esc(id)}">${esc(fullName(P(id)))}</option>`).join('')}</optgroup>`
+      + `<optgroup label="${t('med.everyone')}">${personOptions('')}</optgroup>`
+    : personOptions('');
   const picker = pin
-    ? `<div class="row-btns tag-pick"><select id="tagPerson" aria-label="${t('med.who')}"><option value="">${t('med.who')}</option>${personOptions('')}</select>`
+    ? `<div class="row-btns tag-pick"><select id="tagPerson" aria-label="${t('med.who')}"><option value="">${t('med.who')}</option>${options}</select>`
       + `<button class="btn small" type="button" data-act="tag-cancel">${t('cancel')}</button></div>`
-    : S.canWrite ? `<p class="hint">${t('med.hint')}</p>` : '';
+    : '';
+  // La consigne au-dessus de l'image : c'est là qu'on clique
+  const hint = S.canWrite && !pin ? `<p class="hint tag-hint">${t('med.hint')}</p>` : '';
   $('#mediaCard').innerHTML = `<div class="sheet-head"><h2 id="mdTitle">${esc(m.title || t('med.untitled'))}</h2>`
     + `<button class="icon-btn" type="button" data-act="media-close" aria-label="${t('close')}">×</button></div>`
-    + `<div class="media-pic" data-act="media-pic"><img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">${marks}`
+    + hint
+    + `<div class="media-pic${S.canWrite ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">${marks}`
     + (pin ? `<span class="tag-pin new" style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
     + `${m.date || m.note ? `<p>${esc([m.date, m.note].filter(Boolean).join(' · '))}</p>` : ''}`
     + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker;

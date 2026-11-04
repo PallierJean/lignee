@@ -239,6 +239,8 @@ describe('fiche : événements, sources, galerie', () => {
     assert.ok(fiche.includes('fin : Divorce, 1960'));
     assert.ok(fiche.includes('Ajouter un enfant avec Yves BLANC') || fiche.includes('Ajouter un enfant avec Yves'));
     assert.ok(fiche.includes('class="meds"'));
+    assert.match(fiche, /Ouvrez une photo pour identifier les personnes/);
+    assert.match(fiche, /<span class="med-n" title="1 personne identifiée">1<\/span>/);
   });
 
   test('fiche en fenêtre : frise de vie, ouverture et fermeture', () => {
@@ -252,13 +254,21 @@ describe('fiche : événements, sources, galerie', () => {
   });
 
   test('visionneuse : repère neutralisé, identification, retrait', async () => {
+    S.people.get('a').media[0].note = 'Lyon, avec Léa et Yves';
     openMedia('a', 'm1');
     assert.ok(html('mediaCard').includes('left:0%;top:20%'), 'position piégée remise à zéro');
+    assert.match(html('mediaCard'), /class="hint tag-hint">Pour identifier quelqu’un, cliquez sur son visage/);
+    assert.match(html('mediaCard'), /class="media-pic can-tag"/);
     assert.ok(html('mediaCard').includes('Paul BLANC'));
     const pic = el('mediaPic');
     pic.querySelector = () => ({ getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 100 }) });
     placePin(pic, { target: { closest: () => null }, clientX: 100, clientY: 50 });
     assert.ok(html('mediaCard').includes('id="tagPerson"'));
+    assert.doesNotMatch(html('mediaCard'), /Nommés dans la légende/, 'pas de nom complet dans la légende');
+    S.people.get('a').media[0].note = 'Avec Léa Blanc';
+    S.people.get('c').surname = 'Blanc';
+    placePin(pic, { target: { closest: () => null }, clientX: 100, clientY: 50 });
+    assert.match(html('mediaCard'), /<optgroup label="Nommés dans la légende"><option value="c">Léa BLANC<\/option><\/optgroup>/);
     cancelPin();
     assert.ok(!html('mediaCard').includes('id="tagPerson"'));
     placePin(pic, { target: { closest: () => null }, clientX: 100, clientY: 50 });
