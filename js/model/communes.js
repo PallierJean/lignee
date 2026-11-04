@@ -45,6 +45,7 @@ export const departmentsText = (codes) => codes.map((c) => `${departmentName(c)}
  */
 export function placeDepartmentIssue(place) {
   const pl = parsePlace(place);
+  if (pl.country) return null; // à l'étranger : pas de département français à vérifier
   const expected = cityDepartments(pl.city);
   const code = departmentCode(pl.dept);
   if (!expected.length || !code || expected.includes(code)) return null;

@@ -31,14 +31,11 @@
 }
 
 /* Lieu : ville sur toute la largeur, puis lieu-dit et département */
+/* Lieu : ville et pays, puis lieu-dit et département */
 .place3 {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 8em;
+  grid-template-columns: minmax(0, 1fr) 9em;
   gap: 10px;
-}
-
-.place3 .city {
-  grid-column: 1 / -1;
 }
 
 .dept-name {
