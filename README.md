@@ -381,7 +381,9 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
   autres gardent leur résultat (clé `lignee.insee.v1` de ce navigateur, par arbre). Ne partent que le
   nom de naissance, le premier prénom, le sexe et la date de naissance ; ni les personnes mortes avant
   1970 ou nées avant 1870, ni les vivants de moins de 75 ans. L'acte retenu est « certain » (même
-  date de naissance exacte, sans homonyme), « probable » ou une simple piste (`model/insee.js`).
+  date de naissance exacte, sans homonyme), « probable » ou une simple piste (`model/insee.js`) ;
+  « C'est bien lui / elle » confirme une piste, qui se reporte alors comme un acte sûr (la
+  confirmation vaut pour cet acte-là).
   La vue liste les écarts (date ou lieu de naissance ou de décès, personne marquée vivante), ce qui
   complète la fiche, les prénoms de l'état civil et le numéro de l'acte de décès ; « Reporter »
   écrit une valeur dans la fiche, en une action annulable. Les prénoms et le nom ne sont que

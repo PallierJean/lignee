@@ -17,9 +17,9 @@ import { loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText } f
 import { mediaGrid } from './fiche.js';
 import { toast } from './toast.js';
 import { longDate } from '../utils/dates.js';
-import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace } from '../model/insee.js';
+import { inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace } from '../model/insee.js';
 import {
-  inseeAvailable, inseePending, inseeResults, checkInsee, forgetInsee, inseeStatus, inseeRegister, inseeAuth,
+  inseeAvailable, inseePending, inseeResults, inseeMatch, checkInsee, forgetInsee, inseeStatus, inseeRegister, inseeAuth,
 } from '../services/insee.js';
 
 const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['insee', 'an.insee'], ['stats', 'an.stats'],
@@ -142,10 +142,13 @@ function inseeRow(id, m, diffs) {
   const level = `<span class="n">${t('ins.' + m.level)}${m.others ? ' · ' + t('ins.others', m.others) : ''}</span>`;
   const all = S.canWrite && diffs.filter((x) => x.patch).length > 1
     ? `<button class="btn small" type="button" data-act="insee-apply" data-id="${esc(id)}">${t('ins.applyAll')}</button>` : '';
+  // Piste : l'utilisateur peut la confirmer, ses écarts deviennent alors reportables
+  const confirm = m.level === 'lead'
+    ? `<button class="btn small" type="button" data-act="insee-confirm" data-id="${esc(id)}">${t('ins.confirm', p.sex === 'F')}</button>` : '';
   return `<li class="chk${diffs.some((x) => x.kind === 'fix') ? '' : ' info'}"><p>${personLink(id)} <small>${esc(lifeYears(p))}</small> ${level}</p>`
     + (diffs.length ? `<ul class="ins-diffs">${diffs.map((x, k) => diffLine(id, x, k)).join('')}</ul>` : '')
     + `<p class="hint">${actLine(m.act)}</p>`
-    + `<div class="row-btns">${all}<button class="btn small quiet" type="button" data-act="insee-ignore" data-id="${esc(id)}">${t('ins.ignore')}</button></div></li>`;
+    + `<div class="row-btns">${confirm}${all}<button class="btn small quiet" type="button" data-act="insee-ignore" data-id="${esc(id)}">${t('ins.ignore')}</button></div></li>`;
 }
 
 function inseeView() {
@@ -157,7 +160,7 @@ function inseeView() {
   for (const id of S.people.keys()) {
     const entry = results[id];
     if (!entry || entry.ignored || entry.sig !== inseeSignature(inseeQuery(id))) continue;
-    const m = matchDeath(id, entry.acts);
+    const m = inseeMatch(id);
     if (!m) continue;
     const diffs = m.level === 'lead' ? [] : deathDifferences(id, m.act);
     if (m.level === 'lead') groups.leads.push(inseeRow(id, m, diffs));
