@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
-import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, estimatedBirth } from '../js/model/insee.js';
+import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace, estimatedBirth } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
 import { renderAnalyse, startInsee, inseeSendCode, inseeSendAuth } from '../js/ui/analyse.js';
@@ -69,6 +69,8 @@ describe('INSEE : qui est vérifié, et avec quoi', () => {
     assert.equal(actDateText('19721212'), '12/12/1972');
     assert.equal(actDateText('19720000'), '1972');
     assert.equal(actDateText(''), '');
+    assert.equal(actPlace({ city: 'Tulle', dept: '19', country: 'France' }), 'Tulle (19)');
+    assert.equal(actPlace({ city: 'Fribourg', dept: '99', country: 'Allemagne' }), 'Fribourg, Allemagne');
   });
 });
 
