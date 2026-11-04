@@ -464,6 +464,7 @@
 }
 
 .med {
+  position: relative;
   padding: 0;
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -475,6 +476,21 @@
 
 .med:hover {
   border-color: var(--accent);
+}
+
+/* Vignette : nombre de personnes identifiées, dans le coin */
+.med-n {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  min-width: 18px;
+  padding: 0 5px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  line-height: 18px;
+  color: var(--surface);
+  background: var(--accent);
+  border-radius: 9px;
 }
 
 .med img {
@@ -506,6 +522,14 @@
   max-width: 100%;
   line-height: 0;
   cursor: crosshair;
+}
+
+.media-pic.can-tag img {
+  cursor: crosshair;
+}
+
+.tag-hint {
+  margin: 0 0 8px;
 }
 
 .media-pic img {
