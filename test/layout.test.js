@@ -79,6 +79,17 @@ describe('vue centrée sur une personne', () => {
     assert.equal(childSlot(), true, 'sans date de naissance : proposé');
   });
 
+  test('moins de 15 ans : pas de case « Ajouter un conjoint » ; de 15 à 18 ans, le conjoint mais pas l’enfant', () => {
+    const year = new Date().getFullYear();
+    const slot = (rel) => buildLayout().nodes.some((n) => n.t === 'ph' && n.rel === rel);
+    loadTree([person('moi', { given: 'Tao', birthDate: String(year - 3) })]);
+    S.focus = 'moi';
+    assert.equal(slot('spouse'), false);
+    loadTree([person('moi', { given: 'Ana', birthDate: String(year - 16) })]);
+    assert.equal(slot('spouse'), true);
+    assert.equal(slot('child'), false);
+  });
+
   test('aucun ascendant : ni parents, ni fratrie, ni trait vers eux', () => {
     loadTree([
       person('pere', { given: 'Père' }),

@@ -372,11 +372,16 @@ export function ageInfo(p) {
   return { label: t('age'), text: t('about', approx) };
 }
 
+// Âges en dessous desquels l'arbre et la fiche ne proposent pas d'ajout
+export const CHILD_AGE = 18; // un enfant : majorité
+export const UNION_AGE = 15; // un conjoint ou une union : majorité sexuelle (on se mariait jadis dès 15 ans)
+
 /**
- * Vrai si la personne a sûrement moins de 18 ans, aujourd'hui ou à sa mort : l'arbre et la fiche
- * ne proposent pas de lui ajouter un enfant. Une date incertaine ou absente ne conclut rien.
+ * Vrai si la personne a sûrement moins de `age` ans, aujourd'hui ou à sa mort : l'arbre et la fiche
+ * ne proposent pas de lui ajouter un enfant (CHILD_AGE) ou un conjoint (UNION_AGE). Une date
+ * incertaine ou absente ne conclut rien.
  */
-export function isMinor(p, now = new Date()) {
+export function isMinor(p, now = new Date(), age = CHILD_AGE) {
   const birth = dateBounds(p && p.birthDate);
   if (!birth || !Number.isFinite(birth.lo)) return false;
   let end = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
@@ -385,7 +390,7 @@ export function isMinor(p, now = new Date()) {
     if (!death || !Number.isFinite(death.hi)) return false;
     end = death.hi;
   }
-  return yearsBetween(birth.lo, end) < 18;
+  return yearsBetween(birth.lo, end) < age;
 }
 
 /* ---------- Liens de parenté ---------- */
