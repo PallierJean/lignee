@@ -74,7 +74,7 @@ describe('navigation et affichage', () => {
     A.recenter();
   });
 
-  test('ascendants : fenêtre de quatre valeurs, jusqu’à l’écart de générations de l’arbre', () => {
+  test('ascendants : fenêtre de quatre valeurs, jusqu’au plus lointain ancêtre de la personne choisie', () => {
     const shown = (up) => {
       A.setGenerations('up', up);
       return [...el('segUp').innerHTML.matchAll(/data-n="(\d+)"[^>]*>([^<]+)</g)].map((m) => m[2]).join(' ');
@@ -90,8 +90,13 @@ describe('navigation et affichage', () => {
     assert.equal(shown(7), '… 5 6 7 8');
     assert.equal(shown(8), '… 5 6 7 8');
     assert.match(el('segUp').innerHTML, /data-n="7"[^>]*>…</); // recule d'un cran
+    S.focus = 'g5'; // trois générations au-dessus de g5 : le choix s'arrête à 3
+    assert.equal(shown(8), '0 1 2 3');
+    S.focus = 'g8'; // sans parent : de quoi ajouter parents et grands-parents
+    assert.equal(shown(8), '0 1 2');
+    S.focus = 'g0';
 
-    loadTree(chain(5)); // S.up garde 8, le choix affiché s'arrête à l'arbre
+    loadTree(chain(5)); // S.up garde 8, le choix affiché s'arrête au plus lointain ancêtre
     A.setGenerations('up', 8);
     assert.equal(S.up, 8);
     assert.match(el('segUp').innerHTML, /data-n="4"[^>]*aria-pressed="true"/);

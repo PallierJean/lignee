@@ -395,6 +395,19 @@ export function isMinor(p, now = new Date(), age = CHILD_AGE) {
 
 /* ---------- Liens de parenté ---------- */
 
+/** Nombre de générations d'ancêtres au-dessus de la personne `id` (0 sans parent connu). */
+export function ancestorDepth(id) {
+  let depth = 0;
+  let row = [id];
+  const seen = new Set(row);
+  for (;;) {
+    const next = row.flatMap((x) => [P(x).fatherId, P(x).motherId]).filter((k) => P(k) && !seen.has(k) && seen.add(k));
+    if (!next.length) return depth;
+    depth++;
+    row = next;
+  }
+}
+
 /** Nombre de générations de descendants sous la personne `id` (0 sans enfant). */
 export function descendantDepth(id) {
   let depth = 0;

@@ -3,8 +3,7 @@ import { renderRepoBanner } from './repo-link.js';
 import { S, isLoading, treeName } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { yearOf } from '../utils/dates.js';
-import { P, surname, descendantDepth } from '../model/people.js';
-import { generationSpan } from '../tree/full-layout.js';
+import { P, surname, ancestorDepth, descendantDepth } from '../model/people.js';
 import { t } from '../i18n.js';
 import { canUndo, canRedo } from '../services/history.js';
 
@@ -32,9 +31,10 @@ function generationButtons(kind, value, max, off) {
 /** Boutons du nombre de générations et niveau de zoom. */
 export function renderControls() {
   const off = S.full || S.fan ? ' disabled' : '';
-  // Ascendants : jusqu'à l'écart de générations de tout l'arbre ; descendants : jusqu'au dernier de la personne choisie
-  $('#segUp').innerHTML = generationButtons('up', S.up, Math.max(generationSpan(), UP_MIN), off);
-  $('#segDown').innerHTML = generationButtons('down', S.down, Math.max(P(S.focus) ? descendantDepth(S.focus) : 0, DOWN_MIN), off);
+  // Jusqu'au plus lointain ancêtre et au dernier descendant de la personne choisie
+  const focus = P(S.focus) ? S.focus : null;
+  $('#segUp').innerHTML = generationButtons('up', S.up, Math.max(focus ? ancestorDepth(focus) : 0, UP_MIN), off);
+  $('#segDown').innerHTML = generationButtons('down', S.down, Math.max(focus ? descendantDepth(focus) : 0, DOWN_MIN), off);
   $('#btnFull').setAttribute('aria-pressed', String(S.full && !S.fan));
   $('#btnFan').setAttribute('aria-pressed', String(S.fan));
   $('#btnLine').setAttribute('aria-pressed', String(S.line));
