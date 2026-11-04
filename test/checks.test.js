@@ -138,7 +138,11 @@ describe('vérification de cohérence', () => {
       person('j', { sex: 'M', surname: 'Durand--Vittoz', fatherId: 'f', motherId: 'm' }),
       person('k', { sex: 'M', surname: 'Durand Martin', fatherId: 'f', motherId: 'm' }),
       person('l', { sex: 'M', surname: 'Durand Vittoz', fatherId: 'f' }), // mère inconnue : rien ne justifie le double nom
-    ], [{ a: 'd', b: 'h' }, { a: 'f', b: 'm' }]);
+      // Mère mariée sans nom de jeune fille saisi : son nom de naissance est celui de son père
+      person('gp', { sex: 'M', surname: 'Blanc', deceased: true }),
+      person('m2', { sex: 'F', surname: 'Durand', fatherId: 'gp', deceased: true }),
+      person('n', { sex: 'M', surname: 'Durand Blanc', fatherId: 'f', motherId: 'm2' }),
+    ], [{ a: 'd', b: 'h' }, { a: 'f', b: 'm' }, { a: 'f', b: 'm2' }]);
     const found = findIssues(NOW).filter((x) => x.code === 'nameNotFather').map((x) => [x.ids[0], x.n]);
     assert.deepEqual(found, [['a', 'Martin'], ['e', 'Petit'], ['k', 'Durand Martin'], ['l', 'Durand Vittoz']]);
   });

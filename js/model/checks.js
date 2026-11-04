@@ -9,7 +9,7 @@
 import { S } from '../state.js';
 import { dateBounds, isImpossibleDate, yearsBetween } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
-import { P, eventsOf, isDead, partnersOf, childrenOf } from './people.js';
+import { P, eventsOf, isDead, partnersOf, childrenOf, birthSurname } from './people.js';
 import { placeUses, parsePlace } from './places.js';
 import { placeDepartmentIssue, departmentsText } from './communes.js';
 import { t } from '../i18n.js';
@@ -134,7 +134,9 @@ export function findIssues(now = new Date()) {
       // Le nom du père, ou le double nom du père et de la mère, dans un sens ou dans l'autre
       const own = nameKey(birthName(id));
       const his = nameKey(father.surname);
-      const hers = P(p.motherId) ? nameKey(birthName(p.motherId)) : '';
+      // Nom de naissance de la mère : saisi, sinon celui de son propre père
+      const mother = P(p.motherId);
+      const hers = mother ? nameKey(birthName(p.motherId) || birthSurname(mother.fatherId, mother.motherId)) : '';
       const both = hers ? [his + hers, hers + his] : [];
       if (own && his && own !== his && !both.includes(own)) add('nameNotFather', 'warn', [id, p.fatherId], birthName(id));
     }
