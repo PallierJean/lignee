@@ -12,8 +12,8 @@ import { opSet, opUpdate, opDelete, storePhoto, beginAction, commitAction, undoA
 import { relationship } from './model/kinship.js';
 import { mergedData } from './model/duplicates.js';
 import { renamePatches } from './model/places.js';
-import { matchDeath, deathDifferences } from './model/insee.js';
-import { inseeResults, ignoreInsee } from './services/insee.js';
+import { deathDifferences } from './model/insee.js';
+import { inseeMatch, ignoreInsee, confirmInsee } from './services/insee.js';
 import { ignorePair } from './services/dup-ignore.js';
 import { renderTree, scrollToFocus, scrollToPerson } from './tree/render.js';
 import { renderAll, renderSide, renderFiche, afterData } from './ui/render.js';
@@ -850,8 +850,7 @@ export async function renamePlace(from, to) {
 
 /** Écarts reportables d'une fiche avec son acte INSEE (correspondance sûre ou probable). */
 export function inseeDifferences(id) {
-  const entry = inseeResults()[id];
-  const m = entry && matchDeath(id, entry.acts);
+  const m = inseeMatch(id);
   return m && m.level !== 'lead' ? deathDifferences(id, m.act) : [];
 }
 
@@ -877,6 +876,12 @@ export async function applyInsee(id, i) {
     afterData();
   }
   toast(t('ins.applied', diffs.length));
+}
+
+/** « C'est bien lui » : la piste INSEE de cette fiche devient son acte. */
+export function confirmInseeOf(id) {
+  confirmInsee(id);
+  renderSide();
 }
 
 /** N'affiche plus les écarts INSEE de cette fiche. */
