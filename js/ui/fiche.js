@@ -158,7 +158,7 @@ export function ficheHTML(id) {
 
   if (S.canWrite) {
     html += '<div class="actions">';
-    html += S.confirmDel
+    html += S.confirmDel === id
       ? `<div class="confirm"><p>${esc(t('deleteAsk', fullName(p)))}</p>`
         + `<button class="btn danger" type="button" data-act="delete-yes">${t('delete')}</button>`
         + `<button class="btn" type="button" data-act="delete-no">${t('cancel')}</button></div>`

@@ -222,6 +222,11 @@
   margin-top: 4px;
 }
 
+/* Supprimer la fiche : à l'écart d'Enregistrer */
+.form-actions .f-del {
+  margin-left: auto;
+}
+
 @media (max-width: 900px) {
   .form-actions {
     bottom: env(safe-area-inset-bottom, 0px);

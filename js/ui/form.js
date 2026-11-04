@@ -324,7 +324,11 @@ export function formHTML() {
     <div class="form-actions">
       <button class="btn primary" type="submit" id="f-submit">${t('save')}</button>
       <button class="btn" type="button" data-act="cancel-edit">${t('cancel')}</button>
+      ${e.id ? `<button class="btn quiet f-del" type="button" data-act="form-delete-ask">${t('delete')}</button>` : ''}
     </div>
+    ${e.id ? `<div class="confirm" id="f-delconfirm" hidden><p>${esc(t('deleteAsk', fullName(P(e.id))))}</p>`
+      + `<button class="btn danger" type="button" data-act="delete-yes" data-id="${esc(e.id)}">${t('delete')}</button>`
+      + `<button class="btn" type="button" data-act="form-delete-no">${t('cancel')}</button></div>` : ''}
     ${['hamlet', 'city'].map((k) => `<datalist id="dl-place-${k}">${[...parts[k]].sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>`).join('')}
     <datalist id="dl-place-country">${COUNTRIES.map(([fr, en]) => `<option value="${esc(getLang() === 'en' ? en : fr)}"></option>`).join('')}</datalist>
     <datalist id="dl-place-dept">${[...parts.dept].filter((x) => !departmentName(x)).sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}${Object.entries(DEPARTMENTS).map(([code, name]) => `<option value="${code}" label="${esc(name)}"></option>`).join('')}</datalist>

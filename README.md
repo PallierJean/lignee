@@ -295,6 +295,9 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
   qui renvoie à une fonction de `actions.js`.
 - Les actions modifient `S` (dans `state.js`) et enregistrent via `services/storage.js`,
   puis `afterData()` recalcule les liens de parenté et redessine la page.
+- « Supprimer » une fiche se trouve sur la fiche de la personne centrale, dans la fenêtre d'une
+  personne (clic sur sa carte) et dans le formulaire d'une fiche existante (pour une personne créée
+  au mauvais endroit). Une confirmation est demandée ; ses liens sont retirés, « Annuler » rétablit tout.
 - `tree/layout.js` place les ascendants au-dessus de la personne centrale
   (numérotation Sosa : père = 2n, mère = 2n + 1) et les descendants en dessous,
   avec tous les conjoints de chaque personne : le premier à droite, le second à gauche, les
