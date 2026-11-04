@@ -131,9 +131,16 @@ describe('vérification de cohérence', () => {
       person('d', { sex: 'F', surname: 'Roux', fatherId: 'f' }), // mariée sans nom de jeune fille : pas de conclusion
       person('h', { sex: 'M', surname: 'Roux', deceased: true }),
       person('e', { sex: 'F', surname: 'Petit', fatherId: 'f' }),
-    ], [{ a: 'd', b: 'h' }]);
+      // Double nom : celui du père et celui de naissance de la mère, dans un sens ou dans l'autre
+      person('m', { sex: 'F', surname: 'Durand', maidenName: 'Vittoz', deceased: true }),
+      person('g', { sex: 'M', surname: 'Durand Vittoz', fatherId: 'f', motherId: 'm' }),
+      person('i', { sex: 'M', surname: 'Vittoz-Durand', fatherId: 'f', motherId: 'm' }),
+      person('j', { sex: 'M', surname: 'Durand--Vittoz', fatherId: 'f', motherId: 'm' }),
+      person('k', { sex: 'M', surname: 'Durand Martin', fatherId: 'f', motherId: 'm' }),
+      person('l', { sex: 'M', surname: 'Durand Vittoz', fatherId: 'f' }), // mère inconnue : rien ne justifie le double nom
+    ], [{ a: 'd', b: 'h' }, { a: 'f', b: 'm' }]);
     const found = findIssues(NOW).filter((x) => x.code === 'nameNotFather').map((x) => [x.ids[0], x.n]);
-    assert.deepEqual(found, [['a', 'Martin'], ['e', 'Petit']]);
+    assert.deepEqual(found, [['a', 'Martin'], ['e', 'Petit'], ['k', 'Durand Martin'], ['l', 'Durand Vittoz']]);
   });
 
   test('unions et événements', () => {
