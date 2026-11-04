@@ -6,7 +6,7 @@
  */
 import { INSEE_KEY } from '../config.js';
 import { S } from '../state.js';
-import { inseeQuery, inseeSignature } from '../model/insee.js';
+import { inseeQuery, inseeSignature, matchDeath } from '../model/insee.js';
 import { sleep } from '../utils/helpers.js';
 
 const PAUSE = 1000;
@@ -51,6 +51,26 @@ function keep(id, entry) {
   const store = all();
   store[S.tree] = { ...(store[S.tree] || {}), [id]: entry };
   writeAll(store);
+}
+
+/** Empreinte d'un acte : son décès et son numéro. */
+const actKey = (a) => [a.last, a.deathDate, a.certificate].join('|');
+
+/**
+ * Acte retenu pour la fiche `id` : comme matchDeath(), mais une piste confirmée par
+ * l'utilisateur (« C'est bien lui ») passe au niveau 'confirmed'.
+ */
+export function inseeMatch(id) {
+  const entry = inseeResults()[id];
+  const m = entry && matchDeath(id, entry.acts);
+  return m && m.level === 'lead' && entry.confirmed === actKey(m.act) ? { ...m, level: 'confirmed' } : m;
+}
+
+/** « C'est bien lui » : la piste de la fiche devient son acte, ses écarts se reportent. */
+export function confirmInsee(id) {
+  const entry = inseeResults()[id];
+  const m = inseeMatch(id);
+  if (entry && m) keep(id, { ...entry, confirmed: actKey(m.act) });
 }
 
 /** N'affiche plus l'écart de cette fiche, tant que sa question ne change pas. */

@@ -287,6 +287,11 @@ describe('décès de l’INSEE', () => {
       await assert.rejects(client.auth('lucien@exemple.fr', 'FAUX'), /Mauvais code/);
       assert.equal((await client.auth('lucien@exemple.fr', 'BON')).connected, true);
       assert.equal((await client.status()).user, 'lucien@exemple.fr');
+      // matchID date ses jetons en secondes Unix : l'état les rend en date ISO
+      const saved = JSON.parse(await readFile(tokenFile, 'utf8'));
+      await writeFile(tokenFile, JSON.stringify({ ...saved, expiration_date: '1796334878' }));
+      assert.equal((await client.status()).expires, '2026-12-03T21:54:38.000Z');
+      await writeFile(tokenFile, JSON.stringify(saved));
       // Le jeton expire dans moins d'un jour : renouvelé avant la recherche, puis envoyé
       await client.search({ lastName: 'Bertrand' });
       assert.deepEqual(seen.slice(-2), [['/auth?refresh=true', 'Bearer jeton-1'], ['/search?lastName=Bertrand', 'Bearer jeton-2']]);

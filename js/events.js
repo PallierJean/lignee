@@ -174,6 +174,7 @@ const CLICK_ACTIONS = {
   'insee-forget': () => restartInsee(),
   'insee-apply': once((el) => A.applyInsee(el.dataset.id, el.dataset.i === undefined ? undefined : +el.dataset.i)),
   'insee-ignore': (el) => A.ignoreInseeOf(el.dataset.id),
+  'insee-confirm': (el) => A.confirmInseeOf(el.dataset.id),
 
   // Galerie
   'media-open': (el) => openMedia(el.dataset.owner, el.dataset.id),
