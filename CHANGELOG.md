@@ -1,5 +1,17 @@
 # Historique des versions
 
+## [1.12.0](https://github.com/PallierJean/lignee/compare/v1.11.0...v1.12.0) (2026-11-04)
+
+### Features
+
+* champ Pays dans les lieux, France par défaut ([f8194b8](https://github.com/PallierJean/lignee/commit/f8194b84440741c9d0eeb0f8b05a1120b9075d48))
+* fiches de l'arbre plus hautes, nom de jeune fille plus lisible ([386f0c4](https://github.com/PallierJean/lignee/commit/386f0c4c59fdae4c4f3dbb196c311abe59e02e0a))
+* nom de jeune fille à la ligne sur les fiches de l'arbre ([0836ab4](https://github.com/PallierJean/lignee/commit/0836ab426ff398b890154f26060010c6e4d25a75))
+
+### Bug Fixes
+
+* connexion à matchID quand l'usage anonyme est épuisé ([ebe1dcd](https://github.com/PallierJean/lignee/commit/ebe1dcd6adc87a322cfce2661b4a2ec8433e9e6d))
+
 ## [1.11.0](https://github.com/PallierJean/lignee/compare/v1.10.0...v1.11.0) (2026-11-03)
 
 ### Features
