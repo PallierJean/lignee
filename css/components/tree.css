@@ -241,6 +241,22 @@
   text-overflow: ellipsis;
 }
 
+/* Nom de jeune fille, sur sa propre ligne : la fiche garde sa hauteur, les lignes se resserrent */
+.card.has-maiden {
+  gap: 0;
+}
+
+.card.has-maiden .s {
+  line-height: 1.2;
+}
+
+.card .s.m {
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: none; /* « née » en minuscules, le nom déjà en capitales */
+  color: var(--muted);
+}
+
 .card .d {
   margin-top: auto;
   font-family: var(--f-mono);

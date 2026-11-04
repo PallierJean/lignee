@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  maiden, birthSurname, fullName, longName, surnameLine, situationLabel, situationText,
+  maiden, birthSurname, fullName, longName, cardNames, situationLabel, situationText,
   childrenOf, partnersOf, siblingsOf, isDead, lifeYears, cardDates, ageInfo, matchesWords, queryWords,
   defaultFocus, isPhotoData, isPhotoFile, photoLabel,
 } from '../js/model/people.js';
@@ -19,7 +19,9 @@ describe('noms', () => {
   test('affichages', () => {
     assert.equal(fullName(marguerite), 'Marguerite DUPONT');
     assert.equal(longName(marguerite), 'Marguerite DUPONT née FAURE');
-    assert.equal(surnameLine(marguerite), 'DUPONT née FAURE');
+    assert.deepEqual(cardNames(marguerite), { name: 'DUPONT', maiden: 'née FAURE' });
+    assert.deepEqual(cardNames({ sex: 'F', maidenName: 'Faure' }), { name: 'FAURE', maiden: '' });
+    assert.deepEqual(cardNames({ sex: 'M', surname: 'Roux' }), { name: 'ROUX', maiden: '' });
     assert.equal(fullName({ sex: 'F', maidenName: 'Faure' }), 'FAURE');
   });
 
