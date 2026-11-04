@@ -95,7 +95,7 @@ export function buildLayout() {
       for (const g of Object.keys(groups)) {
         for (const k of groups[g]) kids.push({ g, n: measureDescendants(k, depth + 1) });
       }
-      // Pas d'enfant à proposer à une personne de moins de 18 ans
+      // Pas d'enfant à proposer à une personne de moins de 17 ans
       if (depth === 0 && S.canWrite && !isMinor(P(id))) kids.push({ g: R ? 'R' : 'C', n: { ph: 'child', of: id, w: CW, depth: 1 } });
     }
 
