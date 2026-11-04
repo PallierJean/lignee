@@ -222,7 +222,8 @@ Elle se régénère depuis le Code officiel géographique de l'INSEE (licence ou
 le GEDCOM, la carte et la recherche le lisent tel quel.
 
 `surname` est le nom d'usage. `maidenName` est le nom de jeune fille d'une femme
-(facultatif) : affiché « DUPONT née FAURE », cherchable, et listé dans le registre
+(facultatif) : affiché « DUPONT née FAURE » (sur les fiches de l'arbre, « née FAURE » passe
+à la ligne sous le nom, à l'écran comme à l'impression), cherchable, et listé dans le registre
 sous les deux noms. En GEDCOM, le nom de naissance est exporté en premier `NAME`,
 le nom d'usage en second avec `TYPE married` ; à l'import, `_MARNM` est aussi reconnu.
 

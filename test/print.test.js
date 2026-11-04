@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
-import { S } from '../js/state.js';
+import { S, cardEls } from '../js/state.js';
 import { openPrint, closePrint, printTree, printFamilyBook, updatePrintInfo } from '../js/ui/print.js';
 import { afterData } from '../js/ui/render.js';
 import { example, loadTree, person, resetApp, html } from './helpers.js';
@@ -67,6 +67,22 @@ describe('impression', () => {
     open('tree');
     assert.equal(el('prTitleText').value, 'Mon titre');
     el('prTitleText').value = '';
+  });
+
+  test('nom de jeune fille sur sa propre ligne, à l’écran comme à l’impression', async () => {
+    loadTree([
+      person('w', { given: 'Marie', surname: 'Cremer', maidenName: 'Pourcelet', sex: 'F' }),
+      person('h', { given: 'Lucien', surname: 'Cremer', sex: 'M' }),
+    ], [{ a: 'h', b: 'w', type: 'married' }]);
+    S.focus = 'h';
+    afterData();
+    const card = [...cardEls.values()].find((x) => x.dataset.id === 'w');
+    assert.match(card.className, /has-maiden/);
+    assert.match(card.innerHTML, /<span class="s">CREMER<\/span><span class="s m">née POURCELET<\/span>/);
+    assert.doesNotMatch([...cardEls.values()].find((x) => x.dataset.id === 'h').className, /has-maiden/);
+    open('tree', 'A2', '1');
+    await printTree();
+    assert.match(html('printArea'), />CREMER<\/text><text x="11" y="54"[^>]*>née POURCELET<\/text>/);
   });
 
   test('arbre sur une feuille : format en millimètres', async () => {

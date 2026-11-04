@@ -6,7 +6,7 @@ import { CW, CH, reduced, RINGS_PATH } from '../config.js';
 import { S, cardEls, isLoading } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, given, fullName, surnameLine, longName, cardDates, situationLabel, currentSituation } from '../model/people.js';
+import { P, given, fullName, cardNames, longName, cardDates, situationLabel, currentSituation } from '../model/people.js';
 import { buildLayout } from './layout.js';
 import { buildFullLayout } from './full-layout.js';
 import { relationship } from '../model/kinship.js';
@@ -36,9 +36,10 @@ const lineShown = () => S.line && !S.kinShow;
 
 function fillCard(el, n) {
   const p = P(n.id);
+  const names = cardNames(p);
   el.className = 'card' + (p.sex === 'M' || p.sex === 'F' ? ' is-' + p.sex : '')
     + (n.focus ? ' is-focus' : '') + (n.partnerOf ? ' is-partner' : '') + (n.onPath ? ' on-path' : '')
-    + (lineShown() && n.sosa && !n.focus ? ' is-line' : '');
+    + (lineShown() && n.sosa && !n.focus ? ' is-line' : '') + (names.maiden ? ' has-maiden' : '');
   el.dataset.act = 'person-open';
   el.dataset.id = n.id;
   delete el.dataset.rel;
@@ -51,7 +52,8 @@ function fillCard(el, n) {
   el.setAttribute('aria-label', longName(p) + spokenDates + (n.sosa ? ', Sosa ' + n.sosa : '') + partnerOf);
   el.innerHTML = `<span class="tp"><i class="sx ${esc(p.sex || 'U')}"></i><span class="g">${esc(given(p) || '—')}</span>`
     + `${n.sosa ? `<span class="sosa" title="${t('sosaTitle')}">${n.sosa}</span>` : ''}</span>`
-    + `<span class="s">${esc(surnameLine(p) || t('card.noSurname'))}</span>`
+    + `<span class="s">${esc(names.name || t('card.noSurname'))}</span>`
+    + (names.maiden ? `<span class="s m">${esc(names.maiden)}</span>` : '')
     + `<span class="d">${wed ? MARRIED_SVG : ''}${esc(dates || t('card.noDates'))}</span>`;
 }
 
