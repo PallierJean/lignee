@@ -1,5 +1,20 @@
 # Historique des versions
 
+## [1.13.0](https://github.com/PallierJean/lignee/compare/v1.12.0...v1.13.0) (2026-11-04)
+
+### Features
+
+* famille d'exemple avec noms d'épouse, naissance à l'étranger et double nom ([1439837](https://github.com/PallierJean/lignee/commit/1439837fd6f5b32eafac843561e1c976b1eaade9))
+* ne pas proposer d'enfant à une personne de moins de 18 ans ([f073d69](https://github.com/PallierJean/lignee/commit/f073d6936794d1ac32b092bcbafbe32c2134cf41))
+* ne pas proposer d'union avant 15 ans ([5131077](https://github.com/PallierJean/lignee/commit/5131077d588be184a70a54a11f899f8afebe68cd))
+* nombre d'ascendants proposé selon la personne centrale ([2118472](https://github.com/PallierJean/lignee/commit/21184725f4436d068828ba947d6e96a33b7ee54e))
+* nombre de descendants proposé selon la personne centrale ([3f870e8](https://github.com/PallierJean/lignee/commit/3f870e848ac1b562a77b5302e60ff4fbf279b695))
+* proposer un enfant dès 17 ans ([e554930](https://github.com/PallierJean/lignee/commit/e5549303e10ef89aa278d02616796ac0fe29fe6a))
+
+### Bug Fixes
+
+* accepter le double nom du père et de la mère dans la cohérence ([daa6ccd](https://github.com/PallierJean/lignee/commit/daa6ccd4080d2114d75dc2600f480dfb362a5886))
+
 ## [1.12.0](https://github.com/PallierJean/lignee/compare/v1.11.0...v1.12.0) (2026-11-04)
 
 ### Features
