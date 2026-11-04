@@ -78,7 +78,7 @@ export function loadPrefs() {
   try {
     const v = JSON.parse(localStorage.getItem(PREF_KEY) || '{}');
     if (Number.isInteger(v.up) && v.up >= 0) S.up = v.up;
-    if (v.down >= 0 && v.down <= 3) S.down = v.down;
+    if (Number.isInteger(v.down) && v.down >= 0) S.down = v.down;
     if (ZOOMS.includes(v.zoom)) S.zoom = v.zoom;
     if (typeof v.tree === 'string') S.tree = v.tree;
     if (v.foci && typeof v.foci === 'object') S.foci = v.foci;
