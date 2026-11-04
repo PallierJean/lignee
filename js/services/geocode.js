@@ -5,6 +5,7 @@
  */
 import { GEO_KEY } from '../config.js';
 import { sleep } from '../utils/helpers.js';
+import { parsePlace } from '../model/places.js';
 
 const URL_BASE = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=';
 const PAUSE = 1100;
@@ -25,7 +26,9 @@ export async function locatePlaces(names, onProgress) {
   const cache = readCache();
   let found = 0;
   for (const [i, name] of names.entries()) {
-    const res = await fetch(URL_BASE + encodeURIComponent(name));
+    // Un lieu sans pays est en France : précisé, pour ne pas trouver une homonyme à l'étranger
+    const query = parsePlace(name).country ? name : name + ', France';
+    const res = await fetch(URL_BASE + encodeURIComponent(query));
     if (!res.ok) throw new Error(String(res.status));
     const [hit] = await res.json();
     cache.set(name, hit ? { lat: +hit.lat, lon: +hit.lon } : null);

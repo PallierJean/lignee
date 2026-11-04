@@ -69,6 +69,7 @@ lignee/
 │   │   ├── timeline.js         Frise chronologique
 │   │   ├── history-data.js     Repères historiques de la frise
 │   │   ├── places.js           Lieux cités, migrations
+│   │   ├── countries.js        Pays (français, anglais) du champ Pays des lieux
 │   │   ├── insee.js            Rapprochement avec le fichier des décès de l'INSEE
 │   │   ├── narrative.js        Récit du livret de famille de l'arbre
 │   │   └── family-book.js      Livret de famille d'une personne
@@ -210,8 +211,12 @@ sexe n'est pas précisé). Elle n'est pas exportée en GEDCOM ;
 la sauvegarde .json la conserve.
 
 Les lieux (`birthPlace`, `deathPlace`, lieu d'un événement ou d'une union) restent un texte, au
-format « Lieu-dit, Ville (Département) » : `Roussely, Orgnac-sur-Vézère (19)`. Le formulaire les
-saisit en trois champs (ville, lieu-dit, département) et recompose ce texte (`model/places.js`) ;
+format « Lieu-dit, Ville (Département), Pays » : `Roussely, Orgnac-sur-Vézère (19)`,
+`Bruxelles, Belgique`. Le pays n'est écrit que hors de France : un lieu sans pays est en France,
+et le champ Pays affiche « France » par défaut. Un pays connu (`model/countries.js`, en français ou
+en anglais) est enregistré en français ; à l'étranger, le département n'est ni déduit ni contrôlé,
+et la carte cherche un lieu sans pays en France. Le formulaire les saisit en quatre champs
+(ville, pays, lieu-dit, département) et recompose ce texte (`model/places.js`) ;
 sous le département, le nom suit le numéro saisi (« 19 » : Corrèze, `model/departments.js`).
 La ville prime : quand elle n'existe que dans un département, celui-ci est rempli ou corrigé en
 quittant le champ ; la cohérence et la vue Lieux signalent un département contraire à la ville, et
