@@ -395,6 +395,19 @@ export function isMinor(p, now = new Date(), age = CHILD_AGE) {
 
 /* ---------- Liens de parenté ---------- */
 
+/** Nombre de générations de descendants sous la personne `id` (0 sans enfant). */
+export function descendantDepth(id) {
+  let depth = 0;
+  let row = [id];
+  const seen = new Set(row);
+  for (;;) {
+    const next = row.flatMap((x) => childrenOf(x)).filter((k) => !seen.has(k) && seen.add(k));
+    if (!next.length) return depth;
+    depth++;
+    row = next;
+  }
+}
+
 /** Recalcule les index enfants et conjoints à partir des personnes et des unions. */
 export function reindex() {
   idx.children = new Map();
