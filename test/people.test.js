@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   maiden, birthSurname, fullName, longName, cardNames, situationLabel, situationText,
   childrenOf, partnersOf, siblingsOf, isDead, lifeYears, cardDates, ageInfo, matchesWords, queryWords,
-  defaultFocus, isPhotoData, isPhotoFile, photoLabel,
+  defaultFocus, isMinor, isPhotoData, isPhotoFile, photoLabel,
 } from '../js/model/people.js';
 import { example, loadTree, person } from './helpers.js';
 
@@ -132,4 +132,17 @@ describe('photos', () => {
     assert.ok(!isPhotoFile('photos/../secret.jpg'));
     assert.ok(!isPhotoFile('photos/a.exe'));
   });
+});
+
+test('moins de 18 ans : sûrement, aujourd’hui ou à sa mort', () => {
+  const now = new Date(2026, 10, 4);
+  assert.equal(isMinor({ birthDate: '17/08/2023' }, now), true);
+  assert.equal(isMinor({ birthDate: '05/11/2008' }, now), true, 'aura 18 ans demain');
+  assert.equal(isMinor({ birthDate: '04/11/2008' }, now), false, '18 ans aujourd’hui');
+  assert.equal(isMinor({ birthDate: '2008' }, now), false, 'année seule : peut-être déjà majeur');
+  assert.equal(isMinor({ birthDate: '2010' }, now), true);
+  assert.equal(isMinor({ birthDate: 'vers 2010' }, now), false, 'date approximative : rien de sûr');
+  assert.equal(isMinor({ birthDate: '' }, now), false);
+  assert.equal(isMinor({ birthDate: '1900', deathDate: '1905', deceased: true }, now), true, 'mort enfant');
+  assert.equal(isMinor({ birthDate: '1900', deceased: true }, now), false, 'mort à une date inconnue');
 });

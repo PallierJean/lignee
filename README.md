@@ -275,7 +275,9 @@ concubinage, le type en est déduit à l'affichage, et enregistré à la prochai
 quand. En GEDCOM : `DIV` pour un divorce, `_UEND` (propre à Lignée) pour les autres.
 
 Une personne peut enchaîner autant d'unions que nécessaire, chacune avec son type, ses dates et ses
-enfants. Avec plusieurs conjoints, la fiche propose « Ajouter un enfant avec… » pour chacun. En GEDCOM : `TYPE` (libellé) et `_UTYPE` (code, propre à Lignée)
+enfants. Avec plusieurs conjoints, la fiche propose « Ajouter un enfant avec… » pour chacun. Ni l'arbre
+ni la fiche ne proposent d'ajouter un enfant à une personne qui a sûrement moins de 18 ans, aujourd'hui
+ou à sa mort (`isMinor`, d'après des dates certaines). En GEDCOM : `TYPE` (libellé) et `_UTYPE` (code, propre à Lignée)
 sous `MARR`. À l'import d'un autre logiciel, le type est déduit de `TYPE`, sinon laissé vide.
 
 Les dates sont saisies librement : `12/03/1932`, `03/1932`, `1932`, `12 mars 1932`, `Mars 1932`,

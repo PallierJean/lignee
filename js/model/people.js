@@ -20,7 +20,7 @@
  * cause : pour un remariage, code de REMARRIAGE_CAUSES ; formerId : le conjoint décédé d'un veuvage.
  */
 import { S, idx } from '../state.js';
-import { yearOf, shortDate, longDate, fullDate, dateBounds } from '../utils/dates.js';
+import { yearOf, shortDate, longDate, fullDate, dateBounds, yearsBetween } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
 import { t, getLang } from '../i18n.js';
 
@@ -370,6 +370,22 @@ export function ageInfo(p) {
     return { label: t('age'), text: t('years', a) };
   }
   return { label: t('age'), text: t('about', approx) };
+}
+
+/**
+ * Vrai si la personne a sûrement moins de 18 ans, aujourd'hui ou à sa mort : l'arbre et la fiche
+ * ne proposent pas de lui ajouter un enfant. Une date incertaine ou absente ne conclut rien.
+ */
+export function isMinor(p, now = new Date()) {
+  const birth = dateBounds(p && p.birthDate);
+  if (!birth || !Number.isFinite(birth.lo)) return false;
+  let end = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+  if (isDead(p)) {
+    const death = dateBounds(p.deathDate);
+    if (!death || !Number.isFinite(death.hi)) return false;
+    end = death.hi;
+  }
+  return yearsBetween(birth.lo, end) < 18;
 }
 
 /* ---------- Liens de parenté ---------- */

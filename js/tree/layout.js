@@ -16,7 +16,7 @@
  */
 import { CW, CH, HG, VG, SG, PAD } from '../config.js';
 import { S } from '../state.js';
-import { P, partnersOf, childrenOf, siblingsOf } from '../model/people.js';
+import { P, partnersOf, childrenOf, siblingsOf, isMinor } from '../model/people.js';
 
 const ARC = 16;  // hauteur de l'arc qui relie une personne à ses conjoints suivants
 const LANE = 9;  // écart entre les barres d'enfants de deux unions
@@ -94,7 +94,8 @@ export function buildLayout() {
       for (const g of Object.keys(groups)) {
         for (const k of groups[g]) kids.push({ g, n: measureDescendants(k, depth + 1) });
       }
-      if (depth === 0 && S.canWrite) kids.push({ g: R ? 'R' : 'C', n: { ph: 'child', of: id, w: CW, depth: 1 } });
+      // Pas d'enfant à proposer à une personne de moins de 18 ans
+      if (depth === 0 && S.canWrite && !isMinor(P(id))) kids.push({ g: R ? 'R' : 'C', n: { ph: 'child', of: id, w: CW, depth: 1 } });
     }
 
     const kidsW = kids.reduce((sum, o) => sum + o.n.w, 0) + HG * Math.max(0, kids.length - 1);
