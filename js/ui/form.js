@@ -10,7 +10,7 @@ import { COUNTRIES, countryName, isFrance } from '../model/countries.js';
 import { loadCommunes, cityDepartments, departmentsText } from '../model/communes.js';
 import {
   P, fullName, lifeYears, cmpName, avatarOf, photoSrc, birthSurname, SITUATIONS, DATED_SITUATIONS, situationLabel, situationNoneLabel,
-  EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, REMARRIAGE_CAUSES, eventLabel, isDead, partnersOf,
+  EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, REMARRIAGE_CAUSES, eventLabel, isDead, partnersOf, isMinor, UNION_AGE,
 } from '../model/people.js';
 
 const TITLE_PREFIX = {
@@ -301,12 +301,12 @@ export function formHTML() {
 
     <div class="gt"><b>×</b>${t('unions')}</div>
     ${unionRows}
-    <div class="fld pick">
+    ${isMinor(d, undefined, UNION_AGE) ? '' : `<div class="fld pick">
       <span id="f-spouse-lbl">${t('f.addUnion')}</span>
       <input id="f-spouse" aria-labelledby="f-spouse-lbl" type="search" placeholder="${t('f.addUnionPlaceholder')}" autocomplete="off" spellcheck="false"
         role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="f-spouseList">
       <ul class="find-list" id="f-spouseList" role="listbox" aria-label="${t('find.list')}" hidden></ul>
-    </div>
+    </div>`}
     <div class="gt">${t('events')}</div>
     ${eventRows(e)}
     <button class="addline" type="button" data-act="ev-add">+ ${t('f.addEvent')}</button>

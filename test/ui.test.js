@@ -67,9 +67,17 @@ describe('rendu général', () => {
     S.people.get(camille).birthDate = String(year - 5);
     renderFiche();
     assert.doesNotMatch(html('paneFiche'), /data-rel="child"/);
+    assert.doesNotMatch(html('paneFiche'), /data-rel="spouse"/, 'moins de 15 ans : pas de conjoint non plus');
+    A.startEdit(camille);
+    assert.doesNotMatch(html('paneFiche'), /id="f-spouse"/, 'ni dans le formulaire');
+    A.cancelEdit();
     S.people.get(camille).birthDate = before;
     renderFiche();
     assert.match(html('paneFiche'), /data-rel="child"/);
+    assert.match(html('paneFiche'), /data-rel="spouse"/);
+    A.startEdit(camille);
+    assert.match(html('paneFiche'), /id="f-spouse"/);
+    A.cancelEdit();
   });
 
   test('lecture seule : pas de boutons de modification', () => {
