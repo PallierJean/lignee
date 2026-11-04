@@ -3,7 +3,7 @@ import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace, estimatedBirth } from '../js/model/insee.js';
-import { inseePending, checkInsee, inseeResults, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
+import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
 import { renderAnalyse, startInsee, inseeSendCode, inseeSendAuth } from '../js/ui/analyse.js';
 import { loadTree, person, resetApp, html } from './helpers.js';
@@ -217,6 +217,36 @@ describe('INSEE : vérification et vue', () => {
     assert.match(out, /Connecté à matchID \(lucien@exemple\.fr\)/);
     await startInsee();
     assert.deepEqual(inseePending(), []);
+  });
+
+  test('piste confirmée par « C’est bien lui » : ses écarts se reportent ; un autre acte redevient une piste', async () => {
+    S.mode = 'file';
+    loadTree([person('z', { given: 'Lucien', surname: 'Bertrand', sex: 'M', deceased: true })]);
+    globalThis.fetch = async () => ({ ok: true, json: async () => [act()] });
+    await checkInsee(inseePending(), () => {});
+    A.setTab('analyse');
+    A.setAnalyseView('insee');
+    let out = html('paneAnalyse');
+    assert.match(out, /Pistes à confirmer/);
+    assert.match(out, /data-act="insee-confirm"[^>]*>C’est bien lui</);
+    assert.deepEqual(A.inseeDifferences('z'), [], 'une piste ne se reporte pas');
+
+    A.confirmInseeOf('z');
+    out = html('paneAnalyse');
+    assert.doesNotMatch(out, /Pistes à confirmer/);
+    assert.match(out, /confirmé par vous/);
+    assert.match(out, /data-act="insee-apply"/);
+    S.mode = 'local';
+    await A.applyInsee('z');
+    assert.equal(S.people.get('z').deathDate, '04/07/1995');
+    assert.equal(S.people.get('z').birthDate, '12/03/1920');
+
+    // La confirmation vaut pour cet acte-là : un autre acte retenu redevient une piste
+    S.mode = 'file';
+    const entry = inseeResults().z;
+    S.people.get('z').birthDate = '';
+    entry.acts = [act({ certificate: '9', deathDate: '19990101' })];
+    assert.equal(inseeMatch('z').level, 'lead');
   });
 
   test('hors du mode fichier : la vue explique qu’il faut le serveur local', () => {

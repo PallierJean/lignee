@@ -171,7 +171,10 @@ export function matchidClient(tokenFile) {
     await fs.mkdir(path.dirname(tokenFile), { recursive: true });
     await fs.writeFile(tokenFile, JSON.stringify(t, null, 2) + '\n', { mode: 0o600 });
   };
-  const expires = (t) => Date.parse((t && t.expiration_date) || '') || 0;
+  // matchID date ses jetons en secondes Unix (« 1796334878 ») ; une date ISO est aussi acceptée
+  const when = (v) => (/^\d+$/.test(String(v || '')) ? +v * 1000 : Date.parse(v || '') || 0);
+  const expires = (t) => when(t && t.expiration_date);
+  const iso = (t) => (expires(t) ? new Date(expires(t)).toISOString() : '');
 
   /** Jeton valable, renouvelé s'il expire dans moins d'un jour ; null sans connexion. */
   async function token() {
@@ -227,12 +230,12 @@ export function matchidClient(tokenFile) {
       const o = await res.json().catch(() => ({}));
       if (!res.ok || !o.access_token) throw httpError(400, String(o.msg || o.message || 'Code refusé par matchID'));
       await saveToken({ user: email, ...o });
-      return { connected: true, user: email, expires: o.expiration_date || '' };
+      return { connected: true, user: email, expires: iso(o) };
     },
     async status() {
       const t = await readToken();
       const ok = !!(t && t.access_token && (!expires(t) || expires(t) > Date.now()));
-      return { connected: ok, user: ok ? t.user || '' : '', expires: ok ? t.expiration_date || '' : '' };
+      return { connected: ok, user: ok ? t.user || '' : '', expires: ok ? iso(t) : '' };
     },
   };
 }
