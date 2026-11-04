@@ -152,7 +152,12 @@ function inseeRow(id, m, diffs) {
 }
 
 function inseeView() {
-  if (!inseeAvailable()) return `<p class="nofocus">${t('ins.server')}</p><p class="hint an-hint">${t('ins.scope')}</p>`;
+  // Fonctionnalité de la version locale : matchID refuse les appels venant d'une page web
+  if (!inseeAvailable()) {
+    return `<section class="rel ins-local"><h3>${t('ins.localTitle')}</h3><p>${t('ins.localWhat')}</p>`
+      + `<ol class="ins-steps">${t('ins.localSteps').map((x) => `<li>${x}</li>`).join('')}</ol>`
+      + `<p class="hint an-hint">${t('ins.localWhy')}</p></section>`;
+  }
   const pending = inseePending();
   const results = inseeResults();
   const groups = { fix: [], add: [], leads: [] };
