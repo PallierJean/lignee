@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   maiden, birthSurname, fullName, longName, cardNames, situationLabel, situationText,
   childrenOf, partnersOf, siblingsOf, isDead, lifeYears, cardDates, ageInfo, matchesWords, queryWords,
-  defaultFocus, isMinor, isPhotoData, isPhotoFile, photoLabel,
+  defaultFocus, isMinor, CHILD_AGE, UNION_AGE, isPhotoData, isPhotoFile, photoLabel,
 } from '../js/model/people.js';
 import { example, loadTree, person } from './helpers.js';
 
@@ -145,4 +145,7 @@ test('moins de 18 ans : sûrement, aujourd’hui ou à sa mort', () => {
   assert.equal(isMinor({ birthDate: '' }, now), false);
   assert.equal(isMinor({ birthDate: '1900', deathDate: '1905', deceased: true }, now), true, 'mort enfant');
   assert.equal(isMinor({ birthDate: '1900', deceased: true }, now), false, 'mort à une date inconnue');
+  assert.equal(isMinor({ birthDate: '2010' }, now, UNION_AGE), false, 'majorité sexuelle : 15 ans');
+  assert.equal(isMinor({ birthDate: '2012' }, now, UNION_AGE), true);
+  assert.equal(CHILD_AGE, 18);
 });
