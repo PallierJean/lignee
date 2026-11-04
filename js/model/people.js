@@ -237,11 +237,11 @@ export function factLabel(id, fact) {
   return e ? eventLabel(e) : '';
 }
 
-/** « DUPONT née FAURE », ou le nom seul. */
-export function surnameLine(p) {
+/** Fiche de l'arbre : le nom sur une ligne, « née FAURE » sur la suivante (vide sans nom de jeune fille). */
+export function cardNames(p) {
   const s = surname(p);
   const m = maiden(p);
-  return s && m ? s + ' ' + t('nee') + ' ' + m : s || m;
+  return { name: s || m, maiden: s && m ? t('nee') + ' ' + m : '' };
 }
 
 /** Nom complet avec le nom de jeune fille : « Marguerite DUPONT née FAURE ». */

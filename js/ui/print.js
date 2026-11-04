@@ -10,7 +10,7 @@ import { CW, CH, RINGS_PATH, pageRule } from '../config.js';
 import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { longDate } from '../utils/dates.js';
-import { P, given, surname, surnameLine, cardDates, fullName, parentsName, currentSituation } from '../model/people.js';
+import { P, given, surname, cardNames, cardDates, fullName, parentsName, currentSituation } from '../model/people.js';
 import { buildFullLayout } from '../tree/full-layout.js';
 import { fanSVG, fanSize } from '../tree/fan.js';
 import { bestGrid, autoGrid, sheetCode, neighbours, OVERLAP, FOOT } from '../tree/tiles.js';
@@ -117,7 +117,11 @@ function cardSVG(n, w) {
   const inLine = S.line && n.sosa && !n.focus;
   const sosaW = sosa ? sosa.length * 6.4 + 8 : 0;
   const name = fit(given(p) || '—', `700 14px ${FONT.body}`, w - 26 - 11 - (sosa ? sosaW + 6 : 0));
-  const sur = fit((surnameLine(p) || t('card.noSurname')).toUpperCase(), `400 11.5px ${FONT.body}`, w - 22, 1.04);
+  const names = cardNames(p);
+  const sur = fit((names.name || t('card.noSurname')).toUpperCase(), `400 11.5px ${FONT.body}`, w - 22, 1.04);
+  // Nom de jeune fille sur sa propre ligne : les lignes se resserrent, la fiche garde sa hauteur
+  const maidenLine = names.maiden ? fit(names.maiden, `400 10.5px ${FONT.body}`, w - 22, 0.6) : '';
+  const [surY, datesY] = maidenLine ? [41, 68] : [44, 66];
   // Anneaux devant les dates, s'il y a la place : sur une fiche étroite, l'union se lit au « × » entre conjoints
   const married = w >= CW && ['married', 'remarried'].includes(currentSituation(n.id));
   const dx = married ? 24 : 0;
@@ -131,9 +135,10 @@ function cardSVG(n, w) {
       ? `<rect x="${w - 11 - sosaW}" y="12" width="${sosaW}" height="16" rx="3" fill="${C.card}" stroke="${C.line}"/>`
         + `<text x="${w - 11 - sosaW / 2}" y="24" text-anchor="middle" font-family='${FONT.mono}' font-size="10.5" fill="${C.muted}">${sosa}</text>`
       : '')
-    + `<text x="11" y="44" font-family='${FONT.body}' font-size="11.5" letter-spacing="1.04" fill="${C.ink}">${esc(sur)}</text>`
-    + (married ? `<path d="${RINGS_PATH}" transform="translate(11,56)" fill="none" stroke="${C.muted}" stroke-width="1.5"/>` : '')
-    + `<text x="${11 + dx}" y="66" font-family='${FONT.mono}' font-size="11.5" fill="${C.muted}">${esc(dates)}</text>`
+    + `<text x="11" y="${surY}" font-family='${FONT.body}' font-size="11.5" letter-spacing="1.04" fill="${C.ink}">${esc(sur)}</text>`
+    + (maidenLine ? `<text x="11" y="54" font-family='${FONT.body}' font-size="10.5" letter-spacing="0.6" fill="${C.muted}">${esc(maidenLine)}</text>` : '')
+    + (married ? `<path d="${RINGS_PATH}" transform="translate(11,${datesY - 10})" fill="none" stroke="${C.muted}" stroke-width="1.5"/>` : '')
+    + `<text x="${11 + dx}" y="${datesY}" font-family='${FONT.mono}' font-size="11.5" fill="${C.muted}">${esc(dates)}</text>`
     + '</g>';
 }
 
