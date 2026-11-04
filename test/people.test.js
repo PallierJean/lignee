@@ -134,12 +134,12 @@ describe('photos', () => {
   });
 });
 
-test('moins de 18 ans : sûrement, aujourd’hui ou à sa mort', () => {
+test('moins de 17 ans : sûrement, aujourd’hui ou à sa mort', () => {
   const now = new Date(2026, 10, 4);
   assert.equal(isMinor({ birthDate: '17/08/2023' }, now), true);
-  assert.equal(isMinor({ birthDate: '05/11/2008' }, now), true, 'aura 18 ans demain');
-  assert.equal(isMinor({ birthDate: '04/11/2008' }, now), false, '18 ans aujourd’hui');
-  assert.equal(isMinor({ birthDate: '2008' }, now), false, 'année seule : peut-être déjà majeur');
+  assert.equal(isMinor({ birthDate: '05/11/2009' }, now), true, 'aura 17 ans demain');
+  assert.equal(isMinor({ birthDate: '04/11/2009' }, now), false, '17 ans aujourd’hui');
+  assert.equal(isMinor({ birthDate: '2009' }, now), false, 'année seule : peut-être déjà 17 ans');
   assert.equal(isMinor({ birthDate: '2010' }, now), true);
   assert.equal(isMinor({ birthDate: 'vers 2010' }, now), false, 'date approximative : rien de sûr');
   assert.equal(isMinor({ birthDate: '' }, now), false);
@@ -147,5 +147,5 @@ test('moins de 18 ans : sûrement, aujourd’hui ou à sa mort', () => {
   assert.equal(isMinor({ birthDate: '1900', deceased: true }, now), false, 'mort à une date inconnue');
   assert.equal(isMinor({ birthDate: '2010' }, now, UNION_AGE), false, 'majorité sexuelle : 15 ans');
   assert.equal(isMinor({ birthDate: '2012' }, now, UNION_AGE), true);
-  assert.equal(CHILD_AGE, 18);
+  assert.equal(CHILD_AGE, 17);
 });

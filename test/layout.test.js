@@ -67,7 +67,7 @@ describe('vue centrée sur une personne', () => {
     assert.ok(!ids.includes('p_ex_05'));
   });
 
-  test('moins de 18 ans : pas de case « Ajouter un enfant »', () => {
+  test('moins de 17 ans : pas de case « Ajouter un enfant »', () => {
     const year = new Date().getFullYear();
     const childSlot = () => buildLayout().nodes.some((n) => n.t === 'ph' && n.rel === 'child');
     loadTree([person('moi', { given: 'Tao', birthDate: String(year - 3) })]);
@@ -79,7 +79,7 @@ describe('vue centrée sur une personne', () => {
     assert.equal(childSlot(), true, 'sans date de naissance : proposé');
   });
 
-  test('moins de 15 ans : pas de case « Ajouter un conjoint » ; de 15 à 18 ans, le conjoint mais pas l’enfant', () => {
+  test('moins de 15 ans : pas de case « Ajouter un conjoint » ; de 15 à 17 ans, le conjoint mais pas l’enfant', () => {
     const year = new Date().getFullYear();
     const slot = (rel) => buildLayout().nodes.some((n) => n.t === 'ph' && n.rel === rel);
     loadTree([person('moi', { given: 'Tao', birthDate: String(year - 3) })]);
