@@ -3,7 +3,7 @@ import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { renderHeader } from '../js/ui/header.js';
-import { renderAll, afterData } from '../js/ui/render.js';
+import { renderAll, afterData, renderFiche } from '../js/ui/render.js';
 import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
 import { openMedia, closeMedia, placePin, addTag, removeTag, cancelPin } from '../js/ui/media.js';
 import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind } from '../js/ui/search.js';
@@ -58,6 +58,18 @@ describe('rendu général', () => {
     assert.ok(fiche.includes('Parents'));
     assert.ok(fiche.includes('data-act="edit"'));
     assert.ok(fiche.includes('data-act="family-book"'));
+  });
+
+  test('fiche d’une personne de moins de 18 ans : pas de bouton « Ajouter un enfant »', () => {
+    const year = new Date().getFullYear();
+    const camille = S.focus;
+    const before = S.people.get(camille).birthDate;
+    S.people.get(camille).birthDate = String(year - 5);
+    renderFiche();
+    assert.doesNotMatch(html('paneFiche'), /data-rel="child"/);
+    S.people.get(camille).birthDate = before;
+    renderFiche();
+    assert.match(html('paneFiche'), /data-rel="child"/);
   });
 
   test('lecture seule : pas de boutons de modification', () => {

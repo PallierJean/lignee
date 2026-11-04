@@ -67,6 +67,18 @@ describe('vue centrée sur une personne', () => {
     assert.ok(!ids.includes('p_ex_05'));
   });
 
+  test('moins de 18 ans : pas de case « Ajouter un enfant »', () => {
+    const year = new Date().getFullYear();
+    const childSlot = () => buildLayout().nodes.some((n) => n.t === 'ph' && n.rel === 'child');
+    loadTree([person('moi', { given: 'Tao', birthDate: String(year - 3) })]);
+    S.focus = 'moi';
+    assert.equal(childSlot(), false);
+    loadTree([person('moi', { given: 'Léa', birthDate: String(year - 40) })]);
+    assert.equal(childSlot(), true);
+    loadTree([person('moi', { given: 'Paul' })]);
+    assert.equal(childSlot(), true, 'sans date de naissance : proposé');
+  });
+
   test('aucun ascendant : ni parents, ni fratrie, ni trait vers eux', () => {
     loadTree([
       person('pere', { given: 'Père' }),
