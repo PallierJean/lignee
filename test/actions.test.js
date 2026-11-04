@@ -106,6 +106,29 @@ describe('navigation et affichage', () => {
     assert.equal(shown(3), '0 1 2');
   });
 
+  test('descendants : fenêtre de quatre valeurs, jusqu’au dernier descendant de la personne choisie', () => {
+    const shown = (down) => {
+      A.setGenerations('down', down);
+      return [...el('segDown').innerHTML.matchAll(/data-n="(\d+)"[^>]*>([^<]+)</g)].map((m) => m[2]).join(' ');
+    };
+    // g0 → g1 → … → g6 : six générations de descendants sous g0
+    const line = (n) => Array.from({ length: n }, (_, i) => person('g' + i, { fatherId: i ? 'g' + (i - 1) : null }));
+    loadTree(line(7));
+    S.focus = 'g0';
+    assert.equal(shown(0), '0 1 2 3 …');
+    assert.equal(shown(4), '… 2 3 4 5 …');
+    assert.equal(shown(6), '… 3 4 5 6');
+    S.focus = 'g4'; // deux générations sous g4 : S.down garde 6, le choix affiché s'arrête à 2
+    A.setGenerations('down', 6);
+    assert.equal(S.down, 6);
+    assert.match(el('segDown').innerHTML, /data-n="2"[^>]*aria-pressed="true"/);
+    assert.equal(shown(6), '0 1 2');
+    S.focus = 'g6'; // sans enfant : de quoi ajouter un enfant
+    assert.equal(shown(2), '0 1');
+    S.focus = 'g0';
+    A.setGenerations('down', 2);
+  });
+
   test('recentrer : la personne centrale, même au bord de l’arbre ; la roue aussi', () => {
     const canvas = el('canvas');
     const moves = [];

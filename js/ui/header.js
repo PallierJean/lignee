@@ -3,32 +3,38 @@ import { renderRepoBanner } from './repo-link.js';
 import { S, isLoading, treeName } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { yearOf } from '../utils/dates.js';
-import { surname } from '../model/people.js';
+import { P, surname, descendantDepth } from '../model/people.js';
 import { generationSpan } from '../tree/full-layout.js';
 import { t } from '../i18n.js';
 import { canUndo, canRedo } from '../services/history.js';
 
 const UP_MIN = 2; // au moins : les emplacements « ajouter un parent » vont jusque-là
-const UP_SHOWN = 4; // valeurs visibles à la fois
+const DOWN_MIN = 1; // au moins : l'emplacement « ajouter un enfant » est à la première génération
+const SHOWN = 4; // valeurs visibles à la fois
+
+/**
+ * Boutons de 0 à `max` pour le réglage `kind` ('up' ou 'down'), valeur choisie `value`.
+ * Fenêtre glissante : part de 0 et se décale quand le choix atteint son bord ; « … » avance ou recule d'un cran.
+ */
+function generationButtons(kind, value, max, off) {
+  const cur = Math.min(value, max); // le réglage reste tel quel : il resservira dans un arbre plus profond
+  const count = Math.min(SHOWN, max + 1);
+  const first = Math.min(Math.max(cur - count + 2, 0), max - count + 1);
+  const last = first + count - 1;
+  const button = (n, label, cls = '') =>
+    `<button type="button"${cls} data-act="${kind}" data-n="${n}" aria-pressed="${!off && cur === n}" aria-label="${t('gen.' + kind, n)}"${off}>${label}</button>`;
+  const shown = Array.from({ length: count }, (_, i) => button(first + i, first + i));
+  if (first > 0) shown.unshift(button(cur - 1, '…', ' class="seg-more"'));
+  if (last < max) shown.push(button(cur + 1, '…', ' class="seg-more"'));
+  return shown.join('');
+}
 
 /** Boutons du nombre de générations et niveau de zoom. */
 export function renderControls() {
   const off = S.full || S.fan ? ' disabled' : '';
-  // Fenêtre glissante : part de 0 et se décale quand le choix atteint son bord ; « … » avance ou recule d'un cran
-  const max = Math.max(generationSpan(), UP_MIN);
-  const up = Math.min(S.up, max); // S.up reste tel quel : il resservira dans un arbre plus profond
-  const count = Math.min(UP_SHOWN, max + 1);
-  const first = Math.min(Math.max(up - count + 2, 0), max - count + 1);
-  const last = first + count - 1;
-  const upButton = (n, label, cls = '') =>
-    `<button type="button"${cls} data-act="up" data-n="${n}" aria-pressed="${!off && up === n}" aria-label="${t('gen.up', n)}"${off}>${label}</button>`;
-  const shown = Array.from({ length: count }, (_, i) => upButton(first + i, first + i));
-  if (first > 0) shown.unshift(upButton(up - 1, '…', ' class="seg-more"'));
-  if (last < max) shown.push(upButton(up + 1, '…', ' class="seg-more"'));
-  $('#segUp').innerHTML = shown.join('');
-  $('#segDown').innerHTML = [0, 1, 2, 3].map((n) =>
-    `<button type="button" data-act="down" data-n="${n}" aria-pressed="${!off && S.down === n}" aria-label="${t('gen.down', n)}"${off}>${n}</button>`,
-  ).join('');
+  // Ascendants : jusqu'à l'écart de générations de tout l'arbre ; descendants : jusqu'au dernier de la personne choisie
+  $('#segUp').innerHTML = generationButtons('up', S.up, Math.max(generationSpan(), UP_MIN), off);
+  $('#segDown').innerHTML = generationButtons('down', S.down, Math.max(P(S.focus) ? descendantDepth(S.focus) : 0, DOWN_MIN), off);
   $('#btnFull').setAttribute('aria-pressed', String(S.full && !S.fan));
   $('#btnFan').setAttribute('aria-pressed', String(S.fan));
   $('#btnLine').setAttribute('aria-pressed', String(S.line));
