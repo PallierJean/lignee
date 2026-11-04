@@ -119,9 +119,9 @@ function cardSVG(n, w) {
   const name = fit(given(p) || '—', `700 14px ${FONT.body}`, w - 26 - 11 - (sosa ? sosaW + 6 : 0));
   const names = cardNames(p);
   const sur = fit((names.name || t('card.noSurname')).toUpperCase(), `400 11.5px ${FONT.body}`, w - 22, 1.04);
-  // Nom de jeune fille sur sa propre ligne : les lignes se resserrent, la fiche garde sa hauteur
-  const maidenLine = names.maiden ? fit(names.maiden, `400 10.5px ${FONT.body}`, w - 22, 0.6) : '';
-  const [surY, datesY] = maidenLine ? [41, 68] : [44, 66];
+  // Nom de jeune fille sur sa propre ligne sous le nom ; les dates en bas de la fiche
+  const maidenLine = names.maiden ? fit(names.maiden, `400 11px ${FONT.body}`, w - 22, 0.6) : '';
+  const datesY = CH - 12;
   // Anneaux devant les dates, s'il y a la place : sur une fiche étroite, l'union se lit au « × » entre conjoints
   const married = w >= CW && ['married', 'remarried'].includes(currentSituation(n.id));
   const dx = married ? 24 : 0;
@@ -135,8 +135,8 @@ function cardSVG(n, w) {
       ? `<rect x="${w - 11 - sosaW}" y="12" width="${sosaW}" height="16" rx="3" fill="${C.card}" stroke="${C.line}"/>`
         + `<text x="${w - 11 - sosaW / 2}" y="24" text-anchor="middle" font-family='${FONT.mono}' font-size="10.5" fill="${C.muted}">${sosa}</text>`
       : '')
-    + `<text x="11" y="${surY}" font-family='${FONT.body}' font-size="11.5" letter-spacing="1.04" fill="${C.ink}">${esc(sur)}</text>`
-    + (maidenLine ? `<text x="11" y="54" font-family='${FONT.body}' font-size="10.5" letter-spacing="0.6" fill="${C.muted}">${esc(maidenLine)}</text>` : '')
+    + `<text x="11" y="44" font-family='${FONT.body}' font-size="11.5" letter-spacing="1.04" fill="${C.ink}">${esc(sur)}</text>`
+    + (maidenLine ? `<text x="11" y="59" font-family='${FONT.body}' font-size="11" letter-spacing="0.6" fill="${C.muted}">${esc(maidenLine)}</text>` : '')
     + (married ? `<path d="${RINGS_PATH}" transform="translate(11,${datesY - 10})" fill="none" stroke="${C.muted}" stroke-width="1.5"/>` : '')
     + `<text x="${11 + dx}" y="${datesY}" font-family='${FONT.mono}' font-size="11.5" fill="${C.muted}">${esc(dates)}</text>`
     + '</g>';

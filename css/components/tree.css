@@ -177,7 +177,7 @@
 .card {
   position: absolute;
   width: 176px;   /* = CW dans js/config.js */
-  height: 78px;   /* = CH dans js/config.js */
+  height: 88px;   /* = CH dans js/config.js */
   padding: 9px 11px 8px;
   display: flex;
   flex-direction: column;
@@ -241,17 +241,9 @@
   text-overflow: ellipsis;
 }
 
-/* Nom de jeune fille, sur sa propre ligne : la fiche garde sa hauteur, les lignes se resserrent */
-.card.has-maiden {
-  gap: 0;
-}
-
-.card.has-maiden .s {
-  line-height: 1.2;
-}
-
+/* Nom de jeune fille, sur sa propre ligne sous le nom */
 .card .s.m {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: .06em;
   text-transform: none; /* « née » en minuscules, le nom déjà en capitales */
   color: var(--muted);

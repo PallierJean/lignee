@@ -82,7 +82,7 @@ describe('impression', () => {
     assert.doesNotMatch([...cardEls.values()].find((x) => x.dataset.id === 'h').className, /has-maiden/);
     open('tree', 'A2', '1');
     await printTree();
-    assert.match(html('printArea'), />CREMER<\/text><text x="11" y="54"[^>]*>née POURCELET<\/text>/);
+    assert.match(html('printArea'), />CREMER<\/text><text x="11" y="59"[^>]*>née POURCELET<\/text>/);
   });
 
   test('arbre sur une feuille : format en millimètres', async () => {

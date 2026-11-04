@@ -5,7 +5,7 @@
 
 // Dimensions de l'arbre, en pixels (CW et CH doivent correspondre à .card dans tree.css)
 export const CW = 176;  // largeur d'une fiche
-export const CH = 78;   // hauteur d'une fiche
+export const CH = 88;   // hauteur d’une fiche
 export const HG = 18;   // écart horizontal entre deux fiches voisines
 export const VG = 58;   // écart vertical entre deux générations
 export const SG = 32;   // écart entre deux conjoints
