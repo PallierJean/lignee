@@ -210,6 +210,35 @@ export function mediaOf(id) {
   return out;
 }
 
+/**
+ * Personnes nommées dans un texte (légende d'une photo) : premier prénom et nom (d'usage ou de
+ * naissance) présents tous deux, sans tenir compte des accents ni des tirets. Dans l'ordre du texte.
+ */
+export function peopleNamedIn(text) {
+  const split = (s) => norm(s).replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+  // Une personne est nommée dans un même morceau : virgules, points, parenthèses et tirets isolés séparent
+  const parts = String(text || '').split(/[,;:.()–—]|\s-\s/).map(split);
+  const found = [];
+  for (const [id, p] of S.people) {
+    const givens = split(p.given);
+    const first = split(String(p.given || '').trim().split(/[\s,]+/)[0]);
+    const names = [p.surname, p.maidenName].map(split).filter((x) => x.length);
+    let pos = -1;
+    parts.forEach((words, part) => {
+      const starts = (seq) => words.map((_, i) => i).filter((i) => seq.every((w, k) => words[i + k] === w));
+      for (const g of first.length ? starts(first) : []) {
+        const after = g + first.length;
+        const near = names.some((name) => starts(name).some((n) =>
+          // Le nom après le prénom, séparé seulement par ses autres prénoms ; ou juste avant (« LACCORRE Geneviève »)
+          (n >= after && words.slice(after, n).every((w) => givens.includes(w))) || n + name.length === g));
+        if (near && pos < 0) pos = part * 1000 + g;
+      }
+    });
+    if (pos >= 0) found.push({ id, pos });
+  }
+  return found.sort((a, b) => a.pos - b.pos).map((x) => x.id);
+}
+
 /** Toutes les images de l'arbre. */
 export const allMedia = () => [...S.people].flatMap(([owner, p]) => mediaList(p).map((m) => ({ owner, m })));
 

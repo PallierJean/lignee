@@ -11,8 +11,11 @@ import { occupationLabel } from '../model/occupations.js';
 
 /** Vignettes de la galerie ; un clic ouvre la visionneuse. */
 export function mediaGrid(items) {
+  // Sur chaque vignette, le nombre de personnes identifiées
+  const count = (m) => (Array.isArray(m.tags) ? m.tags.filter((x) => x && P(x.id)).length : 0);
   const cells = items.filter(({ m }) => photoSrc(m.photo)).map(({ owner, m }) => `<button class="med" type="button" data-act="media-open" data-owner="${esc(owner)}" data-id="${esc(m.id)}" title="${esc(m.title || '')}">`
-    + `<img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}"></button>`);
+    + `<img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">`
+    + (count(m) ? `<span class="med-n" title="${esc(t('med.taggedN', count(m)))}">${count(m)}</span>` : '') + '</button>');
   return cells.length ? `<div class="meds">${cells.join('')}</div>` : '';
 }
 
@@ -147,7 +150,8 @@ export function ficheHTML(id) {
       </div>
     </section>` : ''}
 
-    ${mediaOf(id).length ? `<section class="rel"><h3>${t('media')} <span class="n">${mediaOf(id).length}</span></h3>${mediaGrid(mediaOf(id))}</section>` : ''}
+    ${mediaOf(id).length ? `<section class="rel"><h3>${t('media')} <span class="n">${mediaOf(id).length}</span></h3>${mediaGrid(mediaOf(id))}`
+      + `${S.canWrite ? `<p class="hint">${t('med.galleryHint')}</p>` : ''}</section>` : ''}
 
     ${sourcesOf(p).length ? `<section class="rel"><h3>${t('sources')} <span class="n">${sourcesOf(p).length}</span></h3>${sourcesHTML(id)}</section>` : ''}
 

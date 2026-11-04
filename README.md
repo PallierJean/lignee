@@ -253,7 +253,10 @@ conjoint et exportées sous `MARR`. Les documents ne sont pas exportés en GEDCO
 `media` (facultatif) est la galerie :
 `{ "id", "photo", "title", "date", "note", "tags": [{ "id", "x", "y" }] }`. `tags` : personnes
 identifiées, à `x` et `y` pour cent de l'image. Une image apparaît sur la fiche de sa
-propriétaire et sur celles des personnes identifiées. Elle n'est pas exportée en GEDCOM ;
+propriétaire et sur celles des personnes identifiées. On identifie quelqu'un en ouvrant la photo,
+en cliquant sur son visage puis en choisissant la personne ; les personnes nommées dans la légende
+(titre et note : prénom et nom proches, `peopleNamedIn`) sont proposées en premier, et chaque
+vignette porte le nombre de personnes identifiées. Elle n'est pas exportée en GEDCOM ;
 la sauvegarde .json la conserve.
 
 `situation` est la situation familiale (facultative) : `single` (célibataire),
