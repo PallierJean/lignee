@@ -5,7 +5,7 @@ import { longDate } from '../utils/dates.js';
 import { t } from '../i18n.js';
 import {
   P, given, surname, maiden, fullName, photoOf, photoSrc, avatarOf, lifeYears, ageInfo,
-  partnersOf, childrenOf, siblingsOf, isMinor, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, unionTypeLabel, unionCauseText, unionEndText,
+  partnersOf, childrenOf, siblingsOf, isMinor, UNION_AGE, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, unionTypeLabel, unionCauseText, unionEndText,
 } from '../model/people.js';
 import { occupationLabel } from '../model/occupations.js';
 
@@ -85,6 +85,7 @@ export function ficheHTML(id) {
     .join('');
   const severalPartners = partners.length > 1;
   const minor = isMinor(P(id)); // moins de 18 ans : pas d'enfant à ajouter
+  const young = isMinor(P(id), undefined, UNION_AGE); // moins de 15 ans : pas de conjoint à ajouter
   const childChip = (k) => {
     const c = P(k);
     const other = c.fatherId === id ? c.motherId : c.fatherId;
@@ -122,8 +123,8 @@ export function ficheHTML(id) {
       <h3>${t('unions')} <span class="n">${partners.length || ''}</span></h3>
       <div class="chips">
         ${partners.map((pt) => chip(pt.id, unionText(pt))).join('')}
-        ${addButton('spouse', id, t('addSpouse'))}
-        ${!partners.length && !S.canWrite ? `<p class="unknown">${t('noUnion')}</p>` : ''}
+        ${young ? '' : addButton('spouse', id, t('addSpouse'))}
+        ${!partners.length && (!S.canWrite || young) ? `<p class="unknown">${t('noUnion')}</p>` : ''}
       </div>
     </section>
 

@@ -277,7 +277,8 @@ quand. En GEDCOM : `DIV` pour un divorce, `_UEND` (propre à Lignée) pour les a
 Une personne peut enchaîner autant d'unions que nécessaire, chacune avec son type, ses dates et ses
 enfants. Avec plusieurs conjoints, la fiche propose « Ajouter un enfant avec… » pour chacun. Ni l'arbre
 ni la fiche ne proposent d'ajouter un enfant à une personne qui a sûrement moins de 18 ans, aujourd'hui
-ou à sa mort (`isMinor`, d'après des dates certaines). En GEDCOM : `TYPE` (libellé) et `_UTYPE` (code, propre à Lignée)
+ou à sa mort, ni un conjoint ou une union avant 15 ans, la majorité sexuelle (`isMinor`, `CHILD_AGE`,
+`UNION_AGE`, d'après des dates certaines ; on se mariait jadis dès 15 ans). En GEDCOM : `TYPE` (libellé) et `_UTYPE` (code, propre à Lignée)
 sous `MARR`. À l'import d'un autre logiciel, le type est déduit de `TYPE`, sinon laissé vide.
 
 Les dates sont saisies librement : `12/03/1932`, `03/1932`, `1932`, `12 mars 1932`, `Mars 1932`,

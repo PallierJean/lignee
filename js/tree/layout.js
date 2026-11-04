@@ -16,7 +16,7 @@
  */
 import { CW, CH, HG, VG, SG, PAD } from '../config.js';
 import { S } from '../state.js';
-import { P, partnersOf, childrenOf, siblingsOf, isMinor } from '../model/people.js';
+import { P, partnersOf, childrenOf, siblingsOf, isMinor, UNION_AGE } from '../model/people.js';
 
 const ARC = 16;  // hauteur de l'arc qui relie une personne à ses conjoints suivants
 const LANE = 9;  // écart entre les barres d'enfants de deux unions
@@ -74,7 +74,8 @@ export function buildLayout() {
     const L = partners[1] || null;  // second conjoint, à gauche
     const extra = partners.slice(2); // conjoints suivants, à droite du premier
     // Sans conjoint, la personne centrale reçoit un emplacement « Ajouter un conjoint » à droite
-    const phR = depth === 0 && S.canWrite && !R;
+    // Pas de conjoint à proposer avant la majorité sexuelle
+    const phR = depth === 0 && S.canWrite && !R && !isMinor(P(id), undefined, UNION_AGE);
     const unitW = CW + (R || phR ? SG + CW : 0) + (L ? SG + CW : 0) + extra.length * (SG + CW);
     const pL = L ? CW + SG : 0;     // décalage de la personne quand un conjoint est à gauche
     const kids = [];
