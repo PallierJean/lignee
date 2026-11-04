@@ -337,7 +337,8 @@ export function bindEvents() {
     if (el.id === 'f-media' && el.files.length) A.addDraftMedia([...el.files]);
     if (el.id === 'tagPerson' && el.value) addTag(el.value);
     if (el.id === 'kinA' || el.id === 'kinB') A.setKin(el.id, el.value);
-    if (el.id && el.id.endsWith('-city')) departmentFromCity(el.id.slice(0, -'-city'.length));
+    // Ville ou pays changés : le département suit la ville, en France seulement
+    if (el.id && (el.id.endsWith('-city') || el.id.endsWith('-country'))) departmentFromCity(el.id.replace(/-(city|country)$/, ''));
   });
 
   document.addEventListener('input', (ev) => {

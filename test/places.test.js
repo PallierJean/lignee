@@ -25,6 +25,7 @@ describe('lieux', () => {
       person('d', { birthPlace: 'Paris', deathPlace: 'Bastia (2B)' }),
       person('e', { birthPlace: 'Manosque (04)', deathPlace: 'Saint-Denis (974)' }),
       person('f', { birthPlace: 'Brest (29)', deathPlace: 'Limoges (87)' }),
+      person('g', { birthPlace: 'Bruxelles, Belgique', deathPlace: 'Cologne, Allemagne' }),
     ]);
     assert.deepEqual(placesByDepartment().map((x) => x.name), [
       'Manosque (04)',
@@ -38,6 +39,8 @@ describe('lieux', () => {
       'Limoges (87)',
       'Saint-Denis (974)',
       'Paris',
+      'Cologne, Allemagne',
+      'Bruxelles, Belgique',
     ]);
   });
 
@@ -51,7 +54,9 @@ describe('lieux', () => {
     assert.equal(await locatePlaces(['Lyon'], () => {}), 1);
     await locatePlaces(['Nulle-Part'], () => {});
     assert.deepEqual(Object.fromEntries(knownPlaces()), { Lyon: { lat: 45.7, lon: 4.8 }, 'Nulle-Part': null });
-    assert.deepEqual(asked, ['Lyon', 'Nulle-Part']);
+    assert.deepEqual(asked, ['Lyon, France', 'Nulle-Part, France'], 'un lieu sans pays est cherché en France');
+    await locatePlaces(['Bruxelles, Belgique'], () => {});
+    assert.equal(asked.at(-1), 'Bruxelles, Belgique');
     globalThis.fetch = async () => ({ ok: false, status: 429 });
     await assert.rejects(locatePlaces(['Paris'], () => {}));
   });

@@ -12,6 +12,7 @@ import { P, isDead, partnersOf, childrenOf } from './people.js';
 import { dateParts, dateBounds, yearOf } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
 import { parsePlace, formatPlace } from './places.js';
+import { isFrance } from './countries.js';
 
 export const INSEE_FROM = 1970;  // premiers décès du fichier
 const OLDEST_BIRTH = 1870;        // né avant : mort avant 1970, sauf exception
@@ -172,7 +173,9 @@ export function matchDeath(id, acts) {
   return null;
 }
 
-const placeText = (l) => (l.city ? formatPlace({ city: l.city, dept: l.dept }) : l.country);
+/** Lieu d'un acte, écrit comme ceux de l'arbre : « Tulle (19) », « Fribourg, Allemagne ». */
+export const actPlace = (l) => formatPlace({ city: l.city, dept: isFrance(l.country) ? l.dept : '', country: l.country });
+const placeText = actPlace;
 
 /**
  * Écarts entre la fiche et l'acte : [{ field, kind, tree, insee, patch? }]. kind vaut 'fix' (la

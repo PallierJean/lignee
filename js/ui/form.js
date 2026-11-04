@@ -2,10 +2,11 @@
 import { S } from '../state.js';
 import { narrow } from '../config.js';
 import { esc } from '../utils/dom.js';
-import { t } from '../i18n.js';
+import { t, getLang } from '../i18n.js';
 import { longDate } from '../utils/dates.js';
 import { placeUses, parsePlace, formatPlace } from '../model/places.js';
 import { DEPARTMENTS, departmentName, departmentCode } from '../model/departments.js';
+import { COUNTRIES, countryName, isFrance } from '../model/countries.js';
 import { loadCommunes, cityDepartments, departmentsText } from '../model/communes.js';
 import {
   P, fullName, lifeYears, cmpName, avatarOf, photoSrc, birthSurname, SITUATIONS, DATED_SITUATIONS, situationLabel, situationNoneLabel,
@@ -78,20 +79,31 @@ function formerOptions(e, u) {
   return personOptions(u.formerId, new Set([...S.people.keys()].filter((k) => !shown.has(k))));
 }
 
-/** Lieu en trois champs : ville, lieu-dit et département ; `id` en préfixe (« f-bplace-city »). */
+/** Lieu en quatre champs : ville, pays (France par défaut), lieu-dit et département ; `id` en préfixe (« f-bplace-city »). */
 export function placeFields(id, value) {
   const pl = parsePlace(value);
+  pl.country = pl.country || countryLabel('France');
   // Sous le département, son nom d'après le numéro (mis à jour à la saisie, voir events.js)
   const extra = (k) => (k === 'dept' ? `<small class="dept-name" id="${id}-deptname">${esc(departmentName(pl.dept))}</small>` : '');
   const field = (k, cls = '') => `<label class="fld${cls}"><span>${t('f.place_' + k)}</span>`
     + `<input id="${id}-${k}" value="${esc(pl[k])}" list="dl-place-${k}">${extra(k)}</label>`;
-  return `<div class="place3">${field('city', ' city')}${field('hamlet')}${field('dept')}</div>`;
+  return `<div class="place3">${field('city', ' city')}${field('country')}${field('hamlet')}${field('dept')}</div>`;
 }
+
+/** Nom d'un pays dans la langue de l'interface (les lieux gardent le nom saisi). */
+function countryLabel(fr) {
+  const row = COUNTRIES.find(([name]) => name === fr);
+  return row && getLang() === 'en' ? row[1] : fr;
+}
+
+/** Vrai si le pays du lieu `id` (préfixe de placeFields) est la France, ou vide. */
+const inFrance = (id) => isFrance((document.getElementById(id + '-country') || {}).value);
 
 /** Texte sous le département `id` (préfixe de placeFields) : son nom, ou l'écart avec la ville. */
 export function departmentHint(id) {
   const value = (k) => (document.getElementById(id + '-' + k) || {}).value || '';
   const name = departmentName(value('dept'));
+  if (!inFrance(id)) return name;
   const expected = cityDepartments(value('city'));
   const code = departmentCode(value('dept'));
   if (code && expected.length && !expected.includes(code)) return t('pl.deptConflict', value('city').trim(), departmentsText(expected));
@@ -108,6 +120,10 @@ export async function departmentFromCity(id) {
   const dept = document.getElementById(id + '-dept');
   const label = document.getElementById(id + '-deptname');
   if (!city || !dept || !label) return;
+  if (!inFrance(id)) {
+    label.textContent = departmentHint(id); // à l'étranger, la ville ne dit rien du département
+    return;
+  }
   const expected = cityDepartments(city.value);
   if (expected.length === 1 && departmentCode(dept.value) !== expected[0]) {
     dept.value = expected[0];
@@ -117,13 +133,15 @@ export async function departmentFromCity(id) {
   } else label.textContent = departmentHint(id);
 }
 
-/** Lieu saisi dans les trois champs de placeFields(), en un seul texte. */
+/** Lieu saisi dans les quatre champs de placeFields(), en un seul texte (la France n'y est pas écrite). */
 export function placeValue(id) {
   const part = (k) => {
     const el = document.getElementById(id + '-' + k);
     return el ? el.value : '';
   };
-  return formatPlace({ hamlet: part('hamlet'), city: part('city'), dept: part('dept') });
+  // Un pays connu est écrit en français, comme les autres lieux de l'arbre
+  const country = countryName(part('country')) || part('country');
+  return formatPlace({ hamlet: part('hamlet'), city: part('city'), dept: part('dept'), country });
 }
 
 /** Lignes d'événements du formulaire. */
@@ -308,6 +326,7 @@ export function formHTML() {
       <button class="btn" type="button" data-act="cancel-edit">${t('cancel')}</button>
     </div>
     ${['hamlet', 'city'].map((k) => `<datalist id="dl-place-${k}">${[...parts[k]].sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>`).join('')}
+    <datalist id="dl-place-country">${COUNTRIES.map(([fr, en]) => `<option value="${esc(getLang() === 'en' ? en : fr)}"></option>`).join('')}</datalist>
     <datalist id="dl-place-dept">${[...parts.dept].filter((x) => !departmentName(x)).sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}${Object.entries(DEPARTMENTS).map(([code, name]) => `<option value="${code}" label="${esc(name)}"></option>`).join('')}</datalist>
     <datalist id="dl-surnames">${[...surnames].sort().map((x) => `<option value="${esc(x)}"></option>`).join('')}</datalist>
   </form>`;

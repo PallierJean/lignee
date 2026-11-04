@@ -12,12 +12,12 @@ import { ignoredPairs } from '../services/dup-ignore.js';
 import { timelineOf } from '../model/timeline.js';
 import { personOptions, placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
-import { placesByDepartment, parsePlace, formatPlace } from '../model/places.js';
+import { placesByDepartment, parsePlace } from '../model/places.js';
 import { loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText } from '../model/communes.js';
 import { mediaGrid } from './fiche.js';
 import { toast } from './toast.js';
 import { longDate } from '../utils/dates.js';
-import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText } from '../model/insee.js';
+import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace } from '../model/insee.js';
 import {
   inseeAvailable, inseePending, inseeResults, checkInsee, forgetInsee, inseeStatus, inseeRegister, inseeAuth,
 } from '../services/insee.js';
@@ -123,7 +123,7 @@ const actDay = (s) => esc(longDate(actDateText(s)));
 
 /** Acte en une ligne : prénoms, nom, naissance, décès, numéro. */
 function actLine(a) {
-  const where = (l) => esc(l.city ? formatPlace({ city: l.city, dept: l.dept }) : l.country);
+  const where = (l) => esc(actPlace(l));
   return t('ins.act', esc(a.first.join(' ')), esc(a.last), actDay(a.birthDate), where(a.birth), actDay(a.deathDate), where(a.death), esc(a.certificate));
 }
 
