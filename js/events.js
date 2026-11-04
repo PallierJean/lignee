@@ -225,9 +225,18 @@ const CLICK_ACTIONS = {
   'src-photo-remove': (el) => A.removeDraftSourcePhoto(+el.dataset.i),
 
   // Suppression
-  'delete-ask': () => A.confirmDelete(true),
+  'delete-ask': (el) => A.confirmDelete(true, el.dataset.id || S.focus),
   'delete-no': () => A.confirmDelete(false),
-  'delete-yes': once(() => A.doDelete(S.focus)),
+  'delete-yes': once((el) => A.doDelete(el.dataset.id || S.focus)),
+  // Formulaire : la confirmation s'affiche sans redessiner la saisie en cours
+  'form-delete-ask': (el) => {
+    document.getElementById('f-delconfirm').hidden = false;
+    el.hidden = true;
+  },
+  'form-delete-no': () => {
+    document.getElementById('f-delconfirm').hidden = true;
+    document.querySelector('.f-del').hidden = false;
+  },
 
   // Famille d'exemple
   'banner-close': (el) => A.closeBanner(el.dataset.kind),
