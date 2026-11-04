@@ -300,8 +300,9 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
   avec tous les conjoints de chaque personne : le premier à droite, le second à gauche, les
   suivants à droite du premier, reliés par un arc.
 - Les boutons Ascendants et Descendants (`ui/header.js`) montrent quatre valeurs à la fois, encadrées
-  de « … » : jusqu'à l'écart de générations de tout l'arbre pour les ascendants (au moins 2), jusqu'au
-  dernier descendant de la personne centrale pour les descendants (au moins 1, pour ajouter un enfant).
+  de « … » : jusqu'au plus lointain ancêtre de la personne centrale pour les ascendants (au moins 2,
+  pour ajouter parents et grands-parents), jusqu'à son dernier descendant pour les descendants (au
+  moins 1, pour ajouter un enfant). Le choix est gardé d'une personne à l'autre.
 - Les autres conjoints d'un ancêtre (par exemple le second compagnon d'une grand-mère
   devenue veuve) s'affichent à côté de lui, sans numéro Sosa : à gauche d'un père,
   à droite d'une mère. On les ajoute depuis la fiche de l'ancêtre, avec
