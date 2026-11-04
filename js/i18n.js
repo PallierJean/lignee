@@ -568,7 +568,7 @@ const FR = {
   'chk.fatherMissing': (a, b) => `${b} pourrait être le père de ${a} : seule union connue de sa mère, mais non rattaché.`,
   'chk.situationNoUnion': (a) => `${a} : marié(e), veuf(ve), divorcé(e) ou pacsé(e), mais aucun conjoint.`,
   'chk.livingTooOld': (a, b, n) => `${a} aurait au moins ${n} ans : décès manquant ?`,
-  'chk.nameNotFather': (a, b, n) => `${a} : nom de naissance « ${n} », différent de celui de son père ${b}.`,
+  'chk.nameNotFather': (a, b, n) => `${a} : nom de naissance « ${n} », ni celui de son père ${b}, ni le double nom de son père et de sa mère.`,
 
   // Statistiques
   'stat.overview': 'Vue d’ensemble',
@@ -1257,7 +1257,7 @@ const EN = {
   'chk.fatherMissing': (a, b) => `${b} could be the father of ${a}: their mother's only known partner, but not linked.`,
   'chk.situationNoUnion': (a) => `${a}: married, widowed, divorced or in a civil partnership, but no partner.`,
   'chk.livingTooOld': (a, b, n) => `${a} would be at least ${n}: missing death?`,
-  'chk.nameNotFather': (a, b, n) => `${a}: birth name “${n}”, different from their father ${b}.`,
+  'chk.nameNotFather': (a, b, n) => `${a}: birth name “${n}”, neither their father ${b}’s name nor the double name of their father and mother.`,
 
   'stat.overview': 'Overview',
   'stat.people': 'People',
