@@ -437,18 +437,21 @@ export function ancestorDepth(id) {
   }
 }
 
-/** Nombre de générations de descendants sous la personne `id` (0 sans enfant). */
-export function descendantDepth(id) {
-  let depth = 0;
+/** Descendants de la personne `id`, génération par génération : [[enfants], [petits-enfants], …]. */
+export function descendantRows(id) {
+  const rows = [];
   let row = [id];
   const seen = new Set(row);
   for (;;) {
     const next = row.flatMap((x) => childrenOf(x)).filter((k) => !seen.has(k) && seen.add(k));
-    if (!next.length) return depth;
-    depth++;
+    if (!next.length) return rows;
+    rows.push(next);
     row = next;
   }
 }
+
+/** Nombre de générations de descendants sous la personne `id` (0 sans enfant). */
+export const descendantDepth = (id) => descendantRows(id).length;
 
 /** Recalcule les index enfants et conjoints à partir des personnes et des unions. */
 export function reindex() {

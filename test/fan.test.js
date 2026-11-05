@@ -83,7 +83,12 @@ describe('roue d’ascendance : survol et recentrage', () => {
     // Plus de deux enfants : une liste
     loadTree([person('a', { fatherId: 'b' }), person('c', { fatherId: 'b' }), person('d', { fatherId: 'b' }), person('b')]);
     renderFanNav(true);
-    assert.match(nav.innerHTML, /<select class="btn small" id="fanKids"[^>]*><option value="">↓ Descendre vers…<\/option><option value="a">/);
+    assert.match(nav.innerHTML, /<select class="btn small" id="fanKids"[^>]*><option value="">↓ Descendre vers…<\/option><optgroup label="Enfants \(3\)"><option value="a">/);
+    // Tous les descendants, jusqu'au plus lointain, rangés par génération
+    loadTree([person('k'), person('e', { fatherId: 'k' }), person('pe', { fatherId: 'e' }), person('ape', { fatherId: 'pe' }), person('g4', { fatherId: 'ape' })]);
+    S.focus = 'k';
+    renderFanNav(true);
+    assert.match(nav.innerHTML, /label="Enfants \(1\)".*label="Petits-enfants \(1\)".*label="Arrière-petits-enfants \(1\)".*label="4e génération \(1\)"><option value="g4">/);
     assert.match(nav.innerHTML, /Aucun ancêtre connu/);
     renderFanNav(false);
     assert.equal(nav.hidden, true);
