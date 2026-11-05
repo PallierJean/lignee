@@ -214,3 +214,60 @@
   --deco-size: 220px;
   color-scheme: light;
 }
+
+/* ----------------------------------------------------------
+   Thèmes d'accessibilité : sans motif, contours de fiche plus épais.
+   Halo de la lignée directe presque noir : distinct du bleu et de
+   l'orange dans les trois formes de daltonisme (par sa luminosité).
+   ---------------------------------------------------------- */
+
+/* Daltonisme : palette d'Okabe et Ito, sans opposition rouge-vert (alertes en bleu et vermillon) */
+:root[data-theme="daltonisme"] {
+  --paper: #EEF1F4;
+  --surface: #FFFFFF;
+  --ink: #111418;
+  --muted: #4A5260;
+  --line: #C5CCD6;
+  --edge: #7C8796;
+  --dot: #CDD3DC;
+  --accent: #005A8C;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #D6E6F2;
+  --warn: #8A5A00;
+  --danger: #B34700;
+  --danger-soft: #FBE3D6;
+  --ok: #1F6FA8;
+  --halo: #1A1A1A;
+  --male: #0072B2;
+  --female: #C26A00;
+  --scrim: rgba(14, 20, 24, .5);
+  color-scheme: light;
+}
+
+/* Contraste élevé : noir sur blanc, contrastes de 7:1 au moins pour le texte */
+:root[data-theme="contraste"] {
+  --paper: #FFFFFF;
+  --surface: #FFFFFF;
+  --ink: #000000;
+  --muted: #333333;
+  --line: #595959;
+  --edge: #000000;
+  --dot: #BDBDBD;
+  --accent: #003DA5;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DCE6F7;
+  --warn: #7A4A00;
+  --danger: #B00020;
+  --danger-soft: #FBE0E4;
+  --ok: #006B2E;
+  --halo: #1A1A1A;
+  --male: #0047AB;
+  --female: #B0006A;
+  --scrim: rgba(0, 0, 0, .6);
+  color-scheme: light;
+}
+
+:root[data-theme="daltonisme"] .card,
+:root[data-theme="contraste"] .card {
+  border-width: 2px;
+}

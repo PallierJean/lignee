@@ -124,7 +124,11 @@ lignee/
 Le sélecteur de l'en-tête (`ui/theme.js`) change les couleurs : automatique (clair ou sombre selon
 le système), clair, sombre, ou un thème illustré d'un motif discret sur la toile de l'arbre :
 🎄 Noël, 🎃 Halloween, 🌸 Printemps, ☀️ Été, 🍂 Automne. « Selon la saison » passe de l'un à l'autre
-avec la date (Noël du 1er décembre à l'Épiphanie, Halloween du 20 octobre au 2 novembre). Les
+avec la date (Noël du 1er décembre à l'Épiphanie, Halloween du 20 octobre au 2 novembre).
+Deux thèmes d'accessibilité, sans motif et aux contours de fiche plus épais : « Daltonisme »
+(palette d'Okabe et Ito : hommes en bleu, femmes en orange, alertes sans opposition rouge-vert)
+et « Contraste élevé » (noir sur blanc, texte contrasté à 7:1 au moins) ; dans les deux, la
+lignée directe est cerclée de noir, reconnaissable quelle que soit la forme de daltonisme. Les
 couleurs sont dans `css/tokens.css` ; le choix est mémorisé dans le navigateur, l'impression garde
 les siennes.
 

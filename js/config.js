@@ -15,7 +15,7 @@ export const PAD = 48;  // marge autour de l'arbre
 export const ZOOMS = [0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.6, 2, 2.5, 3];
 
 // Thèmes de couleur (css/tokens.css) ; « auto » suit le système, « season » change avec la date
-export const THEMES = ['auto', 'season', 'light', 'dark', 'noel', 'halloween', 'printemps', 'ete', 'automne'];
+export const THEMES = ['auto', 'season', 'light', 'dark', 'noel', 'halloween', 'printemps', 'ete', 'automne', 'daltonisme', 'contraste'];
 
 // Mois en GEDCOM (import/export) ; les mois affichés sont dans i18n.js
 export const GM = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
