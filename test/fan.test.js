@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
 import { S } from '../js/state.js';
 import { fanSize, fanSVG, MAX_FAN_GENS } from '../js/tree/fan.js';
+import { fanHover, fanRecenter } from '../js/ui/fan-hover.js';
 import { loadTree, person } from './helpers.js';
 
 describe('roue d’ascendance', () => {
@@ -34,5 +35,38 @@ describe('roue d’ascendance', () => {
     loadTree([person('a', { fatherId: 'b' }), person('b', { fatherId: 'a' })]);
     S.focus = 'a';
     assert.equal(fanSize().gens, MAX_FAN_GENS);
+  });
+});
+
+describe('roue d’ascendance : survol et recentrage', () => {
+  // Secteur de la roue tel que le voit le navigateur : data-id, data-sosa
+  const sector = (id, sosa) => {
+    const el = { dataset: { id, sosa: String(sosa) }, contains: () => false, getBoundingClientRect: () => ({ left: 0, top: 0, width: 10, height: 10 }) };
+    return { closest: (sel) => (sel === '#fan .fan-s' ? el : null) };
+  };
+
+  test('étiquette : nom, Sosa, génération, naissance', () => {
+    loadTree([person('a', { fatherId: 'b' }), person('b', { given: 'Jean', surname: 'Roux', birthDate: '1864', birthPlace: 'Lyon (69)', fatherId: 'c' }), person('c')]);
+    S.focus = 'a';
+    assert.match(fanSVG(), /data-id="b" data-sosa="2"/);
+    fanHover(sector('b', 2), true, { clientX: 5, clientY: 5 });
+    const tip = document.getElementById('fanTip');
+    assert.equal(tip.hidden, false);
+    assert.match(tip.innerHTML, /<b>Jean ROUX<\/b><small>Sosa 2 · 1re génération<\/small><span>° 1864, Lyon \(69\)<\/span>/);
+    assert.match(tip.innerHTML, /Double-clic : centrer la roue ici/);
+    fanHover(sector('b', 2), false, { relatedTarget: null });
+    assert.equal(tip.hidden, true);
+  });
+
+  test('double-clic : centre sur l’ancêtre, puis au centre revient', () => {
+    loadTree([person('a', { fatherId: 'b' }), person('b', { fatherId: 'c' }), person('c')]);
+    S.focus = 'a';
+    assert.equal(fanRecenter(sector('c', 4)), 'c');
+    S.focus = 'c';
+    fanHover(sector('c', 1), true, { clientX: 5, clientY: 5 });
+    assert.match(document.getElementById('fanTip').innerHTML, /Double-clic : revenir à/);
+    assert.equal(fanRecenter(sector('c', 1)), 'a');
+    assert.equal(fanRecenter(sector('a', 1)), null, 'plus rien à retrouver');
+    assert.equal(fanRecenter({ closest: () => null }), null, 'hors de la roue');
   });
 });

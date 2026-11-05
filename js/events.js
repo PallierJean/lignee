@@ -18,6 +18,7 @@ import {
   openMedia, closeMedia, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption,
 } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
+import { fanHover, fanMove, fanClick, fanRecenter } from './ui/fan-hover.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo } from './ui/repo-link.js';
@@ -130,7 +131,8 @@ const CLICK_ACTIONS = {
   'photo-zoom': (el) => openPhotoZoom(el),
 
   // Fiche en fenêtre
-  'person-open': (el) => openPersonDlg(el.dataset.id),
+  // Dans la roue, la fiche attend un instant : un double-clic recentre la roue (ui/fan-hover.js)
+  'person-open': (el) => (el.closest('#fan') ? fanClick(el.dataset.id) : openPersonDlg(el.dataset.id)),
   'person-close': () => closePersonDlg(),
   'person-center': (el) => {
     closePersonDlg();
@@ -289,9 +291,19 @@ export function bindEvents() {
   // Visionneuse : survoler un nom identifié éclaire la personne sur la photo
   document.addEventListener('mouseover', (ev) => highlightTag(ev.target, true));
   document.addEventListener('mouseout', (ev) => highlightTag(ev.target, false));
+  // Roue d'ascendance : étiquette et chemin au survol, double-clic pour recentrer
+  document.addEventListener('mouseover', (ev) => fanHover(ev.target, true, ev));
+  document.addEventListener('mouseout', (ev) => fanHover(ev.target, false, ev));
+  document.addEventListener('mousemove', fanMove);
+  document.addEventListener('dblclick', (ev) => {
+    const id = fanRecenter(ev.target);
+    if (id) A.setFocus(id);
+  });
+  document.addEventListener('focusout', (ev) => fanHover(ev.target, false, ev));
 
   document.addEventListener('focusin', (ev) => {
     highlightTag(ev.target, true);
+    fanHover(ev.target, true);
     if (ev.target.id === 'f-spouse') onSpouseInput();
   });
   document.addEventListener('focusout', (ev) => {
