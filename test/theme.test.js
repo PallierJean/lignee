@@ -283,6 +283,8 @@ describe('animations des thèmes fêtes et saisons', () => {
       get: (target, key) => (key in target ? target[key] : (...args) => calls.push([key, ...args])),
       set: (target, key, value) => { target[key] = value; return true; },
     });
+    ctx.createLinearGradient = () => ({ addColorStop() {} });
+    ctx.createRadialGradient = () => ({ addColorStop() {} });
     const make = (tag) => {
       const el = {
         tag, style: {}, children: [], parentElement: null, width: 0, height: 0,
@@ -311,10 +313,12 @@ describe('animations des thèmes fêtes et saisons', () => {
       setAmbient('noel'); // même thème : une seule animation
       assert.equal(box.children.length, 1);
       assert.equal(box.children[0].className, 'ambient');
-      // Printemps : pétales (courbes) ; automne : feuilles ; été : aigrettes (traits)
+      // Printemps : pétales (courbes) ; automne : arbres (branches) et feuilles ; été : la mer et ses vagues
       assert.ok(drawn('printemps').has('bezierCurveTo'));
-      assert.ok(drawn('automne').has('bezierCurveTo'));
-      assert.ok(drawn('ete').has('lineTo'));
+      const automne = drawn('automne');
+      assert.ok(automne.has('bezierCurveTo') && automne.has('lineTo'));
+      const ete = drawn('ete');
+      assert.ok(ete.has('lineTo') && ete.has('closePath') && ete.has('arc'), 'mer, rivage et baigneurs');
       // Halloween : chauves-souris et fantômes lâchés au hasard (ici, à coup sûr)
       Math.random = () => 0.001;
       assert.ok(drawn('halloween').has('quadraticCurveTo'));

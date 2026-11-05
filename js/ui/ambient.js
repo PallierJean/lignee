@@ -1,10 +1,11 @@
 /**
  * Animations des thèmes « fêtes et saisons », dessinées sur un calque sous l'arbre : neige et
  * guirlande à Noël, chauves-souris et fantômes à Halloween, pétales et papillons au printemps,
- * aigrettes de pissenlit, papillons et éclats de soleil l'été, feuilles et coups de vent en
- * automne. Chaque objet a sa taille, sa vitesse et son balancement, tirés au hasard. Arrêtées hors
- * de ces thèmes ou si le système demande moins d'animations (le motif du fond reste), en pause
- * quand l'onglet est caché.
+ * la plage l'été (vagues, écume, baigneurs flous, mouettes), et en automne des arbres qui
+ * perdent leurs feuilles de couleur, au gré des coups de vent, en un tapis qui s'efface au sol.
+ * Chaque objet a sa taille, sa vitesse et son balancement, tirés au hasard. Arrêtées hors de ces
+ * thèmes ou si le système demande moins d'animations (le motif du fond reste), en pause quand
+ * l'onglet est caché.
  */
 import { reduced } from '../config.js';
 
@@ -100,7 +101,7 @@ function leaf(ctx, f, now) {
   ctx.restore();
 }
 
-/* ---------- Ce qui vole : papillons, chauves-souris, fantômes, aigrettes ---------- */
+/* ---------- Ce qui vole : papillons, chauves-souris, fantômes ---------- */
 
 /** Un objet qui traverse la toile d'un bord à l'autre, en ondulant. */
 function flyer(w, h, speed, size) {
@@ -206,28 +207,6 @@ function ghost(ctx, g, now, h) {
   return true;
 }
 
-/** Aigrette de pissenlit : une tige et une couronne de filaments, portée par le vent. */
-function seed(ctx, s, now) {
-  ctx.save();
-  ctx.translate(s.x, s.y);
-  ctx.rotate(Math.sin(now / 1100 + s.phase) * 0.4);
-  ctx.strokeStyle = 'rgba(110, 92, 60, .55)';
-  ctx.lineWidth = 0.7;
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(0, s.r * 1.6);
-  for (let a = -2.4; a <= -0.7; a += 0.28) {
-    ctx.moveTo(0, 0);
-    ctx.lineTo(Math.cos(a) * s.r, Math.sin(a) * s.r);
-  }
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(110, 92, 60, .6)';
-  ctx.beginPath();
-  ctx.ellipse(0, s.r * 1.7, 0.9, 1.6, 0, 0, TAU);
-  ctx.fill();
-  ctx.restore();
-}
-
 /** Éclat de soleil : une petite étoile dorée qui scintille un instant. */
 function glint(ctx, g, now) {
   const age = (now - g.born) / 1400;
@@ -280,6 +259,179 @@ function garland(ctx, w, now) {
     ctx.restore();
     ctx.fillStyle = '#2A3A2E';
     ctx.fillRect(x - 2, y - 1, 4, 3);
+  }
+}
+
+/* ---------- Été : la plage ---------- */
+
+/** Mouette : deux ailes en accent circonflexe qui battent. */
+function gull(ctx, x, y, b, now) {
+  const f = Math.sin(now / 160 + b.phase) * 3;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = 'rgba(70, 70, 75, .7)';
+  ctx.lineWidth = 1.4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-b.r, -f);
+  ctx.quadraticCurveTo(-b.r / 2, -b.r / 2 - f, 0, 0);
+  ctx.quadraticCurveTo(b.r / 2, -b.r / 2 - f, b.r, -f);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** Baigneur flou : tête et bonnet qui dépassent de l'eau, bercés par les vagues. */
+function swimmer(ctx, p, now, horizon, shore) {
+  const k = 0.9 + p.depth * 1.1;
+  const x = p.x + Math.sin(now / 5000 + p.phase) * 12;
+  const y = horizon + (shore - horizon) * (0.15 + p.depth * 0.6) + Math.sin(now / 900 + p.phase) * 2.2 * k;
+  ctx.save();
+  ctx.filter = `blur(${(1.8 - p.depth).toFixed(1)}px)`;
+  ctx.globalAlpha = 0.75;
+  ctx.fillStyle = '#B07A5A';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 4 * k, 7 * k, 3.5 * k, 0, 0, TAU); // épaules, à fleur d'eau
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x, y - 2 * k, 4.2 * k, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = p.cap;
+  ctx.beginPath();
+  ctx.arc(x, y - 3 * k, 4.4 * k, Math.PI, 0);
+  ctx.fill();
+  if (p.wave && Math.sin(now / 700 + p.phase) > 0.4) { // un bras qui salue
+    ctx.strokeStyle = '#B07A5A';
+    ctx.lineWidth = 2 * k;
+    ctx.beginPath();
+    ctx.moveTo(x + 5 * k, y + 2 * k);
+    ctx.lineTo(x + 9 * k, y - 8 * k + Math.sin(now / 150) * 2 * k);
+    ctx.stroke();
+  }
+  ctx.filter = 'none';
+  ctx.globalAlpha = 0.6;
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 4.5 * k, 9 * k, 2 * k, 0, 0, TAU); // remous autour du baigneur
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** La plage : soleil, mer et vagues jusqu'à l'horizon, écume qui va et vient sur le sable. */
+function beach(ctx, s, now, w, h) {
+  const horizon = h * 0.62;
+  const shore = h * 0.9;
+  const wash = Math.sin(now / 2600); // la vague monte et redescend sur le sable
+  const shoreY = (x) => shore + Math.sin(x / 70 + now / 1400) * 3 + wash * 9;
+  // Soleil voilé de lumière
+  const sun = ctx.createRadialGradient(w * 0.82, horizon - h * 0.28, 0, w * 0.82, horizon - h * 0.28, 90);
+  sun.addColorStop(0, 'rgba(255, 214, 120, .9)');
+  sun.addColorStop(0.3, 'rgba(255, 200, 90, .45)');
+  sun.addColorStop(1, 'rgba(255, 200, 90, 0)');
+  ctx.fillStyle = sun;
+  ctx.fillRect(w * 0.82 - 90, horizon - h * 0.28 - 90, 180, 180);
+  // Mer : du turquoise de l'horizon au bleu du rivage
+  const sea = ctx.createLinearGradient(0, horizon, 0, shore);
+  sea.addColorStop(0, 'rgba(120, 190, 210, .55)');
+  sea.addColorStop(1, 'rgba(46, 140, 176, .6)');
+  ctx.fillStyle = sea;
+  ctx.beginPath();
+  ctx.moveTo(0, horizon);
+  ctx.lineTo(w, horizon);
+  for (let x = w; x >= 0; x -= 12) ctx.lineTo(x, shoreY(x));
+  ctx.closePath();
+  ctx.fill();
+  // Vagues : des lignes d'écume qui ondulent, plus grandes près du rivage
+  ctx.strokeStyle = 'rgba(255, 255, 255, .55)';
+  for (let k = 0; k < 6; k++) {
+    const y0 = horizon + (shore - horizon) * ((k + 0.6) / 6.5);
+    const amp = 1 + k * 0.8;
+    ctx.lineWidth = 0.6 + k * 0.25;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 10) {
+      const y = y0 + Math.sin(x / (40 + k * 12) + now / (1300 - k * 120) + k) * amp;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  // Baigneurs au loin, flous
+  for (const p of s.swimmers) swimmer(ctx, p, now, horizon, shore);
+  // Sable mouillé et écume du rivage
+  ctx.fillStyle = 'rgba(205, 180, 135, .35)';
+  ctx.beginPath();
+  for (let x = 0; x <= w; x += 12) ctx.lineTo(x, shoreY(x));
+  for (let x = w; x >= 0; x -= 12) ctx.lineTo(x, shoreY(x) + 16 - wash * 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, .85)';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  for (let x = 0; x <= w; x += 12) {
+    if (x === 0) ctx.moveTo(x, shoreY(x));
+    else ctx.lineTo(x, shoreY(x));
+  }
+  ctx.stroke();
+  // Reflets du soleil sur l'eau, mouettes
+  release(s.glints, 5, 0.05, () => ({ x: rand(0, w), y: rand(horizon + 4, shore - 10), r: rand(4, 8), born: now }));
+  s.glints = s.glints.filter((g) => glint(ctx, g, now));
+  release(s.gulls, 3, 0.006, () => ({ ...flyer(w, h, [0.8, 1.6], [7, 11]), y: rand(0.08, 0.45) * h }));
+  s.gulls = s.gulls.filter((b) => {
+    const at = fly(b, now, w);
+    if (at) gull(ctx, ...at, b, now);
+    return !!at;
+  });
+}
+
+/* ---------- Automne : les arbres ---------- */
+
+const AUTUMN = ['#C8642A', '#D9A13B', '#9C4A2A', '#B5651D', '#A83F1E', '#E3B23C', '#7A8A2E'];
+
+/**
+ * Un arbre planté en (x, sol) : tronc et branches qui se ramifient au hasard (traits), et une
+ * couronne de feuilles au bout des rameaux, chacune avec sa couleur.
+ */
+function tree(x, ground, height) {
+  const branches = [];
+  const leaves = [];
+  const grow = (x0, y0, angle, len, width, depth) => {
+    const x1 = x0 + Math.cos(angle) * len;
+    const y1 = y0 + Math.sin(angle) * len;
+    branches.push([x0, y0, x1, y1, width]);
+    if (depth === 0) {
+      for (let i = 0; i < 10; i++) {
+        leaves.push({ x: x1 + rand(-13, 13), y: y1 + rand(-12, 9), r: rand(4, 6), color: pick(AUTUMN), spin: rand(0, TAU), phase: rand(0, TAU), on: true, back: 0 });
+      }
+      return;
+    }
+    const forks = depth > 3 ? 2 : pick([2, 3]);
+    for (let i = 0; i < forks; i++) {
+      const spread = forks === 2 ? (i ? 1 : -1) * rand(0.25, 0.45) : (i - 1) * rand(0.3, 0.5);
+      grow(x1, y1, angle + spread + rand(-0.12, 0.12), len * rand(0.68, 0.8), width * 0.68, depth - 1);
+    }
+  };
+  grow(x, ground, -Math.PI / 2 + rand(-0.06, 0.06), height * 0.32, Math.max(5, height / 30), 5);
+  return { branches, leaves };
+}
+
+/** Dessine un arbre : branches brunes, puis les feuilles encore accrochées (elles frémissent au vent). */
+function drawTree(ctx, t, now, wind) {
+  ctx.strokeStyle = 'rgba(90, 58, 34, .85)';
+  ctx.lineCap = 'round';
+  for (const [x0, y0, x1, y1, width] of t.branches) {
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  }
+  for (const l of t.leaves) {
+    if (!l.on) continue;
+    const shake = Math.sin(now / 300 + l.phase) * (0.08 + wind * 0.1);
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, l.back);
+    leaf(ctx, { ...l, spin: l.spin + shake }, 0);
+    ctx.restore();
   }
 }
 
@@ -344,34 +496,62 @@ const SCENES = {
     },
   },
   ete: {
-    make: (w, h) => ({ seeds: Array.from({ length: Math.round((w * h) / 45000) }, () => ({ ...faller(w, h, false, [5, 8], ['#000']), speed: rand(-0.25, 0.1) })), flies: [], glints: [] }),
-    draw(ctx, s, now, w, h) {
-      // Les aigrettes flottent, montent un peu, poussées par une brise
-      s.seeds.forEach((f, i) => {
-        f.y += f.speed + Math.sin(now / 1500 + f.phase) * 0.2;
-        f.x += 0.35 + Math.sin(now / 1200 * f.sway + f.phase) * 0.3;
-        if (f.x > w + 30 || f.y < -30 || f.y > h + 30) s.seeds[i] = { ...faller(w, h, false, [5, 8], ['#000']), x: -20, speed: rand(-0.25, 0.1) };
-        seed(ctx, f, now);
-      });
-      release(s.flies, 2, 0.005, () => ({ ...flyer(w, h, [0.7, 1.4], [6, 9]), color: pick(WINGS) }));
-      s.flies = s.flies.filter((b) => {
-        const at = fly(b, now, w);
-        if (at) butterfly(ctx, ...at, b, now);
-        return !!at;
-      });
-      release(s.glints, 4, 0.03, () => ({ x: rand(0, w), y: rand(0, h), r: rand(5, 10), born: now }));
-      s.glints = s.glints.filter((g) => glint(ctx, g, now));
-    },
+    make: (w) => ({
+      // Surtout sur les côtés, là où les fiches de l'arbre les cachent moins
+      swimmers: [0.05, 0.13, 0.22, 0.5, 0.79, 0.88, 0.95].map((at, i) => ({
+        x: (at + rand(-0.02, 0.02)) * w, depth: rand(0, 1), phase: rand(0, TAU),
+        cap: pick(['#E0483E', '#F2C94C', '#3A7BD5', '#FFFFFF', '#E58CB0']), wave: i === 1 || i === 5,
+      })),
+      glints: [], gulls: [],
+    }),
+    draw: (ctx, s, now, w, h) => beach(ctx, s, now, w, h),
   },
   automne: {
-    make: (w, h) => ({ fall: Array.from({ length: Math.round((w * h) / 20000) }, () => faller(w, h, false, [4, 8], ['#C8642A', '#D9A13B', '#9C4A2A', '#B5651D', '#A83F1E'])) }),
+    make: (w, h) => ({
+      trees: [tree(w * 0.045, h + 4, h * 0.62), tree(w * 0.955, h + 4, h * 0.55)],
+      falling: [], ground: [],
+      drift: Array.from({ length: Math.round((w * h) / 70000) }, () => faller(w, h, false, [4, 7], AUTUMN)),
+    }),
     draw(ctx, s, now, w, h) {
       // Coups de vent : la brise forcit puis retombe
       const wind = Math.max(0, Math.sin(now / 4000)) ** 3 * 2.2;
-      fall(s.fall, w, h, now, wind, (top) => faller(w, h, top, [4, 8], ['#C8642A', '#D9A13B', '#9C4A2A', '#B5651D', '#A83F1E']));
+      for (const t of s.trees) {
+        drawTree(ctx, t, now, wind);
+        for (const l of t.leaves) {
+          // Une feuille repousse peu à peu ; une autre se détache, plus souvent quand il vente
+          if (l.on && l.back < 1) l.back += 0.01;
+          if (!l.on && now > l.regrow) Object.assign(l, { on: true, back: 0, color: pick(AUTUMN) });
+          if (l.on && l.back >= 1 && Math.random() < 0.0009 + wind * 0.002) {
+            l.on = false;
+            l.regrow = now + rand(15000, 40000);
+            s.falling.push({ ...faller(w, h, false, [l.r, l.r], [l.color]), x: l.x, y: l.y, speed: rand(0.6, 1.2) });
+          }
+        }
+      }
+      // Les feuilles détachées tombent puis se posent au sol, où elles s'effacent peu à peu
+      s.falling = s.falling.filter((f) => {
+        f.y += f.speed;
+        f.x += Math.sin((now / 900) * f.sway + f.phase) * 0.6 + wind * 0.7;
+        f.spin += f.spinSpeed * 2;
+        if (f.y < h - rand(2, 10)) return true;
+        s.ground.push({ ...f, y: Math.min(f.y, h - 3), landed: now });
+        return false;
+      });
+      if (s.ground.length > 160) s.ground.splice(0, s.ground.length - 160);
+      s.ground = s.ground.filter((f) => now - f.landed < 45000);
       ctx.shadowColor = 'rgba(80, 40, 10, .25)';
       ctx.shadowBlur = 3;
-      for (const f of s.fall) leaf(ctx, f, now);
+      for (const f of s.ground) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, (45000 - (now - f.landed)) / 8000);
+        ctx.translate(f.x, f.y);
+        ctx.scale(1, 0.45);
+        leaf(ctx, { ...f, x: 0, y: 0 }, 0);
+        ctx.restore();
+      }
+      for (const f of s.falling) leaf(ctx, f, now);
+      fall(s.drift, w, h, now, wind, (top) => faller(w, h, top, [4, 7], AUTUMN));
+      for (const f of s.drift) leaf(ctx, f, now);
       ctx.shadowBlur = 0;
     },
   },
@@ -409,6 +589,7 @@ export function setAmbient(theme) {
     if (layer) layer.remove();
     layer = null;
     scene = null;
+    if (document.documentElement.dataset) delete document.documentElement.dataset.ambient;
     return;
   }
   if (scene && scene.name === theme) return;
@@ -418,10 +599,12 @@ export function setAmbient(theme) {
     layer.setAttribute('aria-hidden', 'true');
     layer.append(document.createElement('canvas'));
     box.prepend(layer);
-    timer = setInterval(frame, FRAME);
   }
   const canvas = layer.firstChild;
   canvas.width = 0; // nouvelle scène : préparée à la première image
   scene = { name: theme, state: null };
+  document.documentElement.dataset.ambient = theme; // le CSS peut alléger le motif fixe du fond
   frame();
+  // Après une première image réussie : une erreur de dessin ne laisse pas de minuteur tourner
+  if (!timer) timer = setInterval(frame, FRAME);
 }
