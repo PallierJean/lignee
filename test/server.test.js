@@ -177,6 +177,7 @@ describe('fichiers de l’application', () => {
     for (const rel of ['js/main.js', 'css/base.css', 'assets/favicon.svg', 'package.json', 'data/arbres/exemple-famille-bertrand.json']) {
       assert.equal((await fetch(base + rel)).status, 200, rel);
     }
+    assert.equal((await fetch(base + 'assets/fonts/gloock-400-latin.woff2')).headers.get('content-type'), 'font/woff2');
     for (const rel of ['.env.test', '.git/config', 'server.js', 'test/setup.js', 'scripts/build-site.sh', 'data/arbres/autre.json', 'js/../.git/HEAD']) {
       assert.equal((await fetch(base + rel)).status, 403, rel);
     }
