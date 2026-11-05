@@ -674,6 +674,25 @@ describe('événements de la page', () => {
     click({ act: 'photo-zoom', src: 'x' });
   });
 
+  test('menu Affichage : Échap ou un clic ailleurs le ferme ; ses listes changent le thème et le texte', () => {
+    const look = el('appearance');
+    look.contains = (node) => node === look;
+    look.open = true;
+    key('Escape');
+    assert.equal(look.open, false);
+    look.open = true;
+    fire('click', { target: look });
+    assert.equal(look.open, true, 'clic dans le menu');
+    fire('click', { target: target() });
+    assert.equal(look.open, false, 'clic ailleurs');
+    fire('change', { target: Object.assign(target({}, 'themeSel', 'select'), { value: 'contraste-sombre' }) });
+    assert.equal(S.theme, 'contraste-sombre');
+    fire('change', { target: Object.assign(target({}, 'textSel', 'select'), { value: 'large' }) });
+    assert.equal(S.textSize, 'large');
+    A.setTheme('auto');
+    A.setTextSize('normal');
+  });
+
   test('photo agrandie : un clic ou Échap la ferme', () => {
     const img = Object.assign(target({ act: 'photo-zoom' }), { src: 'a.jpg', alt: 'A' });
     fire('click', { target: img });

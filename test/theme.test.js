@@ -35,6 +35,9 @@ describe('thèmes de couleur', () => {
 
   test('le sélecteur propose chaque thème, et chacun a ses couleurs', () => {
     const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    // Rangés dans le menu « Aa » : l'en-tête tient sur une ligne
+    const menu = html.match(/<details class="appearance"[\s\S]*?<\/details>/)[0];
+    assert.match(menu, /id="themeSel"[\s\S]*id="textSel"/);
     const css = readFileSync(new URL('../css/tokens.css', import.meta.url), 'utf8');
     for (const theme of THEMES) {
       assert.match(html, new RegExp(`<option value="${theme}"`), theme);

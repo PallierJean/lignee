@@ -317,6 +317,9 @@ export function bindEvents() {
   });
 
   document.addEventListener('click', (ev) => {
+    // Menu Affichage : un clic ailleurs le ferme
+    const look = document.getElementById('appearance');
+    if (look.open && !look.contains(ev.target)) look.open = false;
     // Photo agrandie : n'importe quel clic la ferme
     if (!document.getElementById('photoZoom').hidden) {
       closePhotoZoom();
@@ -453,6 +456,12 @@ export function bindEvents() {
       return;
     }
     if (ev.key !== 'Escape') return;
+    const look = document.getElementById('appearance');
+    if (look.open) {
+      look.open = false;
+      look.querySelector('summary').focus();
+      return;
+    }
     if (!document.getElementById('photoZoom').hidden) {
       closePhotoZoom();
       return;
