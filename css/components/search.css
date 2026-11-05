@@ -4,7 +4,7 @@
 
 .find {
   position: relative;
-  flex: 1 1 160px;
+  flex: 1 1 120px; /* étroite d'abord : l'en-tête tient sur une ligne, puis elle prend la place libre */
   max-width: 420px;
   min-width: 0;
 }

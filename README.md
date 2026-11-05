@@ -121,7 +121,7 @@ lignee/
 
 ## Thèmes de couleur
 
-Le sélecteur de l'en-tête (`ui/theme.js`) change les couleurs : automatique (clair ou sombre selon
+Le menu « Aa » de l'en-tête (`ui/theme.js`) change les couleurs : automatique (clair ou sombre selon
 le système), clair, sombre, ou un thème illustré d'un motif discret sur la toile de l'arbre :
 🎄 Noël, 🎃 Halloween, 🌸 Printemps, ☀️ Été, 🍂 Automne. « Selon la saison » passe de l'un à l'autre
 avec la date (Noël du 1er décembre à l'Épiphanie, Halloween du 20 octobre au 2 novembre).
@@ -132,7 +132,7 @@ Trois thèmes d'accessibilité, sans motif et aux contours de fiche plus épais 
 fond noir), reconnaissable quelle que soit la forme de daltonisme, et l'élément actif au clavier
 d'un épais cadre noir et jaune. Les tests vérifient ces contrastes.
 
-Le second sélecteur règle la taille du texte de l'interface : normal, grand (125 %) ou très grand
+Le même menu règle la taille du texte de l'interface : normal, grand (125 %) ou très grand
 (150 %). Les tailles du CSS sont en `rem` : elles suivent ce réglage et celui du navigateur. Les
 fiches de l'arbre, de taille fixe, et l'impression restent en pixels ; l'arbre a son propre zoom. Les
 couleurs sont dans `css/tokens.css` ; le choix est mémorisé dans le navigateur, l'impression garde
