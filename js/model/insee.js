@@ -8,12 +8,13 @@
  *             deathDate: 'aaaammjj', death: { city, dept, country }, certificate }
  */
 import { S } from '../state.js';
-import { P, isDead, partnersOf, childrenOf } from './people.js';
+import { P, isDead, partnersOf, childrenOf, sourcesOf } from './people.js';
 import { dateParts, dateBounds, yearOf } from '../utils/dates.js';
-import { norm } from '../utils/helpers.js';
+import { norm, rid } from '../utils/helpers.js';
 import { DICT } from '../i18n.js';
 import { parsePlace, formatPlace } from './places.js';
 import { isFrance } from './countries.js';
+import { ACCENTED_FIRST_NAMES } from './first-names.js';
 
 export const INSEE_FROM = 1970;  // premiers décès du fichier
 const OLDEST_BIRTH = 1870;        // né avant : mort avant 1970, sauf exception
@@ -34,18 +35,45 @@ const sameCity = (a, b) => !!a && !!b && cityKey(a) === cityKey(b);
 /** Nom de naissance : nom de jeune fille d'une femme, sinon le nom. */
 const birthName = (p) => String((p.sex === 'F' && p.maidenName) || p.surname || p.maidenName || '').trim();
 
-/** Mot de l'INSEE (en capitales, sans accents) écrit comme dans l'arbre : « HELENE » -> « Helene », « D'ARC » -> « d'Arc ». */
+/** Mot de l'INSEE (en capitales, sans accents) en minuscules : « HELENE » -> « Helene », « D'ARC » -> « d'Arc ». */
 const PARTICLES = new Set(['de', 'du', 'des', 'la', 'le', 'van', 'von']);
 const capital = (w) => w.toLowerCase().replace(/(^|[-'])(\p{L})/gu, (m, sep, c) => sep + c.toUpperCase())
   .replace(/^D'/, "d'");
-const nameText = (s) => String(s).trim().split(/\s+/).map((w, i) => (i && PARTICLES.has(w.toLowerCase()) ? w.toLowerCase() : capital(w))).join(' ');
+
+const key = (w) => words(w).join('');
+const LISTED = new Map(ACCENTED_FIRST_NAMES.map((n) => [key(n), n]));
+
+/** Mots accentués des champs `fields` de l'arbre : « helene » -> « Hélène » (les mots composés, partie par partie). */
+function treeSpellings(fields) {
+  const out = new Map();
+  for (const p of S.people.values()) {
+    for (const f of fields) {
+      for (const w of String(p[f] || '').replace(/\(.*?\)/g, ' ').split(/[\s-]+/)) {
+        if (/[^\x00-\x7F]/.test(w) && /\p{L}/u.test(w) && !out.has(key(w))) out.set(key(w), w);
+      }
+    }
+  }
+  return out;
+}
 
 /**
- * Prénoms de l'état civil, dans leur ordre, écrits comme dans la fiche quand elle les a déjà
- * (l'INSEE les donne sans accents) : « Marie-Hélène » et MARIE HELENE JEANNE -> « Marie-Hélène Jeanne ».
+ * Mot de l'INSEE avec ses accents : écrit comme dans l'arbre s'il y figure accentué, sinon
+ * (`listed`) comme dans la liste des prénoms accentués, sinon sans accent.
+ */
+const accented = (w, spellings, listed) => w.split('-')
+  .map((x) => spellings.get(key(x)) || (listed && LISTED.get(key(x))) || capital(x)).join('-');
+
+/** Nom de l'INSEE : particules en minuscules, accents repris des noms de l'arbre. */
+const nameText = (s, spellings = new Map()) => String(s).trim().split(/\s+/)
+  .map((w, i) => (i && PARTICLES.has(w.toLowerCase()) ? w.toLowerCase() : accented(w, spellings, false))).join(' ');
+
+/**
+ * Prénoms de l'état civil, dans leur ordre, écrits comme dans la fiche quand elle les a déjà ;
+ * les autres reprennent leurs accents (l'INSEE les retire), voir accented :
+ * « Marie-Hélène » et MARIE HELENE JEANNE -> « Marie-Hélène Jeanne », MARGUERITE HELENE -> « Marguerite Hélène ».
  * Les prénoms de la fiche absents de l'acte suivent, puis un surnom entre parenthèses.
  */
-function mergedGiven(tree, official) {
+function mergedGiven(tree, official, spellings = new Map()) {
   const nick = (String(tree || '').match(/\(.*?\)/g) || []).join(' ');
   const tokens = String(tree || '').replace(/\(.*?\)/g, ' ').split(/\s+/).filter(Boolean).map((x) => ({ x, w: words(x) }));
   const parts = official.split(/\s+/).filter(Boolean);
@@ -55,7 +83,7 @@ function mergedGiven(tree, official) {
   for (let i = 0; i < w.length;) {
     const t = tokens.find((k) => !used.has(k) && k.w.length && k.w.join(' ') === w.slice(i, i + k.w.length).join(' '));
     if (t) used.add(t);
-    out.push(t ? t.x : capital(parts[i]));
+    out.push(t ? t.x : accented(parts[i], spellings, true));
     i += t ? t.w.length : 1;
   }
   // Prénoms de la fiche absents de l'acte (prénom d'usage…) : gardés à la suite
@@ -224,10 +252,11 @@ export function deathDifferences(id, act) {
   const add = (field, kind, tree, insee, patch) => out.push({ field, kind, tree: String(tree || ''), insee, ...(patch ? { patch } : {}) });
 
   const given = words(String(p.given || '').replace(/\(.*?\)/g, ' ')); // sans le surnom entre parenthèses
-  const official = mergedGiven(p.given, act.first.join(' '));
+  const official = mergedGiven(p.given, act.first.join(' '), treeSpellings(['given']));
   if (words(act.first.join(' ')).some((w) => !given.includes(w))) add('given', 'add', p.given, official, { given: official });
   if (words(act.last).join(' ') !== words(birthName(p)).join(' ')) {
-    add('name', 'fix', birthName(p), nameText(act.last), { [birthField(p)]: nameText(act.last) });
+    const last = nameText(act.last, treeSpellings(['surname', 'maidenName']));
+    add('name', 'fix', birthName(p), last, { [birthField(p)]: last });
   }
 
   for (const [field, place, date, which] of [['birth', 'birthPlace', 'birthDate', 'birth'], ['death', 'deathPlace', 'deathDate', 'death']]) {
@@ -243,5 +272,16 @@ export function deathDifferences(id, act) {
     else if (loc.city && !sameCity(city, loc.city)) add(place, 'fix', p[place], placeText(loc), { [place]: placeText(loc) });
   }
   if (!isDead(p)) add('deceased', 'fix', '', '', { deceased: true });
+
+  // Numéro de l'acte de décès : une source de la fiche, sauf si elle le cite déjà
+  const number = String(act.certificate || '').trim();
+  const cited = (s) => s.kind === 'death' && (`${s.title} ${s.ref}`.match(/\w+/g) || []).includes(number);
+  if (number && !sourcesOf(p).some(cited)) {
+    const source = {
+      id: rid('s'), kind: 'death', fact: 'death', title: `Acte n°${number}`, place: act.death.city ? placeText(act.death) : '',
+      ref: '', note: 'Fichier des personnes décédées de l’INSEE (matchID)', photo: '',
+    };
+    add('source', 'add', '', [source.title, source.place].filter(Boolean).join(', '), { sources: [...sourcesOf(p), source] });
+  }
   return out;
 }
