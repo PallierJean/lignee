@@ -19,6 +19,7 @@ import {
 } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
+import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo } from './ui/repo-link.js';
@@ -176,6 +177,9 @@ const CLICK_ACTIONS = {
   'dup-ignore': (el) => A.ignoreDuplicate(el.dataset.key),
   'time-scope': (el) => A.setTimeScope(el.dataset.family === 'true'),
   'map-locate': () => startLocate(),
+  'map-zoom': (el) => mapZoom(+el.dataset.d),
+  'map-region': (el) => mapFit(el.dataset.key || ''),
+  'map-point': (el) => mapPick(el.dataset.name),
   'place-rename': (el) => A.renamePlace(el.dataset.from, placeRowValue(+el.dataset.i)),
   'insee-check': () => startInsee(),
   'insee-register': () => inseeSendCode(),
@@ -301,6 +305,9 @@ export function bindEvents() {
   document.addEventListener('mouseover', (ev) => fanHover(ev.target, true, ev));
   document.addEventListener('mouseout', (ev) => fanHover(ev.target, false, ev));
   document.addEventListener('mousemove', fanMove);
+  // Carte des lieux : molette pour zoomer, glisser pour se déplacer
+  document.addEventListener('wheel', mapWheel, { passive: false });
+  for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, mapDrag);
   document.addEventListener('dblclick', (ev) => {
     const id = fanRecenter(ev.target);
     if (id) A.setFocus(id);

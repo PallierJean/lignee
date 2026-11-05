@@ -1,15 +1,23 @@
-/** Carte des communes : points et migrations, dessinés en SVG sans fond de carte externe. */
+/**
+ * Carte des communes : points et migrations, dessinés en SVG sans fond de carte externe.
+ * On l'explore : zoom (boutons, molette), déplacement à la souris, recadrage sur un département ;
+ * un clic sur une commune liste ses personnes et met ses migrations en évidence.
+ */
 import { S } from '../state.js';
-import { esc } from '../utils/dom.js';
+import { $, esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { cityUses, migrations } from '../model/places.js';
+import { P, fullName, lifeYears } from '../model/people.js';
+import { cityUses, migrations, parsePlace } from '../model/places.js';
+import { departmentCode, departmentName } from '../model/departments.js';
 import { knownPlaces, locatePlaces } from '../services/geocode.js';
 import { toast } from './toast.js';
 
 const W = 340;
-const H = 340;
-const PAD = 22;
-const LABELS = 8;
+const H = 360;
+const PAD = 26;
+const MIN_SPAN = 0.4;  // degrés : une seule commune n'est pas agrandie à l'infini
+const ZOOM = 1.6;      // facteur d'un cran de zoom
+const K_MAX = 4000;    // pixels par degré au plus
 
 // Contour très simplifié de la France, seul repère du fond : [longitude, latitude]
 const FRANCE = [[2.5, 51.1], [4.2, 50], [5.9, 49.5], [8.2, 49], [7.6, 47.6], [6.1, 46.2], [7, 45.9], [6.7, 45], [7.6, 44.1],
@@ -17,57 +25,120 @@ const FRANCE = [[2.5, 51.1], [4.2, 50], [5.9, 49.5], [8.2, 49], [7.6, 47.6], [6.
   [-2.2, 47.2], [-3.1, 47.6], [-4.8, 48.4], [-2, 48.65], [-1.9, 49.7], [-1.3, 49.7], [-1.1, 49.3], [0.1, 49.5], [1.6, 50.4], [1.8, 50.9]];
 
 let busy = null;     // { done, total } pendant la localisation
+let view = null;     // { lon, lat, k } : centre et pixels par degré ; null : tout voir
+let selected = '';   // commune choisie
+let drag = null;     // { x, y, lon, lat, k, moved } pendant un glissé
 
-function mapSVG(points, moves) {
+/** Communes localisées : [{ name, n, ids, lat, lon }]. */
+function located() {
+  const known = knownPlaces();
+  return cityUses().filter((u) => known.get(u.name)).map((u) => ({ ...u, ...known.get(u.name) }));
+}
+
+/** Vue qui montre toutes ces communes. */
+function fit(points) {
   const lons = points.map((x) => x.lon);
   const lats = points.map((x) => x.lat);
-  const mid = (Math.min(...lats) + Math.max(...lats)) / 2;
-  const squeeze = Math.cos((mid * Math.PI) / 180);
-  const spanX = Math.max((Math.max(...lons) - Math.min(...lons)) * squeeze, 0.5);
-  const spanY = Math.max(Math.max(...lats) - Math.min(...lats), 0.5);
-  const k = Math.min((W - 2 * PAD) / spanX, (H - 2 * PAD) / spanY);
-  const x0 = (Math.min(...lons) + Math.max(...lons)) / 2;
-  const y0 = mid;
-  const xy = (lon, lat) => [W / 2 + (lon - x0) * squeeze * k, H / 2 - (lat - y0) * k];
-  const at = new Map(points.map((p) => [p.name, xy(p.lon, p.lat)]));
+  const lat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  const lon = (Math.min(...lons) + Math.max(...lons)) / 2;
+  const squeeze = Math.cos((lat * Math.PI) / 180);
+  const spanX = Math.max((Math.max(...lons) - Math.min(...lons)) * squeeze, MIN_SPAN);
+  const spanY = Math.max(Math.max(...lats) - Math.min(...lats), MIN_SPAN);
+  return { lon, lat, k: Math.min((W - 2 * PAD) / spanX, (H - 2 * PAD) / spanY) };
+}
 
-  const outline = FRANCE.map(([lon, lat]) => xy(lon, lat).map((v) => v.toFixed(1)).join(',')).join(' ');
+/** Passage des coordonnées à la carte (xy) et retour (lonLat), pour la vue `v`. */
+function projector(v) {
+  const squeeze = Math.cos((v.lat * Math.PI) / 180);
+  return {
+    xy: (lon, lat) => [W / 2 + (lon - v.lon) * squeeze * v.k, H / 2 - (lat - v.lat) * v.k],
+    lonLat: (x, y) => [v.lon + (x - W / 2) / (squeeze * v.k), v.lat - (y - H / 2) / v.k],
+  };
+}
+
+function mapSVG(points, moves, v) {
+  const { xy } = projector(v);
+  const at = new Map(points.map((p) => [p.name, xy(p.lon, p.lat)]));
+  const inside = ([x, y]) => x > -20 && x < W + 20 && y > -20 && y < H + 20;
+  const outline = FRANCE.map(([lon, lat]) => xy(lon, lat).map((n) => n.toFixed(1)).join(',')).join(' ');
   const maxN = Math.max(...points.map((p) => p.n));
   const lines = moves.filter((m) => at.has(m.from) && at.has(m.to)).map((m) => {
     const [ax, ay] = at.get(m.from);
     const [bx, by] = at.get(m.to);
     const cx = (ax + bx) / 2 + (by - ay) * 0.14;
     const cy = (ay + by) / 2 - (bx - ax) * 0.14;
-    return `<path class="mv" d="M${ax.toFixed(1)},${ay.toFixed(1)}Q${cx.toFixed(1)},${cy.toFixed(1)} ${bx.toFixed(1)},${by.toFixed(1)}" stroke-width="${Math.min(4, 1 + m.n * 0.5)}" marker-end="url(#mvEnd)"><title>${esc(m.from)} → ${esc(m.to)} (${m.n})</title></path>`;
+    const on = selected && (m.from === selected || m.to === selected) ? ' on' : '';
+    return `<path class="mv${on}" d="M${ax.toFixed(1)},${ay.toFixed(1)}Q${cx.toFixed(1)},${cy.toFixed(1)} ${bx.toFixed(1)},${by.toFixed(1)}" stroke-width="${Math.min(4, 1 + m.n * 0.5)}" marker-end="url(#mvEnd)"><title>${esc(m.from)} → ${esc(m.to)} (${m.n})</title></path>`;
   }).join('');
-  const dots = points.map((p) => {
+  const shown = points.filter((p) => inside(at.get(p.name)));
+  const dots = shown.map((p) => {
     const [x, y] = at.get(p.name);
-    return `<circle class="pt" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(3 + 6 * Math.sqrt(p.n / maxN)).toFixed(1)}"><title>${esc(p.name)} (${p.n})</title></circle>`;
+    return `<circle class="pt${p.name === selected ? ' sel' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(3 + 6 * Math.sqrt(p.n / maxN)).toFixed(1)}"`
+      + ` data-act="map-point" data-name="${esc(p.name)}"><title>${esc(p.name)} (${p.n})</title></circle>`;
   }).join('');
-  // Les lieux les plus cités d'abord ; une étiquette qui en recouvrirait une autre est omise
+  // Les communes les plus citées d'abord (la choisie avant tout) ; une étiquette qui en recouvrirait une autre est omise
   const placed = [];
-  const labels = points.slice(0, LABELS).map((p) => {
+  const labels = [...shown].sort((a, b) => (b.name === selected) - (a.name === selected) || b.n - a.n).map((p) => {
     const [x, y] = at.get(p.name);
-    if (placed.some(([px, py]) => Math.abs(px - x) < 70 && Math.abs(py - y) < 13)) return '';
-    placed.push([x, y]);
+    const w = 6 + p.name.length * 5.2;
     const right = x < W * 0.7;
-    return `<text class="pl-t" x="${(x + (right ? 11 : -11)).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="${right ? 'start' : 'end'}">${esc(p.name)}</text>`;
+    const x0 = right ? x + 9 : x - 9 - w;
+    if (placed.some(([px, py, pw]) => x0 < px + pw && px < x0 + w && Math.abs(py - y) < 12)) return '';
+    placed.push([x0, y, w]);
+    return `<text class="pl-t" x="${(x + (right ? 9 : -9)).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="${right ? 'start' : 'end'}">${esc(p.name)}</text>`;
   }).join('');
-  return `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t('map.label')}">`
+  return `<svg class="map${selected ? ' picking' : ''}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t('map.label')}">`
     + '<defs><marker id="mvEnd" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L8,4L0,8Z" class="mv-end"/></marker></defs>'
     + `<polygon class="fr" points="${outline}"/>${lines}${dots}${labels}</svg>`;
+}
+
+/** Départements (ou pays) des communes localisées, les plus cités d'abord : [{ key, label, n, points }]. */
+function regions(points) {
+  const groups = new Map();
+  for (const p of points) {
+    const pl = parsePlace(p.name);
+    const code = pl.country ? '' : departmentCode(pl.dept);
+    const key = pl.country || code;
+    if (!key) continue;
+    const label = pl.country || departmentName(code);
+    const g = groups.get(key) || groups.set(key, { key, label, n: 0, points: [] }).get(key);
+    g.n += p.n;
+    g.points.push(p);
+  }
+  return [...groups.values()].sort((a, b) => b.n - a.n);
+}
+
+/** Personnes de la commune choisie, avec un lien vers leur fiche. */
+function placeHTML(points) {
+  const p = points.find((x) => x.name === selected);
+  if (!p) return '';
+  const ids = [...p.ids].filter((id) => P(id)).sort((a, b) => fullName(P(a)).localeCompare(fullName(P(b))));
+  return `<section class="rel map-place"><h3>${esc(p.name)} <span class="n">${esc(t('map.mentions', p.n))}</span></h3><ul class="map-people">`
+    + ids.map((id) => `<li><button class="link" type="button" data-act="person-open" data-id="${esc(id)}">${esc(fullName(P(id)))}</button> <small>${esc(lifeYears(P(id)))}</small></li>`).join('')
+    + '</ul></section>';
 }
 
 export function mapView() {
   const uses = cityUses();
   if (!uses.length) return `<p class="nofocus">${t('map.empty')}</p>`;
   const known = knownPlaces();
-  const points = uses.filter((u) => known.get(u.name)).map((u) => ({ ...u, ...known.get(u.name) }));
+  const points = located();
   const missing = uses.filter((u) => !known.has(u.name));
   const notFound = uses.filter((u) => known.get(u.name) === null);
   const moves = migrations();
 
-  let html = points.length ? mapSVG(points, moves) : `<p class="nofocus">${t('map.none')}</p>`;
+  let html = '';
+  if (points.length) {
+    const chips = regions(points).slice(0, 8)
+      .map((g) => `<button class="btn small" type="button" data-act="map-region" data-key="${esc(g.key)}">${esc(g.label)} · ${g.n}</button>`).join('');
+    html += `<div class="row-btns map-tools"><button class="btn small" type="button" data-act="map-zoom" data-d="1" aria-label="${t('ctl.zoomIn')}">+</button>`
+      + `<button class="btn small" type="button" data-act="map-zoom" data-d="-1" aria-label="${t('ctl.zoomOut')}">−</button>`
+      + `<button class="btn small" type="button" data-act="map-region">${t('map.fit')}</button>${chips}</div>`
+      + `<div class="map-box" id="mapBox">${mapSVG(points, moves, view || fit(points))}</div>`
+      + `<p class="hint an-hint">${t('map.help')}</p><div id="mapPlace">${placeHTML(points)}</div>`;
+  } else {
+    html += `<p class="nofocus">${t('map.none')}</p>`;
+  }
   html += `<p class="hint an-hint">${t('map.legend')}</p>`;
   if (busy) html += `<p class="hint an-hint">${t('map.progress', busy.done, busy.total)}</p>`;
   else if (missing.length) {
@@ -81,6 +152,84 @@ export function mapView() {
       + top.map((m) => `<div class="mv-row"><span>${esc(m.from)} → ${esc(m.to)}</span><span class="bv">${m.n}</span></div>`).join('') + '</div></section>';
   }
   return html;
+}
+
+/** Redessine la carte et la commune choisie, sans le reste de la vue (glissé, molette). */
+function redraw() {
+  const box = $('#mapBox');
+  const points = located();
+  if (!box || !points.length) return;
+  box.innerHTML = mapSVG(points, migrations(), view || fit(points));
+  $('#mapPlace').innerHTML = placeHTML(points);
+}
+
+/** Zoom d'un cran (`d` = 1 avant, -1 arrière) autour du point (x, y) de la carte, le centre par défaut. */
+export function mapZoom(d, x = W / 2, y = H / 2) {
+  const points = located();
+  if (!points.length) return;
+  const v = view || fit(points);
+  const [lon, lat] = projector(v).lonLat(x, y);
+  const k = Math.min(K_MAX, Math.max(5, v.k * ZOOM ** d));
+  // Le point visé reste sous la souris
+  const squeeze = Math.cos((v.lat * Math.PI) / 180);
+  view = { k, lon: lon - (x - W / 2) / (squeeze * k), lat: lat + (y - H / 2) / k };
+  redraw();
+}
+
+/** Recadre sur un département ou un pays (`key`), ou sur toutes les communes (`key` vide). */
+export function mapFit(key) {
+  const g = key && regions(located()).find((x) => x.key === key);
+  view = g ? fit(g.points) : null;
+  redraw();
+}
+
+/** Clic sur une commune : ses personnes ; un second clic la quitte. */
+export function mapPick(name) {
+  if (drag && drag.moved) return; // fin d'un glissé, pas un clic
+  selected = selected === name ? '' : name;
+  redraw();
+}
+
+/** Point de la carte (coordonnées du SVG) sous la souris. */
+function mapPoint(ev) {
+  const r = $('#mapBox svg').getBoundingClientRect();
+  return [((ev.clientX - r.left) * W) / r.width, ((ev.clientY - r.top) * H) / r.height];
+}
+
+/** Molette sur la carte : zoom autour de la souris. */
+export function mapWheel(ev) {
+  if (!ev.target.closest || !ev.target.closest('#mapBox')) return;
+  ev.preventDefault();
+  mapZoom(ev.deltaY < 0 ? 1 : -1, ...mapPoint(ev));
+}
+
+/** Glisser la carte : appui, déplacement, relâchement. */
+export function mapDrag(ev) {
+  if (ev.type === 'pointerdown') {
+    if (!ev.target.closest || !ev.target.closest('#mapBox') || ev.button !== 0) return;
+    const points = located();
+    if (!points.length) return;
+    const v = view || fit(points);
+    drag = { x: ev.clientX, y: ev.clientY, lon: v.lon, lat: v.lat, k: v.k, moved: false };
+    return;
+  }
+  if (!drag) return;
+  if (ev.type === 'pointermove') {
+    const r = $('#mapBox svg').getBoundingClientRect();
+    const dx = ((ev.clientX - drag.x) * W) / r.width;
+    const dy = ((ev.clientY - drag.y) * H) / r.height;
+    if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+    drag.moved = true;
+    const squeeze = Math.cos((drag.lat * Math.PI) / 180);
+    view = { k: drag.k, lon: drag.lon - dx / (squeeze * drag.k), lat: drag.lat + dy / drag.k };
+    redraw();
+    return;
+  }
+  // Relâché : le clic qui suit voit encore le glissé (mapPick l'ignore), puis on l'oublie
+  const done = drag;
+  setTimeout(() => {
+    if (drag === done) drag = null;
+  }, 0);
 }
 
 /** Localise les lieux encore inconnus, puis redessine la carte. */
