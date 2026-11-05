@@ -508,6 +508,40 @@
   stroke-width: 2.5;
 }
 
+/* Barre de la roue, au-dessus d'elle, collée à gauche de la zone visible */
+.fan-nav {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: max-content;
+}
+
+.fan-nav[hidden] {
+  display: none;
+}
+
+.fan-nav > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  max-width: calc(100vw - 48px);
+  padding: 10px 10px 0;
+}
+
+.fan-nav .btn {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+}
+
+.fan-nav .hint {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
 /* Étiquette d'un ancêtre, près de la souris */
 .fan-tip {
   position: fixed;

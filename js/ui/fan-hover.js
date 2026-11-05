@@ -1,13 +1,13 @@
 /**
  * Roue d'ascendance : au survol d'un secteur, une étiquette (nom, Sosa, naissance, décès) et le chemin
  * qui le relie à la personne centrale ; un double-clic recentre la roue sur lui, un double-clic au
- * centre revient à la personne quittée.
+ * centre revient à la personne quittée. Des boutons font de même : revenir, ou descendre vers un enfant.
  */
 import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { longDate } from '../utils/dates.js';
 import { t } from '../i18n.js';
-import { P, fullName } from '../model/people.js';
+import { P, fullName, childrenOf } from '../model/people.js';
 import { openPersonDlg } from './person-dlg.js';
 
 const back = [];      // personnes centrales quittées par double-clic, la dernière en fin
@@ -100,6 +100,35 @@ export function fanRecenter(target) {
     back.push(S.focus);
     return sector.dataset.id;
   }
+  return fanBack();
+}
+
+/** La personne quittée par le dernier recentrage (et la retire de la pile), ou null. */
+export function fanBack() {
   while (back.length && !S.people.has(back[back.length - 1])) back.pop();
   return back.length ? back.pop() : null;
+}
+
+/**
+ * Barre de la roue, toujours visible : revenir à la personne quittée, descendre vers un enfant
+ * de la personne centrale (même après un rechargement, qui oublie les personnes quittées).
+ */
+export function renderFanNav(shown) {
+  const nav = $('#fanNav');
+  nav.hidden = !shown;
+  if (!shown) return;
+  while (back.length && !S.people.has(back[back.length - 1])) back.pop();
+  const previous = back.length ? P(back[back.length - 1]) : null;
+  const kids = childrenOf(S.focus).filter((id) => P(id));
+  const p = P(S.focus);
+  const alone = !S.people.has(p.fatherId) && !S.people.has(p.motherId);
+  nav.hidden = !previous && !kids.length && !alone;
+  nav.innerHTML = '<div>'
+    + (previous ? `<button class="btn small" type="button" data-act="fan-back">${esc(t('fan.backTo', fullName(previous)))}</button>` : '')
+    + (kids.length > 2
+      ? `<select class="btn small" id="fanKids" aria-label="${esc(t('fan.down'))}"><option value="">↓ ${esc(t('fan.down'))}</option>`
+        + kids.map((id) => `<option value="${esc(id)}">${esc(fullName(P(id)))}</option>`).join('') + '</select>'
+      : kids.map((id) => `<button class="btn small" type="button" data-act="fan-down" data-id="${esc(id)}">↓ ${esc(fullName(P(id)))}</button>`).join(''))
+    + (alone ? `<span class="hint">${esc(t('fan.alone'))}</span>` : '')
+    + '</div>';
 }
