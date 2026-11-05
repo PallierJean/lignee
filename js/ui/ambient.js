@@ -1,7 +1,7 @@
 /**
  * Animations des thèmes « fêtes et saisons », dessinées sur un calque sous l'arbre : neige et
- * guirlande à Noël, chauves-souris et fantômes à Halloween, pétales et papillons au printemps,
- * la plage l'été (vagues, écume, baigneurs flous, mouettes), et en automne des arbres qui
+ * guirlande tout autour de la toile à Noël, chauves-souris et fantômes à Halloween, pétales et
+ * papillons au printemps, la plage l'été (vagues, écume, baigneurs flous, mouettes), et en automne des arbres qui
  * perdent leurs feuilles de couleur, au gré des coups de vent, en un tapis qui s'efface au sol.
  * Chaque objet a sa taille, sa vitesse et son balancement, tirés au hasard. Arrêtées hors de ces
  * thèmes ou si le système demande moins d'animations (le motif du fond reste), en pause quand
@@ -232,33 +232,58 @@ function glint(ctx, g, now) {
 
 const BULBS = ['#FF4D4D', '#FFD45C', '#4DDB7A', '#5CB8FF'];
 
-/** La guirlande : un fil qui pend entre des attaches, des ampoules qui s'allument par vagues. */
-function garland(ctx, w, now) {
-  const span = 260;
-  ctx.strokeStyle = 'rgba(20, 40, 28, .9)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  for (let x0 = 0; x0 < w; x0 += span) {
-    ctx.moveTo(x0, 4);
-    ctx.quadraticCurveTo(x0 + span / 2, 34, x0 + span, 4);
-  }
-  ctx.stroke();
-  for (let x = 23, i = 0; x < w; x += 46, i++) {
-    const t = (x % span) / span;
-    const y = 4 + 60 * t * (1 - t); // sur le fil (courbe de Bézier : 4 px aux attaches, 19 px au milieu)
-    const color = BULBS[i % BULBS.length];
-    const lit = 0.35 + 0.65 * Math.max(0, Math.sin(now / 600 - i * 0.7));
-    ctx.save();
-    ctx.globalAlpha = lit;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 14 * lit;
-    ctx.fillStyle = color;
+/**
+ * La guirlande, tout autour de la toile : sur chaque côté, un fil qui pend vers l'intérieur entre
+ * des attaches, et des ampoules tournées vers le centre. Une vague de lumière fait le tour du cadre.
+ */
+function garland(ctx, w, h, now) {
+  const span = 230;  // px entre deux attaches
+  const sag = 26;    // le fil pend de … px vers l'intérieur
+  const gap = 44;    // px entre deux ampoules
+  const m = 4;       // marge au bord
+  // Côtés dans le sens des aiguilles d'une montre : départ, arrivée, direction de l'intérieur
+  const sides = [[m, m, w - m, m, 0, 1], [w - m, m, w - m, h - m, -1, 0], [w - m, h - m, m, h - m, 0, -1], [m, h - m, m, m, 1, 0]];
+  let bulb = 0;
+  for (const [x0, y0, x1, y1, nx, ny] of sides) {
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    const ux = (x1 - x0) / len;
+    const uy = (y1 - y0) / len;
+    const count = Math.max(1, Math.round(len / span));
+    const seg = len / count;
+    // Point du fil à la distance d du départ : courbe de Bézier entre deux attaches, creusée vers l'intérieur
+    const at = (d) => {
+      const t = (d % seg) / seg;
+      const dip = 2 * t * (1 - t) * sag;
+      return [x0 + ux * d + nx * dip, y0 + uy * d + ny * dip];
+    };
+    ctx.strokeStyle = 'rgba(20, 40, 28, .9)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.ellipse(x, y + 5, 3.6, 5.2, 0, 0, TAU);
-    ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = '#2A3A2E';
-    ctx.fillRect(x - 2, y - 1, 4, 3);
+    for (let k = 0; k < count; k++) {
+      const a = k * seg;
+      ctx.moveTo(x0 + ux * a, y0 + uy * a);
+      ctx.quadraticCurveTo(x0 + ux * (a + seg / 2) + nx * sag, y0 + uy * (a + seg / 2) + ny * sag, x0 + ux * (a + seg), y0 + uy * (a + seg));
+    }
+    ctx.stroke();
+    const angle = Math.atan2(ny, nx) - Math.PI / 2; // ampoule tournée vers l'intérieur
+    for (let d = gap / 2; d < len; d += gap, bulb++) {
+      const [x, y] = at(d);
+      const color = BULBS[bulb % BULBS.length];
+      const lit = 0.35 + 0.65 * Math.max(0, Math.sin(now / 600 - bulb * 0.5));
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.fillStyle = '#2A3A2E';
+      ctx.fillRect(-2, -1, 4, 3);
+      ctx.globalAlpha = lit;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 14 * lit;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.ellipse(0, 6, 3.6, 5.2, 0, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 }
 
@@ -463,7 +488,7 @@ const SCENES = {
         }
       }
       ctx.shadowBlur = 0;
-      garland(ctx, w, now);
+      garland(ctx, w, h, now);
     },
   },
   halloween: {
