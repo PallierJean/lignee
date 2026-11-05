@@ -291,6 +291,7 @@ export function bindEvents() {
   document.addEventListener('mouseout', (ev) => highlightTag(ev.target, false));
 
   document.addEventListener('focusin', (ev) => {
+    highlightTag(ev.target, true);
     if (ev.target.id === 'f-spouse') onSpouseInput();
   });
   document.addEventListener('focusout', (ev) => {
