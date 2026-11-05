@@ -492,6 +492,61 @@
   stroke-width: 2.5;
 }
 
+/* Survol d'un ancêtre : son chemin jusqu'au centre reste net, le reste s'estompe (ui/fan-hover.js) */
+.fan-s,
+.fan-empty {
+  transition: opacity .15s;
+}
+
+.fan.trace .fan-s:not(.on),
+.fan.trace .fan-empty {
+  opacity: .3;
+}
+
+.fan.trace .fan-s.on path,
+.fan.trace .fan-s.on circle {
+  stroke-width: 2.5;
+}
+
+/* Étiquette d'un ancêtre, près de la souris */
+.fan-tip {
+  position: fixed;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 320px;
+  padding: 8px 12px 9px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(16, 24, 22, .86);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .3);
+  color: #fff;
+  font: 400 12.5px/1.35 var(--f-body);
+  pointer-events: none;
+}
+
+.fan-tip[hidden] {
+  display: none;
+}
+
+.fan-tip b {
+  font: 400 17px/1.2 var(--f-display);
+}
+
+.fan-tip small {
+  margin-bottom: 3px;
+  font: 400 11px/1.3 var(--f-mono);
+  color: rgba(255, 255, 255, .7);
+}
+
+.fan-tip em {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, .6);
+}
+
 /* Galerie */
 .meds {
   display: grid;

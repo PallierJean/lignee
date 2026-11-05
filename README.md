@@ -348,6 +348,9 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
   centrale, jusqu'à 10 générations, père à gauche et mère à droite de chaque secteur. Seuls les
   ancêtres connus et une case vide juste au-dessus d'eux sont tracés, et la roue est recadrée sur eux ;
   dans les anneaux les plus serrés, le nom tient sur une ligne (zoom jusqu'à 300 % pour le lire).
+  Au survol d'un ancêtre (`ui/fan-hover.js`), une étiquette donne son nom, son numéro Sosa, sa
+  génération, sa naissance et son décès, et son chemin jusqu'au centre reste net quand le reste
+  s'estompe. Un double-clic centre la roue sur lui ; un double-clic au centre revient en arrière.
 - « Imprimer » (`ui/print.js`) propose l'arbre complet, la roue d'ascendance ou le livret de
   famille (`ui/booklet.js`) : couverture avec la roue, sommaire, puis un chapitre par génération,
   couples groupés, portraits et sources. Ses pages A4 portent leurs propres marges, indépendantes
