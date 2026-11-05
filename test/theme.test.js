@@ -111,3 +111,47 @@ describe('thèmes de couleur', () => {
     }
   });
 });
+
+describe('empreintes du thème Maraudeur', () => {
+  test('trajets au hasard, pas imprimés l’un après l’autre, arrêtés hors du thème', async () => {
+    const { setFootprints } = await import('../js/ui/footprints.js');
+    // Faux éléments SVG : juste ce que le module utilise
+    const make = (tag) => {
+      const el = {
+        tag, attrs: {}, style: {}, children: [], parentElement: null,
+        setAttribute(k, v) { el.attrs[k] = String(v); },
+        append(c) { c.parentElement = el; el.children.push(c); },
+        prepend(c) { c.parentElement = el; el.children.unshift(c); },
+        remove() { if (el.parentElement) el.parentElement.children.splice(el.parentElement.children.indexOf(el), 1); },
+        get firstChild() { return el.children[0]; },
+      };
+      return el;
+    };
+    const canvas = Object.assign(make('div'), { clientWidth: 800, clientHeight: 600 });
+    const saved = { create: document.createElement, ns: document.createElementNS, byId: document.getElementById };
+    Object.assign(document, {
+      createElement: make, createElementNS: (ns, tag) => make(tag), getElementById: (id) => (id === 'canvas' ? canvas : saved.byId(id)),
+    });
+    try {
+      setFootprints(true);
+      const layer = canvas.children[0];
+      assert.equal(layer.className, 'steps');
+      const svg = layer.firstChild;
+      assert.equal(svg.attrs.width, '800');
+      const [trail] = svg.children;
+      const steps = trail.children;
+      assert.ok(steps.length >= 5 && steps.length <= 11);
+      assert.deepEqual(steps.map((s) => s.style.animationDelay), steps.map((s, i) => `${i * 380}ms`), 'un pas après l’autre');
+      assert.match(steps[0].attrs.transform, /^translate\([\d.-]+ [\d.-]+\) rotate\(-?\d+\) scale\(-1 1\)$/, 'pied gauche en miroir');
+      // Deux trajets ne partent pas du même endroit
+      setFootprints(false);
+      setFootprints(true);
+      const other = canvas.children[0].firstChild.children[0].children[0].attrs.transform;
+      assert.notEqual(other, steps[0].attrs.transform);
+      setFootprints(false);
+      assert.equal(canvas.children.length, 0, 'calque retiré hors du thème');
+    } finally {
+      Object.assign(document, { createElement: saved.create, createElementNS: saved.ns, getElementById: saved.byId });
+    }
+  });
+});
