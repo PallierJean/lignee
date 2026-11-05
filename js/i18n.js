@@ -80,6 +80,7 @@ const FR = {
   'fan.backTo': (name) => `← Revenir à ${name}`,
   'fan.alone': 'Aucun ancêtre connu',
   'fan.down': 'Descendre vers…',
+  'fan.genDown': (n, count) => `${['Enfants', 'Petits-enfants', 'Arrière-petits-enfants'][n - 1] || n + 'e génération'} (${count})`,
   // Thèmes de couleur
   'theme.label': 'Thème de couleur',
   'theme.auto': 'Automatique',
@@ -823,6 +824,7 @@ const EN = {
   'fan.backTo': (name) => `← Back to ${name}`,
   'fan.alone': 'No known ancestor',
   'fan.down': 'Go down to…',
+  'fan.genDown': (n, count) => `${['Children', 'Grandchildren', 'Great-grandchildren'][n - 1] || 'Generation ' + n} (${count})`,
   // Colour themes
   'theme.label': 'Colour theme',
   'theme.auto': 'Automatic',
