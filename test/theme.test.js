@@ -89,6 +89,15 @@ describe('thèmes de couleur', () => {
       const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
       return (hi + 0.05) / (lo + 0.05);
     };
+    // Carte du Maraudeur : parchemin lisible (AA), police à l'ancienne servie par le site
+    const fonts = readFileSync(new URL('../css/fonts.css', import.meta.url), 'utf8');
+    assert.match(fonts, /font-family: 'IM Fell English';[\s\S]*?src: url\('\.\.\/assets\/fonts\/im-fell-english-normal-latin\.woff2'\)/);
+    const parchment = css.match(/:root\[data-theme="maraudeur"\] \{([^}]*)\}/)[1];
+    assert.match(parchment, /--f-display: "IM Fell English"/);
+    const pv = Object.fromEntries([...parchment.matchAll(/--([\w-]+): (#[0-9A-F]{6});/gi)].map((m) => [m[1], m[2]]));
+    for (const k of ['ink', 'muted', 'warn', 'danger', 'ok']) assert.ok(ratio(pv[k], pv.surface) >= 4.5, `maraudeur : --${k}`);
+    assert.ok(ratio(pv['accent-ink'], pv.accent) >= 4.5, 'maraudeur : texte sur l’accent');
+
     for (const theme of ['daltonisme', 'contraste', 'contraste-sombre']) {
       const block = css.match(new RegExp(`:root\\[data-theme="${theme}"\\] \\{([^}]*)\\}`))[1];
       const v = Object.fromEntries([...block.matchAll(/--([\w-]+): (#[0-9A-F]{6});/gi)].map((m) => [m[1], m[2]]));
