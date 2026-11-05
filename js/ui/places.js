@@ -1,8 +1,8 @@
-/** Carte des lieux : points et migrations, dessinés en SVG sans fond de carte externe. */
+/** Carte des communes : points et migrations, dessinés en SVG sans fond de carte externe. */
 import { S } from '../state.js';
 import { esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { placeUses, migrations } from '../model/places.js';
+import { cityUses, migrations } from '../model/places.js';
 import { knownPlaces, locatePlaces } from '../services/geocode.js';
 import { toast } from './toast.js';
 
@@ -59,7 +59,7 @@ function mapSVG(points, moves) {
 }
 
 export function mapView() {
-  const uses = placeUses();
+  const uses = cityUses();
   if (!uses.length) return `<p class="nofocus">${t('map.empty')}</p>`;
   const known = knownPlaces();
   const points = uses.filter((u) => known.get(u.name)).map((u) => ({ ...u, ...known.get(u.name) }));
@@ -87,7 +87,7 @@ export function mapView() {
 export async function locateMissing(refresh) {
   if (busy) return;
   const known = knownPlaces();
-  const names = placeUses().map((u) => u.name).filter((n) => !known.has(n));
+  const names = cityUses().map((u) => u.name).filter((n) => !known.has(n));
   busy = { done: 0, total: names.length };
   refresh();
   try {

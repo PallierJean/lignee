@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
-import { placeUses, placesByDepartment, migrations } from '../js/model/places.js';
+import { placeUses, placesByDepartment, migrations, cityOf, cityUses } from '../js/model/places.js';
 import { knownPlaces, locatePlaces } from '../js/services/geocode.js';
 import { GEO_KEY } from '../js/config.js';
 import { loadTree, person } from './helpers.js';
@@ -15,6 +15,22 @@ describe('lieux', () => {
     ]);
     assert.deepEqual(placeUses().map((x) => [x.name, x.n]), [['Lyon', 3], ['Paris', 2]]);
     assert.deepEqual(migrations(), [{ from: 'Lyon', to: 'Paris', n: 2 }]);
+  });
+
+  test('carte : communes seulement, lieux-dits réunis, migrations entre communes', () => {
+    assert.equal(cityOf('Bourg, Masseret (19)'), 'Masseret (19)');
+    assert.equal(cityOf('Masseret (19)'), 'Masseret (19)');
+    assert.equal(cityOf('Kreuzberg, Berlin, Allemagne'), 'Berlin, Allemagne');
+    assert.equal(cityOf('Belgique'), 'Belgique');
+    loadTree([
+      person('p', { birthPlace: 'Roussely, Orgnac-sur-Vézère (19)' }),
+      person('c', { birthPlace: 'Bressouneix, Orgnac-sur-Vézère (19)', deathPlace: 'Brive-la-Gaillarde (19)', fatherId: 'p' }),
+      person('d', { birthPlace: 'Orgnac-sur-Vézère (19)', fatherId: 'p' }),
+      person('e', { birthPlace: 'Le Bourg, Brive-la-Gaillarde (19)', fatherId: 'c' }),
+    ]);
+    assert.deepEqual(cityUses().map((x) => [x.name, x.n, x.ids.size]), [['Orgnac-sur-Vézère (19)', 3, 3], ['Brive-la-Gaillarde (19)', 2, 2]]);
+    assert.deepEqual(migrations(), [{ from: 'Orgnac-sur-Vézère (19)', to: 'Brive-la-Gaillarde (19)', n: 1 }], 'd’un lieu-dit à l’autre de la même commune : pas de migration');
+    assert.equal(placeUses().length, 5, 'la vue Lieux garde les lieux-dits');
   });
 
   test('rangement par département, ville puis lieu-dit', () => {
