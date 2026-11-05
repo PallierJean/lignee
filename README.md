@@ -236,7 +236,10 @@ format « Lieu-dit, Ville (Département), Pays » : `Roussely, Orgnac-sur-Vézè
 et le champ Pays affiche « France » par défaut. Un pays connu (`model/countries.js`, en français ou
 en anglais) est enregistré en français ; à l'étranger, le département n'est ni déduit ni contrôlé,
 et la carte cherche un lieu sans pays en France. La carte ne place que des communes : les lieux-dits
-y sont réunis à leur commune (« Bourg, Masseret (19) » -> « Masseret (19) »). Le formulaire les saisit en quatre champs
+y sont réunis à leur commune (« Bourg, Masseret (19) » -> « Masseret (19) »). Elle s'explore
+(`ui/places.js`) : zoom par les boutons ou la molette, déplacement en la faisant glisser, recadrage
+sur un département ; un clic sur une commune liste ses personnes et met ses migrations en évidence.
+Le formulaire les saisit en quatre champs
 (ville, pays, lieu-dit, département) et recompose ce texte (`model/places.js`) ;
 sous le département, le nom suit le numéro saisi (« 19 » : Corrèze, `model/departments.js`).
 La ville prime : quand elle n'existe que dans un département, celui-ci est rempli ou corrigé en
