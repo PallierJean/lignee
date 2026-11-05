@@ -72,6 +72,8 @@ const FR = {
   // Page
   'meta.description': 'Arbre généalogique : fiches, unions, numéros Sosa, registre et import/export GEDCOM.',
   'loading': 'Ouverture de l’arbre…',
+  'framed': 'Lignée ne s’ouvre pas à l’intérieur d’un autre site.',
+  'framedOpen': 'Ouvrir Lignée',
   'treeSwitch.title': 'Changer d’arbre, en créer un autre',
   'treeSwitch.lbl': 'Arbre',
   'find.label': 'Rechercher une personne',
@@ -795,6 +797,8 @@ const EN = {
 
   'meta.description': 'Family tree: person records, unions, Sosa numbers, register and GEDCOM import/export.',
   'loading': 'Opening the tree…',
+  'framed': 'Lignée does not open inside another site.',
+  'framedOpen': 'Open Lignée',
   'treeSwitch.title': 'Switch tree, or create another one',
   'treeSwitch.lbl': 'Tree',
   'find.label': 'Search for a person',
