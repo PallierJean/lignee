@@ -38,7 +38,7 @@ describe('thèmes de couleur', () => {
     // Rangés dans le menu « Aa » : l'en-tête tient sur une ligne
     const menu = html.match(/<details class="appearance"[\s\S]*?<\/details>/)[0];
     assert.match(menu, /id="themeSel"[\s\S]*id="textSel"/);
-    const css = readFileSync(new URL('../css/tokens.css', import.meta.url), 'utf8');
+    const css = ['tokens', 'themes'].map((f) => readFileSync(new URL(`../css/${f}.css`, import.meta.url), 'utf8')).join('\n');
     for (const theme of THEMES) {
       assert.match(html, new RegExp(`<option value="${theme}"`), theme);
       if (!['auto', 'season', 'light'].includes(theme)) assert.match(css, new RegExp(`:root\\[data-theme="${theme}"\\] \\{`), theme);
@@ -89,6 +89,17 @@ describe('thèmes de couleur', () => {
       const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
       return (hi + 0.05) / (lo + 0.05);
     };
+    // Thèmes illustrés : texte lisible (AA) sur les panneaux, et sur le fond pour le texte principal
+    const illustrated = readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8');
+    const blocks = [...illustrated.matchAll(/:root\[data-theme="([\w-]+)"\] \{([^}]*--paper[^}]*)\}/g)];
+    assert.equal(blocks.length, 8, 'huit thèmes illustrés');
+    for (const [, theme, block] of blocks) {
+      const tv = Object.fromEntries([...block.matchAll(/--([\w-]+): (#[0-9A-F]{6});/gi)].map((m) => [m[1], m[2]]));
+      for (const k of ['ink', 'muted', 'warn', 'danger', 'ok']) assert.ok(ratio(tv[k], tv.surface) >= 4.5, `${theme} : --${k}`);
+      assert.ok(ratio(tv.ink, tv.paper) >= 4.5, `${theme} : texte sur le fond`);
+      assert.ok(ratio(tv['accent-ink'], tv.accent) >= 4.5, `${theme} : texte sur l’accent`);
+    }
+
     // Carte du Maraudeur : parchemin lisible (AA), police à l'ancienne servie par le site
     const fonts = readFileSync(new URL('../css/fonts.css', import.meta.url), 'utf8');
     assert.match(fonts, /font-family: 'IM Fell English';[\s\S]*?src: url\('\.\.\/assets\/fonts\/im-fell-english-normal-latin\.woff2'\)/);
@@ -150,6 +161,41 @@ describe('empreintes du thème Maraudeur', () => {
       assert.notEqual(other, steps[0].attrs.transform);
       setFootprints(false);
       assert.equal(canvas.children.length, 0, 'calque retiré hors du thème');
+    } finally {
+      Object.assign(document, { createElement: saved.create, createElementNS: saved.ns, getElementById: saved.byId });
+    }
+  });
+});
+
+describe('ciel du thème Constellations', () => {
+  test('calque d’étoiles posé avec sa traînée, retiré hors du thème', async () => {
+    const { setSky } = await import('../js/ui/sky.js');
+    const make = (tag) => {
+      const el = {
+        tag, attrs: {}, style: {}, children: [], parentElement: null,
+        setAttribute(k, v) { el.attrs[k] = String(v); },
+        append(c) { c.parentElement = el; el.children.push(c); },
+        prepend(c) { c.parentElement = el; el.children.unshift(c); },
+        remove() { if (el.parentElement) el.parentElement.children.splice(el.parentElement.children.indexOf(el), 1); },
+        get firstChild() { return el.children[0]; },
+      };
+      return el;
+    };
+    const canvas = Object.assign(make('div'), { clientWidth: 800, clientHeight: 600 });
+    const saved = { create: document.createElement, ns: document.createElementNS, byId: document.getElementById };
+    Object.assign(document, {
+      createElement: make, createElementNS: (ns, tag) => make(tag), getElementById: (id) => (id === 'canvas' ? canvas : saved.byId(id)),
+    });
+    try {
+      setSky(true);
+      setSky(true); // déjà lancé : un seul calque
+      assert.equal(canvas.children.length, 1);
+      const layer = canvas.children[0];
+      assert.equal(layer.className, 'sky');
+      const grad = layer.firstChild.children[0].children[0];
+      assert.deepEqual([grad.tag, grad.attrs.id], ['linearGradient', 'skyTrail']);
+      setSky(false);
+      assert.equal(canvas.children.length, 0);
     } finally {
       Object.assign(document, { createElement: saved.create, createElementNS: saved.ns, getElementById: saved.byId });
     }
