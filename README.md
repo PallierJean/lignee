@@ -234,7 +234,8 @@ format « Lieu-dit, Ville (Département), Pays » : `Roussely, Orgnac-sur-Vézè
 `Bruxelles, Belgique`. Le pays n'est écrit que hors de France : un lieu sans pays est en France,
 et le champ Pays affiche « France » par défaut. Un pays connu (`model/countries.js`, en français ou
 en anglais) est enregistré en français ; à l'étranger, le département n'est ni déduit ni contrôlé,
-et la carte cherche un lieu sans pays en France. Le formulaire les saisit en quatre champs
+et la carte cherche un lieu sans pays en France. La carte ne place que des communes : les lieux-dits
+y sont réunis à leur commune (« Bourg, Masseret (19) » -> « Masseret (19) »). Le formulaire les saisit en quatre champs
 (ville, pays, lieu-dit, département) et recompose ce texte (`model/places.js`) ;
 sous le département, le nom suit le numéro saisi (« 19 » : Corrèze, `model/departments.js`).
 La ville prime : quand elle n'existe que dans un département, celui-ci est rempli ou corrigé en
