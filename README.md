@@ -419,9 +419,13 @@ donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'
   « C'est bien lui / elle » confirme une piste, qui se reporte alors comme un acte sûr (la
   confirmation vaut pour cet acte-là).
   La vue liste les écarts (date ou lieu de naissance ou de décès, personne marquée vivante), ce qui
-  complète la fiche, les prénoms de l'état civil et le numéro de l'acte de décès ; « Reporter »
-  écrit une valeur dans la fiche, en une action annulable. Les prénoms et le nom ne sont que
-  signalés : l'INSEE les écrit sans accents.
+  complète la fiche, les prénoms de l'état civil, le nom de naissance et le numéro de l'acte de
+  décès ; « Reporter » écrit une valeur dans la fiche, en une action annulable. Les dates s'écrivent
+  « 08 Août 1927 » ; le numéro d'acte devient une source « Acte de décès », fait « Décès »,
+  intitulée « Acte n°163 » et placée au lieu du décès. L'INSEE écrit les noms sans accents : les
+  prénoms déjà dans la fiche gardent leur orthographe, les autres reprennent leurs accents d'après
+  l'arbre puis d'après une liste de prénoms français (`model/first-names.js`) ; le nom de naissance,
+  d'après les noms de l'arbre, va dans le nom de jeune fille d'une femme.
   Sans compte, matchID n'accepte que quelques recherches puis répond « connexion nécessaire » :
   la vue propose alors l'inscription gratuite (adresse e-mail, puis code reçu par e-mail). Le jeton
   est gardé par server.js dans `data/matchid.json` (ignoré par git, jamais servi aux pages) et
