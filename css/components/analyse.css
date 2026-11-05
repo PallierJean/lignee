@@ -414,6 +414,50 @@
   fill: var(--accent);
   stroke: var(--surface);
   stroke-width: 2;
+  cursor: pointer;
+}
+
+/* Carte explorable (ui/places.js) : glisser pour se déplacer, clic sur une commune */
+.map-tools {
+  margin-top: 4px;
+}
+
+.map-box {
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.map-box:active {
+  cursor: grabbing;
+}
+
+.map .pt:hover,
+.map .pt.sel {
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+
+.map.picking .mv:not(.on) {
+  opacity: .2;
+}
+
+.map .mv.on {
+  stroke: var(--accent);
+  opacity: 1;
+}
+
+.map-people {
+  columns: 2 12em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: .8438rem;
+}
+
+.map-people li {
+  break-inside: avoid;
+  margin-bottom: 3px;
 }
 
 .map .pl-t {
