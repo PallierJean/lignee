@@ -1,5 +1,5 @@
 /**
- * Thème « Matrice » : une pluie de signes verts défile sur la toile, sous l'arbre. Chaque colonne
+ * Thème « Matrix » : une pluie de signes verts défile sur la toile, sous l'arbre. Chaque colonne
  * tombe à sa vitesse ; la tête de la goutte est presque blanche, la traînée s'éteint peu à peu
  * (on efface un peu de l'image à chaque image, la toile reste transparente). Les signes sont des
  * katakana et des chiffres, retournés comme dans le film. Arrêtée hors de ce thème ou si le système

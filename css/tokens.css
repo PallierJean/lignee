@@ -390,3 +390,18 @@
     opacity: 0;
   }
 }
+
+/* Neige et guirlande du thème Noël (ui/snow.js) : calque collé à la zone visible, sous l'arbre */
+.snow {
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.snow canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}

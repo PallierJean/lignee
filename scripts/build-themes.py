@@ -6,7 +6,8 @@ def uri(svg): return 'url("data:image/svg+xml,' + quote(svg, safe=" =:/,.'-()") 
 def svg(w, h, body): return f"<svg xmlns='http://www.w3.org/2000/svg' width='{w}' height='{h}'>{body}</svg>"
 
 # ---------- Motifs ----------
-def stars(constellation=False):
+def stars():
+    """Fond d'étoiles faibles, semées au hasard ; les constellations, réelles, sont dessinées par ui/sky.js."""
     b = ''
     for _ in range(70):
         x, y, r = random.uniform(0, 400), random.uniform(0, 400), random.choice([.5, .6, .8, 1, 1.3])
@@ -14,11 +15,6 @@ def stars(constellation=False):
     for x, y in [(60, 80), (300, 240), (180, 350)]:  # étoiles à branches
         b += (f"<g stroke='#fff' stroke-linecap='round' opacity='.7'><path d='M{x} {y-5}v10M{x-5} {y}h10' stroke-width='1'/>"
               f"<path d='M{x-2} {y-2}l4 4M{x+2} {y-2}l-4 4' stroke-width='.6'/></g>")
-    # Une petite constellation figée, pour qui a demandé moins d'animations (sinon ui/sky.js les dessine)
-    if constellation:
-        pts = [(250, 60), (285, 85), (320, 75), (340, 110), (300, 130)]
-        b += "<path d='M" + 'L'.join(f'{x} {y}' for x, y in pts) + "' fill='none' stroke='#9FB4FF' stroke-width='.6' opacity='.35'/>"
-        b += ''.join(f"<circle cx='{x}' cy='{y}' r='1.6' fill='#DCE4FF' opacity='.85'/>" for x, y in pts)
     return svg(400, 400, b)
 
 def porcelaine():
@@ -80,15 +76,11 @@ def matrix_still():
             b += f"<text x='{col + 2}' y='{(top + k) * 16}' fill='#00FF41' opacity='{op:.2f}'>{random.choice(glyphs)}</text>"
     return svg(240, 320, f"<g font-family='monospace' font-size='14'>{b}</g>")
 
-def terminal():
-    b = "<path d='M0 1.5H4' stroke='#000' stroke-width='1' opacity='.35'/>"
-    return svg(4, 3, b)
-
 # ---------- Thèmes ----------
 KEYS = ['paper', 'surface', 'ink', 'muted', 'line', 'edge', 'dot', 'accent', 'accent-ink', 'accent-soft', 'warn',
         'danger', 'danger-soft', 'ok', 'halo', 'male', 'female', 'scrim']
 THEMES = [
-  ('constellations', 'Constellations : nuit bleu profond, étoiles, liens en fins traits lumineux ; étoiles qui scintillent et étoiles filantes (ui/sky.js)', 'dark',
+  ('constellations', 'Constellations : nuit bleu profond, le vrai ciel de Bordeaux ce soir avec ses constellations, qui tourne lentement (ui/sky.js)', 'dark',
    dict(paper='#0B1026', surface='#141C3E', ink='#E8ECFF', muted='#AAB4DC', line='#2C386B', edge='#8FA4F0', dot='#1A2350',
         accent='#FFD36E', **{'accent-ink': '#0B1026', 'accent-soft': '#2B2B4F'}, warn='#FFD27A', danger='#FF9A8B', **{'danger-soft': '#3A1C2A'},
         ok='#8FE3C0', halo='#FFE7A3', male='#7FB2FF', female='#F5A3D0', scrim='rgba(2, 4, 16, .7)'),
@@ -98,16 +90,11 @@ THEMES = [
         accent='#1F4690', **{'accent-ink': '#FFFFFF', 'accent-soft': '#DCE5F5'}, warn='#7A5200', danger='#A3263A', **{'danger-soft': '#F6DDE2'},
         ok='#2A6A4A', halo='#B8901A', male='#2E5A9E', female='#B04A7A', scrim='rgba(10, 20, 40, .45)'),
    porcelaine(), '360px', {'--frieze': uri(porcelain_frieze())}),
-  ('matrice', 'Matrice : pluie de signes verts qui défile sur la toile (ui/rain.js), fiches de console', 'dark',
+  ('matrix', 'Matrix : pluie de signes verts qui défile sur la toile (ui/rain.js), fiches de console', 'dark',
    dict(paper='#000300', surface='#020D04', ink='#C8FFD4', muted='#5FE07A', line='#0E4A1C', edge='#00D43A', dot='#021A08',
         accent='#00FF41', **{'accent-ink': '#001A07', 'accent-soft': '#063A16'}, warn='#E6FF6A', danger='#FF6B6B', **{'danger-soft': '#3A0E0E'},
         ok='#7DFFA0', halo='#B6FF00', male='#5CE1FF', female='#FF7AD9', scrim='rgba(0, 0, 0, .75)'),
    svg(4, 4, ''), '4px', {'--f-display': '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace'}),
-  ('terminal', 'Terminal rétro : vert phosphore sur noir, lignes de balayage', 'dark',
-   dict(paper='#040A05', surface='#08140A', ink='#9CFFAE', muted='#5FD47A', line='#1F5A2A', edge='#3FCF5C', dot='#0E2412',
-        accent='#3DFF6E', **{'accent-ink': '#021006', 'accent-soft': '#0F3A1A'}, warn='#E6FF6A', danger='#FF7A7A', **{'danger-soft': '#3A1010'},
-        ok='#9CFFAE', halo='#C6FF4A', male='#6AE0FF', female='#FF9AE0', scrim='rgba(0, 0, 0, .7)'),
-   terminal(), '4px 3px', {'--f-display': '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace'}),
 ]
 
 out = ["""/* ==========================================================
@@ -129,13 +116,9 @@ for name, comment, scheme, v, deco, size, extra in THEMES:
 """)
 
 out.append(f"""
-/* Constellations et Matrice : figées dans le fond pour qui a demandé moins d'animations */
+/* Matrix : pluie figée dans le fond pour qui a demandé moins d'animations */
 @media (prefers-reduced-motion: reduce) {{
-  :root[data-theme="constellations"] {{
-    --deco: {uri(stars(True))};
-  }}
-
-  :root[data-theme="matrice"] {{
+  :root[data-theme="matrix"] {{
     --deco: {uri(matrix_still())};
     --deco-size: 240px 320px;
   }}
@@ -211,44 +194,26 @@ out.append("""
   stroke: #C9A227;
 }
 
-/* Matrice et terminal : fiches en caractères de console (l'interface garde sa police, plus étroite) */
-:root[data-theme="matrice"] .card,
-:root[data-theme="terminal"] .card {
+/* Matrix : fiches en caractères de console (l'interface garde sa police, plus étroite) */
+:root[data-theme="matrix"] .card {
   font-family: var(--f-mono);
 }
 
-/* Matrice : fiches de console qui luisent sur la pluie ; pluie figée dans le fond si moins d'animations */
-:root[data-theme="matrice"] {
+/* Matrix : fiches de console qui luisent sur la pluie ; pluie figée dans le fond si moins d'animations */
+:root[data-theme="matrix"] {
   --r: 2px;
 }
 
-:root[data-theme="matrice"] .card {
+:root[data-theme="matrix"] .card {
   border-radius: 2px;
   box-shadow: 0 0 10px rgba(0, 255, 65, .22);
 }
 
-:root[data-theme="matrice"] .card .g {
+:root[data-theme="matrix"] .card .g {
   text-shadow: 0 0 6px rgba(0, 255, 65, .6);
 }
 
-/* Terminal : texte qui luit, coins carrés, bords de l'écran assombris */
-:root[data-theme="terminal"] {
-  --r: 0;
-}
-
-:root[data-theme="terminal"] body {
-  text-shadow: 0 0 4px rgba(60, 255, 110, .35);
-}
-
-:root[data-theme="terminal"] .card {
-  border-radius: 0;
-}
-
-:root[data-theme="terminal"] .canvas {
-  box-shadow: inset 0 0 80px rgba(0, 0, 0, .8);
-}
-
-/* Matrice : la pluie de signes, dessinée par ui/rain.js sous l'arbre */
+/* Matrix : la pluie de signes, dessinée par ui/rain.js sous l'arbre */
 .rain {
   position: sticky;
   top: 0;
@@ -263,7 +228,7 @@ out.append("""
   left: 0;
 }
 
-/* Constellations : étoiles qui scintillent et étoiles filantes (ui/sky.js) */
+/* Constellations : le vrai ciel de Bordeaux, dessiné par ui/sky.js sous l'arbre */
 .sky {
   position: sticky;
   top: 0;
@@ -272,128 +237,10 @@ out.append("""
   pointer-events: none;
 }
 
-.sky svg {
+.sky canvas {
   position: absolute;
   top: 0;
   left: 0;
-  overflow: visible;
-}
-
-.sky .twinkle {
-  fill: #FFFFFF;
-  opacity: 0;
-  animation: twinkle 3.2s ease-in-out forwards;
-}
-
-.sky .shoot {
-  opacity: 0;
-  animation: shoot 1.4s ease-out forwards;
-}
-
-/* Constellations animées : traits qui se tracent, étoiles qui brillent et pulsent, puis tout s'efface */
-.sky .constel {
-  opacity: 0;
-  animation: constel-life var(--life, 15s) ease-in-out forwards;
-}
-
-.sky .constel-line {
-  fill: none;
-  stroke: #B9CAFF;
-  stroke-width: 1.3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: var(--len);
-  stroke-dashoffset: var(--len);
-  filter: drop-shadow(0 0 3px rgba(185, 202, 255, .95));
-  animation: constel-draw 2.4s ease-out .6s forwards;
-}
-
-.sky .constel-star {
-  fill: #FFFFFF;
-  filter: drop-shadow(0 0 3px #FFFFFF) drop-shadow(0 0 9px #A9BDFF) drop-shadow(0 0 16px rgba(159, 180, 255, .6));
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: shine 2.2s ease-in-out infinite alternate;
-}
-
-.sky .constel-flare {
-  stroke: #FFFFFF;
-  stroke-width: 1.1;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 3px #FFFFFF);
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: flare 3s ease-in-out infinite;
-}
-
-@keyframes constel-life {
-  0% {
-    opacity: 0;
-  }
-  8% {
-    opacity: 1;
-  }
-  85% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes constel-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes shine {
-  from {
-    opacity: .55;
-    transform: scale(.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1.25);
-  }
-}
-
-@keyframes flare {
-  0%,
-  100% {
-    opacity: .2;
-    transform: scale(.6) rotate(0deg);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.2) rotate(45deg);
-  }
-}
-
-@keyframes twinkle {
-  0% {
-    opacity: 0;
-  }
-  50% {
-    opacity: .95;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes shoot {
-  0% {
-    opacity: 0;
-    transform: translateX(0);
-  }
-  10% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(260px);
-  }
 }
 """)
 import sys

@@ -7,6 +7,7 @@ import { $ } from '../utils/dom.js';
 import { setFootprints } from './footprints.js';
 import { setSky } from './sky.js';
 import { setRain } from './rain.js';
+import { setSnow } from './snow.js';
 
 /**
  * Thème de la saison à la date `d` : Noël du 1er décembre à l'Épiphanie, Halloween du 20 octobre
@@ -32,7 +33,8 @@ export function applyTheme() {
   else root.text = S.textSize;
   setFootprints(theme === 'maraudeur');
   setSky(theme === 'constellations');
-  setRain(theme === 'matrice');
+  setRain(theme === 'matrix');
+  setSnow(theme === 'noel');
   $('#themeSel').value = S.theme;
   $('#textSel').value = S.textSize;
 }
