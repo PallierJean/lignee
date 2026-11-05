@@ -532,6 +532,20 @@
   margin: 0 0 8px;
 }
 
+/* Légende de la photo, modifiable sur place */
+.media-text .link {
+  margin-left: 6px;
+}
+
+.media-caption {
+  margin: 10px 0;
+}
+
+.media-caption textarea {
+  width: 100%;
+  resize: vertical;
+}
+
 .media-pic img {
   display: block;
   max-width: 100%;

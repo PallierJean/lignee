@@ -5,7 +5,9 @@ import * as A from '../js/actions.js';
 import { renderHeader } from '../js/ui/header.js';
 import { renderAll, afterData, renderFiche } from '../js/ui/render.js';
 import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
-import { openMedia, closeMedia, placePin, addTag, removeTag, cancelPin, highlightTag } from '../js/ui/media.js';
+import {
+  openMedia, closeMedia, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption,
+} from '../js/ui/media.js';
 import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind } from '../js/ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from '../js/ui/spouse-pick.js';
 import { resetHistory } from '../js/services/history.js';
@@ -289,6 +291,29 @@ describe('fiche : événements, sources, galerie', () => {
     assert.equal(S.people.get('a').media[0].tags.length, 1);
     closeMedia();
     assert.equal(el('mediaDlg').hidden, true);
+  });
+
+  test('visionneuse : modifier la légende sur place, annulable', async () => {
+    openMedia('a', 'm1');
+    assert.match(html('mediaCard'), /data-act="caption-edit">modifier</);
+    editCaption(true);
+    assert.match(html('mediaCard'), /id="mdEditNote" rows="3">Lyon</);
+    el('mdEditTitle').value = 'Mariage';
+    el('mdEditDate').value = '1950';
+    el('mdEditNote').value = ' Geneviève (en haut), Paul ';
+    await saveCaption();
+    const m = S.people.get('a').media[0];
+    assert.deepEqual([m.title, m.date, m.note], ['Mariage', '1950', 'Geneviève (en haut), Paul']);
+    assert.ok(m.tags.length, 'les identifications restent');
+    assert.match(html('mediaCard'), /<h2 id="mdTitle">Mariage<\/h2>/);
+    await A.undo();
+    assert.equal(S.people.get('a').media[0].title, 'Noce');
+    // Fiche du propriétaire en cours de saisie : son enregistrement réécrirait la galerie
+    A.startEdit('a');
+    editCaption(true);
+    assert.doesNotMatch(html('mediaCard'), /id="mdEditNote"/);
+    A.cancelEdit();
+    closeMedia();
   });
 
   test('image supprimée : la visionneuse se ferme', () => {
