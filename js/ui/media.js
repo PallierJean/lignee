@@ -3,7 +3,7 @@
  * Un clic sur l'image place un repère, puis on choisit la personne.
  */
 import { S } from '../state.js';
-import { $, esc } from '../utils/dom.js';
+import { $, esc, setHTML } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { P, fullName, mediaList, photoSrc, peopleNamedIn } from '../model/people.js';
 import { opUpdate, beginAction, commitAction } from '../services/storage.js';
@@ -32,7 +32,7 @@ export function renderMedia() {
   const tags = tagsOf(m);
   // Repères invisibles sur les visages : ils s'éclairent au survol, du visage ou du nom dans la liste (highlightTag)
   const shown = tags.filter((x) => P(x.id));
-  const marks = shown.map((x) => `<button class="tag-pin" type="button" data-tag="${tags.indexOf(x)}" style="left:${x.x}%;top:${x.y}%"`
+  const marks = shown.map((x) => `<button class="tag-pin" type="button" data-tag="${tags.indexOf(x)}" data-style="left:${x.x}%;top:${x.y}%"`
     + ` data-act="media-person" data-id="${esc(x.id)}" aria-label="${esc(fullName(P(x.id)))}"><span class="tag-name">${esc(fullName(P(x.id)))}</span></button>`).join('');
   const names = shown.map((x) => `<li data-tag="${tags.indexOf(x)}">`
     + `<button class="link" type="button" data-act="media-person" data-id="${esc(x.id)}">${esc(fullName(P(x.id)))}</button>`
@@ -50,13 +50,13 @@ export function renderMedia() {
     : '';
   // La consigne au-dessus de l'image : c'est là qu'on clique
   const hint = S.canWrite && !pin ? `<p class="hint tag-hint">${t('med.hint')}</p>` : '';
-  $('#mediaCard').innerHTML = `<div class="sheet-head"><h2 id="mdTitle">${esc(m.title || t('med.untitled'))}</h2>`
+  setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(m.title || t('med.untitled'))}</h2>`
     + `<button class="icon-btn" type="button" data-act="media-close" aria-label="${t('close')}">×</button></div>`
     + hint
     + `<div class="media-pic${S.canWrite ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">${marks}`
-    + (pin ? `<span class="tag-pin new" style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
+    + (pin ? `<span class="tag-pin new" data-style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
     + caption(m)
-    + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker;
+    + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker);
 }
 
 /** Survol (ou focus) d'un nom de la liste : sa personne s'éclaire sur la photo. */

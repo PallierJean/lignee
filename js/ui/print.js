@@ -8,7 +8,7 @@
  */
 import { CW, CH, RINGS_PATH, pageRule } from '../config.js';
 import { S } from '../state.js';
-import { $, esc } from '../utils/dom.js';
+import { $, esc, setHTML } from '../utils/dom.js';
 import { longDate } from '../utils/dates.js';
 import { P, given, surname, cardNames, cardDates, fullName, parentsName, currentSituation } from '../model/people.js';
 import { buildFullLayout } from '../tree/full-layout.js';
@@ -233,9 +233,9 @@ function tileHTML(grid, tile, drawing, title) {
       + label(tile.x + vw / 2, y + band / 2, t('pr.tileGlue', next.down), 0) : '');
   const arrows = [['←', next.left], ['↑', next.up], ['↓', next.down], ['→', next.right]]
     .filter(([, code]) => code).map(([sym, code]) => `${sym} ${code}`).join('   ');
-  return `<section class="tile" style="height:${fitHeight(h + FOOT - 1)}">`
+  return `<section class="tile" data-style="height:${fitHeight(h + FOOT - 1)}">`
     + `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${tile.x} ${tile.y} ${vw} ${vh}" width="${w}mm" height="${h}mm">${drawing}${marks}</svg>`
-    + `<div class="tile-foot" style="height:${FOOT - 1}mm"><b>${sheetCode(tile.row, tile.col)}</b>${locator(grid, tile)}`
+    + `<div class="tile-foot" data-style="height:${FOOT - 1}mm"><b>${sheetCode(tile.row, tile.col)}</b>${locator(grid, tile)}`
     + `<span class="tile-next">${esc(arrows)}</span><span class="tile-title">${esc(title)}</span></div></section>`;
 }
 
@@ -254,7 +254,7 @@ function planHTML(grid, drawing, { W, H }, title, legend) {
       + ` font-size="${size}" fill="${C.accent}" stroke="#fff" stroke-width="${1.2 / fit}" paint-order="stroke">${sheetCode(tile.row, tile.col)}</text>`;
   }).join('');
   const last = sheetCode(grid.rows - 1, grid.cols - 1);
-  return `<section class="tile tile-plan" style="height:${fitHeight(h + FOOT - 1)}"><h1>${esc(t('pr.planTitle'))}</h1><p class="plan-sub">${esc(title)}</p>`
+  return `<section class="tile tile-plan" data-style="height:${fitHeight(h + FOOT - 1)}"><h1>${esc(t('pr.planTitle'))}</h1><p class="plan-sub">${esc(title)}</p>`
     + `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W * fit}mm" height="${H * fit}mm">${drawing}${cells}</svg>`
     + `<ol><li>${esc(t('pr.planStep1', last))}</li><li>${esc(t('pr.planStep2'))}</li><li>${esc(t('pr.planStep3'))}</li></ol>`
     + `<p class="plan-sub">${esc(legend)}</p></section>`;
@@ -362,8 +362,8 @@ export async function printTree() {
     const { W, H } = fan || layout;
     const drawing = `<svg x="0" y="0" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`
       + (fan ? fanSVG(FAN_COLORS, 1) : treeSVG(layout, 1)) + '</svg>';
-    area.innerHTML = planHTML(grid, drawing, fan || layout, title, legend)
-      + grid.tiles.map((tile) => tileHTML(grid, tile, drawing, title)).join('');
+    setHTML(area, planHTML(grid, drawing, fan || layout, title, legend)
+      + grid.tiles.map((tile) => tileHTML(grid, tile, drawing, title)).join(''));
   } else if (isBook(content)) {
     area.style.width = '';
     area.style.height = '';
@@ -371,8 +371,8 @@ export async function printTree() {
   } else {
     area.style.width = `min(${page.w - 2 * MARGIN - 1}mm, 100%)`;
     area.style.height = fitHeight(page.h - 2 * MARGIN - 1);
-    area.innerHTML = `<header style="height:${HEAD}mm"><h1>${esc(title)}</h1><p>${esc(legend)}</p></header>`
-      + `<div class="print-tree">${fan ? fanSVG(FAN_COLORS, page.scale) : treeSVG(layout, page.scale)}</div>`;
+    setHTML(area, `<header data-style="height:${HEAD}mm"><h1>${esc(title)}</h1><p>${esc(legend)}</p></header>`
+      + `<div class="print-tree">${fan ? fanSVG(FAN_COLORS, page.scale) : treeSVG(layout, page.scale)}</div>`);
   }
 
   closePrint();

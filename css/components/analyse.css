@@ -451,6 +451,42 @@
   cursor: pointer;
 }
 
+/* Couleurs du thème (voir paint dans tree/fan.js) */
+.fan-text {
+  fill: var(--ink);
+}
+
+.fan-muted {
+  fill: var(--muted);
+}
+
+.fan-empty {
+  fill: var(--paper);
+  stroke: var(--line);
+  stroke-width: .8;
+}
+
+.fan-sector,
+.fan-center {
+  fill: var(--surface);
+  stroke: var(--line);
+  stroke-width: 1.3;
+}
+
+.fan-center {
+  stroke-width: 2;
+}
+
+.fan-sector.sx-M,
+.fan-center.sx-M {
+  stroke: var(--male);
+}
+
+.fan-sector.sx-F,
+.fan-center.sx-F {
+  stroke: var(--female);
+}
+
 .fan-s:hover path,
 .fan-s:hover circle {
   stroke-width: 2.5;
