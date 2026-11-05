@@ -626,6 +626,7 @@
   flex-direction: column;
   align-items: center;
   gap: 1px;
+  width: max-content;
   padding: 6px 12px 7px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, .18);
@@ -634,19 +635,19 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, .3);
   color: #fff;
   line-height: 1.2;
-  white-space: nowrap;
+  text-align: center;
   opacity: 0;
-  transform: translate(-50%, -4px);
+  transform: translate(calc(-50% + var(--dx, 0px)), -4px);
   transition: opacity .2s, transform .2s;
   pointer-events: none;
 }
 
-/* Petite pointe vers le visage */
+/* Petite pointe vers le visage, même quand l'étiquette glisse près d'un bord (--dx, voir fitLabel) */
 .tag-name::before {
   content: '';
   position: absolute;
   bottom: 100%;
-  left: 50%;
+  left: calc(50% - var(--dx, 0px));
   margin-left: -6px;
   border: 6px solid transparent;
   border-bottom-color: rgba(16, 24, 22, .78);
@@ -673,7 +674,7 @@
 .tag-pin:focus-visible .tag-name,
 .tag-pin.lit .tag-name {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translate(calc(-50% + var(--dx, 0px)), 0);
 }
 
 /* Visage en bas de la photo : l'étiquette au-dessus */
@@ -687,39 +688,6 @@
   top: 100%;
   border-bottom-color: transparent;
   border-top-color: rgba(16, 24, 22, .78);
-}
-
-/* Visage près d'un bord : l'étiquette part vers l'intérieur */
-.tag-pin.start .tag-name {
-  left: 0;
-}
-
-.tag-pin.start .tag-name,
-.tag-pin.start:hover .tag-name,
-.tag-pin.start:focus-visible .tag-name,
-.tag-pin.start.lit .tag-name {
-  transform: none;
-}
-
-.tag-pin.start .tag-name::before {
-  left: 20px;
-}
-
-.tag-pin.end .tag-name {
-  left: auto;
-  right: 0;
-}
-
-.tag-pin.end .tag-name,
-.tag-pin.end:hover .tag-name,
-.tag-pin.end:focus-visible .tag-name,
-.tag-pin.end.lit .tag-name {
-  transform: none;
-}
-
-.tag-pin.end .tag-name::before {
-  left: auto;
-  right: 14px;
 }
 
 /* Repère en attente d'une personne : un point visible */
