@@ -275,7 +275,11 @@ export function deathDifferences(id, act) {
 
   // Numéro de l'acte de décès : une source de la fiche, sauf si elle le cite déjà
   const number = String(act.certificate || '').trim();
-  const cited = (s) => s.kind === 'death' && (`${s.title} ${s.ref}`.match(/\w+/g) || []).includes(number);
+  // Cité si ses mots s'y suivent : « 1094 N » dans « Acte n°1094 N », mais pas « 12 » dans « Acte n°123 »
+  const tokens = (x) => norm(x).match(/[a-z0-9]+/g) || [];
+  const wanted = tokens(number);
+  const cited = (s) => s.kind === 'death' && tokens(`${s.title} ${s.ref}`)
+    .some((x, i, all) => wanted.every((w, k) => all[i + k] === w));
   if (number && !sourcesOf(p).some(cited)) {
     const source = {
       id: rid('s'), kind: 'death', fact: 'death', title: `Acte n°${number}`, place: act.death.city ? placeText(act.death) : '',
