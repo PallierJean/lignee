@@ -8,7 +8,7 @@ import { afterData } from '../js/ui/render.js';
 import { openPersonDlg } from '../js/ui/person-dlg.js';
 import { currentSituation, unionCauseText } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
-import { CW, DUP_KEY } from '../js/config.js';
+import { CW, CH, DUP_KEY } from '../js/config.js';
 import { ignoredPairs } from '../js/services/dup-ignore.js';
 import { parsePlace } from '../js/model/places.js';
 import { resetHistory, canUndo } from '../js/services/history.js';
@@ -135,16 +135,27 @@ describe('navigation et affichage', () => {
     A.setGenerations('down', 2);
   });
 
-  test('recentrer : la personne centrale, même au bord de l’arbre ; la roue aussi', () => {
+  test('recentrer : la personne centrale ; défilement à la taille de l’arbre ; la roue aussi', () => {
     const canvas = el('canvas');
     const moves = [];
     canvas.scrollTo = (x) => moves.push(x);
     S.fan = false;
+    const size = [canvas.clientWidth, canvas.clientHeight];
+    // L'arbre tient à l'écran : centré, sans marge de défilement en trop
+    Object.assign(canvas, { clientWidth: 10000, clientHeight: 8000 });
     renderTree();
-    assert.equal(el('sizer').style.margin, `${canvas.clientHeight / 2}px ${canvas.clientWidth / 2}px`);
+    const w = Math.ceil(S.lastLayout.W * S.zoom);
+    const h = Math.ceil(S.lastLayout.H * S.zoom);
+    assert.equal(el('sizer').style.margin, `${Math.floor((8000 - h) / 2)}px ${Math.floor((10000 - w) / 2)}px`);
+    // Plus grand que l'écran : les barres suivent sa taille, la personne centrale vient au milieu
+    Object.assign(canvas, { clientWidth: 200, clientHeight: 150 });
+    renderTree();
+    assert.equal(el('sizer').style.margin, '0px 0px');
     const n = S.lastLayout.nodes.find((x) => x.focus);
     A.recenter();
-    assert.equal(moves[0].left, (n.x + CW / 2) * S.zoom);
+    assert.equal(moves[0].left, (n.x + CW / 2) * S.zoom - 100);
+    assert.equal(moves[0].top, (n.y + CH / 2) * S.zoom - 150 * 0.55);
+    [canvas.clientWidth, canvas.clientHeight] = size;
     S.fan = true;
     canvas.scrollWidth = 1000;
     canvas.scrollHeight = 900;
