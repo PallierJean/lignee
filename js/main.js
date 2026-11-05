@@ -8,7 +8,7 @@
  */
 import { S, services, loadPrefs } from './state.js';
 import { bindEvents } from './events.js';
-import { applyStatic } from './i18n.js';
+import { applyStatic, t } from './i18n.js';
 import { renderAll, afterData } from './ui/render.js';
 import { loadCommunes } from './model/communes.js';
 import { loadLocal, seedExample, loadFile, subscribe } from './services/storage.js';
@@ -78,4 +78,19 @@ async function init() {
   services.downloads = await useService('downloads');
 }
 
-init();
+/**
+ * Vrai si la page est affichée dans le cadre d'un autre site : celui-ci pourrait faire cliquer
+ * à l'aveugle sur ses boutons (« Supprimer »…). GitHub Pages ne permet pas l'en-tête qui l'interdit
+ * (frame-ancestors). claude.ai, qui fournit window.claude, affiche l'application dans un cadre.
+ */
+const framedByOtherSite = () => window.top !== window.self && !window.claude;
+
+if (framedByOtherSite()) {
+  const p = document.createElement('p');
+  p.className = 'framed';
+  const a = Object.assign(document.createElement('a'), { href: location.href, target: '_blank', rel: 'noopener', textContent: t('framedOpen') });
+  p.append(t('framed'), ' ', a);
+  document.body.replaceChildren(p);
+} else {
+  init();
+}
