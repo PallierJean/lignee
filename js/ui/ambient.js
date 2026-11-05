@@ -3,10 +3,10 @@
  * guirlande tout autour de la toile à Noël ; à Halloween, lune et nuages, citrouilles qui
  * vacillent, brume, araignée, chauves-souris et fantômes ; au printemps, branches de cerisier en
  * fleur, prairie fleurie, pétales, papillons et hirondelles ; l'été, la plage (vagues, écume,
- * baigneurs flous, mouettes) ; en automne, des arbres qui perdent leurs feuilles de couleur au gré
- * des coups de vent, en un tapis qui s'efface au sol. Chaque objet a sa taille, sa vitesse et son
- * balancement, tirés au hasard. Arrêtées hors de ces thèmes ou si le système demande moins
- * d'animations (le motif du fond reste), en pause quand l'onglet est caché.
+ * baigneurs flous, petit requin, mouettes) ; en automne, des arbres qui perdent leurs feuilles de
+ * couleur au gré des coups de vent, en un tapis qui s'efface au sol. Chaque objet a sa taille, sa
+ * vitesse et son balancement, tirés au hasard. Arrêtées hors de ces thèmes ou si le système
+ * demande moins d'animations (le motif du fond reste), en pause quand l'onglet est caché.
  */
 import { reduced } from '../config.js';
 
@@ -576,6 +576,41 @@ function gull(ctx, x, y, b, now) {
   ctx.restore();
 }
 
+/** Petit requin : un aileron qui fend l'eau, son sillage d'écume, sa silhouette devinée dessous. */
+function shark(ctx, k, now, horizon, shore) {
+  const y = horizon + (shore - horizon) * k.depth + Math.sin(now / 700 + k.phase) * 1.5;
+  const x = k.x;
+  const z = 0.8 + k.depth * 0.6; // plus proche, plus grand
+  ctx.save();
+  // Silhouette sous l'eau
+  ctx.fillStyle = 'rgba(30, 60, 80, .18)';
+  ctx.beginPath();
+  ctx.ellipse(x - k.dir * 6 * z, y + 5 * z, 26 * z, 5 * z, 0, 0, TAU);
+  ctx.fill();
+  // Sillage : deux traînées d'écume en V derrière l'aileron
+  ctx.strokeStyle = 'rgba(255, 255, 255, .75)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (const side of [-1, 1]) {
+    ctx.moveTo(x - k.dir * 4 * z, y);
+    ctx.quadraticCurveTo(x - k.dir * 20 * z, y + side * 3 * z, x - k.dir * 38 * z, y + side * 6 * z);
+  }
+  ctx.stroke();
+  // Aileron : bord d'attaque bombé, bord de fuite creusé
+  ctx.fillStyle = '#5F6E7A';
+  ctx.beginPath();
+  ctx.moveTo(x + k.dir * 7 * z, y);
+  ctx.quadraticCurveTo(x + k.dir * 3 * z, y - 10 * z, x - k.dir * 4 * z, y - 15 * z);
+  ctx.quadraticCurveTo(x - k.dir * 4 * z, y - 6 * z, x - k.dir * 9 * z, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255, 255, 255, .8)'; // écume au pied de l'aileron
+  ctx.beginPath();
+  ctx.ellipse(x, y + 0.5, 9 * z, 1.6 * z, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
 /** Baigneur flou : tête et bonnet qui dépassent de l'eau, bercés par les vagues. */
 function swimmer(ctx, p, now, horizon, shore) {
   const k = 0.9 + p.depth * 1.1;
@@ -653,6 +688,19 @@ function beach(ctx, s, now, w, h) {
   }
   // Baigneurs au loin, flous
   for (const p of s.swimmers) swimmer(ctx, p, now, horizon, shore);
+  // De temps en temps, un petit requin traverse la mer
+  if (!s.shark && now > s.nextShark) {
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    s.shark = { x: dir > 0 ? -40 : w + 40, dir, depth: rand(0.25, 0.75), speed: rand(1.6, 2.4), phase: rand(0, TAU) };
+  }
+  if (s.shark) {
+    s.shark.x += s.shark.dir * s.shark.speed;
+    shark(ctx, s.shark, now, horizon, shore);
+    if (s.shark.x < -60 || s.shark.x > w + 60) {
+      s.shark = null;
+      s.nextShark = now + rand(8000, 20000);
+    }
+  }
   // Sable mouillé et écume du rivage
   ctx.fillStyle = 'rgba(205, 180, 135, .35)';
   ctx.beginPath();
@@ -830,7 +878,7 @@ const SCENES = {
         x: (at + rand(-0.02, 0.02)) * w, depth: rand(0, 1), phase: rand(0, TAU),
         cap: pick(['#E0483E', '#F2C94C', '#3A7BD5', '#FFFFFF', '#E58CB0']), wave: i === 1 || i === 5,
       })),
-      glints: [], gulls: [],
+      glints: [], gulls: [], shark: null, nextShark: Date.now() + 1500,
     }),
     draw: (ctx, s, now, w, h) => beach(ctx, s, now, w, h),
   },
