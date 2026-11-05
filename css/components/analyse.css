@@ -539,23 +539,57 @@
   border-radius: 4px;
 }
 
+/* Personne identifiée : repère invisible sur le visage, cercle et nom au survol (du visage ou du nom) */
 .tag-pin {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 24px;
-  height: 24px;
+  width: clamp(40px, 16%, 96px);
+  aspect-ratio: 1;
   border-radius: 50%;
-  border: 2px solid #fff;
-  background: var(--accent);
-  color: var(--accent-ink);
-  font: 700 12px/20px var(--f-mono);
-  text-align: center;
+  border: 2px solid transparent;
+  background: transparent;
   padding: 0;
   cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
 }
 
+.tag-pin:hover,
+.tag-pin:focus-visible,
+.tag-pin.lit {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 12px rgba(0, 0, 0, .45);
+}
+
+.tag-name {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font: 600 12px/18px var(--f-body);
+  white-space: nowrap;
+  color: var(--accent-ink);
+  background: var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s;
+}
+
+.tag-pin:hover .tag-name,
+.tag-pin:focus-visible .tag-name,
+.tag-pin.lit .tag-name {
+  opacity: 1;
+}
+
+/* Repère en attente d'une personne : un point visible */
 .tag-pin.new {
+  width: 24px;
+  border-color: #fff;
   background: var(--danger);
+  color: #fff;
+  font: 700 13px/20px var(--f-mono);
+  text-align: center;
   cursor: default;
 }
 
