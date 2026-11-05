@@ -19,6 +19,18 @@ describe('roue d’ascendance', () => {
     const ink = { text: '#111', muted: '#555', line: '#ccc', empty: '#eee', M: '#fff', F: '#fff', U: '#fff', stroke: { M: '#00f', F: '#f0f', U: '#ccc' } };
     assert.match(fanSVG(ink), /fill="#fff" stroke="#00f" stroke-width="2"/);
 
+    // Dix générations ; dans les anneaux serrés, prénom et nom sur une seule ligne
+    loadTree(Array.from({ length: 11 }, (_, i) => person('g' + i, { given: 'P' + i, surname: 'Nom', fatherId: i < 10 ? 'g' + (i + 1) : null })));
+    S.focus = 'g0';
+    assert.equal(fanSize().gens, 10);
+    assert.match(fanSVG(), />P10 NOM<\/tspan>/);
+    assert.match(fanSVG(), />P4<\/tspan>/);
+    // Une seule lignée : recadrée sur ses secteurs, sans réserver le demi-disque entier (2876 × 1532)
+    assert.deepEqual([fanSize().W, fanSize().H], [1556, 366]);
+    loadTree([person('k', { fatherId: 'f', motherId: 'm' }), person('f'), person('m')]);
+    S.focus = 'k';
+    assert.deepEqual([fanSize().W, fanSize().H], [360, 274], 'roue complète : le demi-disque');
+
     loadTree([person('a', { fatherId: 'b' }), person('b', { fatherId: 'a' })]);
     S.focus = 'a';
     assert.equal(fanSize().gens, MAX_FAN_GENS);
