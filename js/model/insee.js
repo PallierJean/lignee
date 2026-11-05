@@ -11,6 +11,7 @@ import { S } from '../state.js';
 import { P, isDead, partnersOf, childrenOf } from './people.js';
 import { dateParts, dateBounds, yearOf } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
+import { DICT } from '../i18n.js';
 import { parsePlace, formatPlace } from './places.js';
 import { isFrance } from './countries.js';
 
@@ -33,6 +34,37 @@ const sameCity = (a, b) => !!a && !!b && cityKey(a) === cityKey(b);
 /** Nom de naissance : nom de jeune fille d'une femme, sinon le nom. */
 const birthName = (p) => String((p.sex === 'F' && p.maidenName) || p.surname || p.maidenName || '').trim();
 
+/** Mot de l'INSEE (en capitales, sans accents) écrit comme dans l'arbre : « HELENE » -> « Helene », « D'ARC » -> « d'Arc ». */
+const PARTICLES = new Set(['de', 'du', 'des', 'la', 'le', 'van', 'von']);
+const capital = (w) => w.toLowerCase().replace(/(^|[-'])(\p{L})/gu, (m, sep, c) => sep + c.toUpperCase())
+  .replace(/^D'/, "d'");
+const nameText = (s) => String(s).trim().split(/\s+/).map((w, i) => (i && PARTICLES.has(w.toLowerCase()) ? w.toLowerCase() : capital(w))).join(' ');
+
+/**
+ * Prénoms de l'état civil, dans leur ordre, écrits comme dans la fiche quand elle les a déjà
+ * (l'INSEE les donne sans accents) : « Marie-Hélène » et MARIE HELENE JEANNE -> « Marie-Hélène Jeanne ».
+ * Les prénoms de la fiche absents de l'acte suivent, puis un surnom entre parenthèses.
+ */
+function mergedGiven(tree, official) {
+  const nick = (String(tree || '').match(/\(.*?\)/g) || []).join(' ');
+  const tokens = String(tree || '').replace(/\(.*?\)/g, ' ').split(/\s+/).filter(Boolean).map((x) => ({ x, w: words(x) }));
+  const parts = official.split(/\s+/).filter(Boolean);
+  const w = parts.map((x) => words(x).join(' '));
+  const out = [];
+  const used = new Set();
+  for (let i = 0; i < w.length;) {
+    const t = tokens.find((k) => !used.has(k) && k.w.length && k.w.join(' ') === w.slice(i, i + k.w.length).join(' '));
+    if (t) used.add(t);
+    out.push(t ? t.x : capital(parts[i]));
+    i += t ? t.w.length : 1;
+  }
+  // Prénoms de la fiche absents de l'acte (prénom d'usage…) : gardés à la suite
+  return [...out, ...tokens.filter((k) => !used.has(k)).map((k) => k.x), nick].filter(Boolean).join(' ');
+}
+
+/** Où va le nom de naissance : nom de jeune fille d'une femme (le nom d'usage reste), sinon le nom. */
+const birthField = (p) => (p.sex === 'F' && (p.maidenName || p.surname) ? 'maidenName' : 'surname');
+
 /** Premier prénom usuel, composé compris : « Jean-Baptiste Louis » -> « Jean-Baptiste ». */
 function firstGiven(p) {
   const w = String(p.given || '').replace(/\(.*?\)/g, ' ').split(/[\s,]+/).find((x) => /\p{L}/u.test(x));
@@ -45,12 +77,15 @@ function actDate(s) {
   return m ? { y: +m[1], m: +m[2], d: +m[3] } : null;
 }
 
-/** « 12/12/1972 », la forme enregistrée dans la fiche quand on reporte une date de l'acte. */
+// Mois en français, comme on les saisit : « 12 Décembre 1972 »
+const MONTHS = DICT.fr.months.map((m) => m.charAt(0).toUpperCase() + m.slice(1));
+
+/** « 12 Décembre 1972 », la forme enregistrée dans la fiche quand on reporte une date de l'acte. */
 export function actDateText(s) {
   const a = actDate(s);
   if (!a) return '';
   if (!a.m) return String(a.y);
-  return (a.d ? String(a.d).padStart(2, '0') + '/' : '') + String(a.m).padStart(2, '0') + '/' + a.y;
+  return (a.d ? String(a.d).padStart(2, '0') + ' ' : '') + MONTHS[a.m - 1] + ' ' + a.y;
 }
 
 /** true si la date de la fiche et celle de l'acte concordent, false si elles se contredisent, null sinon. */
@@ -180,17 +215,20 @@ const placeText = actPlace;
 /**
  * Écarts entre la fiche et l'acte : [{ field, kind, tree, insee, patch? }]. kind vaut 'fix' (la
  * fiche contredit l'acte) ou 'add' (l'acte complète la fiche) ; patch est ce qu'on reporte
- * dans la fiche d'un clic. Les noms ne sont que signalés : l'INSEE les écrit sans accents.
+ * dans la fiche d'un clic. L'INSEE écrit les noms sans accents : les prénoms déjà dans la fiche
+ * gardent leur orthographe, le nom de naissance s'écrit en minuscules (à accentuer au besoin).
  */
 export function deathDifferences(id, act) {
   const p = P(id);
   const out = [];
   const add = (field, kind, tree, insee, patch) => out.push({ field, kind, tree: String(tree || ''), insee, ...(patch ? { patch } : {}) });
 
-  const given = words(p.given);
-  const official = act.first.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-  if (words(official).length > given.length) add('given', 'add', p.given, official);
-  if (words(act.last).join(' ') !== words(birthName(p)).join(' ')) add('name', 'fix', birthName(p), act.last);
+  const given = words(String(p.given || '').replace(/\(.*?\)/g, ' ')); // sans le surnom entre parenthèses
+  const official = mergedGiven(p.given, act.first.join(' '));
+  if (words(act.first.join(' ')).some((w) => !given.includes(w))) add('given', 'add', p.given, official, { given: official });
+  if (words(act.last).join(' ') !== words(birthName(p)).join(' ')) {
+    add('name', 'fix', birthName(p), nameText(act.last), { [birthField(p)]: nameText(act.last) });
+  }
 
   for (const [field, place, date, which] of [['birth', 'birthPlace', 'birthDate', 'birth'], ['death', 'deathPlace', 'deathDate', 'death']]) {
     const text = actDateText(act[date]);

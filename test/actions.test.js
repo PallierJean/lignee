@@ -228,6 +228,22 @@ describe('formulaire', () => {
     assert.equal(S.people.size, ex.people.length + 1);
   });
 
+  test('dates en toutes lettres dans le formulaire ; la saisie d’origine reste si le jour ne change pas', async () => {
+    loadTree([person('a', { given: 'Ana', surname: 'Roux', birthDate: '01/01/1900', deathDate: '1970' })]);
+    S.focus = 'a';
+    A.startEdit('a');
+    const form = html('paneFiche');
+    assert.match(form, /id="f-bdate" value="01 Janvier 1900"/);
+    assert.match(form, /id="f-ddate" value="1970"/);
+    fill({ 'f-bdate': '01 Janvier 1900' });
+    await A.submitEdit();
+    assert.equal(S.people.get('a').birthDate, '01/01/1900', 'même jour : rien ne change');
+    A.startEdit('a');
+    fill({ 'f-bdate': '02 Janvier 1900' });
+    await A.submitEdit();
+    assert.equal(S.people.get('a').birthDate, '02 Janvier 1900');
+  });
+
   test('erreurs de saisie : nom, date, parents, fratrie', async () => {
     A.startNew();
     fill({});
