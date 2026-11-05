@@ -168,11 +168,11 @@ describe('empreintes du thème Maraudeur', () => {
 });
 
 describe('ciel du thème Constellations', () => {
-  test('calque d’étoiles posé avec sa traînée, retiré hors du thème', async () => {
+  test('calque d’étoiles, constellation qui se trace et brille, retiré hors du thème', async () => {
     const { setSky } = await import('../js/ui/sky.js');
     const make = (tag) => {
       const el = {
-        tag, attrs: {}, style: {}, children: [], parentElement: null,
+        tag, attrs: {}, style: { setProperty(k, v) { this[k] = v; } }, children: [], parentElement: null,
         setAttribute(k, v) { el.attrs[k] = String(v); },
         append(c) { c.parentElement = el; el.children.push(c); },
         prepend(c) { c.parentElement = el; el.children.unshift(c); },
@@ -181,7 +181,13 @@ describe('ciel du thème Constellations', () => {
       };
       return el;
     };
-    const canvas = Object.assign(make('div'), { clientWidth: 800, clientHeight: 600 });
+    // Une fiche couvre le quart haut gauche : les étoiles l'évitent
+    const card = { getBoundingClientRect: () => ({ left: 0, top: 0, right: 400, bottom: 300 }) };
+    const canvas = Object.assign(make('div'), {
+      clientWidth: 800, clientHeight: 600,
+      getBoundingClientRect: () => ({ left: 0, top: 0, right: 800, bottom: 600 }),
+      querySelectorAll: () => [card],
+    });
     const saved = { create: document.createElement, ns: document.createElementNS, byId: document.getElementById };
     Object.assign(document, {
       createElement: make, createElementNS: (ns, tag) => make(tag), getElementById: (id) => (id === 'canvas' ? canvas : saved.byId(id)),
@@ -194,6 +200,17 @@ describe('ciel du thème Constellations', () => {
       assert.equal(layer.className, 'sky');
       const grad = layer.firstChild.children[0].children[0];
       assert.deepEqual([grad.tag, grad.attrs.id], ['linearGradient', 'skyTrail']);
+      // Une constellation dès le départ : un tracé à dessiner, 4 à 7 étoiles qui pulsent, un éclat
+      const constel = layer.firstChild.children[1];
+      assert.equal(constel.attrs.class, 'constel');
+      const [line, ...rest] = constel.children;
+      assert.equal(line.attrs.class, 'constel-line');
+      assert.ok(+line.style['--len'] > 0, 'longueur du tracé, pour l’animation qui le dessine');
+      const stars = rest.filter((x) => x.attrs.class === 'constel-star');
+      assert.ok(stars.length >= 4 && stars.length <= 7);
+      assert.equal(rest.filter((x) => x.attrs.class === 'constel-flare').length, 1);
+      const under = stars.filter((x) => +x.attrs.cx < 408 && +x.attrs.cy < 308).length;
+      assert.ok(under <= 1, 'presque toutes les étoiles hors de la fiche');
       setSky(false);
       assert.equal(canvas.children.length, 0);
     } finally {

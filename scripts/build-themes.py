@@ -6,7 +6,7 @@ def uri(svg): return 'url("data:image/svg+xml,' + quote(svg, safe=" =:/,.'-()") 
 def svg(w, h, body): return f"<svg xmlns='http://www.w3.org/2000/svg' width='{w}' height='{h}'>{body}</svg>"
 
 # ---------- Motifs ----------
-def stars():
+def stars(constellation=False):
     b = ''
     for _ in range(70):
         x, y, r = random.uniform(0, 400), random.uniform(0, 400), random.choice([.5, .6, .8, 1, 1.3])
@@ -14,10 +14,11 @@ def stars():
     for x, y in [(60, 80), (300, 240), (180, 350)]:  # étoiles à branches
         b += (f"<g stroke='#fff' stroke-linecap='round' opacity='.7'><path d='M{x} {y-5}v10M{x-5} {y}h10' stroke-width='1'/>"
               f"<path d='M{x-2} {y-2}l4 4M{x+2} {y-2}l-4 4' stroke-width='.6'/></g>")
-    # une petite constellation
-    pts = [(250, 60), (285, 85), (320, 75), (340, 110), (300, 130)]
-    b += "<path d='M" + 'L'.join(f'{x} {y}' for x, y in pts) + "' fill='none' stroke='#9FB4FF' stroke-width='.6' opacity='.35'/>"
-    b += ''.join(f"<circle cx='{x}' cy='{y}' r='1.6' fill='#DCE4FF' opacity='.85'/>" for x, y in pts)
+    # Une petite constellation figée, pour qui a demandé moins d'animations (sinon ui/sky.js les dessine)
+    if constellation:
+        pts = [(250, 60), (285, 85), (320, 75), (340, 110), (300, 130)]
+        b += "<path d='M" + 'L'.join(f'{x} {y}' for x, y in pts) + "' fill='none' stroke='#9FB4FF' stroke-width='.6' opacity='.35'/>"
+        b += ''.join(f"<circle cx='{x}' cy='{y}' r='1.6' fill='#DCE4FF' opacity='.85'/>" for x, y in pts)
     return svg(400, 400, b)
 
 def registre():
@@ -142,6 +143,15 @@ for name, comment, scheme, v, deco, size, extra in THEMES:
 {body}  --deco: {uri(deco)};
   --deco-size: {size};
   color-scheme: {scheme};
+}}
+""")
+
+out.append(f"""
+/* Constellations : figées dans le fond pour qui a demandé moins d'animations */
+@media (prefers-reduced-motion: reduce) {{
+  :root[data-theme="constellations"] {{
+    --deco: {uri(stars(True))};
+  }}
 }}
 """)
 
@@ -274,6 +284,86 @@ out.append("""
 .sky .shoot {
   opacity: 0;
   animation: shoot 1.4s ease-out forwards;
+}
+
+/* Constellations animées : traits qui se tracent, étoiles qui brillent et pulsent, puis tout s'efface */
+.sky .constel {
+  opacity: 0;
+  animation: constel-life var(--life, 15s) ease-in-out forwards;
+}
+
+.sky .constel-line {
+  fill: none;
+  stroke: #B9CAFF;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: var(--len);
+  filter: drop-shadow(0 0 3px rgba(185, 202, 255, .95));
+  animation: constel-draw 2.4s ease-out .6s forwards;
+}
+
+.sky .constel-star {
+  fill: #FFFFFF;
+  filter: drop-shadow(0 0 3px #FFFFFF) drop-shadow(0 0 9px #A9BDFF) drop-shadow(0 0 16px rgba(159, 180, 255, .6));
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: shine 2.2s ease-in-out infinite alternate;
+}
+
+.sky .constel-flare {
+  stroke: #FFFFFF;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px #FFFFFF);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: flare 3s ease-in-out infinite;
+}
+
+@keyframes constel-life {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes constel-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes shine {
+  from {
+    opacity: .55;
+    transform: scale(.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+@keyframes flare {
+  0%,
+  100% {
+    opacity: .2;
+    transform: scale(.6) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2) rotate(45deg);
+  }
 }
 
 @keyframes twinkle {
