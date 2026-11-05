@@ -12,6 +12,7 @@ import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind }
 import { onSpouseInput, onSpouseKey, closeSpouse } from '../js/ui/spouse-pick.js';
 import { resetHistory } from '../js/services/history.js';
 import { setLang } from '../js/i18n.js';
+import { mapZoom, mapFit, mapPick, mapDrag } from '../js/ui/places.js';
 import { example, loadTree, person, resetApp, html } from './helpers.js';
 
 const el = (id) => document.getElementById(id);
@@ -208,6 +209,49 @@ describe('onglet Analyse', () => {
     assert.ok(out.includes('class="mv"'));
     assert.ok(out.includes('Introuvables : Nantes'));
     assert.ok(out.includes('Principales migrations'));
+  });
+
+  test('carte explorable : commune choisie, zoom, département, glisser', () => {
+    localStorage.setItem('lignee.geo.v1', JSON.stringify({ 'Tulle (19)': { lat: 45.27, lon: 1.77 }, 'Brive-la-Gaillarde (19)': { lat: 45.16, lon: 1.53 }, 'Bordeaux (33)': { lat: 44.84, lon: -0.58 } }));
+    loadTree([
+      person('p', { given: 'Jean', surname: 'Roux', birthPlace: 'Le Bourg, Tulle (19)' }),
+      person('c', { given: 'Anne', surname: 'Roux', birthPlace: 'Brive-la-Gaillarde (19)', deathPlace: 'Bordeaux (33)', fatherId: 'p' }),
+    ]);
+    const out = view('map');
+    assert.match(out, /data-act="map-region" data-key="19">Corrèze · 2</);
+    assert.match(out, /data-act="map-region" data-key="33">Gironde · 1</);
+    assert.match(out, /data-act="map-point" data-name="Tulle \(19\)"/, 'lieu-dit réuni à sa commune');
+    const svg = () => document.getElementById('mapBox').innerHTML;
+    const cx = (name) => +new RegExp(`cx="([\\d.-]+)"[^>]*data-name="${name.replace(/[()]/g, '\\$&')}"`).exec(svg())[1];
+
+    // Commune choisie : ses personnes, ses migrations en évidence ; un second clic la quitte
+    mapPick('Tulle (19)');
+    assert.match(document.getElementById('mapPlace').innerHTML, /Tulle \(19\) <span class="n">1 mention<\/span>.*Jean ROUX/);
+    assert.match(svg(), /class="map picking"/);
+    assert.match(svg(), /class="mv on"/);
+    mapPick('Tulle (19)');
+    assert.equal(document.getElementById('mapPlace').innerHTML, '');
+
+    // Recadrage sur la Corrèze (Bordeaux sort du cadre), zoom (les communes s'écartent), puis tout voir
+    mapFit('19');
+    assert.doesNotMatch(svg(), /data-name="Bordeaux \(33\)"/, 'Bordeaux hors du cadre de la Corrèze');
+    const gap = cx('Tulle (19)') - cx('Brive-la-Gaillarde (19)');
+    mapZoom(1);
+    assert.ok(cx('Tulle (19)') - cx('Brive-la-Gaillarde (19)') > gap * 1.5);
+    mapFit('');
+    assert.match(svg(), /data-name="Bordeaux \(33\)"/);
+
+    // Glisser : la carte suit ; le clic qui termine le glissé ne choisit pas de commune
+    const before = cx('Tulle (19)');
+    const target = document.getElementById('mapBox');
+    target.closest = (sel) => (sel === '#mapBox' ? target : null);
+    mapDrag({ type: 'pointerdown', button: 0, clientX: 10, clientY: 10, target });
+    mapDrag({ type: 'pointermove', clientX: 15, clientY: 10, target });
+    assert.ok(cx('Tulle (19)') > before);
+    mapDrag({ type: 'pointerup', target });
+    mapPick('Tulle (19)');
+    assert.equal(document.getElementById('mapPlace').innerHTML, '', 'fin de glissé, pas un clic');
+    mapFit('');
   });
 });
 

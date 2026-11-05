@@ -740,6 +740,9 @@ const FR = {
   'map.progress': (done, total) => `Localisation… ${done} / ${total}`,
   'map.notFound': (names) => 'Introuvables : ' + names,
   'map.moves': 'Principales migrations',
+  'map.fit': 'Tout voir',
+  'map.help': 'Molette ou + et − pour zoomer, glisser pour se déplacer ; un clic sur une commune montre ses personnes et ses migrations.',
+  'map.mentions': (n) => `${n} mention${n > 1 ? 's' : ''}`,
   'map.failed': 'La localisation a échoué. Vérifiez votre connexion.',
 
   // Galerie
@@ -1472,6 +1475,9 @@ const EN = {
   'map.progress': (done, total) => `Locating… ${done} / ${total}`,
   'map.notFound': (names) => 'Not found: ' + names,
   'map.moves': 'Main migrations',
+  'map.fit': 'Show all',
+  'map.help': 'Scroll or + and − to zoom, drag to move; click a town to see its people and migrations.',
+  'map.mentions': (n) => `${n} mention${sEn(n)}`,
   'map.failed': 'Locating failed. Check your connection.',
 
   'media': 'Gallery',
