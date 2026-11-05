@@ -517,7 +517,15 @@ export function createServer({
 if (import.meta.main) {
   const PORT = Number(process.env.PORT) || 8000;
   const dataDir = path.join(ROOT, 'data', 'arbres');
-  createServer({ dataDir }).listen(PORT, '127.0.0.1', () => {
+  const server = createServer({ dataDir });
+  // Port déjà pris (souvent un Lignée lancé plus tôt, encore ouvert) : un message clair, pas une pile d'erreur
+  server.on('error', (e) => {
+    if (e.code !== 'EADDRINUSE') throw e;
+    console.error(`Le port ${PORT} est déjà utilisé, sans doute par un Lignée lancé plus tôt.`);
+    console.error(`Arrêtez-le (Ctrl+C dans son terminal), ou lancez sur un autre port : PORT=${PORT + 1} npm start`);
+    process.exit(1);
+  });
+  server.listen(PORT, '127.0.0.1', () => {
     console.log(`Lignée : http://localhost:${PORT}`);
     console.log(`Données : ${path.relative(process.cwd(), dataDir) || dataDir}`);
   });
