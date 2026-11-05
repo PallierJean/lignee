@@ -141,6 +141,14 @@ export function setTheme(theme) {
   renderAll(true);
 }
 
+/** Change la taille du texte de l'interface ; les panneaux se remettent en page. */
+export function setTextSize(size) {
+  S.textSize = size;
+  savePrefs();
+  applyTheme();
+  renderAll(true);
+}
+
 /** Bascule l'interface entre le français et l'anglais, sans perdre la saisie en cours. */
 export function toggleLang() {
   captureDraft();

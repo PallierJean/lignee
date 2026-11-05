@@ -4,7 +4,7 @@
 
 .btn {
   font: inherit;
-  font-size: 14px;
+  font-size: .875rem;
   line-height: 1.2;
   padding: 8px 13px;
   border-radius: 6px;
@@ -53,7 +53,7 @@
 
 .btn.small {
   padding: 6px 10px;
-  font-size: 13px;
+  font-size: .8125rem;
 }
 
 .btn:disabled {
@@ -63,7 +63,7 @@
 
 .icon-btn {
   font: inherit;
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1;
   width: 34px;
   height: 34px;
@@ -80,7 +80,7 @@
 .fld textarea,
 .search input {
   font: inherit;
-  font-size: 15px;
+  font-size: .9375rem;
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 6px;

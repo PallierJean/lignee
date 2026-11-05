@@ -44,7 +44,7 @@
 .brand h1 {
   font-family: var(--f-display);
   font-weight: 400;
-  font-size: 31px;
+  font-size: 1.9375rem;
   line-height: 1;
   margin: 0;
   letter-spacing: -.01em;
@@ -53,7 +53,7 @@
 .sum {
   margin: 4px 0 0;
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: .75rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -92,7 +92,7 @@
 
 @media (max-width: 480px) {
   .brand h1 {
-    font-size: 27px;
+    font-size: 1.6875rem;
   }
 }
 
@@ -106,7 +106,7 @@
 /* Numéro de version, à côté du nom */
 .app-version {
   font-family: var(--f-mono);
-  font-size: 11px;
+  font-size: .6875rem;
   font-weight: 400;
   color: var(--muted);
 }
@@ -136,8 +136,9 @@
   font-weight: 700;
 }
 
-/* Choix du thème de couleur */
-.btn.theme {
-  max-width: 11em;
+/* Choix du thème de couleur et de la taille du texte */
+.btn.theme,
+.btn.text-size {
+  max-width: 15em;
   cursor: pointer;
 }

@@ -12,7 +12,7 @@
   min-width: 0;
   padding: 6px 2px;
   font-family: var(--f-body);
-  font-size: 12.5px;
+  font-size: .7812rem;
 }
 
 .an-form {
@@ -25,7 +25,7 @@
 .kin-result .hint {
   margin: 8px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: .8125rem;
 }
 
 .an-ok {
@@ -50,7 +50,7 @@
 
 .kin-text {
   font-family: var(--f-display);
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1.25;
 }
 
@@ -148,7 +148,7 @@
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: .8438rem;
 }
 
 .bl {
@@ -174,7 +174,7 @@
 
 .bv {
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: .75rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -201,7 +201,7 @@
 
 .cal-day {
   font-family: var(--f-mono);
-  font-size: 12.5px;
+  font-size: .7812rem;
   width: 20px;
   text-align: right;
   flex: none;
@@ -240,17 +240,17 @@
 .src small {
   display: block;
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: .7812rem;
 }
 
 .src p {
   margin: 4px 0 0;
-  font-size: 13.5px;
+  font-size: .8438rem;
   white-space: pre-wrap;
 }
 
 .src-fact {
-  font-size: 12px;
+  font-size: .75rem;
   color: var(--muted);
 }
 
@@ -266,7 +266,7 @@
 .ev-note {
   display: block;
   color: var(--muted);
-  font-size: 13px;
+  font-size: .8125rem;
 }
 
 .fiche-tools {
@@ -324,12 +324,12 @@
 .dup-names small {
   color: var(--muted);
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: .75rem;
 }
 
 .chk .hint {
   color: var(--muted);
-  font-size: 13px;
+  font-size: .8125rem;
   margin: 4px 0 8px;
 }
 
@@ -351,7 +351,7 @@
 
 .tl-y {
   font-family: var(--f-mono);
-  font-size: 12.5px;
+  font-size: .7812rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -364,7 +364,7 @@
   color: var(--ink);
   text-decoration: none;
   text-align: left;
-  font-size: 14px;
+  font-size: .875rem;
 }
 
 .tl .link:hover {
@@ -374,7 +374,7 @@
 
 .tl.hist {
   color: var(--muted);
-  font-size: 13px;
+  font-size: .8125rem;
   font-style: italic;
 }
 
@@ -417,7 +417,7 @@
 }
 
 .map .pl-t {
-  font-size: 10.5px;
+  font-size: .6562rem;
   fill: var(--ink);
   paint-order: stroke;
   stroke: var(--paper);
@@ -428,7 +428,7 @@
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: .8438rem;
 }
 
 /* Roue d'ascendance */
@@ -544,7 +544,7 @@
   border-radius: 6px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: .7812rem;
 }
 
 /* Étiquette d'un ancêtre, près de la souris */
@@ -562,7 +562,7 @@
   backdrop-filter: blur(8px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, .3);
   color: #fff;
-  font: 400 12.5px/1.35 var(--f-body);
+  font: 400 .7812rem/1.35 var(--f-body);
   pointer-events: none;
 }
 
@@ -571,18 +571,18 @@
 }
 
 .fan-tip b {
-  font: 400 17px/1.2 var(--f-display);
+  font: 400 1.0625rem/1.2 var(--f-display);
 }
 
 .fan-tip small {
   margin-bottom: 3px;
-  font: 400 11px/1.3 var(--f-mono);
+  font: 400 .6875rem/1.3 var(--f-mono);
   color: rgba(255, 255, 255, .7);
 }
 
 .fan-tip em {
   margin-top: 4px;
-  font-size: 11.5px;
+  font-size: .7188rem;
   color: rgba(255, 255, 255, .6);
 }
 
@@ -616,8 +616,8 @@
   min-width: 18px;
   padding: 0 5px;
   font-family: var(--f-mono);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: .6875rem;
+  line-height: 1.125rem;
   color: var(--surface);
   background: var(--accent);
   border-radius: 9px;
@@ -748,19 +748,19 @@
 }
 
 .tag-name b {
-  font: 400 16px/1.2 var(--f-display);
+  font: 400 1rem/1.2 var(--f-display);
   letter-spacing: .01em;
 }
 
 .tag-name .sur {
-  font: 600 11px/1 var(--f-body);
+  font: 600 .6875rem/1 var(--f-body);
   text-transform: uppercase;
   letter-spacing: .08em;
   vertical-align: 1px;
 }
 
 .tag-name small {
-  font: 400 11px/1.3 var(--f-mono);
+  font: 400 .6875rem/1.3 var(--f-mono);
   color: rgba(255, 255, 255, .7);
 }
 
@@ -790,7 +790,7 @@
   border-color: #fff;
   background: var(--danger);
   color: #fff;
-  font: 700 13px/20px var(--f-mono);
+  font: 700 .8125rem/1.25rem var(--f-mono);
   text-align: center;
   cursor: default;
 }
@@ -812,7 +812,7 @@
 
 .tag-n {
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: .75rem;
   color: var(--muted);
 }
 

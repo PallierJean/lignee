@@ -125,10 +125,16 @@ Le sélecteur de l'en-tête (`ui/theme.js`) change les couleurs : automatique (c
 le système), clair, sombre, ou un thème illustré d'un motif discret sur la toile de l'arbre :
 🎄 Noël, 🎃 Halloween, 🌸 Printemps, ☀️ Été, 🍂 Automne. « Selon la saison » passe de l'un à l'autre
 avec la date (Noël du 1er décembre à l'Épiphanie, Halloween du 20 octobre au 2 novembre).
-Deux thèmes d'accessibilité, sans motif et aux contours de fiche plus épais : « Daltonisme »
-(palette d'Okabe et Ito : hommes en bleu, femmes en orange, alertes sans opposition rouge-vert)
-et « Contraste élevé » (noir sur blanc, texte contrasté à 7:1 au moins) ; dans les deux, la
-lignée directe est cerclée de noir, reconnaissable quelle que soit la forme de daltonisme. Les
+Trois thèmes d'accessibilité, sans motif et aux contours de fiche plus épais : « Daltonisme »
+(palette d'Okabe et Ito : hommes en bleu, femmes en orange, alertes sans opposition rouge-vert),
+« Contraste élevé » (noir sur blanc, texte contrasté à 7:1 au moins) et « Contraste élevé sombre »
+(clair sur noir, pour qui la lumière gêne). La lignée directe y est cerclée de noir (de blanc sur
+fond noir), reconnaissable quelle que soit la forme de daltonisme, et l'élément actif au clavier
+d'un épais cadre noir et jaune. Les tests vérifient ces contrastes.
+
+Le second sélecteur règle la taille du texte de l'interface : normal, grand (125 %) ou très grand
+(150 %). Les tailles du CSS sont en `rem` : elles suivent ce réglage et celui du navigateur. Les
+fiches de l'arbre, de taille fixe, et l'impression restent en pixels ; l'arbre a son propre zoom. Les
 couleurs sont dans `css/tokens.css` ; le choix est mémorisé dans le navigateur, l'impression garde
 les siennes.
 
