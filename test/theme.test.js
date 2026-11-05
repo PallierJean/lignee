@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { S, savePrefs, loadPrefs } from '../js/state.js';
+import { THEMES } from '../js/config.js';
 import { seasonTheme, applyTheme } from '../js/ui/theme.js';
 
 describe('thèmes de couleur', () => {
@@ -29,5 +31,14 @@ describe('thèmes de couleur', () => {
     S.theme = 'auto';
     applyTheme();
     assert.equal('theme' in document.documentElement.dataset, false, 'automatique : le thème du système');
+  });
+
+  test('le sélecteur propose chaque thème, et chacun a ses couleurs', () => {
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    const css = readFileSync(new URL('../css/tokens.css', import.meta.url), 'utf8');
+    for (const theme of THEMES) {
+      assert.match(html, new RegExp(`<option value="${theme}"`), theme);
+      if (!['auto', 'season', 'light'].includes(theme)) assert.match(css, new RegExp(`:root\\[data-theme="${theme}"\\] \\{`), theme);
+    }
   });
 });
