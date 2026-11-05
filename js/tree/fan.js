@@ -7,11 +7,11 @@ import { S } from '../state.js';
 import { esc } from '../utils/dom.js';
 import { P, given, surname, maiden, lifeYears } from '../model/people.js';
 
-export const MAX_FAN_GENS = 7;
+export const MAX_FAN_GENS = 10;
 
 const CENTER = 74;                 // rayon du disque central
-const RING = [0, 96, 92, 92, 112, 120, 130, 140]; // épaisseur de chaque anneau
-const FONT = [0, 13, 12, 11, 10.5, 9.5, 8.5, 8];  // taille du texte
+const RING = [0, 96, 92, 92, 112, 120, 130, 140, 150, 170, 190]; // épaisseur de chaque anneau
+const FONT = [0, 13, 12, 11, 10.5, 9.5, 8.5, 8, 7, 6, 5];           // taille du texte, au plus
 
 /**
  * Couleurs d'un élément de la roue : `kind` text | muted | empty | sector | center.
@@ -55,15 +55,17 @@ const cut = (text, max) => (text.length > max ? text.slice(0, max - 1).trimEnd()
 /** Texte d'un secteur : tangent aux premiers anneaux, le long du rayon ensuite. */
 function sectorText(id, cx, cy, r0, r1, mid, g, c) {
   const p = P(id);
-  const size = FONT[g];
   const thick = r1 - r0;
   const radial = g >= 3;
-  const room = radial ? thick - 10 : (r0 + thick / 2) * (Math.PI / 2 ** g) - 8;
+  const arc = (r0 + thick / 2) * (Math.PI / 2 ** g); // largeur du secteur en son milieu
+  // Anneaux les plus serrés : le texte prend la largeur du secteur, sur une seule ligne
+  const size = Math.min(FONT[g], arc / 1.25);
+  const room = radial ? thick - 10 : arc - 8;
   const chars = Math.max(3, Math.floor(room / (size * 0.56)));
-  const lines = [
-    [cut(given(p) || '—', chars), 700, size],
-    [cut(surname(p) || maiden(p), chars), 400, size],
-  ];
+  const name = surname(p) || maiden(p);
+  const lines = arc < size * 2.4
+    ? [[cut([given(p) || '—', name].filter(Boolean).join(' '), chars), 700, size]]
+    : [[cut(given(p) || '—', chars), 700, size], [cut(name, chars), 400, size]];
   // Assez de place pour les années : tous les anneaux sauf les plus serrés
   if (g <= 5) lines.push([cut(lifeYears(p), chars), 400, size - 1.5]);
   const [x, y] = point(cx, cy, r0 + thick / 2, mid);
@@ -75,19 +77,40 @@ function sectorText(id, cx, cy, r0, r1, mid, g, c) {
   return `<text transform="translate(${x},${y}) rotate(${angle.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" ${paint(c, 'text')}>${spans}</text>`;
 }
 
-/** Dimensions du dessin pour `gens` générations. */
+/** Secteur tracé : un ancêtre, ou la case vide juste au-dessus d'un ancêtre connu (là où chercher ensuite). */
+const drawn = (levels, g, i) => !!(levels[g][i] || levels[g - 1][i >> 1]);
+
+/**
+ * Dimensions du dessin pour `gens` générations, recadré sur les secteurs tracés (une seule lignée
+ * qui remonte loin ne réserve pas tout le demi-disque) ; (cx, cy) : centre de la roue.
+ */
 export function fanSize(focus = S.focus, maxGens = MAX_FAN_GENS) {
-  const gens = fanLevels(focus, maxGens).length - 1;
-  const R = CENTER + RING.slice(1, gens + 1).reduce((s, x) => s + x, 0);
-  return { gens, W: 2 * R + 20, H: R + CENTER + 30, R };
+  const levels = fanLevels(focus, maxGens);
+  let [left, right, top] = [-CENTER, CENTER, -CENTER];
+  let r0 = CENTER;
+  for (let g = 1; g < levels.length; g++) {
+    const r1 = r0 + RING[g];
+    const n = 2 ** g;
+    levels[g].forEach((id, i) => {
+      if (!drawn(levels, g, i)) return;
+      const a0 = Math.PI - (i * Math.PI) / n;
+      const a1 = a0 - Math.PI / n;
+      // Bords de l'arc extérieur, et son sommet s'il passe à la verticale du centre
+      for (const a of a1 <= Math.PI / 2 && Math.PI / 2 <= a0 ? [a0, a1, Math.PI / 2] : [a0, a1]) {
+        left = Math.min(left, r1 * Math.cos(a));
+        right = Math.max(right, r1 * Math.cos(a));
+        top = Math.min(top, -r1 * Math.sin(a));
+      }
+    });
+    r0 = r1;
+  }
+  return { gens: levels.length - 1, W: right - left + 20, H: CENTER - top + 30, cx: 10 - left, cy: 10 - top };
 }
 
 /** La roue en SVG ; `c` : couleurs (sans elles, celles du thème, voir paint), `scale` : échelle d'affichage. */
 export function fanSVG(c = null, scale = 1, focus = S.focus, maxGens = MAX_FAN_GENS) {
   const levels = fanLevels(focus, maxGens);
-  const { W, H, R } = fanSize(focus, maxGens);
-  const cx = W / 2;
-  const cy = R + 10;
+  const { W, H, cx, cy } = fanSize(focus, maxGens);
   let out = '';
   let r0 = CENTER;
   for (let g = 1; g < levels.length; g++) {
@@ -98,7 +121,7 @@ export function fanSVG(c = null, scale = 1, focus = S.focus, maxGens = MAX_FAN_G
       const a1 = a0 - Math.PI / n;
       const d = sector(cx, cy, r0 + 1, r1, a0, a1);
       if (!id) {
-        out += `<path d="${d}" ${paint(c, 'empty')}/>`;
+        if (drawn(levels, g, i)) out += `<path d="${d}" ${paint(c, 'empty')}/>`;
         return;
       }
       const sex = P(id).sex === 'M' || P(id).sex === 'F' ? P(id).sex : 'U';

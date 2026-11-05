@@ -12,7 +12,7 @@ export const SG = 32;   // écart entre deux conjoints
 export const PAD = 48;  // marge autour de l'arbre
 
 // Niveaux de zoom proposés
-export const ZOOMS = [0.55, 0.7, 0.85, 1, 1.15, 1.3];
+export const ZOOMS = [0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.6, 2, 2.5, 3];
 
 // Mois en GEDCOM (import/export) ; les mois affichés sont dans i18n.js
 export const GM = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
