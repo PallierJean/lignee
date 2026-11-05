@@ -1,124 +1,211 @@
 /**
- * Thème « Constellations » : des constellations naissent çà et là (leurs traits se tracent, leurs
- * étoiles brillent et pulsent, puis elles s'effacent), des étoiles s'allument et s'éteignent, et
- * une étoile filante traverse la toile de temps en temps (animations de css/themes.css). Positions,
- * formes et directions sont tirées au hasard. Arrêté hors de ce thème ou si le système demande
- * moins d'animations (le ciel du fond reste, avec une constellation figée).
+ * Thème « Constellations » : le vrai ciel de Bordeaux ce soir, dessiné sous l'arbre. Les étoiles
+ * des constellations (model/sky.js) sont placées comme on les voit en levant la tête : zénith au
+ * centre, nord en haut, est à gauche (projection stéréographique). Le ciel tourne d'une heure par
+ * minute, de 21 h à 5 h, puis recommence ; les étoiles scintillent, les plus brillantes portent des
+ * aigrettes, une étoile au hasard s'embrase un instant, une étoile filante passe de temps en temps.
+ * Si le système demande moins d'animations, le ciel de ce soir reste immobile.
  */
 import { reduced } from '../config.js';
+import { t, getLang } from '../i18n.js';
+import { skyAt, tonight } from '../model/sky.js';
 
-const NS = 'http://www.w3.org/2000/svg';
-const TWINKLE = 450;       // une étoile qui scintille toutes les … ms
-const SHOOT = 7000;        // une étoile filante toutes les … ms (en moyenne)
-const CONSTEL = 5000;      // une constellation naît toutes les … ms
-const LIFE = 15000;        // durée de vie d'une constellation
+const FRAME = 100;     // ms entre deux images
+const SPEED = 60;      // le ciel tourne 60 fois plus vite que l'heure : une heure par minute
+const SHOOT = 7000;    // une étoile filante toutes les … ms, en moyenne
 
-let timers = [];
 let layer = null;
+let timer = null;
+let start = 0;         // instant réel du lancement
+let sky0 = null;       // instant du ciel au lancement
+let shooting = null;   // étoile filante en cours : { x, y, angle, born }
+let nextShoot = 0;
+let flash = null;      // étoile qui s'embrase un instant : { id, born }
+let nextFlash = 0;
+const FLASH = 1500;    // une étoile s'embrase toutes les … ms, en moyenne
+const FLASH_LIFE = 1100;
 
-const rand = (a, b) => a + Math.random() * (b - a);
-
-function element(tag, attrs, parent) {
-  const el = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
-  parent.append(el);
-  return el;
-}
-
-/** Taille de la zone visible ; le calque la suit. */
-function area() {
-  const svg = layer.firstChild;
-  const canvas = layer.parentElement;
-  svg.setAttribute('width', canvas.clientWidth);
-  svg.setAttribute('height', canvas.clientHeight);
-  return [svg, canvas.clientWidth, canvas.clientHeight];
-}
-
-/** Une étoile s'allume puis s'éteint, à un endroit au hasard. */
-function twinkle() {
-  if (document.hidden) return;
-  const [svg, w, h] = area();
-  const star = element('circle', { class: 'twinkle', cx: rand(0, w).toFixed(0), cy: rand(0, h).toFixed(0), r: rand(0.8, 2).toFixed(1) }, svg);
-  setTimeout(() => star.remove(), 3300);
-}
-
-/**
- * Une constellation : 4 à 7 étoiles reliées par une ligne brisée qui se trace, la plus brillante
- * ornée d'un éclat ; chaque étoile pulse à son rythme.
- */
-/** Forme au hasard : 4 à 7 étoiles, chacune à quelques dizaines de pixels de la précédente. */
-function shape(w, h) {
-  const pts = [[rand(0.08, 0.92) * w, rand(0.08, 0.92) * h]];
-  let heading = rand(0, 2 * Math.PI);
-  const count = Math.round(rand(4, 7));
-  while (pts.length < count) {
-    heading += rand(-1.1, 1.1);
-    const [x, y] = pts[pts.length - 1];
-    const step = rand(40, 90);
-    pts.push([x + Math.cos(heading) * step, y + Math.sin(heading) * step]);
+/** Instant du ciel montré : il avance d'une heure par minute, de 21 h à 5 h, puis repart de 21 h. */
+function skyTime(now) {
+  if (reduced) return sky0;
+  const d = new Date(sky0.getTime() + (now - start) * SPEED);
+  const h = d.getHours();
+  if (h >= 5 && h < 21) {
+    start = now;
+    sky0 = new Date(d);
+    sky0.setHours(21, 0, 0, 0);
+    return sky0;
   }
-  return pts;
+  return d;
 }
 
-/** Parmi quelques formes, celle dont le moins d'étoiles tombent sous une fiche (qui les cacherait). */
-function freeShape(w, h) {
-  const box = layer.parentElement.getBoundingClientRect();
-  const cards = [...layer.parentElement.querySelectorAll('.card, .fan-s')].map((c) => c.getBoundingClientRect())
-    .map((r) => [r.left - box.left - 8, r.top - box.top - 8, r.right - box.left + 8, r.bottom - box.top + 8]);
-  const hidden = (pts) => pts.filter(([x, y]) => x < 0 || y < 0 || x > w || y > h
-    || cards.some(([l, t, r, b]) => x > l && x < r && y > t && y < b)).length;
-  let best = null;
-  for (let i = 0; i < 14 && (!best || best.n); i++) {
-    const pts = shape(w, h);
-    const n = hidden(pts);
-    if (!best || n < best.n) best = { pts, n };
+/** Projection : hauteur et azimut -> point de la toile (zénith au centre, horizon à `radius`). */
+function projector(w, h) {
+  const radius = h * 0.8;
+  const cx = w / 2;
+  const cy = h / 2;
+  return ({ alt, az }) => {
+    const r = Math.tan(((90 - alt) * Math.PI) / 360) * radius;
+    const a = (az * Math.PI) / 180;
+    return [cx - r * Math.sin(a), cy - r * Math.cos(a)];
+  };
+}
+
+/** Une image du ciel. */
+function frame() {
+  if (document.hidden && !reduced) return;
+  const canvas = layer.firstChild;
+  const box = layer.parentElement;
+  const w = box.clientWidth;
+  const h = box.clientHeight;
+  const ratio = window.devicePixelRatio || 1;
+  if (canvas.width !== Math.round(w * ratio) || canvas.height !== Math.round(h * ratio)) {
+    canvas.width = Math.round(w * ratio);
+    canvas.height = Math.round(h * ratio);
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
   }
-  return best.pts;
-}
-
-function constellation() {
-  if (document.hidden) return;
-  const [svg, w, h] = area();
-  const pts = freeShape(w, h);
-  const count = pts.length;
-  const g = element('g', { class: 'constel' }, svg);
-  g.style.setProperty('--life', `${LIFE}ms`);
-  const len = pts.slice(1).reduce((s, [x, y], i) => s + Math.hypot(x - pts[i][0], y - pts[i][1]), 0);
-  const line = element('path', { class: 'constel-line', d: 'M' + pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L') }, g);
-  line.style.setProperty('--len', len.toFixed(0));
-  const bright = Math.floor(rand(0, count));
-  pts.forEach(([x, y], i) => {
-    const star = element('circle', { class: 'constel-star', cx: x.toFixed(1), cy: y.toFixed(1), r: (i === bright ? 3.4 : rand(2, 2.8)).toFixed(1) }, g);
-    star.style.animationDelay = `${(-rand(0, 2.2)).toFixed(2)}s`;
-    if (i === bright) element('path', { class: 'constel-flare', d: `M${x - 11} ${y}H${x + 11}M${x} ${y - 11}V${y + 11}` }, g);
-  });
-  setTimeout(() => g.remove(), LIFE + 200);
-}
-
-/** Une étoile filante : une traînée qui file en biais, dans une direction au hasard. */
-function shoot() {
-  if (!document.hidden) {
-    const [svg, w, h] = area();
-    const angle = rand(15, 40) * (Math.random() < 0.5 ? 1 : -1) + (Math.random() < 0.5 ? 0 : 180);
-    const g = element('g', { transform: `translate(${rand(0.15, 0.85) * w} ${rand(0.1, 0.6) * h}) rotate(${angle.toFixed(0)})` }, svg);
-    const trail = element('g', { class: 'shoot' }, g);
-    element('line', { x1: -90, y1: 0, x2: 0, y2: 0, stroke: 'url(#skyTrail)', 'stroke-width': 1.6, 'stroke-linecap': 'round' }, trail);
-    element('circle', { cx: 0, cy: 0, r: 1.8, fill: '#FFFFFF' }, trail);
-    setTimeout(() => g.remove(), 1500);
+  const now = Date.now();
+  const when = skyTime(now);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const at = projector(w, h);
+  const lang = getLang();
+  // Une étoile au hasard s'embrase un instant
+  if (!reduced && now > nextFlash) {
+    const visible = skyAt(when).flatMap((c, ci) => Object.entries(c.stars).filter(([, s]) => s.alt > 5).map(([key]) => `${ci}:${key}`));
+    flash = visible.length ? { id: visible[Math.floor(Math.random() * visible.length)], born: now } : null;
+    nextFlash = now + FLASH * (0.5 + Math.random());
   }
-  timers.push(setTimeout(shoot, rand(0.5, 1.5) * SHOOT));
-}
 
-/** Lance (`on`) ou arrête le ciel animé. */
-export function setSky(on) {
-  const canvas = document.getElementById('canvas');
-  const can = on && !reduced && canvas && typeof document.createElementNS === 'function';
-  if (!can) {
-    for (const t of timers) {
-      clearTimeout(t);
-      clearInterval(t);
+  for (const [ci, c] of skyAt(when).entries()) {
+    const up = Object.values(c.stars).filter((s) => s.alt > 0);
+    if (!up.length) continue;
+    // Traits de la figure : seulement entre deux étoiles au-dessus de l'horizon
+    ctx.strokeStyle = 'rgba(176, 196, 255, .42)';
+    ctx.lineWidth = 1;
+    ctx.shadowColor = 'rgba(159, 180, 255, .8)';
+    ctx.shadowBlur = 4;
+    ctx.beginPath();
+    for (const line of c.lines) {
+      line.forEach((key, i) => {
+        const a = c.stars[line[i - 1]];
+        const b = c.stars[key];
+        if (i === 0 || a.alt <= 0 || b.alt <= 0) return;
+        ctx.moveTo(...at(a));
+        ctx.lineTo(...at(b));
+      });
     }
-    timers = [];
+    ctx.stroke();
+    // Étoiles : elles scintillent, chacune à son rythme ; les plus brillantes plus grosses
+    for (const [key, s] of Object.entries(c.stars)) {
+      if (s.alt <= 0) continue;
+      const [x, y] = at(s);
+      const seed = ci * 31 + key.charCodeAt(0) * 7 + key.length;
+      const glow = reduced ? 1 : 0.75 + 0.25 * Math.sin(now / (500 + (seed % 7) * 130) + seed);
+      ctx.shadowColor = '#A9BDFF';
+      ctx.shadowBlur = s.bright ? 12 : 7;
+      ctx.fillStyle = `rgba(255, 255, 255, ${(0.7 + 0.3 * glow).toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc(x, y, (s.bright ? 2.8 : 1.8) * (0.85 + 0.15 * glow), 0, 2 * Math.PI);
+      ctx.fill();
+      // Aigrettes des étoiles brillantes ; plus grandes pour celle qui s'embrase
+      const age = flash && flash.id === `${ci}:${key}` ? (now - flash.born) / FLASH_LIFE : 1;
+      const burst = age < 1 ? Math.sin(age * Math.PI) : 0;
+      if (s.bright || burst > 0) sparkle(ctx, x, y, (s.bright ? 5 + 5 * glow : 0) + 16 * burst, 0.35 + 0.4 * glow * (s.bright ? 1 : 0) + 0.6 * burst);
+      if (s.name) {
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(214, 224, 255, .7)';
+        ctx.font = '10.5px "Atkinson Hyperlegible", sans-serif';
+        ctx.fillText(s.name, x + 6, y - 5);
+      }
+    }
+    // Nom de la constellation, au milieu de ses étoiles visibles
+    if (up.length >= 2) {
+      const pts = up.map(at);
+      const mx = pts.reduce((sum, p) => sum + p[0], 0) / pts.length;
+      const my = pts.reduce((sum, p) => sum + p[1], 0) / pts.length;
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(176, 196, 255, .55)';
+      ctx.font = 'italic 11.5px "Gloock", Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(lang === 'en' ? c.en : c.fr, mx, my + 16);
+      ctx.textAlign = 'start';
+    }
+  }
+  if (!reduced) shootingStar(ctx, now, w, h);
+
+  // Légende : le lieu, la date et l'heure du ciel montré
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(214, 224, 255, .6)';
+  ctx.font = '11.5px "Atkinson Hyperlegible", sans-serif';
+  const date = when.toLocaleDateString(t('locale'), { day: 'numeric', month: 'long' });
+  const time = when.toLocaleTimeString(t('locale'), { hour: '2-digit', minute: '2-digit' });
+  ctx.fillText(t('sky.caption', date, time), 12, h - 12);
+}
+
+/** Aigrettes : une croix de lumière fine autour d'une étoile, plus une croix plus courte en biais. */
+function sparkle(ctx, x, y, len, alpha) {
+  if (len <= 0) return;
+  ctx.save();
+  ctx.strokeStyle = `rgba(255, 255, 255, ${Math.min(1, alpha).toFixed(2)})`;
+  ctx.shadowColor = '#DCE4FF';
+  ctx.shadowBlur = 6;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x - len, y);
+  ctx.lineTo(x + len, y);
+  ctx.moveTo(x, y - len);
+  ctx.lineTo(x, y + len);
+  ctx.stroke();
+  ctx.lineWidth = 0.6;
+  const d = len * 0.4;
+  ctx.beginPath();
+  ctx.moveTo(x - d, y - d);
+  ctx.lineTo(x + d, y + d);
+  ctx.moveTo(x - d, y + d);
+  ctx.lineTo(x + d, y - d);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** Étoile filante : une traînée qui file en biais, puis s'éteint. */
+function shootingStar(ctx, now, w, h) {
+  if (!shooting && now > nextShoot) {
+    shooting = { x: (0.15 + Math.random() * 0.7) * w, y: (0.1 + Math.random() * 0.5) * h, angle: (Math.random() < 0.5 ? 20 : 160) + Math.random() * 25, born: now };
+    nextShoot = now + SHOOT * (0.5 + Math.random());
+  }
+  if (!shooting) return;
+  const age = (now - shooting.born) / 1200;
+  if (age > 1) {
+    shooting = null;
+    return;
+  }
+  const a = (shooting.angle * Math.PI) / 180;
+  const head = [shooting.x + Math.cos(a) * 260 * age, shooting.y + Math.sin(a) * 260 * age];
+  const tail = [head[0] - Math.cos(a) * 90, head[1] - Math.sin(a) * 90];
+  const grad = ctx.createLinearGradient(...tail, ...head);
+  grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+  grad.addColorStop(1, `rgba(255, 255, 255, ${(1 - age).toFixed(2)})`);
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 1.6;
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = '#FFFFFF';
+  ctx.beginPath();
+  ctx.moveTo(...tail);
+  ctx.lineTo(...head);
+  ctx.stroke();
+}
+
+/** Lance (`on`) ou arrête le ciel. */
+export function setSky(on) {
+  const box = document.getElementById('canvas');
+  const can = on && box && typeof document.createElement('canvas').getContext === 'function';
+  if (!can) {
+    clearInterval(timer);
+    timer = null;
     if (layer) layer.remove();
     layer = null;
     return;
@@ -127,16 +214,13 @@ export function setSky(on) {
   layer = document.createElement('div');
   layer.className = 'sky';
   layer.setAttribute('aria-hidden', 'true');
-  const svg = document.createElementNS(NS, 'svg');
-  layer.append(svg);
-  // Traînée : transparente au départ, blanche à la tête
-  const defs = element('defs', {}, svg);
-  const grad = element('linearGradient', { id: 'skyTrail', x1: 0, x2: 1, y1: 0, y2: 0 }, defs);
-  element('stop', { offset: 0, 'stop-color': '#FFFFFF', 'stop-opacity': 0 }, grad);
-  element('stop', { offset: 1, 'stop-color': '#FFFFFF', 'stop-opacity': 0.9 }, grad);
-  canvas.prepend(layer);
-  constellation(); // avant les minuteurs : une erreur n'en laisse pas un tourner
-  timers.push(setInterval(twinkle, TWINKLE));
-  timers.push(setInterval(constellation, CONSTEL));
-  timers.push(setTimeout(shoot, 1500));
+  layer.append(document.createElement('canvas'));
+  box.prepend(layer);
+  start = Date.now();
+  sky0 = tonight();
+  nextShoot = start + 3000;
+  nextFlash = start + 800;
+  frame();
+  // Ciel immobile si le système demande moins d'animations : redessiné seulement si la taille change
+  timer = setInterval(frame, reduced ? 2000 : FRAME);
 }

@@ -92,7 +92,7 @@ describe('thèmes de couleur', () => {
     // Thèmes illustrés : texte lisible (AA) sur les panneaux, et sur le fond pour le texte principal
     const illustrated = readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8');
     const blocks = [...illustrated.matchAll(/:root\[data-theme="([\w-]+)"\] \{([^}]*--paper[^}]*)\}/g)];
-    assert.equal(blocks.length, 4, 'quatre thèmes illustrés');
+    assert.equal(blocks.length, 3, 'trois thèmes illustrés');
     for (const [, theme, block] of blocks) {
       const tv = Object.fromEntries([...block.matchAll(/--([\w-]+): (#[0-9A-F]{6});/gi)].map((m) => [m[1], m[2]]));
       for (const k of ['ink', 'muted', 'warn', 'danger', 'ok']) assert.ok(ratio(tv[k], tv.surface) >= 4.5, `${theme} : --${k}`);
@@ -167,59 +167,73 @@ describe('empreintes du thème Maraudeur', () => {
   });
 });
 
-describe('ciel du thème Constellations', () => {
-  test('calque d’étoiles, constellation qui se trace et brille, retiré hors du thème', async () => {
+describe('ciel du thème Constellations : le vrai ciel de Bordeaux', () => {
+  test('positions des étoiles vues de Bordeaux, selon la saison', async () => {
+    const { horizontal, skyAt, tonight, siderealDeg } = await import('../js/model/sky.js');
+    const close = (a, b, tol, what) => assert.ok(Math.abs(a - b) <= tol, `${what} : ${a.toFixed(1)} au lieu de ${b}`);
+    // Temps sidéral de Greenwich le 1er janvier 2000 à 12 h TU : 280,46°
+    close(siderealDeg(new Date('2000-01-01T12:00:00Z'), 0), 280.46, 0.01, 'temps sidéral');
+    // La Polaire, à la hauteur de la latitude de Bordeaux, toute l'année
+    for (const iso of ['2027-01-15T21:00:00Z', '2026-08-15T20:00:00Z']) close(horizontal(2.53, 89.26, new Date(iso)).alt, 44.84, 1, 'Polaire');
+    // Orion haut au sud un soir d'hiver, couché un soir d'été ; Véga presque au zénith en août
+    const winter = horizontal(5.92, 7.41, new Date('2027-01-15T21:00:00Z'));
+    assert.ok(winter.alt > 40 && winter.az > 130 && winter.az < 180, 'Bételgeuse en janvier');
+    assert.ok(horizontal(5.92, 7.41, new Date('2026-07-15T20:00:00Z')).alt < 0, 'Bételgeuse en juillet');
+    assert.ok(horizontal(18.62, 38.78, new Date('2026-08-15T20:00:00Z')).alt > 70, 'Véga en août');
+    // Antarès ne monte jamais haut à Bordeaux (90 − 44,84 − 26,43 = 18,7° au plus)
+    assert.ok(horizontal(16.49, -26.43, new Date('2026-06-15T21:30:00Z')).alt < 19);
+    // Toutes les constellations, avec leurs étoiles et des traits entre étoiles connues
+    const sky = skyAt(new Date('2027-01-15T21:00:00Z'));
+    assert.ok(sky.length >= 25);
+    for (const c of sky) for (const line of c.lines) for (const key of line) assert.ok(c.stars[key], `${c.fr} : ${key}`);
+    assert.ok(sky.find((c) => c.fr === 'Orion').stars.bet.alt > 40);
+    // Le ciel de ce soir : maintenant la nuit, sinon 22 h
+    assert.equal(tonight(new Date(2026, 10, 5, 15, 30)).getHours(), 22);
+    assert.equal(tonight(new Date(2026, 10, 5, 23, 10)).getMinutes(), 10);
+  });
+
+  test('ciel dessiné sous l’arbre : étoiles, traits, noms, légende ; retiré hors du thème', async () => {
     const { setSky } = await import('../js/ui/sky.js');
+    const calls = [];
+    const ctx = new Proxy({}, {
+      get: (target, key) => (key in target ? target[key] : (...args) => calls.push([key, ...args])),
+      set: (target, key, value) => { target[key] = value; return true; },
+    });
+    ctx.createLinearGradient = () => ({ addColorStop() {} });
     const make = (tag) => {
       const el = {
-        tag, attrs: {}, style: { setProperty(k, v) { this[k] = v; } }, children: [], parentElement: null,
-        setAttribute(k, v) { el.attrs[k] = String(v); },
+        tag, style: {}, children: [], parentElement: null, width: 0, height: 0,
+        setAttribute() {},
         append(c) { c.parentElement = el; el.children.push(c); },
         prepend(c) { c.parentElement = el; el.children.unshift(c); },
         remove() { if (el.parentElement) el.parentElement.children.splice(el.parentElement.children.indexOf(el), 1); },
         get firstChild() { return el.children[0]; },
+        getContext: () => ctx,
       };
       return el;
     };
-    // Une fiche couvre le quart haut gauche : les étoiles l'évitent
-    const card = { getBoundingClientRect: () => ({ left: 0, top: 0, right: 400, bottom: 300 }) };
-    const canvas = Object.assign(make('div'), {
-      clientWidth: 800, clientHeight: 600,
-      getBoundingClientRect: () => ({ left: 0, top: 0, right: 800, bottom: 600 }),
-      querySelectorAll: () => [card],
-    });
-    const saved = { create: document.createElement, ns: document.createElementNS, byId: document.getElementById };
-    Object.assign(document, {
-      createElement: make, createElementNS: (ns, tag) => make(tag), getElementById: (id) => (id === 'canvas' ? canvas : saved.byId(id)),
-    });
+    const box = Object.assign(make('div'), { clientWidth: 900, clientHeight: 600 });
+    const saved = { create: document.createElement, byId: document.getElementById };
+    Object.assign(document, { createElement: make, getElementById: (id) => (id === 'canvas' ? box : saved.byId(id)) });
     try {
       setSky(true);
-      setSky(true); // déjà lancé : un seul calque
-      assert.equal(canvas.children.length, 1);
-      const layer = canvas.children[0];
-      assert.equal(layer.className, 'sky');
-      const grad = layer.firstChild.children[0].children[0];
-      assert.deepEqual([grad.tag, grad.attrs.id], ['linearGradient', 'skyTrail']);
-      // Une constellation dès le départ : un tracé à dessiner, 4 à 7 étoiles qui pulsent, un éclat
-      const constel = layer.firstChild.children[1];
-      assert.equal(constel.attrs.class, 'constel');
-      const [line, ...rest] = constel.children;
-      assert.equal(line.attrs.class, 'constel-line');
-      assert.ok(+line.style['--len'] > 0, 'longueur du tracé, pour l’animation qui le dessine');
-      const stars = rest.filter((x) => x.attrs.class === 'constel-star');
-      assert.ok(stars.length >= 4 && stars.length <= 7);
-      assert.equal(rest.filter((x) => x.attrs.class === 'constel-flare').length, 1);
-      const under = stars.filter((x) => +x.attrs.cx < 408 && +x.attrs.cy < 308).length;
-      assert.ok(under <= 1, 'presque toutes les étoiles hors de la fiche');
+      setSky(true); // déjà lancé : un seul ciel
+      assert.equal(box.children.length, 1);
+      assert.equal(box.children[0].className, 'sky');
+      const texts = calls.filter((c) => c[0] === 'fillText').map((c) => c[1]);
+      assert.ok(calls.filter((c) => c[0] === 'arc').length > 40, 'des dizaines d’étoiles au-dessus de l’horizon');
+      assert.ok(calls.some((c) => c[0] === 'lineTo'), 'les traits des constellations');
+      assert.ok(texts.includes('Polaire'), 'la Polaire, toujours visible de Bordeaux');
+      assert.ok(texts.some((x) => /^Ciel de Bordeaux · .+ · .+/.test(x)), 'la légende');
       setSky(false);
-      assert.equal(canvas.children.length, 0);
+      assert.equal(box.children.length, 0);
     } finally {
-      Object.assign(document, { createElement: saved.create, createElementNS: saved.ns, getElementById: saved.byId });
+      Object.assign(document, { createElement: saved.create, getElementById: saved.byId });
     }
   });
 });
 
-describe('pluie du thème Matrice', () => {
+describe('pluie du thème Matrix', () => {
   test('colonnes de signes retournés qui tombent, retirées hors du thème', async () => {
     const { setRain } = await import('../js/ui/rain.js');
     const drawn = [];
@@ -257,6 +271,45 @@ describe('pluie du thème Matrice', () => {
       assert.ok(texts.every(([, t]) => t.length === 1));
       assert.ok(drawn.some((x) => x[0] === 'scale' && x[1] === -1));
       setRain(false);
+      assert.equal(box.children.length, 0);
+    } finally {
+      Object.assign(document, { createElement: saved.create, getElementById: saved.byId });
+    }
+  });
+});
+
+describe('neige du thème Noël', () => {
+  test('flocons qui tombent, cristaux, guirlande ; retirés hors du thème', async () => {
+    const { setSnow } = await import('../js/ui/snow.js');
+    const calls = [];
+    const ctx = new Proxy({}, {
+      get: (target, key) => (key in target ? target[key] : (...args) => calls.push([key, ...args])),
+      set: (target, key, value) => { target[key] = value; return true; },
+    });
+    const make = (tag) => {
+      const el = {
+        tag, style: {}, children: [], parentElement: null, width: 0, height: 0,
+        setAttribute() {},
+        append(c) { c.parentElement = el; el.children.push(c); },
+        prepend(c) { c.parentElement = el; el.children.unshift(c); },
+        remove() { if (el.parentElement) el.parentElement.children.splice(el.parentElement.children.indexOf(el), 1); },
+        get firstChild() { return el.children[0]; },
+        getContext: () => ctx,
+      };
+      return el;
+    };
+    const box = Object.assign(make('div'), { clientWidth: 700, clientHeight: 500 });
+    const saved = { create: document.createElement, byId: document.getElementById };
+    Object.assign(document, { createElement: make, getElementById: (id) => (id === 'canvas' ? box : saved.byId(id)) });
+    try {
+      setSnow(true);
+      setSnow(true); // déjà lancée : une seule neige
+      assert.equal(box.children.length, 1);
+      assert.equal(box.children[0].className, 'snow');
+      assert.ok(calls.filter((c) => c[0] === 'arc').length > 20, 'des flocons');
+      assert.ok(calls.some((c) => c[0] === 'quadraticCurveTo'), 'le fil de la guirlande');
+      assert.ok(calls.filter((c) => c[0] === 'ellipse').length >= 10, 'ses ampoules');
+      setSnow(false);
       assert.equal(box.children.length, 0);
     } finally {
       Object.assign(document, { createElement: saved.create, getElementById: saved.byId });
