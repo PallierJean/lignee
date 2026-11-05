@@ -22,6 +22,7 @@ import { blankDraft, captureDraft, focusFirstField } from './ui/form.js';
 import { toast } from './ui/toast.js';
 import { t, getLang, setLang } from './i18n.js';
 import { updatePrintInfo } from './ui/print.js';
+import { applyTheme } from './ui/theme.js';
 import { renderPersonDlg } from './ui/person-dlg.js';
 import { photoFromFile, DOCUMENT_SIDE } from './utils/image.js';
 
@@ -130,6 +131,14 @@ export function togglePanel() {
 export function recenter() {
   S.scrollPending = true;
   scrollToFocus();
+}
+
+/** Change le thème de couleur ; redessine ce qui lit les couleurs à l'affichage (carte…). */
+export function setTheme(theme) {
+  S.theme = theme;
+  savePrefs();
+  applyTheme();
+  renderAll(true);
 }
 
 /** Bascule l'interface entre le français et l'anglais, sans perdre la saisie en cours. */

@@ -92,8 +92,9 @@
   overflow: auto;
   position: relative;
   background-color: var(--paper);
-  background-image: radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
-  background-size: 20px 20px;
+  /* Motif du thème choisi (--deco, css/tokens.css), sur la trame pointée */
+  background-image: var(--deco, none), radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
+  background-size: var(--deco-size, auto), 20px 20px;
   overscroll-behavior: contain;
 }
 

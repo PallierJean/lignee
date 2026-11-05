@@ -2,7 +2,7 @@
  * État partagé de l'application.
  * Un seul objet S, lu et modifié par les autres modules.
  */
-import { ZOOMS, PREF_KEY, DEFAULT_TREE } from './config.js';
+import { ZOOMS, THEMES, PREF_KEY, DEFAULT_TREE } from './config.js';
 
 export const S = {
   mode: 'loading',       // 'loading' | 'db' (base en ligne) | 'file' (data/arbres/) | 'local' (navigateur)
@@ -25,6 +25,7 @@ export const S = {
   line: true,            // halo sur la lignée directe de la personne centrale
   panel: true,           // panneau fiche/registre affiché
   closed: {},            // bandeaux fermés : ex (famille d'exemple), local (mode local)
+  theme: 'auto',         // thème de couleur : voir THEMES dans config.js
   tab: 'fiche',          // onglet du panneau : 'fiche' | 'registre' | 'analyse'
   analyse: 'kin',        // vue de l'onglet Analyse : voir VIEWS dans ui/analyse.js
   timeFamily: false,     // frise : la famille proche plutôt que la personne seule
@@ -88,6 +89,7 @@ export function loadPrefs() {
     S.line = v.line !== false;
     S.panel = v.panel !== false;
     if (v.closed && typeof v.closed === 'object') S.closed = v.closed;
+    if (THEMES.includes(v.theme)) S.theme = v.theme;
   } catch (e) {
     /* stockage indisponible : on garde les valeurs par défaut */
   }
@@ -97,7 +99,7 @@ export function savePrefs() {
   try {
     if (S.focus) S.foci[S.tree] = S.focus;
     else delete S.foci[S.tree];
-    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci }));
+    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci, theme: S.theme }));
   } catch (e) {
     /* stockage indisponible : préférences non mémorisées */
   }
