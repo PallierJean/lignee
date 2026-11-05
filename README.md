@@ -25,7 +25,7 @@ lignee/
 ├── assets/
 │   └── favicon.svg             Icône de l'onglet
 ├── images/
-│   └── avatar_femme.jpeg, avatar_homme.jpeg   Avatars par défaut des fiches
+│   └── avatar_femme.jpeg, avatar_homme.jpeg, avatar_neutre.jpeg   Avatars par défaut des fiches
 ├── css/
 │   ├── tokens.css              Couleurs (thèmes clair et sombre), polices
 │   ├── base.css                Remise à zéro, typographie, utilitaires
@@ -228,8 +228,8 @@ Une personne :
 ou, avec `server.js`, une référence `photos/<fichier>` (voir plus haut).
 Elle est choisie dans le formulaire, réduite à 320 pixels de côté au plus (quelques
 dizaines de Ko), et affichée en haut de la fiche. Sans photo, la fiche montre
-`images/avatar_femme.jpeg` ou `images/avatar_homme.jpeg` selon le sexe (rien si le
-sexe n'est pas précisé). Elle n'est pas exportée en GEDCOM ;
+`images/avatar_femme.jpeg` ou `images/avatar_homme.jpeg` selon le sexe
+(`images/avatar_neutre.jpeg` s'il n'est pas précisé). Elle n'est pas exportée en GEDCOM ;
 la sauvegarde .json la conserve.
 
 Les lieux (`birthPlace`, `deathPlace`, lieu d'un événement ou d'une union) restent un texte, au
