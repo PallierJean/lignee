@@ -77,19 +77,28 @@ describe('INSEE : qui est vérifié, et avec quoi', () => {
 
 describe('INSEE : rapprochement et écarts', () => {
   test('naissance exacte identique : acte certain, rien à reporter quand tout concorde', () => {
-    loadTree([lucien({ given: 'Lucien Marcel', deathDate: '04/07/1995', deathPlace: 'Limoges (87)' })]);
+    const cited = [{ kind: 'death', fact: 'death', title: 'Acte n°412' }];
+    loadTree([lucien({ given: 'Lucien Marcel', deathDate: '04/07/1995', deathPlace: 'Limoges (87)', sources: cited })]);
     const m = matchDeath('l', [act()]);
     assert.equal(m.level, 'sure');
-    assert.deepEqual(deathDifferences('l', m.act), []);
+    assert.deepEqual(deathDifferences('l', m.act), [], 'numéro d’acte déjà cité dans une source');
   });
 
   test('écarts et compléments : décès contradictoire, lieu manquant, prénoms complets', () => {
     loadTree([lucien({ deathDate: '02/07/1995' })]);
     const m = matchDeath('l', [act()]);
     const diffs = deathDifferences('l', m.act);
-    assert.deepEqual(diffs.map((x) => [x.field, x.kind]), [['given', 'add'], ['deathDate', 'fix'], ['deathPlace', 'add']]);
+    assert.deepEqual(diffs.map((x) => [x.field, x.kind]), [['given', 'add'], ['deathDate', 'fix'], ['deathPlace', 'add'], ['source', 'add']]);
     assert.deepEqual(diffs[1].patch, { deathDate: '04 Juillet 1995', deceased: true });
     assert.deepEqual(diffs[2].patch, { deathPlace: 'Limoges (87)' });
+    // Numéro de l'acte de décès : une source de la fiche
+    assert.equal(diffs[3].insee, 'Acte n°412, Limoges (87)');
+    const [source] = diffs[3].patch.sources;
+    assert.deepEqual({ ...source, id: undefined }, {
+      id: undefined, kind: 'death', fact: 'death', title: 'Acte n°412', place: 'Limoges (87)',
+      ref: '', note: 'Fichier des personnes décédées de l’INSEE (matchID)', photo: '',
+    });
+    assert.match(source.id, /^s/);
     assert.deepEqual(diffs[0].patch, { given: 'Lucien Marcel' }, 'prénoms complets de l’état civil, reportables');
   });
 
@@ -103,16 +112,35 @@ describe('INSEE : rapprochement et écarts', () => {
     assert.deepEqual(d.find((x) => x.field === 'given').patch, { given: 'Lucien Marcel Paul' }, 'prénom absent de l’acte gardé');
     // Nom de naissance d'une femme : dans le nom de jeune fille, le nom d'usage reste
     loadTree([lucien({ given: 'Marguerite', surname: 'Frisch', sex: 'F', deathDate: '04/07/1995', deathPlace: 'Limoges (87)' })]);
-    d = deathDifferences('l', act({ first: ['MARGUERITE'], last: 'DUTIN', sex: 'F' }));
+    d = deathDifferences('l', act({ first: ['MARGUERITE'], last: 'DUTIN', sex: 'F', certificate: '' }));
     assert.deepEqual(d.map((x) => [x.field, x.kind, x.insee]), [['name', 'fix', 'Dutin']]);
     assert.deepEqual(d[0].patch, { maidenName: 'Dutin' });
     // Déjà là : rien à reporter
     loadTree([lucien({ given: 'Marguerite', surname: 'Frisch', maidenName: 'Dutin', sex: 'F', deathDate: '04/07/1995', deathPlace: 'Limoges (87)' })]);
-    assert.deepEqual(deathDifferences('l', act({ first: ['MARGUERITE'], last: 'DUTIN', sex: 'F' })), []);
+    assert.deepEqual(deathDifferences('l', act({ first: ['MARGUERITE'], last: 'DUTIN', sex: 'F', certificate: '' })), []);
     // Homme : dans le nom ; particules en minuscules
     loadTree([lucien({ surname: 'Lafontaine', deathDate: '04/07/1995', deathPlace: 'Limoges (87)', given: 'Lucien Marcel' })]);
     d = deathDifferences('l', act({ last: "DE LA FONTAINE D'ARC" }));
     assert.deepEqual(d[0].patch, { surname: "De la Fontaine d'Arc" });
+  });
+
+  test('prénoms et nom reportés avec leurs accents : ceux de l’arbre d’abord, puis la liste des prénoms', () => {
+    const given = (first, others = []) => {
+      loadTree([lucien({ given: 'Marguerite', sex: 'F', deathDate: '04/07/1995', deathPlace: 'Limoges (87)' }), ...others]);
+      const d = deathDifferences('l', act({ first, last: 'BERTRAND', sex: 'F', certificate: '' }));
+      return d.find((x) => x.field === 'given').insee;
+    };
+    assert.equal(given(['MARGUERITE', 'HELENE']), 'Marguerite Hélène', 'liste des prénoms accentués');
+    assert.equal(given(['MARGUERITE', 'JEAN-FRANCOIS']), 'Marguerite Jean-François', 'prénom composé, partie par partie');
+    assert.equal(given(['MARGUERITE', 'EVA']), 'Marguerite Eva', 'prénom ambigu : sans accent');
+    assert.equal(given(['MARGUERITE', 'PETRONILLE'], [person('o', { given: 'Pétronille' })]), 'Marguerite Pétronille', 'orthographe de l’arbre');
+    assert.equal(given(['MARGUERITE', 'HELENE'], [person('o', { given: 'Hèlene' })]), 'Marguerite Hèlene', 'l’arbre passe avant la liste');
+    // Nom de naissance : accents repris d'un nom de l'arbre seulement
+    loadTree([lucien({ surname: 'Lefevre', deathDate: '04/07/1995', deathPlace: 'Limoges (87)', given: 'Lucien Marcel' }), person('o', { surname: 'Lefèvre' })]);
+    const d = deathDifferences('l', act({ last: 'LEFEBVRE', certificate: '' }));
+    assert.equal(d[0].insee, 'Lefebvre', 'pas dans l’arbre : sans accent');
+    loadTree([lucien({ surname: 'Lefebvre', deathDate: '04/07/1995', deathPlace: 'Limoges (87)', given: 'Lucien Marcel' }), person('o', { maidenName: 'Lefèvre' })]);
+    assert.deepEqual(deathDifferences('l', act({ last: 'LEFEVRE', certificate: '' }))[0].patch, { surname: 'Lefèvre' });
   });
 
   test('marqué vivant mais décédé : signalé, et « Le » ou « St » ne font pas un écart de lieu', () => {
@@ -180,6 +208,10 @@ describe('INSEE : vérification et vue', () => {
     assert.equal(S.people.get('l').deathPlace, undefined, 'un seul écart reporté');
     await A.applyInsee('l');
     assert.equal(S.people.get('l').deathPlace, 'Limoges (87)');
+    // Tout reporter : prénoms de l'état civil et numéro d'acte compris, plus rien à proposer
+    assert.equal(S.people.get('l').given, 'Lucien Marcel');
+    assert.deepEqual(S.people.get('l').sources.map((x) => [x.kind, x.fact, x.title]), [['death', 'death', 'Acte n°412']]);
+    assert.deepEqual(A.inseeDifferences('l'), []);
     await A.undo();
     assert.equal(S.people.get('l').deathPlace, undefined);
 
