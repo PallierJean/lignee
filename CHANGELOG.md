@@ -1,5 +1,30 @@
 # Historique des versions
 
+## [1.16.0](https://github.com/PallierJean/lignee/compare/v1.15.0...v1.16.0) (2026-11-05)
+
+### Features
+
+* « Descendre vers » propose tous les descendants connus, par génération ([b0a46da](https://github.com/PallierJean/lignee/commit/b0a46da9211fec72e250f1857902fe206bf58e15))
+* carte explorable, zoom, déplacement, départements, personnes d'une commune ([9a5cd97](https://github.com/PallierJean/lignee/commit/9a5cd97db916f26f9aadd3b8f935cf2039026277))
+* INSEE, numéro d'acte en source et accents des prénoms ([dd135c4](https://github.com/PallierJean/lignee/commit/dd135c483e033946988c63a89ce7032f9d699f9b))
+* liste « Descendre vers » à toutes les générations de la roue ([5634248](https://github.com/PallierJean/lignee/commit/5634248368466b49a7ddc486afd89b401406561a))
+* Maraudeur, empreintes au hasard au lieu d'un motif répété ([9a6b64d](https://github.com/PallierJean/lignee/commit/9a6b64df5ec5e0090cbbcc2d7490aad9efa21854))
+* Maraudeur, empreintes rouges qui avancent puis s'effacent ([2dc3c51](https://github.com/PallierJean/lignee/commit/2dc3c516702f9ed48fd0563afdca97157a4375e7))
+* roue d'ascendance sur 10 générations, recadrée sur les ancêtres connus ([445cf48](https://github.com/PallierJean/lignee/commit/445cf48d57f6f213caa24ed5d08c84dd4c3a4c16))
+* roue d'ascendance, étiquette au survol et recentrage d'un double-clic ([7ec01b8](https://github.com/PallierJean/lignee/commit/7ec01b80f435603df0ff6233797ac11e4a6abd74))
+* taille du texte, thème contraste élevé sombre, focus très visible ([fcdf82d](https://github.com/PallierJean/lignee/commit/fcdf82df6f769ef1013121354fe203df1fb66a59))
+* thème « Carte du Maraudeur » ([b62f07d](https://github.com/PallierJean/lignee/commit/b62f07dd5c0ce7910e3d560f0177cc8aae483826))
+* thèmes d'accessibilité, daltonisme et contraste élevé ([76ba1af](https://github.com/PallierJean/lignee/commit/76ba1afe91f4e24b920964940334ed619b35e0c9))
+* thèmes de couleur, dont Noël, Halloween et les saisons ([15563bb](https://github.com/PallierJean/lignee/commit/15563bb0e2d42a86a3edfc4dbe6f73b5eb3ddf01))
+
+### Bug Fixes
+
+* en-tête sur une ligne, thème et taille du texte dans un menu « Aa » ([fdfc65d](https://github.com/PallierJean/lignee/commit/fdfc65de6a4d4c5b2b4d4163394462ad80bc3dcc))
+* INSEE, prénoms et nom reportables ; dates en toutes lettres ([1496a47](https://github.com/PallierJean/lignee/commit/1496a47c37196e6ce196b7b00b807a040807e1ea))
+* INSEE, un numéro d'acte en plusieurs mots n'est plus reproposé ([41435a7](https://github.com/PallierJean/lignee/commit/41435a720e5738168346b26f2b3557c1bf9fcb1f))
+* la carte ne cherche que les communes, pas les lieux-dits ([05aa3b7](https://github.com/PallierJean/lignee/commit/05aa3b762da6d24c3dfb4dc4df2c5d85d37dd4a6))
+* la roue ne laisse plus sans issue après un recentrage ([855d75d](https://github.com/PallierJean/lignee/commit/855d75d7867f9193a563b3c3b03b7c29dbb40648))
+
 ## [1.15.0](https://github.com/PallierJean/lignee/compare/v1.14.0...v1.15.0) (2026-11-05)
 
 ### Features
