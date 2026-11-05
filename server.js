@@ -459,12 +459,17 @@ export function createServer({
 
   /* ---------- Fichiers de l'application ---------- */
 
+  // Seuls les fichiers que publie aussi le site (scripts/build-site.sh) : ni .git, ni .env.test,
+  // ni le jeton matchID, ni les arbres personnels (servis par /api/trees)
+  const PUBLIC = /^(index\.html|package\.json|(assets|css|images|js)\/.+|data\/arbres\/exemple-famille-bertrand\.json)$/;
+
   async function serveFile(req, res) {
     const url = new URL(req.url, 'http://localhost');
     let rel = decodeURIComponent(url.pathname);
     if (rel.endsWith('/')) rel += 'index.html';
     const file = path.normalize(path.join(root, rel));
-    if (!file.startsWith(root + path.sep) || file === path.normalize(tokenFile)) {
+    const pub = path.relative(root, file).split(path.sep).join('/');
+    if (!file.startsWith(root + path.sep) || file === path.normalize(tokenFile) || !PUBLIC.test(pub)) {
       send(res, 403, 'Accès refusé');
       return;
     }
