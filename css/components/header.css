@@ -135,3 +135,9 @@
   color: var(--danger);
   font-weight: 700;
 }
+
+/* Choix du thème de couleur */
+.btn.theme {
+  max-width: 11em;
+  cursor: pointer;
+}
