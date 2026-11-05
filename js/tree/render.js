@@ -164,8 +164,11 @@ export function renderTree() {
   const canvas = $('#canvas');
   sizer.style.width = Math.ceil(L.W * S.zoom) + 'px';
   sizer.style.height = Math.ceil(L.H * S.zoom) + 'px';
-  // Marges de défilement : même au bord de l'arbre, ou si tout tient à l'écran, on peut centrer
-  sizer.style.margin = `${canvas.clientHeight / 2}px ${canvas.clientWidth / 2}px`;
+  // Marges : l'arbre qui tient à l'écran y est centré, sans barre de défilement ; plus grand, les
+  // barres suivent exactement sa taille (voir treeMargins)
+  const w = Math.ceil(L.W * S.zoom);
+  const h = Math.ceil(L.H * S.zoom);
+  sizer.style.margin = `${Math.max(0, Math.floor((canvas.clientHeight - h) / 2))}px ${Math.max(0, Math.floor((canvas.clientWidth - w) / 2))}px`;
   tree.style.width = L.W + 'px';
   tree.style.height = L.H + 'px';
   tree.style.transform = `scale(${S.zoom})`;
@@ -244,12 +247,19 @@ export function scrollToPerson(id) {
   if (L) scrollToNode(L.nodes.find((x) => x.id === id));
 }
 
+/** Marges autour de l'arbre dans la zone de défilement : { x, y } en pixels. */
+export function treeMargins() {
+  const sizer = $('#sizer');
+  return { x: parseFloat(sizer.style.marginLeft) || 0, y: parseFloat(sizer.style.marginTop) || 0 };
+}
+
 function scrollToNode(n) {
   if (!n) return;
   const canvas = $('#canvas');
+  const m = treeMargins();
   canvas.scrollTo({
-    left: (n.x + CW / 2) * S.zoom,
-    top: (n.y + CH / 2) * S.zoom + canvas.clientHeight / 2 - canvas.clientHeight * 0.55,
+    left: m.x + (n.x + CW / 2) * S.zoom - canvas.clientWidth / 2,
+    top: m.y + (n.y + CH / 2) * S.zoom - canvas.clientHeight * 0.55,
     behavior: reduced || S.firstScroll ? 'auto' : 'smooth',
   });
   S.firstScroll = false;

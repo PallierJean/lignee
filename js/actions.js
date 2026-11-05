@@ -15,7 +15,7 @@ import { renamePatches } from './model/places.js';
 import { deathDifferences } from './model/insee.js';
 import { inseeMatch, ignoreInsee, confirmInsee } from './services/insee.js';
 import { ignorePair } from './services/dup-ignore.js';
-import { renderTree, scrollToFocus, scrollToPerson } from './tree/render.js';
+import { renderTree, scrollToFocus, scrollToPerson, treeMargins } from './tree/render.js';
 import { renderAll, renderSide, renderFiche, afterData } from './ui/render.js';
 import { renderHeader, renderControls } from './ui/header.js';
 import { blankDraft, captureDraft, focusFirstField } from './ui/form.js';
@@ -78,16 +78,18 @@ export function setGenerations(kind, n) {
 /** Zoom avant (+1) ou arrière (-1), en gardant le centre de la vue. */
 export function zoomBy(step) {
   const canvas = $('#canvas');
-  // Centre de la vue dans l'arbre : les marges de défilement valent une demi-vue
-  const cx = canvas.scrollLeft / S.zoom;
-  const cy = canvas.scrollTop / S.zoom;
+  // Point de l'arbre au centre de la vue, qu'on y garde après le zoom
+  let m = treeMargins();
+  const cx = (canvas.scrollLeft + canvas.clientWidth / 2 - m.x) / S.zoom;
+  const cy = (canvas.scrollTop + canvas.clientHeight / 2 - m.y) / S.zoom;
   const i = Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(S.zoom) + step));
   S.zoom = ZOOMS[i];
   savePrefs();
   renderControls();
   renderTree();
-  canvas.scrollLeft = cx * S.zoom;
-  canvas.scrollTop = cy * S.zoom;
+  m = treeMargins();
+  canvas.scrollLeft = m.x + cx * S.zoom - canvas.clientWidth / 2;
+  canvas.scrollTop = m.y + cy * S.zoom - canvas.clientHeight / 2;
 }
 
 /** Bascule entre la vue centrée sur une personne et l'arbre complet, à plat. */
