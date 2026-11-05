@@ -345,7 +345,9 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
   qui ont un numéro Sosa) et colore les traits qui remontent jusqu'à eux. À l'impression, seul le
   contour des fiches est vert.
 - « Éventail » (`tree/fan.js`) remplace l'arbre par la roue d'ascendance de la personne
-  centrale, jusqu'à 7 générations, père à gauche et mère à droite de chaque secteur.
+  centrale, jusqu'à 10 générations, père à gauche et mère à droite de chaque secteur. Seuls les
+  ancêtres connus et une case vide juste au-dessus d'eux sont tracés, et la roue est recadrée sur eux ;
+  dans les anneaux les plus serrés, le nom tient sur une ligne (zoom jusqu'à 300 % pour le lire).
 - « Imprimer » (`ui/print.js`) propose l'arbre complet, la roue d'ascendance ou le livret de
   famille (`ui/booklet.js`) : couverture avec la roue, sommaire, puis un chapitre par génération,
   couples groupés, portraits et sources. Ses pages A4 portent leurs propres marges, indépendantes
