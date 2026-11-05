@@ -61,31 +61,42 @@
       </div>
       <div class="top-actions">
         <span class="pill" id="status"><i></i><span>Connexion…</span></span>
-        <select class="btn theme" id="themeSel" title="Thème de couleur" aria-label="Thème de couleur" data-i18n-attr="title:theme.label; aria-label:theme.label">
-          <optgroup label="Général" data-i18n-attr="label:theme.groupBase">
-            <option value="auto" data-i18n="theme.auto">Automatique</option>
-            <option value="season" data-i18n="theme.season">Selon la saison</option>
-            <option value="light" data-i18n="theme.light">Clair</option>
-            <option value="dark" data-i18n="theme.dark">Sombre</option>
-          </optgroup>
-          <optgroup label="Fêtes et saisons" data-i18n-attr="label:theme.groupFun">
-            <option value="noel" data-i18n="theme.noel">🎄 Noël</option>
-            <option value="halloween" data-i18n="theme.halloween">🎃 Halloween</option>
-            <option value="printemps" data-i18n="theme.printemps">🌸 Printemps</option>
-            <option value="ete" data-i18n="theme.ete">☀️ Été</option>
-            <option value="automne" data-i18n="theme.automne">🍂 Automne</option>
-          </optgroup>
-          <optgroup label="Accessibilité" data-i18n-attr="label:theme.groupA11y">
-            <option value="daltonisme" data-i18n="theme.daltonisme">Daltonisme</option>
-            <option value="contraste" data-i18n="theme.contraste">Contraste élevé</option>
-            <option value="contraste-sombre" data-i18n="theme.contraste-sombre">Contraste élevé sombre</option>
-          </optgroup>
-        </select>
-        <select class="btn text-size" id="textSel" title="Taille du texte" aria-label="Taille du texte" data-i18n-attr="title:text.label; aria-label:text.label">
-          <option value="normal" data-i18n="text.normal">Texte normal</option>
-          <option value="large" data-i18n="text.large">Texte grand</option>
-          <option value="xlarge" data-i18n="text.xlarge">Texte très grand</option>
-        </select>
+        <!-- Affichage : thème de couleur et taille du texte, dans un menu pour garder l'en-tête sur une ligne -->
+        <details class="appearance" id="appearance">
+          <summary class="btn" title="Affichage : thème et taille du texte" aria-label="Affichage : thème et taille du texte"
+            data-i18n-attr="title:look.title; aria-label:look.title">Aa</summary>
+          <div class="appearance-menu">
+            <label class="fld"><span data-i18n="theme.label">Thème de couleur</span>
+              <select id="themeSel">
+                <optgroup label="Général" data-i18n-attr="label:theme.groupBase">
+                  <option value="auto" data-i18n="theme.auto">Automatique</option>
+                  <option value="season" data-i18n="theme.season">Selon la saison</option>
+                  <option value="light" data-i18n="theme.light">Clair</option>
+                  <option value="dark" data-i18n="theme.dark">Sombre</option>
+                </optgroup>
+                <optgroup label="Fêtes et saisons" data-i18n-attr="label:theme.groupFun">
+                  <option value="noel" data-i18n="theme.noel">🎄 Noël</option>
+                  <option value="halloween" data-i18n="theme.halloween">🎃 Halloween</option>
+                  <option value="printemps" data-i18n="theme.printemps">🌸 Printemps</option>
+                  <option value="ete" data-i18n="theme.ete">☀️ Été</option>
+                  <option value="automne" data-i18n="theme.automne">🍂 Automne</option>
+                </optgroup>
+                <optgroup label="Accessibilité" data-i18n-attr="label:theme.groupA11y">
+                  <option value="daltonisme" data-i18n="theme.daltonisme">Daltonisme</option>
+                  <option value="contraste" data-i18n="theme.contraste">Contraste élevé</option>
+                  <option value="contraste-sombre" data-i18n="theme.contraste-sombre">Contraste élevé sombre</option>
+                </optgroup>
+              </select>
+            </label>
+            <label class="fld"><span data-i18n="text.label">Taille du texte</span>
+              <select id="textSel">
+                <option value="normal" data-i18n="text.normal">Texte normal</option>
+                <option value="large" data-i18n="text.large">Texte grand</option>
+                <option value="xlarge" data-i18n="text.xlarge">Texte très grand</option>
+              </select>
+            </label>
+          </div>
+        </details>
         <button class="btn lang" type="button" data-act="lang" id="btnLang" title="Switch to English" aria-label="Switch to English">EN</button>
         <button class="btn" type="button" id="btnImport" data-act="import-open" data-i18n="btn.import">Importer</button>
         <button class="btn" type="button" data-act="export-open" data-i18n="btn.export">Exporter</button>
