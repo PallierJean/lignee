@@ -81,8 +81,8 @@ KEYS = ['paper', 'surface', 'ink', 'muted', 'line', 'edge', 'dot', 'accent', 'ac
         'danger', 'danger-soft', 'ok', 'halo', 'male', 'female', 'scrim']
 THEMES = [
   ('constellations', 'Constellations : nuit bleu profond, le vrai ciel de Bordeaux ce soir avec ses constellations, qui tourne lentement (ui/sky.js)', 'dark',
-   dict(paper='#0B1026', surface='#141C3E', ink='#E8ECFF', muted='#AAB4DC', line='#2C386B', edge='#8FA4F0', dot='#1A2350',
-        accent='#FFD36E', **{'accent-ink': '#0B1026', 'accent-soft': '#2B2B4F'}, warn='#FFD27A', danger='#FF9A8B', **{'danger-soft': '#3A1C2A'},
+   dict(paper='#0B1026', surface='#1C2756', ink='#EEF1FF', muted='#B4BEE4', line='#33407A', edge='#8FA4F0', dot='#1A2350',
+        accent='#FFD36E', **{'accent-ink': '#0B1026', 'accent-soft': '#3A3872'}, warn='#FFD27A', danger='#FF9A8B', **{'danger-soft': '#3A1C2A'},
         ok='#8FE3C0', halo='#FFE7A3', male='#7FB2FF', female='#F5A3D0', scrim='rgba(2, 4, 16, .7)'),
    stars(), '400px', {}),
   ('porcelaine', 'Porcelaine de Limoges : émail blanc, décor de faïence en bleu de four (médaillons, rinceaux, fleurettes), filets et perles d’or ; frises festonnées, fiches en plaques émaillées, la personne au centre en bleu de four', 'light',
@@ -128,9 +128,14 @@ out.append(f"""
 out.append("""
 /* ---------- Touches propres ---------- */
 
-/* Constellations : fiches et liens qui brillent doucement */
-:root[data-theme="constellations"] .card {
-  box-shadow: 0 0 14px rgba(127, 160, 255, .18);
+/* Constellations : fiches plus claires que le ciel, détachées des étoiles par un liseré de nuit,
+   et un halo (doré pour la lignée directe) ; le contour garde la couleur homme ou femme */
+:root[data-theme="constellations"] .card:not(.is-line) {
+  box-shadow: 0 0 0 5px rgba(8, 12, 30, .88), 0 0 22px 4px rgba(127, 160, 255, .28);
+}
+
+:root[data-theme="constellations"] .card.is-line {
+  box-shadow: 0 0 0 2px var(--halo), 0 0 0 7px rgba(8, 12, 30, .88), 0 0 22px 5px rgba(255, 231, 163, .3);
 }
 
 :root[data-theme="constellations"] .edges path {

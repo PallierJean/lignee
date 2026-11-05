@@ -391,8 +391,8 @@
   }
 }
 
-/* Neige et guirlande du thème Noël (ui/snow.js) : calque collé à la zone visible, sous l'arbre */
-.snow {
+/* Animations des thèmes fêtes et saisons (ui/ambient.js) : calque collé à la zone visible, sous l'arbre */
+.ambient {
   position: sticky;
   top: 0;
   left: 0;
@@ -400,7 +400,7 @@
   pointer-events: none;
 }
 
-.snow canvas {
+.ambient canvas {
   position: absolute;
   top: 0;
   left: 0;

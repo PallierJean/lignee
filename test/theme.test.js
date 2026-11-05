@@ -275,9 +275,9 @@ describe('pluie du thème Matrix', () => {
   });
 });
 
-describe('neige du thème Noël', () => {
-  test('flocons qui tombent, cristaux, guirlande ; retirés hors du thème', async () => {
-    const { setSnow } = await import('../js/ui/snow.js');
+describe('animations des thèmes fêtes et saisons', () => {
+  test('chaque thème a sa scène ; une seule animation à la fois ; arrêtée hors de ces thèmes', async () => {
+    const { setAmbient } = await import('../js/ui/ambient.js');
     const calls = [];
     const ctx = new Proxy({}, {
       get: (target, key) => (key in target ? target[key] : (...args) => calls.push([key, ...args])),
@@ -298,17 +298,32 @@ describe('neige du thème Noël', () => {
     const box = Object.assign(make('div'), { clientWidth: 700, clientHeight: 500 });
     const saved = { create: document.createElement, byId: document.getElementById };
     Object.assign(document, { createElement: make, getElementById: (id) => (id === 'canvas' ? box : saved.byId(id)) });
+    const random = Math.random;
     try {
-      setSnow(true);
-      setSnow(true); // déjà lancée : une seule neige
+      const drawn = (theme) => {
+        calls.length = 0;
+        setAmbient(theme);
+        return new Set(calls.map((c) => c[0]));
+      };
+      // Noël : flocons et guirlande
+      const noel = drawn('noel');
+      assert.ok(noel.has('arc') && noel.has('quadraticCurveTo') && noel.has('ellipse'));
+      setAmbient('noel'); // même thème : une seule animation
       assert.equal(box.children.length, 1);
-      assert.equal(box.children[0].className, 'snow');
-      assert.ok(calls.filter((c) => c[0] === 'arc').length > 20, 'des flocons');
-      assert.ok(calls.some((c) => c[0] === 'quadraticCurveTo'), 'le fil de la guirlande');
-      assert.ok(calls.filter((c) => c[0] === 'ellipse').length >= 10, 'ses ampoules');
-      setSnow(false);
+      assert.equal(box.children[0].className, 'ambient');
+      // Printemps : pétales (courbes) ; automne : feuilles ; été : aigrettes (traits)
+      assert.ok(drawn('printemps').has('bezierCurveTo'));
+      assert.ok(drawn('automne').has('bezierCurveTo'));
+      assert.ok(drawn('ete').has('lineTo'));
+      // Halloween : chauves-souris et fantômes lâchés au hasard (ici, à coup sûr)
+      Math.random = () => 0.001;
+      assert.ok(drawn('halloween').has('quadraticCurveTo'));
+      Math.random = random;
+      assert.equal(box.children.length, 1, 'toujours un seul calque');
+      setAmbient('auto');
       assert.equal(box.children.length, 0);
     } finally {
+      Math.random = random;
       Object.assign(document, { createElement: saved.create, getElementById: saved.byId });
     }
   });
