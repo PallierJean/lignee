@@ -5,7 +5,7 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, fullName, mediaList, photoSrc, peopleNamedIn } from '../model/people.js';
+import { P, given, surname, maiden, fullName, lifeYears, mediaList, photoSrc, peopleNamedIn } from '../model/people.js';
 import { opUpdate, beginAction, commitAction } from '../services/storage.js';
 import { afterData } from './render.js';
 import { personOptions } from './form.js';
@@ -22,6 +22,16 @@ const tagsOf = (m) => (Array.isArray(m.tags) ? m.tags : [])
   .filter((x) => x && typeof x === 'object')
   .map((x) => ({ ...x, x: Math.min(100, Math.max(0, +x.x || 0)), y: Math.min(100, Math.max(0, +x.y || 0)) }));
 
+/** Étiquette d'un visage : prénom, nom et années de vie. */
+function tagLabel(p) {
+  const years = lifeYears(p);
+  return `<span class="tag-name"><b>${esc(given(p))} <span class="sur">${esc(surname(p) || maiden(p))}</span></b>`
+    + (years ? `<small>${esc(years)}</small>` : '') + '</span>';
+}
+
+/** Côté de l'étiquette pour qu'elle reste dans la photo : au-dessus du visage en bas, décalée sur les bords. */
+const pinSide = (x) => (x.y > 70 ? ' up' : '') + (x.x < 20 ? ' start' : x.x > 80 ? ' end' : '');
+
 export function renderMedia() {
   if (!current) return;
   const m = item();
@@ -32,8 +42,8 @@ export function renderMedia() {
   const tags = tagsOf(m);
   // Repères invisibles sur les visages : ils s'éclairent au survol, du visage ou du nom dans la liste (highlightTag)
   const shown = tags.filter((x) => P(x.id));
-  const marks = shown.map((x) => `<button class="tag-pin" type="button" data-tag="${tags.indexOf(x)}" data-style="left:${x.x}%;top:${x.y}%"`
-    + ` data-act="media-person" data-id="${esc(x.id)}" aria-label="${esc(fullName(P(x.id)))}"><span class="tag-name">${esc(fullName(P(x.id)))}</span></button>`).join('');
+  const marks = shown.map((x) => `<button class="tag-pin${pinSide(x)}" type="button" data-tag="${tags.indexOf(x)}" data-style="left:${x.x}%;top:${x.y}%"`
+    + ` data-act="media-person" data-id="${esc(x.id)}" aria-label="${esc(fullName(P(x.id)))}">${tagLabel(P(x.id))}</button>`).join('');
   const names = shown.map((x) => `<li data-tag="${tags.indexOf(x)}">`
     + `<button class="link" type="button" data-act="media-person" data-id="${esc(x.id)}">${esc(fullName(P(x.id)))}</button>`
     + (S.canWrite ? ` <button class="link" type="button" data-act="tag-remove" data-i="${tags.indexOf(x)}">${t('med.untag')}</button>` : '') + '</li>').join('');

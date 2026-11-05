@@ -589,7 +589,13 @@
   border-radius: 4px;
 }
 
-/* Personne identifiée : repère invisible sur le visage, cercle et nom au survol (du visage ou du nom) */
+/* Personne identifiée : repère invisible sur le visage ; au survol (du visage ou du nom), le visage
+   s'éclaire, le reste de la photo s'assombrit et une étiquette donne le nom et les années */
+.media-pic {
+  overflow: hidden;
+  border-radius: 4px;
+}
+
 .tag-pin {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -600,36 +606,120 @@
   background: transparent;
   padding: 0;
   cursor: pointer;
-  transition: border-color .15s, box-shadow .15s;
+  transition: border-color .2s, box-shadow .2s;
 }
 
 .tag-pin:hover,
 .tag-pin:focus-visible,
 .tag-pin.lit {
-  border-color: #fff;
-  box-shadow: 0 0 0 2px var(--accent), 0 0 12px rgba(0, 0, 0, .45);
+  z-index: 1;
+  border-color: rgba(255, 255, 255, .9);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .15), 0 0 0 100vmax rgba(10, 16, 14, .38);
+  outline: none;
 }
 
 .tag-name {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 10px);
   left: 50%;
-  transform: translateX(-50%);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font: 600 12px/18px var(--f-body);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 12px 7px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(16, 24, 22, .78);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .3);
+  color: #fff;
+  line-height: 1.2;
   white-space: nowrap;
-  color: var(--accent-ink);
-  background: var(--accent);
   opacity: 0;
+  transform: translate(-50%, -4px);
+  transition: opacity .2s, transform .2s;
   pointer-events: none;
-  transition: opacity .15s;
+}
+
+/* Petite pointe vers le visage */
+.tag-name::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-bottom-color: rgba(16, 24, 22, .78);
+}
+
+.tag-name b {
+  font: 400 16px/1.2 var(--f-display);
+  letter-spacing: .01em;
+}
+
+.tag-name .sur {
+  font: 600 11px/1 var(--f-body);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  vertical-align: 1px;
+}
+
+.tag-name small {
+  font: 400 11px/1.3 var(--f-mono);
+  color: rgba(255, 255, 255, .7);
 }
 
 .tag-pin:hover .tag-name,
 .tag-pin:focus-visible .tag-name,
 .tag-pin.lit .tag-name {
   opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Visage en bas de la photo : l'étiquette au-dessus */
+.tag-pin.up .tag-name {
+  top: auto;
+  bottom: calc(100% + 10px);
+}
+
+.tag-pin.up .tag-name::before {
+  bottom: auto;
+  top: 100%;
+  border-bottom-color: transparent;
+  border-top-color: rgba(16, 24, 22, .78);
+}
+
+/* Visage près d'un bord : l'étiquette part vers l'intérieur */
+.tag-pin.start .tag-name {
+  left: 0;
+}
+
+.tag-pin.start .tag-name,
+.tag-pin.start:hover .tag-name,
+.tag-pin.start:focus-visible .tag-name,
+.tag-pin.start.lit .tag-name {
+  transform: none;
+}
+
+.tag-pin.start .tag-name::before {
+  left: 20px;
+}
+
+.tag-pin.end .tag-name {
+  left: auto;
+  right: 0;
+}
+
+.tag-pin.end .tag-name,
+.tag-pin.end:hover .tag-name,
+.tag-pin.end:focus-visible .tag-name,
+.tag-pin.end.lit .tag-name {
+  transform: none;
+}
+
+.tag-pin.end .tag-name::before {
+  left: auto;
+  right: 14px;
 }
 
 /* Repère en attente d'une personne : un point visible */
