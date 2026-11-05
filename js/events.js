@@ -18,7 +18,7 @@ import {
   openMedia, closeMedia, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption,
 } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
-import { fanHover, fanMove, fanClick, fanRecenter } from './ui/fan-hover.js';
+import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo } from './ui/repo-link.js';
@@ -134,6 +134,13 @@ const CLICK_ACTIONS = {
   // Dans la roue, la fiche attend un instant : un double-clic recentre la roue (ui/fan-hover.js)
   'person-open': (el) => (el.closest('#fan') ? fanClick(el.dataset.id) : openPersonDlg(el.dataset.id)),
   'person-close': () => closePersonDlg(),
+
+  // Roue d'ascendance : revenir à la personne quittée, descendre vers un enfant
+  'fan-back': () => {
+    const id = fanBack();
+    if (id) A.setFocus(id);
+  },
+  'fan-down': (el) => A.setFocus(el.dataset.id),
   'person-center': (el) => {
     closePersonDlg();
     A.setFocus(el.dataset.id);
@@ -350,6 +357,7 @@ export function bindEvents() {
       updateFormAvatar(el.value);
       updateSituationLabels(el.value);
     }
+    if (el.id === 'fanKids' && el.value) A.setFocus(el.value);
     if (el.name === 'f-sex') updateNames(false);
     if (el.id === 'f-father' || el.id === 'f-mother') updateNames(true);
     if (el.id === 'f-situ') {

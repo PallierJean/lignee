@@ -351,6 +351,8 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
   Au survol d'un ancêtre (`ui/fan-hover.js`), une étiquette donne son nom, son numéro Sosa, sa
   génération, sa naissance et son décès, et son chemin jusqu'au centre reste net quand le reste
   s'estompe. Un double-clic centre la roue sur lui ; un double-clic au centre revient en arrière.
+  Une barre au-dessus de la roue fait de même (« ← Revenir à… ») et descend vers un enfant de la
+  personne centrale, même après un rechargement ; elle signale une personne sans ancêtre connu.
 - « Imprimer » (`ui/print.js`) propose l'arbre complet, la roue d'ascendance ou le livret de
   famille (`ui/booklet.js`) : couverture avec la roue, sommaire, puis un chapitre par génération,
   couples groupés, portraits et sources. Ses pages A4 portent leurs propres marges, indépendantes

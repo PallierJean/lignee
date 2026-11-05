@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
 import { S } from '../js/state.js';
 import { fanSize, fanSVG, MAX_FAN_GENS } from '../js/tree/fan.js';
-import { fanHover, fanRecenter } from '../js/ui/fan-hover.js';
+import { fanHover, fanRecenter, renderFanNav } from '../js/ui/fan-hover.js';
 import { loadTree, person } from './helpers.js';
 
 describe('roue d’ascendance', () => {
@@ -68,5 +68,24 @@ describe('roue d’ascendance : survol et recentrage', () => {
     assert.equal(fanRecenter(sector('c', 1)), 'a');
     assert.equal(fanRecenter(sector('a', 1)), null, 'plus rien à retrouver');
     assert.equal(fanRecenter({ closest: () => null }), null, 'hors de la roue');
+  });
+
+  test('barre : revenir, descendre vers un enfant, aucun ancêtre', () => {
+    loadTree([person('a', { fatherId: 'b' }), person('b', { given: 'Léonard', surname: 'Roux' })]);
+    S.focus = 'a';
+    assert.equal(fanRecenter(sector('b', 2)), 'b');
+    S.focus = 'b';
+    renderFanNav(true);
+    const nav = document.getElementById('fanNav');
+    assert.equal(nav.hidden, false);
+    assert.match(nav.innerHTML, /data-act="fan-back">← Revenir à /);
+    assert.match(nav.innerHTML, /data-act="fan-down" data-id="a">↓ /);
+    // Plus de deux enfants : une liste
+    loadTree([person('a', { fatherId: 'b' }), person('c', { fatherId: 'b' }), person('d', { fatherId: 'b' }), person('b')]);
+    renderFanNav(true);
+    assert.match(nav.innerHTML, /<select class="btn small" id="fanKids"[^>]*><option value="">↓ Descendre vers…<\/option><option value="a">/);
+    assert.match(nav.innerHTML, /Aucun ancêtre connu/);
+    renderFanNav(false);
+    assert.equal(nav.hidden, true);
   });
 });

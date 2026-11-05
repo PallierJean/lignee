@@ -11,6 +11,7 @@ import { buildLayout } from './layout.js';
 import { buildFullLayout } from './full-layout.js';
 import { relationship } from '../model/kinship.js';
 import { fanSVG } from './fan.js';
+import { renderFanNav } from '../ui/fan-hover.js';
 
 const PH_LABEL = {
   father: 'addFather',
@@ -136,9 +137,11 @@ export function renderTree() {
     sizer.hidden = true;
     empty.hidden = true;
     fan.innerHTML = fanSVG(undefined, S.zoom);
+    renderFanNav(true);
     return;
   }
   fan.innerHTML = '';
+  renderFanNav(false);
 
   if (isLoading() || !S.people.size) {
     clearCards();
