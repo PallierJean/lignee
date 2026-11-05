@@ -99,6 +99,15 @@ describe('INSEE : rapprochement et écarts', () => {
       ref: '', note: 'Fichier des personnes décédées de l’INSEE (matchID)', photo: '',
     });
     assert.match(source.id, /^s/);
+    // Numéro en plusieurs mots (« 1094 N ») : reconnu une fois reporté ; un numéro voisin ne compte pas
+    const number = (certificate, title) => {
+      loadTree([lucien({ given: 'Lucien Marcel', deathDate: '04/07/1995', deathPlace: 'Limoges (87)', sources: [{ kind: 'death', title }] })]);
+      return deathDifferences('l', act({ certificate })).some((x) => x.field === 'source');
+    };
+    assert.equal(number('1094 N', 'Acte n°1094 N'), false);
+    assert.equal(number('1094 N', 'Acte n° 1094N'), true, 'autre découpage : reproposé plutôt que perdu');
+    assert.equal(number('12', 'Acte n°123'), true);
+    assert.equal(number('123', 'Acte n°123'), false);
     assert.deepEqual(diffs[0].patch, { given: 'Lucien Marcel' }, 'prénoms complets de l’état civil, reportables');
   });
 
