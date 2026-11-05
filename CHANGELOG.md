@@ -1,5 +1,18 @@
 # Historique des versions
 
+## [1.15.0](https://github.com/PallierJean/lignee/compare/v1.14.0...v1.15.0) (2026-11-05)
+
+### Features
+
+* étiquette élégante sur les visages identifiés ([091e500](https://github.com/PallierJean/lignee/commit/091e5003dff1074ba800a810185b9ec31e2bf9c5))
+* polices servies par le site, plus aucun appel à Google Fonts ([84d5e35](https://github.com/PallierJean/lignee/commit/84d5e35961fdaa932e169b1e5677f721b7e7f393))
+
+### Bug Fixes
+
+* l'étiquette d'un visage reste dans la photo près des bords ([f2010e7](https://github.com/PallierJean/lignee/commit/f2010e77b988a9bf7d380c59311983e6e225ed37))
+* le serveur local ne sert que les fichiers de l'application ([9aa6433](https://github.com/PallierJean/lignee/commit/9aa64338c5c4cf72dd3a08a86a0078834d6d8c10))
+* refuser l'affichage dans le cadre d'un autre site ([9557846](https://github.com/PallierJean/lignee/commit/9557846d140ccbc3319e381296cb746ebcea7be8))
+
 ## [1.14.0](https://github.com/PallierJean/lignee/compare/v1.13.0...v1.14.0) (2026-11-05)
 
 ### Features
