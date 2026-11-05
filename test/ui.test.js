@@ -262,7 +262,7 @@ describe('fiche : événements, sources, galerie', () => {
     assert.match(html('mediaCard'), /class="hint tag-hint">Pour identifier quelqu’un, cliquez sur son visage/);
     assert.match(html('mediaCard'), /class="media-pic can-tag"/);
     // Repères invisibles, sans numéro ; le survol d'un nom éclaire son repère
-    assert.match(html('mediaCard'), /class="tag-pin" type="button" data-tag="0"[^>]*><span class="tag-name">Paul BLANC<\/span><\/button>/);
+    assert.match(html('mediaCard'), /class="tag-pin start" type="button" data-tag="0"[^>]*><span class="tag-name"><b>Paul <span class="sur">BLANC<\/span><\/b><\/span><\/button>/);
     assert.match(html('mediaCard'), /<li data-tag="0"><button class="link"/);
     assert.doesNotMatch(html('mediaCard'), /class="tag-n"/);
     const pinEl = document.querySelector('.tag-pin[data-tag="0"]');
