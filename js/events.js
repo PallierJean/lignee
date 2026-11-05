@@ -135,12 +135,11 @@ const CLICK_ACTIONS = {
   'person-open': (el) => (el.closest('#fan') ? fanClick(el.dataset.id) : openPersonDlg(el.dataset.id)),
   'person-close': () => closePersonDlg(),
 
-  // Roue d'ascendance : revenir à la personne quittée, descendre vers un enfant
+  // Roue d'ascendance : revenir à la personne quittée (descendre : liste #fanKids, voir 'change')
   'fan-back': () => {
     const id = fanBack();
     if (id) A.setFocus(id);
   },
-  'fan-down': (el) => A.setFocus(el.dataset.id),
   'person-center': (el) => {
     closePersonDlg();
     A.setFocus(el.dataset.id);
