@@ -1,11 +1,12 @@
 /**
  * Animations des thèmes « fêtes et saisons », dessinées sur un calque sous l'arbre : neige et
- * guirlande tout autour de la toile à Noël, chauves-souris et fantômes à Halloween, pétales et
- * papillons au printemps, la plage l'été (vagues, écume, baigneurs flous, mouettes), et en automne des arbres qui
- * perdent leurs feuilles de couleur, au gré des coups de vent, en un tapis qui s'efface au sol.
- * Chaque objet a sa taille, sa vitesse et son balancement, tirés au hasard. Arrêtées hors de ces
- * thèmes ou si le système demande moins d'animations (le motif du fond reste), en pause quand
- * l'onglet est caché.
+ * guirlande tout autour de la toile à Noël ; à Halloween, lune et nuages, citrouilles qui
+ * vacillent, brume, araignée, chauves-souris et fantômes ; au printemps, branches de cerisier en
+ * fleur, prairie fleurie, pétales, papillons et hirondelles ; l'été, la plage (vagues, écume,
+ * baigneurs flous, mouettes) ; en automne, des arbres qui perdent leurs feuilles de couleur au gré
+ * des coups de vent, en un tapis qui s'efface au sol. Chaque objet a sa taille, sa vitesse et son
+ * balancement, tirés au hasard. Arrêtées hors de ces thèmes ou si le système demande moins
+ * d'animations (le motif du fond reste), en pause quand l'onglet est caché.
  */
 import { reduced } from '../config.js';
 
@@ -226,6 +227,276 @@ function glint(ctx, g, now) {
   ctx.stroke();
   ctx.restore();
   return true;
+}
+
+/* ---------- Printemps : cerisier en fleur, prairie, hirondelles ---------- */
+
+const BLOSSOMS = ['#F7A8C4', '#FBC6D8', '#F48FB8', '#FFFFFF'];
+
+/**
+ * Branche de cerisier qui part d'un coin : rameaux qui se ramifient (traits), et des fleurs à
+ * cinq pétales en grappes au bout et le long des rameaux.
+ */
+function cherry(x, y, angle, len) {
+  const twigs = [];
+  const flowers = [];
+  const grow = (x0, y0, a, l, width, depth) => {
+    const x1 = x0 + Math.cos(a) * l;
+    const y1 = y0 + Math.sin(a) * l;
+    twigs.push([x0, y0, x1, y1, width]);
+    for (let i = 0; i < (depth ? 2 : 6); i++) {
+      const t = depth ? rand(0.4, 1) : 1;
+      flowers.push({ x: x0 + (x1 - x0) * t + rand(-10, 10), y: y0 + (y1 - y0) * t + rand(-9, 9), r: rand(3.2, 5.2), color: pick(BLOSSOMS), turn: rand(0, TAU) });
+    }
+    if (depth === 0) return;
+    grow(x1, y1, a + rand(-0.5, -0.2), l * rand(0.6, 0.75), width * 0.65, depth - 1);
+    grow(x1, y1, a + rand(0.2, 0.55), l * rand(0.6, 0.75), width * 0.65, depth - 1);
+  };
+  grow(x, y, angle, len, 7, 4);
+  return { x, y, twigs, flowers };
+}
+
+/** Dessine une branche qui se balance doucement autour de son attache. */
+function drawCherry(ctx, b, now, phase) {
+  ctx.save();
+  ctx.translate(b.x, b.y);
+  ctx.rotate(Math.sin(now / 2200 + phase) * 0.025);
+  ctx.translate(-b.x, -b.y);
+  ctx.strokeStyle = '#5B3B2A';
+  ctx.lineCap = 'round';
+  for (const [x0, y0, x1, y1, width] of b.twigs) {
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  }
+  for (const f of b.flowers) {
+    ctx.fillStyle = f.color;
+    ctx.beginPath();
+    for (let k = 0; k < 5; k++) {
+      const a = f.turn + (k * TAU) / 5;
+      ctx.moveTo(f.x + Math.cos(a) * f.r, f.y + Math.sin(a) * f.r);
+      ctx.arc(f.x + Math.cos(a) * f.r, f.y + Math.sin(a) * f.r, f.r * 0.62, 0, TAU);
+    }
+    ctx.fill();
+    ctx.fillStyle = '#F2C94C';
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r * 0.32, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** La prairie : herbes hautes qui ondulent au vent, tulipes et pâquerettes. */
+function meadow(ctx, m, w, h, now) {
+  const wind = (x, k) => Math.sin(now / 900 + x / 60) * k;
+  const blades = (list) => {
+    for (const g of list) {
+      ctx.strokeStyle = g.color;
+      ctx.lineWidth = g.width;
+      ctx.beginPath();
+      ctx.moveTo(g.x, h);
+      ctx.quadraticCurveTo(g.x + g.lean * 0.4, h - g.height * 0.6, g.x + g.lean + wind(g.x, 6), h - g.height);
+      ctx.stroke();
+    }
+  };
+  blades(m.back);
+  for (const f of m.flowers) {
+    const sway = wind(f.x, 4);
+    const top = [f.x + sway, h - f.height];
+    ctx.strokeStyle = '#4E8A3A';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(f.x, h);
+    ctx.quadraticCurveTo(f.x, h - f.height * 0.5, ...top);
+    ctx.stroke();
+    if (f.kind === 'tulip') {
+      ctx.fillStyle = f.color;
+      ctx.beginPath();
+      ctx.moveTo(top[0] - 6, top[1] - 2);
+      ctx.quadraticCurveTo(top[0] - 7, top[1] + 9, top[0], top[1] + 9);
+      ctx.quadraticCurveTo(top[0] + 7, top[1] + 9, top[0] + 6, top[1] - 2);
+      ctx.lineTo(top[0] + 3, top[1] + 2);
+      ctx.lineTo(top[0], top[1] - 4);
+      ctx.lineTo(top[0] - 3, top[1] + 2);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      for (let k = 0; k < 10; k++) {
+        const a = (k * TAU) / 10;
+        ctx.moveTo(top[0], top[1]);
+        ctx.ellipse(top[0] + Math.cos(a) * 4.5, top[1] + Math.sin(a) * 4.5, 3.6, 1.4, a, 0, TAU);
+      }
+      ctx.fill();
+      ctx.fillStyle = '#F2C21B';
+      ctx.beginPath();
+      ctx.arc(top[0], top[1], 2.4, 0, TAU);
+      ctx.fill();
+    }
+  }
+  blades(m.front);
+}
+
+/** Herbes et fleurs de la prairie, sur toute la largeur. */
+function makeMeadow(w) {
+  const grass = (n, tall, colors) => Array.from({ length: n }, () => ({
+    x: rand(0, w), height: rand(...tall), lean: rand(-10, 10), width: rand(1.2, 2.4), color: pick(colors),
+  }));
+  return {
+    back: grass(Math.round(w / 6), [22, 46], ['#7CB85A', '#8FC86A', '#6AA84E']),
+    front: grass(Math.round(w / 10), [14, 30], ['#5E9E44', '#4E8A3A']),
+    flowers: Array.from({ length: Math.round(w / 45) }, () => ({
+      x: rand(0, w), height: rand(26, 60), kind: Math.random() < 0.55 ? 'tulip' : 'daisy',
+      color: pick(['#E53950', '#F2B91B', '#F06AA0', '#FF8A3D']),
+    })),
+  };
+}
+
+/** Hirondelle : ailes en croissant et queue fourchue, elle file vite. */
+function swallow(ctx, x, y, b, now) {
+  const f = Math.sin(now / 110 + b.phase) * 0.35;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(b.dir, 1);
+  ctx.fillStyle = '#1E2A4A';
+  ctx.beginPath();
+  ctx.moveTo(6, 0);
+  ctx.quadraticCurveTo(-2, -12 - f * 10, -10, -10 - f * 12);
+  ctx.quadraticCurveTo(-4, -3, -6, 0);
+  ctx.lineTo(-14, 4);
+  ctx.lineTo(-7, 2);
+  ctx.lineTo(-13, 7);
+  ctx.quadraticCurveTo(-4, 3, -2, 1);
+  ctx.quadraticCurveTo(-2, 9 + f * 10, -8, 12 + f * 12);
+  ctx.quadraticCurveTo(2, 6, 6, 0);
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ---------- Halloween : lune, citrouilles, brume, araignée ---------- */
+
+/** Pleine lune voilée de lumière, devant laquelle passent des nuages sombres. */
+function moon(ctx, w, h, now) {
+  const x = w * 0.86;
+  const y = h * 0.17;
+  const r = 36;
+  const halo = ctx.createRadialGradient(x, y, r * 0.8, x, y, r * 3);
+  halo.addColorStop(0, 'rgba(255, 236, 190, .35)');
+  halo.addColorStop(1, 'rgba(255, 236, 190, 0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(x - r * 3, y - r * 3, r * 6, r * 6);
+  ctx.fillStyle = '#F3E6C2';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(190, 170, 130, .35)'; // mers lunaires
+  for (const [dx, dy, cr] of [[-10, -8, 8], [9, 6, 6], [-4, 14, 5], [13, -12, 4]]) {
+    ctx.beginPath();
+    ctx.arc(x + dx, y + dy, cr, 0, TAU);
+    ctx.fill();
+  }
+  // Nuages : ils traversent lentement, de gauche à droite, et masquent la lune en passant
+  ctx.fillStyle = 'rgba(28, 18, 42, .75)';
+  for (const [speed, dy, size] of [[22, -6, 1], [34, 18, 0.7]]) {
+    const cx = ((now / speed) % (w * 0.5 + 300)) + w * 0.6 - 150;
+    ctx.beginPath();
+    ctx.ellipse(cx, y + dy, 46 * size, 11 * size, 0, 0, TAU);
+    ctx.ellipse(cx + 26 * size, y + dy - 8 * size, 26 * size, 12 * size, 0, 0, TAU);
+    ctx.ellipse(cx - 24 * size, y + dy - 4 * size, 22 * size, 9 * size, 0, 0, TAU);
+    ctx.fill();
+  }
+}
+
+/** Citrouille sculptée : côtes, tige, visage éclairé par une bougie qui vacille. */
+function pumpkin(ctx, x, y, s, now, seed) {
+  const flicker = 0.75 + 0.25 * Math.sin(now / 90 + seed) * Math.sin(now / 37 + seed * 2);
+  const glow = ctx.createRadialGradient(x, y, 0, x, y, 70 * s);
+  glow.addColorStop(0, `rgba(255, 170, 60, ${(0.35 * flicker).toFixed(2)})`);
+  glow.addColorStop(1, 'rgba(255, 170, 60, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(x - 70 * s, y - 70 * s, 140 * s, 140 * s);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  ctx.fillStyle = '#C85A12';
+  for (const [dx, rx] of [[-11, 11], [11, 11], [0, 12]]) {
+    ctx.beginPath();
+    ctx.ellipse(dx, 0, rx, 16, 0, 0, TAU);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#E8781A';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 9, 15.5, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#4E6B2A';
+  ctx.fillRect(-2, -20, 4, 7);
+  // Visage : yeux en triangle, bouche en dents de scie, lumière de la bougie
+  ctx.fillStyle = `rgba(255, ${Math.round(200 + 40 * flicker)}, 90, ${(0.75 + 0.25 * flicker).toFixed(2)})`;
+  ctx.shadowColor = '#FFB347';
+  ctx.shadowBlur = 10 * flicker;
+  ctx.beginPath();
+  ctx.moveTo(-12, -4); ctx.lineTo(-5, -4); ctx.lineTo(-8.5, -10); ctx.closePath();
+  ctx.moveTo(12, -4); ctx.lineTo(5, -4); ctx.lineTo(8.5, -10); ctx.closePath();
+  ctx.moveTo(-13, 3);
+  for (let i = 0; i <= 8; i++) ctx.lineTo(-13 + i * 3.25, i % 2 ? 6 : 3);
+  ctx.lineTo(13, 3); ctx.quadraticCurveTo(0, 14, -13, 3);
+  ctx.fill();
+  ctx.restore();
+}
+
+/** Brume au ras du sol : des nappes violacées qui dérivent lentement. */
+function fog(ctx, w, h, now) {
+  for (let i = 0; i < 5; i++) {
+    const x = ((now / (60 + i * 17) + i * 300) % (w + 600)) - 300;
+    const y = h - 20 - (i % 2) * 18;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(4, 1);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 60);
+    g.addColorStop(0, 'rgba(190, 170, 225, .16)');
+    g.addColorStop(1, 'rgba(190, 170, 225, 0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, 60, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+/** Araignée : elle monte et descend au bout de son fil, en agitant les pattes. */
+function spider(ctx, x, h, now) {
+  const y = 40 + (0.5 + 0.5 * Math.sin(now / 2600)) * h * 0.32;
+  ctx.strokeStyle = 'rgba(220, 210, 240, .45)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(x, 0);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  ctx.strokeStyle = '#0B0612';
+  ctx.lineWidth = 1.3;
+  for (const side of [-1, 1]) {
+    for (let k = 0; k < 4; k++) {
+      const wiggle = Math.sin(now / 120 + k) * 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x, y + 2 + k * 1.5);
+      ctx.quadraticCurveTo(x + side * 7, y - 3 + k * 3 + wiggle, x + side * 11, y + 4 + k * 3 + wiggle);
+      ctx.stroke();
+    }
+  }
+  ctx.fillStyle = '#0B0612';
+  ctx.shadowColor = 'rgba(177, 138, 224, .6)';
+  ctx.shadowBlur = 5;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 6, 4.5, 5.5, 0, 0, TAU);
+  ctx.arc(x, y, 3, 0, TAU);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#E0483E'; // deux yeux rouges
+  ctx.fillRect(x - 1.8, y - 0.8, 1.2, 1.2);
+  ctx.fillRect(x + 0.6, y - 0.8, 1.2, 1.2);
 }
 
 /* ---------- Noël : la guirlande ---------- */
@@ -462,7 +733,7 @@ function drawTree(ctx, t, now, wind) {
 
 /* ---------- Les scènes ---------- */
 
-const WINGS = ['#E58CB0', '#9CC8F0', '#F2C94C', '#B79AE0'];
+const WINGS = ['#F06AA0', '#4FA3E8', '#F2B91B', '#9B6BE0', '#FF8A3D', '#3FBF7F'];
 
 /** Lâche de temps en temps un objet volant dans la liste, jusqu'à `max`. */
 function release(list, max, chance, make) {
@@ -492,30 +763,62 @@ const SCENES = {
     },
   },
   halloween: {
-    make: () => ({ bats: [], ghosts: [] }),
+    make: () => ({ bats: [], ghosts: [], nextSwarm: Date.now() + 5000 }),
     draw(ctx, s, now, w, h) {
-      release(s.bats, 5, 0.02, () => flyer(w, h, [1.6, 3.2], [9, 18]));
+      moon(ctx, w, h, now);
+      fog(ctx, w, h, now);
+      pumpkin(ctx, w * 0.05, h - 28, 1.3, now, 1);
+      pumpkin(ctx, w * 0.95, h - 24, 1, now, 2);
+      pumpkin(ctx, w * 0.9, h - 20, 0.7, now, 3);
+      spider(ctx, w * 0.27, h, now);
+      // Des chauves-souris passent ; de temps en temps, une nuée jaillit d'un côté
+      release(s.bats, 8, 0.03, () => flyer(w, h, [1.6, 3.4], [9, 18]));
+      if (now > s.nextSwarm) {
+        const lead = flyer(w, h, [2.6, 3.4], [8, 14]);
+        for (let i = 0; i < 12; i++) {
+          s.bats.push({ ...lead, x: lead.x - lead.dir * rand(0, 160), y: lead.y + rand(-50, 50), r: rand(7, 14), phase: rand(0, TAU), speed: lead.speed + rand(-0.4, 0.4) });
+        }
+        s.nextSwarm = now + rand(14000, 24000);
+      }
       s.bats = s.bats.filter((b) => {
         const at = fly(b, now, w);
         if (at) bat(ctx, ...at, b, now);
         return !!at;
       });
-      release(s.ghosts, 2, 0.006, () => ({ x: rand(0.1, 0.9) * w, y: rand(0.55, 0.95) * h, r: rand(11, 18), born: now, life: rand(6000, 9000), phase: rand(0, TAU) }));
+      release(s.ghosts, 3, 0.015, () => ({ x: rand(0.08, 0.92) * w, y: rand(0.55, 0.95) * h, r: rand(14, 24), born: now, life: rand(5000, 8000), phase: rand(0, TAU) }));
       s.ghosts = s.ghosts.filter((g) => ghost(ctx, g, now, h));
     },
   },
   printemps: {
-    make: (w, h) => ({ fall: Array.from({ length: Math.round((w * h) / 16000) }, () => faller(w, h, false, [3, 6], ['#F6B7C8', '#F9D3DE', '#FFFFFF', '#F2A7C3'])), flies: [] }),
+    make: (w, h) => ({
+      branches: [cherry(-10, 18, 0.35, h * 0.15), cherry(w + 10, 26, Math.PI - 0.4, h * 0.14)],
+      meadow: makeMeadow(w),
+      fall: Array.from({ length: Math.round((w * h) / 30000) }, () => faller(w, h, false, [3, 5.5], BLOSSOMS)),
+      flies: [], birds: [],
+    }),
     draw(ctx, s, now, w, h) {
-      fall(s.fall, w, h, now, 0.15, (top) => faller(w, h, top, [3, 6], ['#F6B7C8', '#F9D3DE', '#FFFFFF', '#F2A7C3']));
+      s.branches.forEach((b, i) => drawCherry(ctx, b, now, i * 2));
+      meadow(ctx, s.meadow, w, h, now);
+      // Pétales : ils s'envolent des branches et tombent en tournoyant
+      fall(s.fall, w, h, now, 0.25, (top) => {
+        const b = pick(s.branches);
+        const f = pick(b.flowers);
+        return top ? { ...faller(w, h, true, [3, 5.5], BLOSSOMS), x: f.x, y: f.y } : faller(w, h, false, [3, 5.5], BLOSSOMS);
+      });
       ctx.shadowColor = 'rgba(180, 80, 120, .25)';
       ctx.shadowBlur = 3;
       for (const f of s.fall) petal(ctx, f, now);
       ctx.shadowBlur = 0;
-      release(s.flies, 2, 0.006, () => ({ ...flyer(w, h, [0.7, 1.4], [6, 9]), color: pick(WINGS) }));
+      release(s.flies, 5, 0.02, () => ({ ...flyer(w, h, [0.7, 1.5], [7, 11]), y: rand(0.25, 0.85) * h, color: pick(WINGS) }));
       s.flies = s.flies.filter((b) => {
         const at = fly(b, now, w);
         if (at) butterfly(ctx, ...at, b, now);
+        return !!at;
+      });
+      release(s.birds, 2, 0.005, () => ({ ...flyer(w, h, [4, 6], [10, 10]), y: rand(0.1, 0.4) * h, wave: rand(15, 35) }));
+      s.birds = s.birds.filter((b) => {
+        const at = fly(b, now, w);
+        if (at) swallow(ctx, ...at, b, now);
         return !!at;
       });
     },
