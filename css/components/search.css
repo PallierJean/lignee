@@ -11,7 +11,7 @@
 
 .find input {
   font: inherit;
-  font-size: 15px;
+  font-size: .9375rem;
   width: 100%;
   min-width: 0;
   padding: 8px 12px;
@@ -74,12 +74,12 @@
 
 .find-opt .fp {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: .7812rem;
 }
 
 .find-opt .fy {
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: .75rem;
   color: var(--muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -88,7 +88,7 @@
 .find-none,
 .find-more {
   padding: 8px;
-  font-size: 13.5px;
+  font-size: .8438rem;
   color: var(--muted);
 }
 

@@ -1,4 +1,7 @@
-/** Thème de couleur de l'interface : attribut data-theme de <html>, voir css/tokens.css. */
+/**
+ * Apparence de l'interface : thème de couleur (attribut data-theme de <html>, voir css/tokens.css)
+ * et taille du texte (attribut data-text, voir css/base.css).
+ */
 import { S } from '../state.js';
 import { $ } from '../utils/dom.js';
 
@@ -16,10 +19,14 @@ export function seasonTheme(d = new Date()) {
   return 'auto';
 }
 
-/** Applique le thème choisi et met le sélecteur à jour. */
+/** Applique le thème et la taille du texte choisis, et met les sélecteurs à jour. */
 export function applyTheme() {
+  const root = document.documentElement.dataset;
   const theme = S.theme === 'season' ? seasonTheme() : S.theme;
-  if (theme === 'auto') delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = theme;
+  if (theme === 'auto') delete root.theme;
+  else root.theme = theme;
+  if (S.textSize === 'normal') delete root.text;
+  else root.text = S.textSize;
   $('#themeSel').value = S.theme;
+  $('#textSel').value = S.textSize;
 }

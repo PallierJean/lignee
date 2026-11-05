@@ -74,7 +74,7 @@
   align-items: center;
   gap: 6px;
   margin: 0;
-  font-size: 11px;
+  font-size: .6875rem;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--muted);
@@ -88,7 +88,7 @@
 .pd-name {
   font-family: var(--f-display);
   font-weight: 400;
-  font-size: 24px;
+  font-size: 1.5rem;
   line-height: 1.1;
   margin: 0;
   text-wrap: balance;
@@ -104,7 +104,7 @@
 .pd-maiden,
 .pd-occ {
   margin: 0;
-  font-size: 13.5px;
+  font-size: .8438rem;
 }
 
 .pd-maiden {
@@ -114,7 +114,7 @@
 .pd-years {
   margin: 0;
   font-family: var(--f-mono);
-  font-size: 13px;
+  font-size: .8125rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -129,7 +129,7 @@
 }
 
 .pd-body h3 {
-  font-size: 11px;
+  font-size: .6875rem;
   letter-spacing: .09em;
   text-transform: uppercase;
   color: var(--muted);
@@ -157,12 +157,12 @@
   align-items: baseline;
   padding: 6px 0;
   border-bottom: 1px solid var(--line);
-  font-size: 14px;
+  font-size: .875rem;
 }
 
 .pd-sym {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1;
   color: var(--accent);
   text-align: center;
@@ -170,7 +170,7 @@
 
 .pd-d {
   font-family: var(--f-mono);
-  font-size: 12.5px;
+  font-size: .7812rem;
   min-width: 0;
   overflow-wrap: anywhere; /* date saisie en texte libre trop longue : passe à la ligne */
   font-variant-numeric: tabular-nums;
@@ -183,7 +183,7 @@
 
 .pd-what small {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: .7812rem;
   margin-left: 6px;
 }
 
@@ -205,7 +205,7 @@
 }
 
 .pd-rels .unknown {
-  font-size: 13px;
+  font-size: .8125rem;
   margin: 0;
 }
 
@@ -217,7 +217,7 @@
   width: 100%;
   text-align: left;
   font: inherit;
-  font-size: 13.5px;
+  font-size: .8438rem;
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -245,13 +245,13 @@
 .pd-rn small {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: .75rem;
 }
 
 .pd-ry {
   flex: none;
   font-family: var(--f-mono);
-  font-size: 11.5px;
+  font-size: .7188rem;
   color: var(--muted);
 }
 
@@ -260,7 +260,7 @@
   padding: 8px 10px;
   background: var(--paper);
   border-radius: 6px;
-  font-size: 13.5px;
+  font-size: .8438rem;
   white-space: pre-line;
 }
 
@@ -278,7 +278,7 @@
 
 .pd-meta {
   font-family: var(--f-mono);
-  font-size: 11.5px;
+  font-size: .7188rem;
   color: var(--muted);
 }
 
@@ -304,7 +304,7 @@
   }
 
   .pd-d {
-    font-size: 11.5px;
+    font-size: .7188rem;
   }
 
   .pd-what small {

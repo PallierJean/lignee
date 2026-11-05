@@ -41,7 +41,7 @@
 
 .sheet h2 {
   font-family: var(--f-display);
-  font-size: 25px;
+  font-size: 1.5625rem;
   font-weight: 400;
   margin: 0;
 }
@@ -55,7 +55,7 @@
 }
 
 .sheet h3 {
-  font-size: 11.5px;
+  font-size: .7188rem;
   letter-spacing: .09em;
   text-transform: uppercase;
   color: var(--muted);
@@ -69,7 +69,7 @@
 
 .sheet .hint {
   color: var(--muted);
-  font-size: 13.5px;
+  font-size: .8438rem;
 }
 
 .row-btns {
@@ -84,7 +84,7 @@
 
 #exportText {
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: .75rem;
   width: 100%;
   height: 170px;
   padding: 8px;
@@ -96,7 +96,7 @@
 
 input[type="file"] {
   font: inherit;
-  font-size: 14px;
+  font-size: .875rem;
   max-width: 100%;
   color: var(--ink);
 }
