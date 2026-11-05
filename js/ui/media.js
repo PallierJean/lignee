@@ -29,8 +29,8 @@ function tagLabel(p) {
     + (years ? `<small>${esc(years)}</small>` : '') + '</span>';
 }
 
-/** Côté de l'étiquette pour qu'elle reste dans la photo : au-dessus du visage en bas, décalée sur les bords. */
-const pinSide = (x) => (x.y > 70 ? ' up' : '') + (x.x < 20 ? ' start' : x.x > 80 ? ' end' : '');
+/** Visage en bas de la photo : l'étiquette au-dessus. Sur les côtés, voir fitLabel. */
+const pinSide = (x) => (x.y > 70 ? ' up' : '');
 
 export function renderMedia() {
   if (!current) return;
@@ -69,11 +69,30 @@ export function renderMedia() {
     + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker);
 }
 
-/** Survol (ou focus) d'un nom de la liste : sa personne s'éclaire sur la photo. */
+/**
+ * Garde l'étiquette d'un visage dans la photo : près d'un bord, elle glisse vers l'intérieur (--dx)
+ * et sa pointe reste sur le visage ; plus large que la photo, elle passe à la ligne.
+ */
+function fitLabel(pin) {
+  const label = pin.querySelector('.tag-name');
+  const pic = pin.closest('.media-pic');
+  if (!label || !pic) return;
+  const box = pic.getBoundingClientRect();
+  label.style.maxWidth = `${box.width - 12}px`;
+  label.style.setProperty('--dx', '0px');
+  const r = label.getBoundingClientRect();
+  const dx = Math.max(box.left + 6 - r.left, Math.min(0, box.right - 6 - r.right));
+  label.style.setProperty('--dx', `${Math.round(dx)}px`);
+}
+
+/** Survol (ou focus) d'un visage, ou d'un nom de la liste qui éclaire alors sa personne sur la photo. */
 export function highlightTag(target, on) {
-  const row = target && target.closest && target.closest('.tag-list [data-tag]');
-  const pin = row && document.querySelector(`.tag-pin[data-tag="${row.dataset.tag}"]`);
-  if (pin) pin.classList.toggle('lit', on);
+  if (!target || !target.closest) return;
+  const row = target.closest('.tag-list [data-tag]');
+  const pin = row ? document.querySelector(`.tag-pin[data-tag="${row.dataset.tag}"]`) : target.closest('.tag-pin[data-tag]');
+  if (!pin) return;
+  if (on) fitLabel(pin);
+  if (row) pin.classList.toggle('lit', on);
 }
 
 /** Légende sous l'image : titre, date et texte ; modifiables sur place. */
