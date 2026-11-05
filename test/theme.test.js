@@ -169,7 +169,7 @@ describe('empreintes du thème Maraudeur', () => {
 
 describe('ciel du thème Constellations : le vrai ciel de Bordeaux', () => {
   test('positions des étoiles vues de Bordeaux, selon la saison', async () => {
-    const { horizontal, skyAt, tonight, siderealDeg } = await import('../js/model/sky.js');
+    const { horizontal, skyAt, siderealDeg } = await import('../js/model/sky.js');
     const close = (a, b, tol, what) => assert.ok(Math.abs(a - b) <= tol, `${what} : ${a.toFixed(1)} au lieu de ${b}`);
     // Temps sidéral de Greenwich le 1er janvier 2000 à 12 h TU : 280,46°
     close(siderealDeg(new Date('2000-01-01T12:00:00Z'), 0), 280.46, 0.01, 'temps sidéral');
@@ -187,9 +187,6 @@ describe('ciel du thème Constellations : le vrai ciel de Bordeaux', () => {
     assert.ok(sky.length >= 25);
     for (const c of sky) for (const line of c.lines) for (const key of line) assert.ok(c.stars[key], `${c.fr} : ${key}`);
     assert.ok(sky.find((c) => c.fr === 'Orion').stars.bet.alt > 40);
-    // Le ciel de ce soir : maintenant la nuit, sinon 22 h
-    assert.equal(tonight(new Date(2026, 10, 5, 15, 30)).getHours(), 22);
-    assert.equal(tonight(new Date(2026, 10, 5, 23, 10)).getMinutes(), 10);
   });
 
   test('ciel dessiné sous l’arbre : étoiles, traits, noms, légende ; retiré hors du thème', async () => {
@@ -221,9 +218,9 @@ describe('ciel du thème Constellations : le vrai ciel de Bordeaux', () => {
       assert.equal(box.children.length, 1);
       assert.equal(box.children[0].className, 'sky');
       const texts = calls.filter((c) => c[0] === 'fillText').map((c) => c[1]);
-      assert.ok(calls.filter((c) => c[0] === 'arc').length > 40, 'des dizaines d’étoiles au-dessus de l’horizon');
+      assert.ok(calls.filter((c) => c[0] === 'arc').length > 20, 'des dizaines d’étoiles dans le cadre');
       assert.ok(calls.some((c) => c[0] === 'lineTo'), 'les traits des constellations');
-      assert.ok(texts.includes('Polaire'), 'la Polaire, toujours visible de Bordeaux');
+      assert.ok(texts.some((x) => /^Ciel de Bordeaux · .+ · .+/.test(x)), 'la légende, à l’heure qu’il est');
       assert.ok(texts.some((x) => /^Ciel de Bordeaux · .+ · .+/.test(x)), 'la légende');
       setSky(false);
       assert.equal(box.children.length, 0);

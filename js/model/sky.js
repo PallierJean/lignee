@@ -37,15 +37,3 @@ export function skyAt(date, place = BORDEAUX) {
     stars: Object.fromEntries(Object.entries(c.stars).map(([key, [ra, dec, name, b]]) => [key, { ...horizontal(ra, dec, date, place), name: name || '', bright: b === 'b' }])),
   }));
 }
-
-/**
- * Instant du ciel à montrer : maintenant s'il fait nuit (de 21 h à 5 h), sinon ce soir à 22 h
- * (heure de l'ordinateur).
- */
-export function tonight(now = new Date()) {
-  const hour = now.getHours();
-  if (hour >= 21 || hour < 5) return new Date(now);
-  const d = new Date(now);
-  d.setHours(22, 0, 0, 0);
-  return d;
-}
