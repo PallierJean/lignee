@@ -25,7 +25,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--f-body);
-  font-size: 15px;
+  font-size: .9375rem;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
@@ -63,4 +63,14 @@ img {
   margin: 4rem auto;
   padding: 0 16px;
   text-align: center;
+}
+
+/* Taille du texte de l'interface (ui/theme.js) : les tailles sont en rem, relatives à celle-ci,
+   elle-même relative au réglage du navigateur. Les fiches de l'arbre et l'impression restent en px. */
+:root[data-text="large"] {
+  font-size: 125%;
+}
+
+:root[data-text="xlarge"] {
+  font-size: 150%;
 }

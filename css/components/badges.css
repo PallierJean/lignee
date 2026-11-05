@@ -7,7 +7,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12.5px;
+  font-size: .7812rem;
   color: var(--muted);
   padding: 5px 11px;
   border: 1px solid var(--line);
@@ -34,7 +34,7 @@
 .sosa {
   flex: none;
   font-family: var(--f-mono);
-  font-size: 10.5px;
+  font-size: .6562rem;
   line-height: 1;
   color: var(--muted);
   border: 1px solid var(--line);
@@ -70,5 +70,5 @@
   color: var(--accent);
   border-radius: 3px;
   padding: 1px 5px;
-  font-size: 11.5px;
+  font-size: .7188rem;
 }
