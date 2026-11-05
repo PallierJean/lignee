@@ -172,6 +172,15 @@ describe('fichiers de l’application', () => {
     assert.ok(!(await res.text()).includes('root:'));
   });
 
+  test('seuls les fichiers de l’application sont servis', async () => {
+    for (const rel of ['js/main.js', 'css/base.css', 'assets/favicon.svg', 'package.json', 'data/arbres/exemple-famille-bertrand.json']) {
+      assert.equal((await fetch(base + rel)).status, 200, rel);
+    }
+    for (const rel of ['.env.test', '.git/config', 'server.js', 'test/setup.js', 'scripts/build-site.sh', 'data/arbres/autre.json', 'js/../.git/HEAD']) {
+      assert.equal((await fetch(base + rel)).status, 403, rel);
+    }
+  });
+
   test('méthodes non prévues', async () => {
     assert.equal((await fetch(base, { method: 'POST' })).status, 405);
     assert.equal((await api('', { method: 'DELETE' })).status, 405);
