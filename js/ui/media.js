@@ -28,9 +28,11 @@ export function renderMedia() {
     return;
   }
   const tags = tagsOf(m);
-  const marks = tags.filter((x) => P(x.id)).map((x, i) => `<button class="tag-pin" type="button" style="left:${x.x}%;top:${x.y}%"`
-    + ` data-act="media-person" data-id="${esc(x.id)}" title="${esc(fullName(P(x.id)))}">${i + 1}</button>`).join('');
-  const names = tags.filter((x) => P(x.id)).map((x, i) => `<li><span class="tag-n">${i + 1}</span>`
+  // Repères invisibles sur les visages : ils s'éclairent au survol, du visage ou du nom dans la liste (highlightTag)
+  const shown = tags.filter((x) => P(x.id));
+  const marks = shown.map((x) => `<button class="tag-pin" type="button" data-tag="${tags.indexOf(x)}" style="left:${x.x}%;top:${x.y}%"`
+    + ` data-act="media-person" data-id="${esc(x.id)}" aria-label="${esc(fullName(P(x.id)))}"><span class="tag-name">${esc(fullName(P(x.id)))}</span></button>`).join('');
+  const names = shown.map((x) => `<li data-tag="${tags.indexOf(x)}">`
     + `<button class="link" type="button" data-act="media-person" data-id="${esc(x.id)}">${esc(fullName(P(x.id)))}</button>`
     + (S.canWrite ? ` <button class="link" type="button" data-act="tag-remove" data-i="${tags.indexOf(x)}">${t('med.untag')}</button>` : '') + '</li>').join('');
   // Les personnes nommées dans la légende, pas encore identifiées, en tête de la liste
@@ -53,6 +55,13 @@ export function renderMedia() {
     + (pin ? `<span class="tag-pin new" style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
     + `${m.date || m.note ? `<p>${esc([m.date, m.note].filter(Boolean).join(' · '))}</p>` : ''}`
     + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker;
+}
+
+/** Survol (ou focus) d'un nom de la liste : sa personne s'éclaire sur la photo. */
+export function highlightTag(target, on) {
+  const row = target && target.closest && target.closest('.tag-list [data-tag]');
+  const pin = row && document.querySelector(`.tag-pin[data-tag="${row.dataset.tag}"]`);
+  if (pin) pin.classList.toggle('lit', on);
 }
 
 export function openMedia(owner, id) {
