@@ -34,11 +34,7 @@ const typing = (el) => !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || 
 /** Formulaire sans photo : affiche l'avatar du sexe choisi. */
 function updateFormAvatar(sex) {
   const img = document.getElementById('f-avatar');
-  if (!img) return;
-  const src = avatarOf(sex);
-  if (src) img.src = src;
-  img.hidden = !src;
-  document.getElementById('f-avatar-empty').hidden = !!src;
+  if (img) img.src = avatarOf(sex);
 }
 
 /** Formulaire : accorde les libellés de la situation (« Marié », « Mariée ») au sexe choisi. */
