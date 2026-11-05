@@ -125,14 +125,14 @@ export function fanSVG(c = null, scale = 1, focus = S.focus, maxGens = MAX_FAN_G
         return;
       }
       const sex = P(id).sex === 'M' || P(id).sex === 'F' ? P(id).sex : 'U';
-      out += `<g class="fan-s" role="button" tabindex="0" data-act="person-open" data-id="${esc(id)}"><path d="${d}" ${paint(c, 'sector', sex)}/>`
+      out += `<g class="fan-s" role="button" tabindex="0" data-act="person-open" data-id="${esc(id)}" data-sosa="${n + i}"><path d="${d}" ${paint(c, 'sector', sex)}/>`
         + sectorText(id, cx, cy, r0, r1, (a0 + a1) / 2, g, c) + '</g>';
     });
     r0 = r1;
   }
   const p = P(focus);
   const sex = p.sex === 'M' || p.sex === 'F' ? p.sex : 'U';
-  out += `<g class="fan-s" role="button" tabindex="0" data-act="person-open" data-id="${esc(focus)}"><circle cx="${cx}" cy="${cy}" r="${CENTER}" ${paint(c, 'center', sex)}/>`
+  out += `<g class="fan-s" role="button" tabindex="0" data-act="person-open" data-id="${esc(focus)}" data-sosa="1"><circle cx="${cx}" cy="${cy}" r="${CENTER}" ${paint(c, 'center', sex)}/>`
     + `<text x="${cx}" y="${cy - 8}" text-anchor="middle" font-size="14" font-weight="700" ${paint(c, 'text')}>${esc(cut(given(p) || '—', 16))}</text>`
     + `<text x="${cx}" y="${cy + 10}" text-anchor="middle" font-size="12" ${paint(c, 'text')}>${esc(cut(surname(p) || maiden(p), 18))}</text>`
     + `<text x="${cx}" y="${cy + 27}" text-anchor="middle" font-size="11" ${paint(c, 'muted')}>${esc(lifeYears(p))}</text></g>`;
