@@ -93,14 +93,35 @@ export function placesByDepartment() {
   return keyed.map((x) => x.u);
 }
 
-/** Migrations : lieu de naissance d'un parent -> celui de son enfant : [{ from, to, n }]. */
+/**
+ * Commune d'un lieu, sans son lieu-dit : « Bourg, Masseret (19) » -> « Masseret (19) ». La carte ne
+ * place que des communes : un lieu-dit est rarement connu du service de localisation.
+ */
+export function cityOf(place) {
+  const pl = parsePlace(place);
+  return pl.city || pl.country ? formatPlace({ ...pl, hamlet: '' }) : clean(place);
+}
+
+/** Communes citées, lieux-dits réunis : [{ name, n, ids }], les plus citées d'abord. */
+export function cityUses() {
+  const cities = new Map();
+  for (const u of placeUses()) {
+    const name = cityOf(u.name);
+    const c = cities.get(name) || cities.set(name, { name, n: 0, ids: new Set() }).get(name);
+    c.n += u.n;
+    for (const id of u.ids) c.ids.add(id);
+  }
+  return [...cities.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+}
+
+/** Migrations : commune de naissance d'un parent -> celle de son enfant : [{ from, to, n }]. */
 export function migrations() {
   const moves = new Map();
   for (const p of S.people.values()) {
-    const to = clean(p.birthPlace);
+    const to = p.birthPlace && cityOf(p.birthPlace);
     if (!to) continue;
     for (const parent of new Set([p.fatherId, p.motherId])) {
-      const from = clean(P(parent) && P(parent).birthPlace);
+      const from = P(parent) && P(parent).birthPlace && cityOf(P(parent).birthPlace);
       if (!from || from === to) continue;
       const key = from + '→' + to;
       if (!moves.has(key)) moves.set(key, { from, to, n: 0 });
