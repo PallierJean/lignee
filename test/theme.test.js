@@ -92,7 +92,7 @@ describe('thèmes de couleur', () => {
     // Thèmes illustrés : texte lisible (AA) sur les panneaux, et sur le fond pour le texte principal
     const illustrated = readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8');
     const blocks = [...illustrated.matchAll(/:root\[data-theme="([\w-]+)"\] \{([^}]*--paper[^}]*)\}/g)];
-    assert.equal(blocks.length, 8, 'huit thèmes illustrés');
+    assert.equal(blocks.length, 4, 'quatre thèmes illustrés');
     for (const [, theme, block] of blocks) {
       const tv = Object.fromEntries([...block.matchAll(/--([\w-]+): (#[0-9A-F]{6});/gi)].map((m) => [m[1], m[2]]));
       for (const k of ['ink', 'muted', 'warn', 'danger', 'ok']) assert.ok(ratio(tv[k], tv.surface) >= 4.5, `${theme} : --${k}`);
@@ -215,6 +215,51 @@ describe('ciel du thème Constellations', () => {
       assert.equal(canvas.children.length, 0);
     } finally {
       Object.assign(document, { createElement: saved.create, createElementNS: saved.ns, getElementById: saved.byId });
+    }
+  });
+});
+
+describe('pluie du thème Matrice', () => {
+  test('colonnes de signes retournés qui tombent, retirées hors du thème', async () => {
+    const { setRain } = await import('../js/ui/rain.js');
+    const drawn = [];
+    const ctx = {
+      setTransform() {}, fillRect() {}, clearRect() {}, save() {}, restore() {}, translate() {},
+      scale(x) { drawn.push(['scale', x]); },
+      fillText(t, x, y) { drawn.push(['text', t, y]); },
+    };
+    const make = (tag) => {
+      const el = {
+        tag, style: {}, children: [], parentElement: null, width: 0, height: 0,
+        setAttribute() {},
+        append(c) { c.parentElement = el; el.children.push(c); },
+        prepend(c) { c.parentElement = el; el.children.unshift(c); },
+        remove() { if (el.parentElement) el.parentElement.children.splice(el.parentElement.children.indexOf(el), 1); },
+        get firstChild() { return el.children[0]; },
+        getContext: () => ctx,
+      };
+      return el;
+    };
+    const box = Object.assign(make('div'), { clientWidth: 160, clientHeight: 320 });
+    const saved = { create: document.createElement, byId: document.getElementById };
+    Object.assign(document, { createElement: make, getElementById: (id) => (id === 'canvas' ? box : saved.byId(id)) });
+    try {
+      setRain(true);
+      setRain(true); // déjà lancée : une seule pluie
+      assert.equal(box.children.length, 1);
+      assert.equal(box.children[0].className, 'rain');
+      const canvas = box.children[0].firstChild;
+      assert.deepEqual([canvas.width, canvas.height], [160, 320], 'à la taille de la zone visible');
+      // Quelques images : les colonnes avancent et dessinent des signes retournés (miroir)
+      await new Promise((r) => setTimeout(r, 400));
+      const texts = drawn.filter((x) => x[0] === 'text');
+      assert.ok(texts.length > 0, 'des signes tombent');
+      assert.ok(texts.every(([, t]) => t.length === 1));
+      assert.ok(drawn.some((x) => x[0] === 'scale' && x[1] === -1));
+      setRain(false);
+      assert.equal(box.children.length, 0);
+    } finally {
+      Object.assign(document, { createElement: saved.create, getElementById: saved.byId });
     }
   });
 });
