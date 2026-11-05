@@ -358,6 +358,7 @@ export function bindEvents() {
       updateSituationLabels(el.value);
     }
     if (el.id === 'fanKids' && el.value) A.setFocus(el.value);
+    if (el.id === 'themeSel') A.setTheme(el.value);
     if (el.name === 'f-sex') updateNames(false);
     if (el.id === 'f-father' || el.id === 'f-mother') updateNames(true);
     if (el.id === 'f-situ') {
