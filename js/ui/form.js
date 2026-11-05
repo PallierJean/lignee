@@ -43,8 +43,7 @@ function photoField(d) {
   const avatar = avatarOf(d.sex);
   const preview = d.photo
     ? `<img class="photo" src="${esc(photoSrc(d.photo))}" alt="${t('f.photoChosen')}">`
-    : `<img class="photo avatar" id="f-avatar" src="${esc(avatar)}" alt=""${avatar ? '' : ' hidden'}>`
-      + `<div class="photo empty" id="f-avatar-empty" aria-hidden="true"${avatar ? ' hidden' : ''}></div>`;
+    : `<img class="photo avatar" id="f-avatar" src="${esc(avatar)}" alt="">`;
   return `<div class="photofld">
       ${preview}
       <div class="photobtns">
