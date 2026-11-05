@@ -1,5 +1,20 @@
 # Historique des versions
 
+## [1.14.0](https://github.com/PallierJean/lignee/compare/v1.13.0...v1.14.0) (2026-11-05)
+
+### Features
+
+* identifier les personnes d'une photo plus facilement ([380a196](https://github.com/PallierJean/lignee/commit/380a196013bbbb3cdeb00330a5fe8f2f22efc554))
+* modifier la légende d'une photo depuis la visionneuse ([f611fb5](https://github.com/PallierJean/lignee/commit/f611fb5109ec67e800645986acffc13364711456))
+* repères invisibles sur les photos, personne éclairée au survol de son nom ([1a6c0ea](https://github.com/PallierJean/lignee/commit/1a6c0ea1f13b5c4c8b28cc86016a72c9bf6020ad))
+* supprimer une fiche depuis sa fenêtre ou son formulaire ([d518e0c](https://github.com/PallierJean/lignee/commit/d518e0cf5693dc9f972f874f9fd6b169774e85f3))
+
+### Bug Fixes
+
+* confirmer une piste INSEE, date d'expiration de la connexion matchID ([8875279](https://github.com/PallierJean/lignee/commit/887527970b295ccd9d98ede6af6dfabcf3474421))
+* expliquer pourquoi la vérification INSEE est indisponible sur le site ([99b96f4](https://github.com/PallierJean/lignee/commit/99b96f441acddaf4187934a8614cca63a39ac60e))
+* présenter la vérification INSEE comme une fonctionnalité de la version locale ([40fff04](https://github.com/PallierJean/lignee/commit/40fff04b02990c3e0363ae92898dbe82d32d0598))
+
 ## [1.13.0](https://github.com/PallierJean/lignee/compare/v1.12.0...v1.13.0) (2026-11-04)
 
 ### Features
