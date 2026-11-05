@@ -1,8 +1,9 @@
 /**
- * Thème « Constellations » : le vrai ciel de Bordeaux, en temps réel, dessiné sous l'arbre. Les
- * étoiles des constellations (model/sky.js) sont placées à l'heure qu'il est, comme on les voit en
- * levant la tête : zénith au centre, nord en haut, est à gauche (projection stéréographique), assez
- * agrandies pour que les figures s'écartent. Les étoiles scintillent, les plus brillantes portent
+ * Thème « Constellations » : le vrai ciel de Bordeaux, dessiné sous l'arbre. Les étoiles des
+ * constellations (model/sky.js) sont placées comme on les voit en levant la tête : zénith au centre,
+ * nord en haut, est à gauche (projection stéréographique), assez agrandies pour que les figures
+ * s'écartent. Le ciel part de l'heure qu'il est et tourne en accéléré (une heure toutes les 30 s)
+ * pendant une minute, puis revient en fondu à l'heure réelle : on le voit tourner, toujours juste. Les étoiles scintillent, les plus brillantes portent
  * des aigrettes, une étoile au hasard s'embrase un instant, une étoile filante passe de temps en
  * temps. Si le système demande moins d'animations, le ciel est redessiné sans ces effets.
  */
@@ -13,9 +14,13 @@ import { skyAt } from '../model/sky.js';
 const FRAME = 100;     // ms entre deux images
 const SHOOT = 7000;    // une étoile filante toutes les … ms, en moyenne
 const ZOOM = 1.25;     // rayon de l'horizon, en hauteurs de toile : les constellations s'écartent
+const SPEED = 120;     // en accéléré : une heure du ciel toutes les 30 s
+const CYCLE = 60000;   // ms d'accéléré avant de revenir à l'heure réelle
+const FADE = 1200;     // ms de fondu au retour
 
 let layer = null;
 let timer = null;
+let start = 0;         // début du cycle d'accéléré
 let shooting = null;   // étoile filante en cours : { x, y, angle, born }
 let nextShoot = 0;
 let flash = null;      // étoile qui s'embrase un instant : { id, born }
@@ -50,10 +55,13 @@ function frame() {
     canvas.style.height = `${h}px`;
   }
   const now = Date.now();
-  const when = new Date(now);
+  // Heure du ciel : l'heure réelle, plus l'avance prise depuis le début du cycle
+  const elapsed = reduced ? 0 : (now - start) % CYCLE;
+  const when = new Date(now + elapsed * SPEED);
   const ctx = canvas.getContext('2d');
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.clearRect(0, 0, w, h);
+  ctx.globalAlpha = reduced ? 1 : Math.min(1, elapsed / FADE, (CYCLE - elapsed) / FADE); // fondu au retour
   const at = projector(w, h);
   const lang = getLang();
   // Une étoile au hasard s'embrase un instant
@@ -118,6 +126,7 @@ function frame() {
       ctx.textAlign = 'start';
     }
   }
+  ctx.globalAlpha = 1;
   if (!reduced) shootingStar(ctx, now, w, h);
 
   // Légende : le lieu, la date et l'heure du ciel montré
@@ -126,7 +135,7 @@ function frame() {
   ctx.font = '11.5px "Atkinson Hyperlegible", sans-serif';
   const date = when.toLocaleDateString(t('locale'), { day: 'numeric', month: 'long' });
   const time = when.toLocaleTimeString(t('locale'), { hour: '2-digit', minute: '2-digit' });
-  ctx.fillText(t('sky.caption', date, time), 12, h - 12);
+  ctx.fillText(t('sky.caption', date, time) + (reduced ? '' : t('sky.fast')), 12, h - 12);
 }
 
 /** Aigrettes : une croix de lumière fine autour d'une étoile, plus une croix plus courte en biais. */
@@ -200,6 +209,7 @@ export function setSky(on) {
   layer.setAttribute('aria-hidden', 'true');
   layer.append(document.createElement('canvas'));
   box.prepend(layer);
+  start = Date.now();
   nextShoot = Date.now() + 3000;
   nextFlash = Date.now() + 800;
   frame();

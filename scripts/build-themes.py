@@ -23,13 +23,15 @@ def porcelaine():
     C, G = '#1F4690', '#C9A227'
     def medallion(cx, cy):
         petals = ''.join(f"<ellipse cx='{cx}' cy='{cy - 15}' rx='6.5' ry='15' transform='rotate({a} {cx} {cy})'/>" for a in range(0, 360, 45))
-        pearls = ''.join(f"<circle cx='{cx + 33*math.cos(math.radians(a)):.1f}' cy='{cy + 33*math.sin(math.radians(a)):.1f}' r='1.5'/>" for a in range(0, 360, 15))
+        pearls = ''.join(f"<circle cx='{cx + 33*math.cos(math.radians(a)):.1f}' cy='{cy + 33*math.sin(math.radians(a)):.1f}' r='1.6' fill='{G if a % 30 else C}'/>" for a in range(0, 360, 15))
         return (f"<g opacity='.3'><circle cx='{cx}' cy='{cy}' r='44' fill='none' stroke='{C}' stroke-width='1.8'/>"
                 f"<circle cx='{cx}' cy='{cy}' r='39' fill='none' stroke='{C}' stroke-width='.7'/>"
-                f"<g fill='{C}'>{pearls}</g>"
+                f"<g>{pearls}</g>"
                 f"<g fill='{C}' fill-opacity='.35' stroke='{C}' stroke-width='.9'>{petals}</g>"
                 f"<circle cx='{cx}' cy='{cy}' r='5.5' fill='{C}'/></g>"
-                f"<circle cx='{cx}' cy='{cy}' r='2.2' fill='{G}' opacity='.8'/>")
+                f"<circle cx='{cx}' cy='{cy}' r='47.5' fill='none' stroke='{G}' stroke-width='1.4' opacity='.7'/>"
+                f"<circle cx='{cx}' cy='{cy}' r='36.5' fill='none' stroke='{G}' stroke-width='.6' opacity='.55'/>"
+                f"<circle cx='{cx}' cy='{cy}' r='2.4' fill='{G}' opacity='.9'/>")
     def floweret(cx, cy):
         petals = ''.join(f"<circle cx='{cx + 6*math.cos(math.radians(a)):.1f}' cy='{cy + 6*math.sin(math.radians(a)):.1f}' r='4'/>" for a in range(-90, 270, 72))
         return f"<g fill='{C}' opacity='.26'>{petals}</g><circle cx='{cx}' cy='{cy}' r='2.4' fill='{G}' opacity='.75'/>"
@@ -51,14 +53,15 @@ def porcelaine():
         b += vine(d, [(round(l1[0]), round(l1[1]), ang - 35), (round(l2[0]), round(l2[1]), ang + 40), (round(l3[0]), round(l3[1]), ang - 30)])
         t0 = at(48, 18)
         b += f"<path d='M{t0[0]:.0f} {t0[1]:.0f}c{px*8+dx*4:.0f} {py*8+dy*4:.0f} {px*14-dx*2:.0f} {py*14-dy*2:.0f} {px*8-dx*6:.0f} {py*8-dy*6:.0f}' fill='none' stroke='{C}' stroke-width='.9' opacity='.26'/>"
+        b += f"<circle cx='{t0[0] + px*8 - dx*6:.0f}' cy='{t0[1] + py*8 - dy*6:.0f}' r='1.5' fill='{G}' opacity='.75'/>"
     # Perles d'or semées
-    b += f"<g fill='{G}' opacity='.55'>" + ''.join(f"<circle cx='{x}' cy='{y}' r='1.3'/>" for x, y in ((90, 90), (270, 90), (90, 270), (270, 270))) + "</g>"
+    b += f"<g fill='{G}' opacity='.7'>" + ''.join(f"<circle cx='{x}' cy='{y}' r='1.6'/>" for x, y in ((90, 90), (270, 90), (90, 270), (270, 270), (135, 45), (225, 315), (45, 225), (315, 135))) + "</g>"
     return svg(360, 360, b)
 
 def porcelain_frieze():
     """Frise festonnée de bordure d'assiette : bandeau bleu de four, festons blancs, perles d'or."""
     return svg(36, 18, "<rect width='36' height='12' fill='#1F4690'/><path d='M0 12a9 6 0 0 0 18 0a9 6 0 0 0 18 0' fill='#1F4690'/>"
-               "<path d='M0 4h36' stroke='#C9A227' stroke-width='1'/><path d='M3 12a6 4 0 0 0 12 0M21 12a6 4 0 0 0 12 0' fill='none' stroke='#FFFFFF' stroke-width='1' opacity='.8'/>"
+               "<path d='M0 1.2h36M0 4.2h36' stroke='#D9B440' stroke-width='1.2'/><path d='M3 12a6 4 0 0 0 12 0M21 12a6 4 0 0 0 12 0' fill='none' stroke='#FFFFFF' stroke-width='1' opacity='.8'/>"
                "<circle cx='9' cy='8' r='1.4' fill='#C9A227'/><circle cx='27' cy='8' r='1.4' fill='#C9A227'/>")
 
 def matrix_still():
@@ -166,7 +169,17 @@ out.append("""
 :root[data-theme="porcelaine"] .card {
   border-radius: 10px;
   background: radial-gradient(120% 90% at 28% 18%, #FFFFFF 0%, #F7F9FD 55%, #E8EEF8 100%);
-  box-shadow: inset 0 0 0 2px #FFFFFF, inset 0 0 0 3px #C9A227, 0 2px 6px rgba(16, 34, 74, .12);
+  box-shadow: inset 0 0 0 2px #FFFFFF, inset 0 0 0 3.5px #C9A227, inset 0 0 0 5px #FFFFFF, inset 0 0 0 5.6px rgba(201, 162, 39, .6), 0 2px 6px rgba(16, 34, 74, .12);
+}
+
+/* Boutons principaux et onglet choisi : un filet d'or */
+:root[data-theme="porcelaine"] .btn.primary,
+:root[data-theme="porcelaine"] .seg button[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px #E2C15A;
+}
+
+:root[data-theme="porcelaine"] .tabs button[aria-selected="true"] {
+  box-shadow: inset 0 -3px 0 #C9A227;
 }
 
 /* La personne au centre : une plaque bleu de four bordée d'or, au reflet blanc */
