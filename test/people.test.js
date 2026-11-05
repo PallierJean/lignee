@@ -149,3 +149,15 @@ test('moins de 17 ans : sûrement, aujourd’hui ou à sa mort', () => {
   assert.equal(isMinor({ birthDate: '2012' }, now, UNION_AGE), true);
   assert.equal(CHILD_AGE, 17);
 });
+
+describe('avatars par défaut', () => {
+  test('un par sexe, neutre quand le sexe n’est pas précisé', async () => {
+    const { avatarOf } = await import('../js/model/people.js');
+    const { existsSync } = await import('node:fs');
+    assert.equal(avatarOf('F'), 'images/avatar_femme.jpeg');
+    assert.equal(avatarOf('M'), 'images/avatar_homme.jpeg');
+    assert.equal(avatarOf('U'), 'images/avatar_neutre.jpeg');
+    assert.equal(avatarOf(undefined), 'images/avatar_neutre.jpeg');
+    for (const sex of ['F', 'M', 'U']) assert.ok(existsSync(new URL('../' + avatarOf(sex), import.meta.url)), avatarOf(sex));
+  });
+});

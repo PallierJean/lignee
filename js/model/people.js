@@ -303,10 +303,10 @@ export function photoSrc(s) {
 /** Photo de la personne (adresse affichable), ou ''. */
 export const photoOf = (p) => photoSrc(p && p.photo);
 
-const AVATARS = { F: 'images/avatar_femme.jpeg', M: 'images/avatar_homme.jpeg' };
+const AVATARS = { F: 'images/avatar_femme.jpeg', M: 'images/avatar_homme.jpeg', U: 'images/avatar_neutre.jpeg' };
 
-/** Avatar par défaut selon le sexe, ou '' si le sexe n'est pas précisé. */
-export const avatarOf = (sex) => AVATARS[sex] || '';
+/** Avatar par défaut selon le sexe ; neutre si le sexe n'est pas précisé. */
+export const avatarOf = (sex) => AVATARS[sex] || AVATARS.U;
 
 export function fullName(p) {
   if (!p) return t('unknownPerson');

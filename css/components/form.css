@@ -136,10 +136,6 @@
   gap: 14px;
 }
 
-.photo.empty {
-  border-style: dashed;
-}
-
 .photobtns {
   display: flex;
   flex-direction: column;
