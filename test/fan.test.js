@@ -70,7 +70,7 @@ describe('roue d’ascendance : survol et recentrage', () => {
     assert.equal(fanRecenter({ closest: () => null }), null, 'hors de la roue');
   });
 
-  test('barre : revenir, descendre vers un enfant, aucun ancêtre', () => {
+  test('barre : revenir, descendre vers un descendant, aucun ancêtre', () => {
     loadTree([person('a', { fatherId: 'b' }), person('b', { given: 'Léonard', surname: 'Roux' })]);
     S.focus = 'a';
     assert.equal(fanRecenter(sector('b', 2)), 'b');
@@ -79,8 +79,9 @@ describe('roue d’ascendance : survol et recentrage', () => {
     const nav = document.getElementById('fanNav');
     assert.equal(nav.hidden, false);
     assert.match(nav.innerHTML, /data-act="fan-back">← Revenir à /);
-    assert.match(nav.innerHTML, /data-act="fan-down" data-id="a">↓ /);
-    // Plus de deux enfants : une liste
+    assert.match(nav.innerHTML, /<select class="btn small" id="fanKids"[^>]*><option value="">↓ Descendre vers…<\/option><optgroup label="Enfants \(1\)"><option value="a">/);
+    assert.match(nav.innerHTML, /Aucun ancêtre connu/);
+    // Plusieurs enfants
     loadTree([person('a', { fatherId: 'b' }), person('c', { fatherId: 'b' }), person('d', { fatherId: 'b' }), person('b')]);
     renderFanNav(true);
     assert.match(nav.innerHTML, /<select class="btn small" id="fanKids"[^>]*><option value="">↓ Descendre vers…<\/option><optgroup label="Enfants \(3\)"><option value="a">/);
@@ -89,7 +90,11 @@ describe('roue d’ascendance : survol et recentrage', () => {
     S.focus = 'k';
     renderFanNav(true);
     assert.match(nav.innerHTML, /label="Enfants \(1\)".*label="Petits-enfants \(1\)".*label="Arrière-petits-enfants \(1\)".*label="4e génération \(1\)"><option value="g4">/);
-    assert.match(nav.innerHTML, /Aucun ancêtre connu/);
+    // Sans descendant : la liste reste, grisée
+    S.focus = 'g4';
+    renderFanNav(true);
+    assert.equal(nav.hidden, false);
+    assert.match(nav.innerHTML, /id="fanKids"[^>]* disabled><option value="">↓ Aucun descendant connu<\/option><\/select>/);
     renderFanNav(false);
     assert.equal(nav.hidden, true);
   });

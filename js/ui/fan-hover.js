@@ -112,8 +112,7 @@ export function fanBack() {
 /**
  * Barre de la roue, toujours visible : revenir à la personne quittée, descendre vers un descendant
  * de la personne centrale, jusqu'au plus lointain connu (même après un rechargement, qui oublie
- * les personnes quittées) : un bouton par enfant s'il n'y en a que deux au plus, sinon une liste
- * rangée par génération.
+ * les personnes quittées) : une liste rangée par génération, toujours là, grisée sans descendant.
  */
 export function renderFanNav(shown) {
   const nav = $('#fanNav');
@@ -122,19 +121,15 @@ export function renderFanNav(shown) {
   while (back.length && !S.people.has(back[back.length - 1])) back.pop();
   const previous = back.length ? P(back[back.length - 1]) : null;
   const rows = descendantRows(S.focus);
-  const kids = rows.length ? rows[0] : [];
-  const few = rows.length === 1 && kids.length <= 2;
   const option = (id) => `<option value="${esc(id)}">${esc([fullName(P(id)), lifeYears(P(id))].filter(Boolean).join(' · '))}</option>`;
   const p = P(S.focus);
   const alone = !S.people.has(p.fatherId) && !S.people.has(p.motherId);
-  nav.hidden = !previous && !kids.length && !alone;
   nav.innerHTML = '<div>'
     + (previous ? `<button class="btn small" type="button" data-act="fan-back">${esc(t('fan.backTo', fullName(previous)))}</button>` : '')
-    + (few
-      ? kids.map((id) => `<button class="btn small" type="button" data-act="fan-down" data-id="${esc(id)}">↓ ${esc(fullName(P(id)))}</button>`).join('')
-      : `<select class="btn small" id="fanKids" aria-label="${esc(t('fan.down'))}"><option value="">↓ ${esc(t('fan.down'))}</option>`
-        + rows.map((row, i) => `<optgroup label="${esc(t('fan.genDown', i + 1, row.length))}">${row.map(option).join('')}</optgroup>`).join('')
-        + '</select>')
+    + `<select class="btn small" id="fanKids" aria-label="${esc(t('fan.down'))}"${rows.length ? '' : ' disabled'}>`
+    + `<option value="">↓ ${esc(t(rows.length ? 'fan.down' : 'fan.noDown'))}</option>`
+    + rows.map((row, i) => `<optgroup label="${esc(t('fan.genDown', i + 1, row.length))}">${row.map(option).join('')}</optgroup>`).join('')
+    + '</select>'
     + (alone ? `<span class="hint">${esc(t('fan.alone'))}</span>` : '')
     + '</div>';
 }
