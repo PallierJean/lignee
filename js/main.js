@@ -12,6 +12,7 @@ import { applyStatic, t } from './i18n.js';
 import { renderAll, afterData } from './ui/render.js';
 import { loadCommunes } from './model/communes.js';
 import { loadLocal, seedExample, loadFile, subscribe } from './services/storage.js';
+import { applyTheme } from './ui/theme.js';
 
 /** Service fourni par claude.ai, ou null hors de claude.ai. */
 async function useService(name) {
@@ -36,6 +37,7 @@ async function init() {
   loadPrefs();
   showVersion();
   applyStatic();
+  applyTheme();
   bindEvents();
   renderAll(); // état « Ouverture de l'arbre… »
 

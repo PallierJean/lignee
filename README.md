@@ -119,6 +119,15 @@ lignee/
         └── exemple-famille-bertrand.json   Famille d'exemple, seul fichier de ce dossier dans git
 ```
 
+## Thèmes de couleur
+
+Le sélecteur de l'en-tête (`ui/theme.js`) change les couleurs : automatique (clair ou sombre selon
+le système), clair, sombre, ou un thème illustré d'un motif discret sur la toile de l'arbre :
+🎄 Noël, 🎃 Halloween, 🌸 Printemps, ☀️ Été, 🍂 Automne. « Selon la saison » passe de l'un à l'autre
+avec la date (Noël du 1er décembre à l'Épiphanie, Halloween du 20 octobre au 2 novembre). Les
+couleurs sont dans `css/tokens.css` ; le choix est mémorisé dans le navigateur, l'impression garde
+les siennes.
+
 ## Langue
 
 Le bouton FR / EN de l'en-tête passe toute l'interface en français ou en anglais ;
