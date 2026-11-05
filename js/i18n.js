@@ -671,6 +671,10 @@ const FR = {
   'ctl.fanTitle': 'Afficher les ascendants en éventail',
   'hist.merge': 'fusion de fiches',
   'hist.tag': 'identification sur une photo',
+  'hist.caption': 'légende d’une photo',
+  'med.caption': 'Légende',
+  'med.editCaption': 'modifier',
+  'med.addCaption': 'Ajouter une légende',
 
   // Doublons
   'dup.none': 'Aucun doublon probable.',
@@ -1366,6 +1370,10 @@ const EN = {
   'ctl.fanTitle': 'Show ancestors as a fan chart',
   'hist.merge': 'record merge',
   'hist.tag': 'photo tag',
+  'hist.caption': 'photo caption',
+  'med.caption': 'Caption',
+  'med.editCaption': 'edit',
+  'med.addCaption': 'Add a caption',
 
   'dup.none': 'No likely duplicate.',
   'dup.scope': 'Records with the same first given name and surname, and no conflicting date. Ctrl+Z undoes a merge.',

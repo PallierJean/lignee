@@ -14,7 +14,9 @@ import {
   startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail,
 } from './ui/analyse.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
-import { openMedia, closeMedia, placePin, cancelPin, addTag, removeTag, highlightTag } from './ui/media.js';
+import {
+  openMedia, closeMedia, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption,
+} from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
@@ -185,6 +187,9 @@ const CLICK_ACTIONS = {
   },
   'media-pic': (el, ev) => placePin(el, ev),
   'tag-cancel': () => cancelPin(),
+  'caption-edit': () => editCaption(true),
+  'caption-cancel': () => editCaption(false),
+  'caption-save': once(() => saveCaption()),
   'tag-remove': (el) => removeTag(+el.dataset.i),
 
   // Collection d'arbres

@@ -9,9 +9,11 @@ import { P, fullName, mediaList, photoSrc, peopleNamedIn } from '../model/people
 import { opUpdate, beginAction, commitAction } from '../services/storage.js';
 import { afterData } from './render.js';
 import { personOptions } from './form.js';
+import { toast } from './toast.js';
 
 let current = null;  // { owner, id } : photo affichée
 let pin = null;      // { x, y } : repère en attente d'une personne
+let editing = false; // légende en cours de modification
 
 const item = () => current && mediaList(P(current.owner)).find((m) => m.id === current.id);
 
@@ -53,7 +55,7 @@ export function renderMedia() {
     + hint
     + `<div class="media-pic${S.canWrite ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">${marks}`
     + (pin ? `<span class="tag-pin new" style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
-    + `${m.date || m.note ? `<p>${esc([m.date, m.note].filter(Boolean).join(' · '))}</p>` : ''}`
+    + caption(m)
     + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker;
 }
 
@@ -64,9 +66,54 @@ export function highlightTag(target, on) {
   if (pin) pin.classList.toggle('lit', on);
 }
 
+/** Légende sous l'image : titre, date et texte ; modifiables sur place. */
+function caption(m) {
+  if (editing) {
+    const off = S.busy ? ' disabled' : '';
+    return `<div class="an-form media-caption">`
+      + `<label class="fld"><span>${t('f.srcTitle')}</span><input id="mdEditTitle" value="${esc(m.title)}"></label>`
+      + `<label class="fld"><span>${t('f.date')}</span><input id="mdEditDate" value="${esc(m.date)}"></label>`
+      + `<label class="fld"><span>${t('med.caption')}</span><textarea id="mdEditNote" rows="3">${esc(m.note)}</textarea></label>`
+      + `<div class="row-btns"><button class="btn small primary" type="button" data-act="caption-save"${off}>${t('save')}</button>`
+      + `<button class="btn small" type="button" data-act="caption-cancel">${t('cancel')}</button></div></div>`;
+  }
+  const text = [m.date, m.note].filter(Boolean).join(' · ');
+  const change = S.canWrite ? ` <button class="link" type="button" data-act="caption-edit">${t(text ? 'med.editCaption' : 'med.addCaption')}</button>` : '';
+  return text || change ? `<p class="media-text">${esc(text)}${change}</p>` : '';
+}
+
+/** Ouvre ou ferme la modification de la légende. */
+export function editCaption(on) {
+  if (on && S.edit && S.edit.id === current.owner) {
+    toast(t('finishFirst')); // le formulaire de la fiche réécrirait la galerie en l'enregistrant
+    return;
+  }
+  editing = on;
+  pin = null;
+  renderMedia();
+}
+
+/** Enregistre le titre, la date et la légende saisis. */
+export async function saveCaption() {
+  const m = item();
+  if (!m || !S.canWrite) return;
+  const value = (id) => String((document.getElementById(id) || {}).value || '').trim();
+  const patch = { title: value('mdEditTitle'), date: value('mdEditDate'), note: value('mdEditNote') };
+  editing = false;
+  const owner = P(current.owner);
+  beginAction('hist.caption');
+  try {
+    await opUpdate('people', current.owner, { media: mediaList(owner).map((x) => (x.id === current.id ? { ...x, ...patch } : x)) });
+  } finally {
+    commitAction();
+    afterData();
+  }
+}
+
 export function openMedia(owner, id) {
   current = { owner, id };
   pin = null;
+  editing = false;
   $('#mediaDlg').hidden = false;
   renderMedia();
 }
@@ -79,7 +126,8 @@ export function closeMedia() {
 
 /** Clic sur l'image : position du repère, en pourcentage de l'image. */
 export function placePin(el, ev) {
-  if (!S.canWrite || !item() || ev.target.closest('.tag-pin')) return;
+  // Pendant la saisie de la légende, un clic sur l'image ne doit pas redessiner (et effacer) les champs
+  if (!S.canWrite || editing || !item() || ev.target.closest('.tag-pin')) return;
   const box = el.querySelector('img').getBoundingClientRect();
   pin = {
     x: Math.round(((ev.clientX - box.left) / box.width) * 1000) / 10,
