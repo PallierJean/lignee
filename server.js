@@ -60,7 +60,7 @@ const TYPES = {
 
 // Ce que la page a le droit de charger : ses propres fichiers (polices comprises), le service de localisation ;
 // frame-ancestors : aucun autre site ne peut l'afficher dans un cadre
-const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; "
+const CSP = "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; "
   + "img-src 'self' data: blob:; connect-src 'self' https://nominatim.openstreetmap.org https://api.github.com https://raw.githubusercontent.com; "
   + "object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 

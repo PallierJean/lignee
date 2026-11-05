@@ -1,6 +1,6 @@
 /** Onglet « Analyse » : lien de parenté, cohérence, statistiques, éphémérides. */
 import { S } from '../state.js';
-import { $, esc } from '../utils/dom.js';
+import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
 import { P, fullName, lifeYears, eventLabel, allMedia } from '../model/people.js';
 import { relationship } from '../model/kinship.js';
@@ -287,7 +287,7 @@ function bars(rows) {
   const max = Math.max(...rows.map((r) => r.n), 1);
   return '<div class="bars">' + rows.map((r) => '<div class="bar-row">'
     + `<span class="bl" title="${esc(r.name)}">${esc(r.name)}</span>`
-    + `<span class="bt"><i style="width:${(r.n / max) * 100}%"></i></span><span class="bv">${r.n}</span></div>`).join('') + '</div>';
+    + `<span class="bt"><i data-style="width:${(r.n / max) * 100}%"></i></span><span class="bv">${r.n}</span></div>`).join('') + '</div>';
 }
 
 function statsView() {
@@ -314,7 +314,7 @@ function statsView() {
   if (st.completeness.length) {
     html += `<section class="rel"><h3>${t('stat.complete')}</h3><div class="bars">`
       + st.completeness.map((r) => `<div class="bar-row"><span class="bl">${t('stat.gen', r.gen)}</span>`
-        + `<span class="bt" title="${t('percent', Math.round(r.pct * 10) / 10)}"><i style="width:${r.pct}%"></i></span>`
+        + `<span class="bt" title="${t('percent', Math.round(r.pct * 10) / 10)}"><i data-style="width:${r.pct}%"></i></span>`
         + `<span class="bv">${t('stat.completeRow', r.found, r.expected)}</span></div>`).join('')
       + `</div><p class="hint an-hint">${t('stat.completeHint', name(S.focus))}</p></section>`;
   }
@@ -406,5 +406,5 @@ export function renderAnalyse() {
   const body = {
     kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
   }[S.analyse]();
-  $('#paneAnalyse').innerHTML = `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`;
+  setHTML($('#paneAnalyse'), `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`);
 }
