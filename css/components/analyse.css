@@ -477,6 +477,7 @@
 
 /* Roue d'ascendance */
 .fan {
+  position: relative; /* au-dessus des empreintes du thème Maraudeur (ui/footprints.js) */
   display: flex;
   justify-content: center;
   padding: 20px;

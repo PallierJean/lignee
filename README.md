@@ -124,7 +124,8 @@ lignee/
 Le menu « Aa » de l'en-tête (`ui/theme.js`) change les couleurs : automatique (clair ou sombre selon
 le système), clair, sombre, ou un thème illustré d'un motif discret sur la toile de l'arbre :
 🎄 Noël, 🎃 Halloween, 🌸 Printemps, ☀️ Été, 🍂 Automne, et 🪄 Carte du Maraudeur (parchemin, encre
-sépia, empreintes de pas rouges qui s'impriment pas à pas puis s'effacent, fixes si le système
+sépia, empreintes de pas rouges qui s'impriment pas à pas puis s'effacent, chaque trajet tiré au
+hasard (`ui/footprints.js`), fixes si le système
 demande moins d'animations, titres en IM Fell English). « Selon la saison » passe de l'un à l'autre
 avec la date (Noël du 1er décembre à l'Épiphanie, Halloween du 20 octobre au 2 novembre).
 Trois thèmes d'accessibilité, sans motif et aux contours de fiche plus épais : « Daltonisme »
