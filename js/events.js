@@ -14,7 +14,7 @@ import {
   startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail,
 } from './ui/analyse.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
-import { openMedia, closeMedia, placePin, cancelPin, addTag, removeTag } from './ui/media.js';
+import { openMedia, closeMedia, placePin, cancelPin, addTag, removeTag, highlightTag } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
@@ -281,6 +281,10 @@ export function bindEvents() {
   document.addEventListener('mousedown', (ev) => {
     if (ev.target.closest('#f-spouseList')) ev.preventDefault();
   });
+  // Visionneuse : survoler un nom identifié éclaire la personne sur la photo
+  document.addEventListener('mouseover', (ev) => highlightTag(ev.target, true));
+  document.addEventListener('mouseout', (ev) => highlightTag(ev.target, false));
+
   document.addEventListener('focusin', (ev) => {
     if (ev.target.id === 'f-spouse') onSpouseInput();
   });

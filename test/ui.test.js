@@ -5,7 +5,7 @@ import * as A from '../js/actions.js';
 import { renderHeader } from '../js/ui/header.js';
 import { renderAll, afterData, renderFiche } from '../js/ui/render.js';
 import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
-import { openMedia, closeMedia, placePin, addTag, removeTag, cancelPin } from '../js/ui/media.js';
+import { openMedia, closeMedia, placePin, addTag, removeTag, cancelPin, highlightTag } from '../js/ui/media.js';
 import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind } from '../js/ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from '../js/ui/spouse-pick.js';
 import { resetHistory } from '../js/services/history.js';
@@ -259,6 +259,17 @@ describe('fiche : événements, sources, galerie', () => {
     assert.ok(html('mediaCard').includes('left:0%;top:20%'), 'position piégée remise à zéro');
     assert.match(html('mediaCard'), /class="hint tag-hint">Pour identifier quelqu’un, cliquez sur son visage/);
     assert.match(html('mediaCard'), /class="media-pic can-tag"/);
+    // Repères invisibles, sans numéro ; le survol d'un nom éclaire son repère
+    assert.match(html('mediaCard'), /class="tag-pin" type="button" data-tag="0"[^>]*><span class="tag-name">Paul BLANC<\/span><\/button>/);
+    assert.match(html('mediaCard'), /<li data-tag="0"><button class="link"/);
+    assert.doesNotMatch(html('mediaCard'), /class="tag-n"/);
+    const pinEl = document.querySelector('.tag-pin[data-tag="0"]');
+    const row = { closest: () => ({ dataset: { tag: '0' } }) };
+    highlightTag(row, true);
+    assert.ok(pinEl.classList.contains('lit'));
+    highlightTag(row, false);
+    assert.ok(!pinEl.classList.contains('lit'));
+    highlightTag({ closest: () => null }, true); // ailleurs que sur un nom : rien
     assert.ok(html('mediaCard').includes('Paul BLANC'));
     const pic = el('mediaPic');
     pic.querySelector = () => ({ getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 100 }) });
