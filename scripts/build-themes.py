@@ -128,6 +128,83 @@ out.append(f"""
 }}
 """)
 
+# ---------- Carte du Maraudeur : ornements dessinés à l'encre (inspirés de l'affiche, sans en copier
+# ni les textes ni l'emblème) : banderole, château et losange rouge, saule, rose des vents ----------
+INK = '#4A2A18'
+SERIF = "font-family='IM Fell English, Georgia, serif'"
+
+def banner():
+    """Banderole calligraphiée et ses arabesques : « Itinerarium familiae », et une ligne d'annonce."""
+    swirl = ("M20 70C10 40 40 20 60 40S50 80 30 66"  # arabesque de gauche
+             "M300 70C310 40 280 20 260 40S270 80 290 66")
+    ribbon = "M40 48C90 28 230 28 280 48L272 66C222 48 98 48 48 66Z"
+    return svg(320, 130,
+        f"<g fill='none' stroke='{INK}' stroke-linecap='round' opacity='.6'>"
+        f"<path d='{swirl}' stroke-width='1.4'/>"
+        "<path d='M60 40c20-25 60-30 100-28s80 3 100 28' stroke-width='.9'/>"
+        "<path d='M14 80c10 18 40 22 60 12M306 80c-10 18-40 22-60 12' stroke-width='1'/></g>"
+        f"<path d='{ribbon}' fill='#EAD9B0' stroke='{INK}' stroke-width='1.3' opacity='.85'/>"
+        f"<path d='M48 66l-14 8 8-14M272 66l14 8-8-14' fill='none' stroke='{INK}' stroke-width='1.1' opacity='.7'/>"
+        f"<path id='rb' d='M52 57C100 40 220 40 268 57' fill='none'/>"
+        f"<text {SERIF} font-size='12' letter-spacing='1.5' fill='{INK}' opacity='.85'>"
+        "<textPath href='#rb' startOffset='50%' text-anchor='middle'>ITINERARIUM FAMILIAE</textPath></text>"
+        f"<text x='160' y='96' {SERIF} font-style='italic' font-size='13' fill='{INK}' text-anchor='middle' opacity='.75'>"
+        "les ancêtres ont l’honneur</text>"
+        f"<text x='160' y='114' {SERIF} font-style='italic' font-size='13' fill='{INK}' text-anchor='middle' opacity='.75'>"
+        "de vous présenter</text>")
+
+def castle():
+    """Château à tourelles, à l'encre, barré d'un losange rouge : « La carte de Lignée »."""
+    towers = ''
+    for x, w, top in ((30, 26, 70), (78, 22, 50), (122, 30, 30), (172, 22, 52), (212, 26, 74)):
+        towers += (f"<path d='M{x} 180V{top}h{w}V180'/><path d='M{x - 3} {top}L{x + w / 2} {top - 26}L{x + w + 3} {top}Z'/>"
+                   f"<path d='M{x + w / 2 - 3} {top + 18}v8h6v-8a3 3 0 0 0-6 0'/>")
+    walls = "M20 180h230M20 180v-60h230v60" + ''.join(f"M{20 + i * 10} 120v-6h5v6" for i in range(23))
+    seal = ("<g transform='translate(135 150) rotate(45)'>"
+            "<rect x='-46' y='-46' width='92' height='92' fill='#8E1F1F' stroke='#4A1A12' stroke-width='2'/>"
+            "<rect x='-40' y='-40' width='80' height='80' fill='none' stroke='#E9D3A8' stroke-width='1' opacity='.8'/></g>"
+            f"<text x='135' y='140' {SERIF} font-style='italic' font-size='15' fill='#F4E6C4' text-anchor='middle'>La carte de</text>"
+            f"<text x='135' y='166' {SERIF} font-size='22' letter-spacing='1' fill='#F4E6C4' text-anchor='middle'>LIGNÉE</text>")
+    return svg(270, 230,
+        f"<g fill='none' stroke='{INK}' stroke-width='1.2' stroke-linejoin='round' opacity='.6'>{towers}<path d='{walls}'/>"
+        "<path d='M20 200c40 10 80-6 120 4s80 8 110-2' stroke-dasharray='2 4'/></g>" + seal)
+
+def willow():
+    """Saule croqué à la plume : tronc noueux, branches qui retombent."""
+    b = "<path d='M100 200C96 160 108 130 98 100S104 60 100 40' stroke-width='4'/>"
+    for i in range(16):
+        x0 = 100 + (i - 8) * 3
+        dx = (i - 8) * 9
+        b += f"<path d='M{x0} {50 + abs(i - 8) * 3}C{x0 + dx * .6} {20 + i % 3 * 6} {x0 + dx} {60} {x0 + dx * 1.1} {120 + (i % 4) * 14}' stroke-width='.9'/>"
+    return svg(200, 210, f"<g fill='none' stroke='{INK}' stroke-linecap='round' opacity='.5'>{b}</g>")
+
+def compass():
+    """Rose des vents à huit branches et ses points cardinaux."""
+    pts = ''
+    for k in range(8):
+        a = k * math.pi / 4
+        long = 46 if k % 2 == 0 else 26
+        x, y = 70 + long * math.sin(a), 70 - long * math.cos(a)
+        lx, ly = 70 + 7 * math.sin(a + math.pi / 2), 70 - 7 * math.cos(a + math.pi / 2)
+        rx, ry = 70 + 7 * math.sin(a - math.pi / 2), 70 - 7 * math.cos(a - math.pi / 2)
+        fill = INK if k % 2 == 0 else 'none'
+        pts += f"<path d='M{x:.1f} {y:.1f}L{lx:.1f} {ly:.1f}L70 70L{rx:.1f} {ry:.1f}Z' fill='{fill}' fill-opacity='.55'/>"
+    letters = ''.join(f"<text x='{x}' y='{y}' {SERIF} font-size='12' fill='{INK}' text-anchor='middle'>{t}</text>"
+                      for x, y, t in ((70, 16, 'N'), (70, 134, 'S'), (128, 74, 'E'), (12, 74, 'O')))
+    return svg(140, 140, f"<g stroke='{INK}' stroke-width='.9' opacity='.6'><circle cx='70' cy='70' r='34' fill='none'/>"
+               f"<circle cx='70' cy='70' r='30' fill='none' stroke-dasharray='1 3'/>{pts}</g><g opacity='.65'>{letters}</g>")
+
+out.append(f"""
+/* Carte du Maraudeur : ornements à l'encre aux coins de la toile (banderole, saule, château et
+   losange rouge, rose des vents), sur le parchemin et ses tracés ; fixes, même sans animation */
+:root[data-theme="maraudeur"] .canvas {{
+  background-image: {uri(banner())}, {uri(willow())}, {uri(castle())}, {uri(compass())}, var(--deco), radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
+  background-position: top 10px left 14px, top 6px right 10px, bottom 6px left 10px, bottom 14px right 16px, 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat;
+  background-size: 320px 130px, 200px 210px, 270px 230px, 140px 140px, var(--deco-size), 20px 20px;
+}}
+""")
+
 out.append("""
 /* ---------- Touches propres ---------- */
 
