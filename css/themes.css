@@ -1,0 +1,365 @@
+/* ==========================================================
+   Thèmes illustrés supplémentaires (menu « Aa », ui/theme.js) : palette, motif
+   de la toile (--deco) et quelques touches propres à chaque thème.
+   Généré par scripts/build-themes.py : les couleurs se règlent là.
+   ========================================================== */
+
+/* Constellations : nuit bleu profond, étoiles, liens en fins traits lumineux ; étoiles qui scintillent et étoiles filantes (ui/sky.js) */
+:root[data-theme="constellations"] {
+  --paper: #0B1026;
+  --surface: #141C3E;
+  --ink: #E8ECFF;
+  --muted: #AAB4DC;
+  --line: #2C386B;
+  --edge: #8FA4F0;
+  --dot: #1A2350;
+  --accent: #FFD36E;
+  --accent-ink: #0B1026;
+  --accent-soft: #2B2B4F;
+  --warn: #FFD27A;
+  --danger: #FF9A8B;
+  --danger-soft: #3A1C2A;
+  --ok: #8FE3C0;
+  --halo: #FFE7A3;
+  --male: #7FB2FF;
+  --female: #F5A3D0;
+  --scrim: rgba(2, 4, 16, .7);
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Ccircle cx='130' cy='60' r='0.5' fill='%23fff' opacity='0.29'/%3E%3Ccircle cx='214' cy='146' r='0.5' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='86' cy='34' r='1' fill='%23fff' opacity='0.29'/%3E%3Ccircle cx='36' cy='170' r='1.3' fill='%23fff' opacity='0.32'/%3E%3Ccircle cx='89' cy='251' r='0.5' fill='%23fff' opacity='0.57'/%3E%3Ccircle cx='159' cy='391' r='0.5' fill='%23fff' opacity='0.56'/%3E%3Ccircle cx='53' cy='168' r='1.3' fill='%23fff' opacity='0.31'/%3E%3Ccircle cx='123' cy='326' r='0.6' fill='%23fff' opacity='0.31'/%3E%3Ccircle cx='228' cy='75' r='0.5' fill='%23fff' opacity='0.55'/%3E%3Ccircle cx='25' cy='24' r='0.6' fill='%23fff' opacity='0.52'/%3E%3Ccircle cx='213' cy='311' r='1' fill='%23fff' opacity='0.57'/%3E%3Ccircle cx='181' cy='120' r='0.6' fill='%23fff' opacity='0.63'/%3E%3Ccircle cx='98' cy='230' r='1.3' fill='%23fff' opacity='0.52'/%3E%3Ccircle cx='137' cy='180' r='1.3' fill='%23fff' opacity='0.79'/%3E%3Ccircle cx='47' cy='167' r='0.8' fill='%23fff' opacity='0.33'/%3E%3Ccircle cx='196' cy='16' r='0.5' fill='%23fff' opacity='0.67'/%3E%3Ccircle cx='229' cy='350' r='0.8' fill='%23fff' opacity='0.44'/%3E%3Ccircle cx='140' cy='199' r='1' fill='%23fff' opacity='0.29'/%3E%3Ccircle cx='37' cy='108' r='0.5' fill='%23fff' opacity='0.28'/%3E%3Ccircle cx='281' cy='259' r='1' fill='%23fff' opacity='0.41'/%3E%3Ccircle cx='154' cy='267' r='0.5' fill='%23fff' opacity='0.77'/%3E%3Ccircle cx='142' cy='244' r='1' fill='%23fff' opacity='0.28'/%3E%3Ccircle cx='307' cy='52' r='0.6' fill='%23fff' opacity='0.47'/%3E%3Ccircle cx='367' cy='199' r='0.6' fill='%23fff' opacity='0.50'/%3E%3Ccircle cx='220' cy='353' r='1' fill='%23fff' opacity='0.73'/%3E%3Ccircle cx='111' cy='166' r='0.8' fill='%23fff' opacity='0.63'/%3E%3Ccircle cx='152' cy='92' r='0.5' fill='%23fff' opacity='0.35'/%3E%3Ccircle cx='93' cy='93' r='1' fill='%23fff' opacity='0.71'/%3E%3Ccircle cx='73' cy='113' r='0.6' fill='%23fff' opacity='0.48'/%3E%3Ccircle cx='148' cy='227' r='0.6' fill='%23fff' opacity='0.63'/%3E%3Ccircle cx='206' cy='247' r='0.5' fill='%23fff' opacity='0.50'/%3E%3Ccircle cx='348' cy='381' r='1.3' fill='%23fff' opacity='0.47'/%3E%3Ccircle cx='160' cy='41' r='1' fill='%23fff' opacity='0.28'/%3E%3Ccircle cx='27' cy='84' r='0.6' fill='%23fff' opacity='0.31'/%3E%3Ccircle cx='240' cy='41' r='1.3' fill='%23fff' opacity='0.33'/%3E%3Ccircle cx='41' cy='145' r='0.5' fill='%23fff' opacity='0.29'/%3E%3Ccircle cx='83' cy='150' r='0.8' fill='%23fff' opacity='0.78'/%3E%3Ccircle cx='241' cy='190' r='0.5' fill='%23fff' opacity='0.72'/%3E%3Ccircle cx='397' cy='186' r='1' fill='%23fff' opacity='0.42'/%3E%3Ccircle cx='58' cy='300' r='0.8' fill='%23fff' opacity='0.51'/%3E%3Ccircle cx='277' cy='207' r='0.6' fill='%23fff' opacity='0.77'/%3E%3Ccircle cx='211' cy='59' r='1.3' fill='%23fff' opacity='0.75'/%3E%3Ccircle cx='303' cy='119' r='0.5' fill='%23fff' opacity='0.63'/%3E%3Ccircle cx='104' cy='147' r='0.6' fill='%23fff' opacity='0.45'/%3E%3Ccircle cx='89' cy='217' r='1.3' fill='%23fff' opacity='0.43'/%3E%3Ccircle cx='89' cy='325' r='0.6' fill='%23fff' opacity='0.69'/%3E%3Ccircle cx='327' cy='296' r='0.6' fill='%23fff' opacity='0.36'/%3E%3Ccircle cx='197' cy='292' r='0.5' fill='%23fff' opacity='0.68'/%3E%3Ccircle cx='189' cy='77' r='1.3' fill='%23fff' opacity='0.78'/%3E%3Ccircle cx='179' cy='375' r='0.8' fill='%23fff' opacity='0.78'/%3E%3Ccircle cx='146' cy='88' r='0.6' fill='%23fff' opacity='0.51'/%3E%3Ccircle cx='135' cy='193' r='1.3' fill='%23fff' opacity='0.71'/%3E%3Ccircle cx='192' cy='261' r='0.5' fill='%23fff' opacity='0.71'/%3E%3Ccircle cx='48' cy='155' r='0.6' fill='%23fff' opacity='0.51'/%3E%3Ccircle cx='71' cy='316' r='0.8' fill='%23fff' opacity='0.30'/%3E%3Ccircle cx='378' cy='289' r='1' fill='%23fff' opacity='0.47'/%3E%3Ccircle cx='379' cy='290' r='0.6' fill='%23fff' opacity='0.80'/%3E%3Ccircle cx='11' cy='236' r='1' fill='%23fff' opacity='0.69'/%3E%3Ccircle cx='58' cy='331' r='1' fill='%23fff' opacity='0.61'/%3E%3Ccircle cx='140' cy='219' r='0.6' fill='%23fff' opacity='0.26'/%3E%3Ccircle cx='320' cy='291' r='0.5' fill='%23fff' opacity='0.54'/%3E%3Ccircle cx='373' cy='174' r='0.6' fill='%23fff' opacity='0.70'/%3E%3Ccircle cx='84' cy='101' r='0.8' fill='%23fff' opacity='0.53'/%3E%3Ccircle cx='305' cy='130' r='1.3' fill='%23fff' opacity='0.48'/%3E%3Ccircle cx='52' cy='364' r='0.8' fill='%23fff' opacity='0.74'/%3E%3Ccircle cx='265' cy='326' r='1.3' fill='%23fff' opacity='0.48'/%3E%3Ccircle cx='367' cy='201' r='1.3' fill='%23fff' opacity='0.33'/%3E%3Ccircle cx='204' cy='349' r='0.6' fill='%23fff' opacity='0.58'/%3E%3Ccircle cx='310' cy='60' r='0.6' fill='%23fff' opacity='0.51'/%3E%3Ccircle cx='290' cy='223' r='0.8' fill='%23fff' opacity='0.63'/%3E%3Cg stroke='%23fff' stroke-linecap='round' opacity='.7'%3E%3Cpath d='M60 75v10M55 80h10' stroke-width='1'/%3E%3Cpath d='M58 78l4 4M62 78l-4 4' stroke-width='.6'/%3E%3C/g%3E%3Cg stroke='%23fff' stroke-linecap='round' opacity='.7'%3E%3Cpath d='M300 235v10M295 240h10' stroke-width='1'/%3E%3Cpath d='M298 238l4 4M302 238l-4 4' stroke-width='.6'/%3E%3C/g%3E%3Cg stroke='%23fff' stroke-linecap='round' opacity='.7'%3E%3Cpath d='M180 345v10M175 350h10' stroke-width='1'/%3E%3Cpath d='M178 348l4 4M182 348l-4 4' stroke-width='.6'/%3E%3C/g%3E%3Cpath d='M250 60L285 85L320 75L340 110L300 130' fill='none' stroke='%239FB4FF' stroke-width='.6' opacity='.35'/%3E%3Ccircle cx='250' cy='60' r='1.6' fill='%23DCE4FF' opacity='.85'/%3E%3Ccircle cx='285' cy='85' r='1.6' fill='%23DCE4FF' opacity='.85'/%3E%3Ccircle cx='320' cy='75' r='1.6' fill='%23DCE4FF' opacity='.85'/%3E%3Ccircle cx='340' cy='110' r='1.6' fill='%23DCE4FF' opacity='.85'/%3E%3Ccircle cx='300' cy='130' r='1.6' fill='%23DCE4FF' opacity='.85'/%3E%3C/svg%3E");
+  --deco-size: 400px;
+  color-scheme: dark;
+}
+
+/* Registre ancien : papier de registre paroissial jauni et réglé, encre brun-noir, titres de copiste, tampon d’archives ; la personne au centre en lettrine */
+:root[data-theme="registre"] {
+  --paper: #EDE3C8;
+  --surface: #F7EFD9;
+  --ink: #2B1D12;
+  --muted: #5E4A36;
+  --line: #C9B48A;
+  --edge: #6B5038;
+  --dot: #E3D6B2;
+  --accent: #7A2420;
+  --accent-ink: #FBF3E0;
+  --accent-soft: #E8D3B0;
+  --warn: #7A4E00;
+  --danger: #8E1F1F;
+  --danger-soft: #EBC9B4;
+  --ok: #3B5A26;
+  --halo: #8C5A1E;
+  --male: #2F4F72;
+  --female: #8E3A52;
+  --scrim: rgba(40, 24, 10, .5);
+  --f-display: "IM Fell English", "Iowan Old Style", Georgia, serif;
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cpath d='M0 14H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 36H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 58H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 80H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 102H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 124H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 146H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 168H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 190H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 212H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 234H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 256H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 278H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 300H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 322H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M0 344H360' stroke='%237A93B8' stroke-width='.6' opacity='.28'/%3E%3Cpath d='M46 0V360' stroke='%23B4473B' stroke-width='.8' opacity='.35'/%3E%3Cg transform='translate(270 250) rotate(-14)' fill='none' stroke='%236A2A3A' opacity='.16'%3E%3Ccircle r='38' stroke-width='2'/%3E%3Ccircle r='30' stroke-width='.8'/%3E%3Cpath id='a' d='M-34 0A34 34 0 0 1 34 0' stroke='none'/%3E%3Ctext font-family='Georgia,serif' font-size='7.5' letter-spacing='1.2' fill='%236A2A3A' stroke='none'%3E%3CtextPath href='%23a' startOffset='50%25' text-anchor='middle'%3EARCHIVES D%C3%89PARTEMENTALES%3C/textPath%3E%3C/text%3E%3Ctext y='5' font-family='Georgia,serif' font-size='12' fill='%236A2A3A' stroke='none' text-anchor='middle'%3E%E2%9C%A0%3C/text%3E%3C/g%3E%3C/svg%3E");
+  --deco-size: 360px;
+  color-scheme: light;
+}
+
+/* Porcelaine de Limoges : blanc émaillé, fleurs en bleu de four, liseré doré au bord des fiches */
+:root[data-theme="porcelaine"] {
+  --paper: #F2F5FA;
+  --surface: #FFFFFF;
+  --ink: #12233F;
+  --muted: #46577A;
+  --line: #B9C8DF;
+  --edge: #2E5A9E;
+  --dot: #DCE5F2;
+  --accent: #1F4E9A;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DCE6F6;
+  --warn: #7A5200;
+  --danger: #A3263A;
+  --danger-soft: #F6DDE2;
+  --ok: #2A6A4A;
+  --halo: #B8901A;
+  --male: #2E5A9E;
+  --female: #B04A7A;
+  --scrim: rgba(10, 20, 40, .45);
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cg fill='%232E5A9E' opacity='.22'%3E%3Cellipse cx='67.0' cy='60.0' rx='4.2' ry='2.6' transform='rotate(0 67.0 60.0)'/%3E%3Cellipse cx='63.5' cy='66.1' rx='4.2' ry='2.6' transform='rotate(60 63.5 66.1)'/%3E%3Cellipse cx='56.5' cy='66.1' rx='4.2' ry='2.6' transform='rotate(120 56.5 66.1)'/%3E%3Cellipse cx='53.0' cy='60.0' rx='4.2' ry='2.6' transform='rotate(180 53.0 60.0)'/%3E%3Cellipse cx='56.5' cy='53.9' rx='4.2' ry='2.6' transform='rotate(240 56.5 53.9)'/%3E%3Cellipse cx='63.5' cy='53.9' rx='4.2' ry='2.6' transform='rotate(300 63.5 53.9)'/%3E%3Ccircle cx='60' cy='60' r='2.4'/%3E%3C/g%3E%3Cg fill='%232E5A9E' opacity='.22'%3E%3Cellipse cx='239.1' cy='150.0' rx='5.5' ry='3.4' transform='rotate(0 239.1 150.0)'/%3E%3Cellipse cx='234.6' cy='157.9' rx='5.5' ry='3.4' transform='rotate(60 234.6 157.9)'/%3E%3Cellipse cx='225.4' cy='157.9' rx='5.5' ry='3.4' transform='rotate(120 225.4 157.9)'/%3E%3Cellipse cx='220.9' cy='150.0' rx='5.5' ry='3.4' transform='rotate(180 220.9 150.0)'/%3E%3Cellipse cx='225.4' cy='142.1' rx='5.5' ry='3.4' transform='rotate(240 225.4 142.1)'/%3E%3Cellipse cx='234.6' cy='142.1' rx='5.5' ry='3.4' transform='rotate(300 234.6 142.1)'/%3E%3Ccircle cx='230' cy='150' r='3.1'/%3E%3C/g%3E%3Cg fill='%232E5A9E' opacity='.22'%3E%3Cellipse cx='125.6' cy='260.0' rx='3.4' ry='2.1' transform='rotate(0 125.6 260.0)'/%3E%3Cellipse cx='122.8' cy='264.8' rx='3.4' ry='2.1' transform='rotate(60 122.8 264.8)'/%3E%3Cellipse cx='117.2' cy='264.8' rx='3.4' ry='2.1' transform='rotate(120 117.2 264.8)'/%3E%3Cellipse cx='114.4' cy='260.0' rx='3.4' ry='2.1' transform='rotate(180 114.4 260.0)'/%3E%3Cellipse cx='117.2' cy='255.2' rx='3.4' ry='2.1' transform='rotate(240 117.2 255.2)'/%3E%3Cellipse cx='122.8' cy='255.2' rx='3.4' ry='2.1' transform='rotate(300 122.8 255.2)'/%3E%3Ccircle cx='120' cy='260' r='1.9'/%3E%3C/g%3E%3Cg transform='translate(100 90) rotate(20)' fill='none' stroke='%232E5A9E' stroke-width='1.1' opacity='.2' stroke-linecap='round'%3E%3Cpath d='M0 0C10 -6 22 -6 34 0'/%3E%3Cpath d='M8 -4c2-6 7-8 10-8M18 -5c3-5 8-6 11-5M14 -3c0 5-3 8-6 9M26 -2c1 5-1 8-4 10'/%3E%3C/g%3E%3Cg transform='translate(250 250) rotate(-30)' fill='none' stroke='%232E5A9E' stroke-width='1.1' opacity='.2' stroke-linecap='round'%3E%3Cpath d='M0 0C10 -6 22 -6 34 0'/%3E%3Cpath d='M8 -4c2-6 7-8 10-8M18 -5c3-5 8-6 11-5M14 -3c0 5-3 8-6 9M26 -2c1 5-1 8-4 10'/%3E%3C/g%3E%3Cg transform='translate(20 200) rotate(60)' fill='none' stroke='%232E5A9E' stroke-width='1.1' opacity='.2' stroke-linecap='round'%3E%3Cpath d='M0 0C10 -6 22 -6 34 0'/%3E%3Cpath d='M8 -4c2-6 7-8 10-8M18 -5c3-5 8-6 11-5M14 -3c0 5-3 8-6 9M26 -2c1 5-1 8-4 10'/%3E%3C/g%3E%3Cg fill='%23C9A227' opacity='.35'%3E%3Ccircle cx='170' cy='40' r='1.6'/%3E%3Ccircle cx='300' cy='70' r='1.2'/%3E%3Ccircle cx='40' cy='300' r='1.4'/%3E%3C/g%3E%3C/svg%3E");
+  --deco-size: 320px;
+  color-scheme: light;
+}
+
+/* Herbier : papier de botaniste, feuilles et fougères séchées, tiges vertes pour les liens */
+:root[data-theme="herbier"] {
+  --paper: #EDEFE0;
+  --surface: #FAFBF1;
+  --ink: #1F2A1A;
+  --muted: #526046;
+  --line: #C3CBA9;
+  --edge: #5E7A3A;
+  --dot: #DCE1C6;
+  --accent: #3F6A28;
+  --accent-ink: #F6FAEE;
+  --accent-soft: #DDE7C9;
+  --warn: #7A5200;
+  --danger: #9A2E22;
+  --danger-soft: #F1DCD3;
+  --ok: #2F6A3A;
+  --halo: #7FA63A;
+  --male: #3F6E8C;
+  --female: #A8506F;
+  --scrim: rgba(20, 30, 10, .45);
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cg transform='translate(70 120) rotate(-25) scale(1.1)' opacity='.28'%3E%3Cpath d='M0 0C8-10 8-26 0-36C-8-26-8-10 0 0z' fill='%236B8A4E'/%3E%3Cpath d='M0 0V-34M0-10l5-5M0-18l-5-5M0-26l4-4' stroke='%23F4F5E8' stroke-width='.7' fill='none'/%3E%3C/g%3E%3Cg transform='translate(260 90) rotate(35) scale(0.9)' opacity='.28'%3E%3Cpath d='M0 0C8-10 8-26 0-36C-8-26-8-10 0 0z' fill='%23A08A3E'/%3E%3Cpath d='M0 0V-34M0-10l5-5M0-18l-5-5M0-26l4-4' stroke='%23F4F5E8' stroke-width='.7' fill='none'/%3E%3C/g%3E%3Cg transform='translate(170 310) rotate(160) scale(1)' opacity='.28'%3E%3Cpath d='M0 0C8-10 8-26 0-36C-8-26-8-10 0 0z' fill='%237E9A54'/%3E%3Cpath d='M0 0V-34M0-10l5-5M0-18l-5-5M0-26l4-4' stroke='%23F4F5E8' stroke-width='.7' fill='none'/%3E%3C/g%3E%3Cg transform='translate(320 300) rotate(-20)' opacity='.3'%3E%3Cpath d='M0 0C2-20 2-40 0-60' stroke='%235E7A3A' stroke-width='1.1' fill='none'/%3E%3Cpath d='M0 -7.5q5.85 -3 11.7 -1M0 -7.5q-5.85 -3 -11.7 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -15.0q5.2 -3 10.4 -1M0 -15.0q-5.2 -3 -10.4 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -22.5q4.55 -3 9.1 -1M0 -22.5q-4.55 -3 -9.1 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -30.0q3.9 -3 7.8 -1M0 -30.0q-3.9 -3 -7.8 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -37.5q3.25 -3 6.5 -1M0 -37.5q-3.25 -3 -6.5 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -45.0q2.5999999999999996 -3 5.199999999999999 -1M0 -45.0q-2.5999999999999996 -3 -5.199999999999999 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -52.5q1.9500000000000002 -3 3.9000000000000004 -1M0 -52.5q-1.9500000000000002 -3 -3.9000000000000004 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3C/g%3E%3Cg transform='translate(40 330) rotate(25)' opacity='.3'%3E%3Cpath d='M0 0C2-20 2-40 0-60' stroke='%235E7A3A' stroke-width='1.1' fill='none'/%3E%3Cpath d='M0 -7.5q5.85 -3 11.7 -1M0 -7.5q-5.85 -3 -11.7 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -15.0q5.2 -3 10.4 -1M0 -15.0q-5.2 -3 -10.4 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -22.5q4.55 -3 9.1 -1M0 -22.5q-4.55 -3 -9.1 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -30.0q3.9 -3 7.8 -1M0 -30.0q-3.9 -3 -7.8 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -37.5q3.25 -3 6.5 -1M0 -37.5q-3.25 -3 -6.5 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -45.0q2.5999999999999996 -3 5.199999999999999 -1M0 -45.0q-2.5999999999999996 -3 -5.199999999999999 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3Cpath d='M0 -52.5q1.9500000000000002 -3 3.9000000000000004 -1M0 -52.5q-1.9500000000000002 -3 -3.9000000000000004 -1' stroke='%235E7A3A' stroke-width='.9' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+  --deco-size: 360px;
+  color-scheme: light;
+}
+
+/* Album de famille : carton d’album, fiches en tirages photo à bords blancs tenus par des coins */
+:root[data-theme="album"] {
+  --paper: #CBB797;
+  --surface: #FFFDF7;
+  --ink: #2A211C;
+  --muted: #5A4A3C;
+  --line: #D9CDB6;
+  --edge: #5A4632;
+  --dot: #BCA683;
+  --accent: #7A3E1E;
+  --accent-ink: #FFF8F0;
+  --accent-soft: #EEDDC8;
+  --warn: #7A4E00;
+  --danger: #8E1F1F;
+  --danger-soft: #F1D3C6;
+  --ok: #3B5A26;
+  --halo: #9A5A1E;
+  --male: #3A5F86;
+  --female: #A0476A;
+  --scrim: rgba(30, 20, 10, .5);
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cpath d='M159 145l3.3 1.5' stroke='%235A4632' stroke-width='.6' opacity='0.11'/%3E%3Cpath d='M57 13l-4.8 -0.2' stroke='%235A4632' stroke-width='.6' opacity='0.10'/%3E%3Cpath d='M268 19l-2.1 1.9' stroke='%235A4632' stroke-width='.6' opacity='0.19'/%3E%3Cpath d='M60 83l0.1 1.2' stroke='%235A4632' stroke-width='.6' opacity='0.18'/%3E%3Cpath d='M74 157l4.5 1.7' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M268 61l-0.6 -0.3' stroke='%235A4632' stroke-width='.6' opacity='0.16'/%3E%3Cpath d='M95 201l-0.9 -1.1' stroke='%235A4632' stroke-width='.6' opacity='0.15'/%3E%3Cpath d='M37 233l5.3 0.6' stroke='%235A4632' stroke-width='.6' opacity='0.15'/%3E%3Cpath d='M76 41l-0.4 1.0' stroke='%235A4632' stroke-width='.6' opacity='0.11'/%3E%3Cpath d='M265 49l2.0 -1.1' stroke='%235A4632' stroke-width='.6' opacity='0.21'/%3E%3Cpath d='M298 121l-0.9 -0.6' stroke='%235A4632' stroke-width='.6' opacity='0.11'/%3E%3Cpath d='M110 101l-0.5 0.8' stroke='%235A4632' stroke-width='.6' opacity='0.16'/%3E%3Cpath d='M155 89l5.5 -1.5' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M69 263l-5.0 -0.9' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M54 227l3.8 1.4' stroke='%235A4632' stroke-width='.6' opacity='0.20'/%3E%3Cpath d='M284 122l0.4 0.1' stroke='%235A4632' stroke-width='.6' opacity='0.17'/%3E%3Cpath d='M98 84l3.6 -1.3' stroke='%235A4632' stroke-width='.6' opacity='0.23'/%3E%3Cpath d='M81 5l-4.9 -1.0' stroke='%235A4632' stroke-width='.6' opacity='0.19'/%3E%3Cpath d='M67 79l-4.5 -2.0' stroke='%235A4632' stroke-width='.6' opacity='0.25'/%3E%3Cpath d='M125 275l1.5 -1.8' stroke='%235A4632' stroke-width='.6' opacity='0.21'/%3E%3Cpath d='M281 291l-2.9 -1.3' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M189 159l-3.5 -0.2' stroke='%235A4632' stroke-width='.6' opacity='0.20'/%3E%3Cpath d='M81 241l5.9 -1.9' stroke='%235A4632' stroke-width='.6' opacity='0.10'/%3E%3Cpath d='M152 293l0.2 -1.0' stroke='%235A4632' stroke-width='.6' opacity='0.17'/%3E%3Cpath d='M197 195l1.9 0.2' stroke='%235A4632' stroke-width='.6' opacity='0.23'/%3E%3Cpath d='M291 92l-3.4 -1.1' stroke='%235A4632' stroke-width='.6' opacity='0.13'/%3E%3Cpath d='M265 219l-4.3 2.0' stroke='%235A4632' stroke-width='.6' opacity='0.25'/%3E%3Cpath d='M251 4l1.5 1.5' stroke='%235A4632' stroke-width='.6' opacity='0.16'/%3E%3Cpath d='M17 200l-1.4 0.0' stroke='%235A4632' stroke-width='.6' opacity='0.25'/%3E%3Cpath d='M180 208l-5.5 -1.3' stroke='%235A4632' stroke-width='.6' opacity='0.14'/%3E%3Cpath d='M1 109l-2.1 1.9' stroke='%235A4632' stroke-width='.6' opacity='0.15'/%3E%3Cpath d='M10 265l-3.4 -1.3' stroke='%235A4632' stroke-width='.6' opacity='0.15'/%3E%3Cpath d='M25 84l1.9 -1.0' stroke='%235A4632' stroke-width='.6' opacity='0.22'/%3E%3Cpath d='M27 245l-4.3 0.3' stroke='%235A4632' stroke-width='.6' opacity='0.16'/%3E%3Cpath d='M90 189l-5.0 1.8' stroke='%235A4632' stroke-width='.6' opacity='0.23'/%3E%3Cpath d='M47 268l3.4 0.4' stroke='%235A4632' stroke-width='.6' opacity='0.21'/%3E%3Cpath d='M216 148l-2.6 0.5' stroke='%235A4632' stroke-width='.6' opacity='0.12'/%3E%3Cpath d='M247 215l0.2 -0.3' stroke='%235A4632' stroke-width='.6' opacity='0.21'/%3E%3Cpath d='M152 273l3.0 0.3' stroke='%235A4632' stroke-width='.6' opacity='0.22'/%3E%3Cpath d='M5 206l3.6 0.8' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M193 26l-5.5 0.5' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M113 135l-5.4 -1.9' stroke='%235A4632' stroke-width='.6' opacity='0.18'/%3E%3Cpath d='M73 79l-0.5 -1.7' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M269 28l0.3 1.0' stroke='%235A4632' stroke-width='.6' opacity='0.17'/%3E%3Cpath d='M243 254l-3.2 1.0' stroke='%235A4632' stroke-width='.6' opacity='0.13'/%3E%3Cpath d='M195 138l4.1 -1.7' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M86 14l1.6 -1.2' stroke='%235A4632' stroke-width='.6' opacity='0.19'/%3E%3Cpath d='M100 195l2.3 0.5' stroke='%235A4632' stroke-width='.6' opacity='0.12'/%3E%3Cpath d='M145 146l5.7 -1.6' stroke='%235A4632' stroke-width='.6' opacity='0.13'/%3E%3Cpath d='M147 213l-2.6 -0.1' stroke='%235A4632' stroke-width='.6' opacity='0.22'/%3E%3Cpath d='M298 165l-2.3 -1.7' stroke='%235A4632' stroke-width='.6' opacity='0.17'/%3E%3Cpath d='M87 23l0.1 2.0' stroke='%235A4632' stroke-width='.6' opacity='0.25'/%3E%3Cpath d='M116 275l5.2 -1.7' stroke='%235A4632' stroke-width='.6' opacity='0.11'/%3E%3Cpath d='M224 79l-1.7 0.4' stroke='%235A4632' stroke-width='.6' opacity='0.19'/%3E%3Cpath d='M84 34l-1.6 -0.0' stroke='%235A4632' stroke-width='.6' opacity='0.23'/%3E%3Cpath d='M118 48l5.4 0.7' stroke='%235A4632' stroke-width='.6' opacity='0.16'/%3E%3Cpath d='M218 125l-1.5 -1.5' stroke='%235A4632' stroke-width='.6' opacity='0.15'/%3E%3Cpath d='M97 101l-1.2 1.8' stroke='%235A4632' stroke-width='.6' opacity='0.13'/%3E%3Cpath d='M4 222l-3.0 -1.7' stroke='%235A4632' stroke-width='.6' opacity='0.16'/%3E%3Cpath d='M261 23l5.1 1.0' stroke='%235A4632' stroke-width='.6' opacity='0.23'/%3E%3Cpath d='M84 15l1.9 0.5' stroke='%235A4632' stroke-width='.6' opacity='0.12'/%3E%3Cpath d='M291 131l-2.2 1.1' stroke='%235A4632' stroke-width='.6' opacity='0.22'/%3E%3Cpath d='M128 9l3.1 -0.4' stroke='%235A4632' stroke-width='.6' opacity='0.23'/%3E%3Cpath d='M166 61l-5.0 1.7' stroke='%235A4632' stroke-width='.6' opacity='0.16'/%3E%3Cpath d='M184 42l4.4 -0.1' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M165 51l-1.0 -0.9' stroke='%235A4632' stroke-width='.6' opacity='0.14'/%3E%3Cpath d='M222 196l-1.1 -1.0' stroke='%235A4632' stroke-width='.6' opacity='0.17'/%3E%3Cpath d='M201 36l1.7 -1.7' stroke='%235A4632' stroke-width='.6' opacity='0.18'/%3E%3Cpath d='M244 165l-0.6 -0.7' stroke='%235A4632' stroke-width='.6' opacity='0.21'/%3E%3Cpath d='M128 164l-3.1 -1.3' stroke='%235A4632' stroke-width='.6' opacity='0.18'/%3E%3Cpath d='M96 110l3.7 -1.2' stroke='%235A4632' stroke-width='.6' opacity='0.10'/%3E%3Cpath d='M261 115l3.0 -1.2' stroke='%235A4632' stroke-width='.6' opacity='0.14'/%3E%3Cpath d='M226 149l0.9 -0.6' stroke='%235A4632' stroke-width='.6' opacity='0.20'/%3E%3Cpath d='M159 237l4.2 -1.6' stroke='%235A4632' stroke-width='.6' opacity='0.23'/%3E%3Cpath d='M115 194l-0.8 -0.8' stroke='%235A4632' stroke-width='.6' opacity='0.22'/%3E%3Cpath d='M290 38l-0.9 1.1' stroke='%235A4632' stroke-width='.6' opacity='0.22'/%3E%3Cpath d='M290 147l-5.1 1.7' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M158 140l-0.6 1.1' stroke='%235A4632' stroke-width='.6' opacity='0.13'/%3E%3Cpath d='M46 292l-4.7 1.3' stroke='%235A4632' stroke-width='.6' opacity='0.21'/%3E%3Cpath d='M254 268l-5.0 1.1' stroke='%235A4632' stroke-width='.6' opacity='0.10'/%3E%3Cpath d='M38 171l-5.5 0.9' stroke='%235A4632' stroke-width='.6' opacity='0.24'/%3E%3Cpath d='M188 158l-0.8 1.1' stroke='%235A4632' stroke-width='.6' opacity='0.11'/%3E%3Cpath d='M90 283l-3.7 -1.0' stroke='%235A4632' stroke-width='.6' opacity='0.22'/%3E%3Cpath d='M0 161l6.0 -0.9' stroke='%235A4632' stroke-width='.6' opacity='0.15'/%3E%3Cpath d='M252 73l0.3 0.2' stroke='%235A4632' stroke-width='.6' opacity='0.10'/%3E%3Cpath d='M124 195l-5.3 -1.2' stroke='%235A4632' stroke-width='.6' opacity='0.23'/%3E%3Cpath d='M194 24l-3.3 -0.3' stroke='%235A4632' stroke-width='.6' opacity='0.16'/%3E%3Cpath d='M148 209l2.6 -0.6' stroke='%235A4632' stroke-width='.6' opacity='0.16'/%3E%3Cpath d='M2 88l4.1 -1.7' stroke='%235A4632' stroke-width='.6' opacity='0.17'/%3E%3Cpath d='M60 230l-3.7 -0.1' stroke='%235A4632' stroke-width='.6' opacity='0.14'/%3E%3C/svg%3E");
+  --deco-size: 300px;
+  color-scheme: light;
+}
+
+/* Machine à écrire : papier pelure, caractères de machine, ruban rouge et noir */
+:root[data-theme="machine"] {
+  --paper: #F1EEE4;
+  --surface: #FBFAF4;
+  --ink: #1C1C1C;
+  --muted: #4A4A4A;
+  --line: #C9C4B6;
+  --edge: #4A4A4A;
+  --dot: #E1DCCD;
+  --accent: #A8221B;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #F1D6D2;
+  --warn: #6E4A00;
+  --danger: #A8221B;
+  --danger-soft: #F1D6D2;
+  --ok: #2F5A2F;
+  --halo: #A8221B;
+  --male: #2F4A78;
+  --female: #8E3A5A;
+  --scrim: rgba(0, 0, 0, .45);
+  --f-display: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cpath d='M267 33l2.5 0.2' stroke='%238A8576' stroke-width='.5' opacity='0.17'/%3E%3Cpath d='M146 273l-8.9 0.2' stroke='%238A8576' stroke-width='.5' opacity='0.17'/%3E%3Cpath d='M16 7l1.9 -0.2' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M55 135l4.2 -0.4' stroke='%238A8576' stroke-width='.5' opacity='0.09'/%3E%3Cpath d='M24 50l-6.2 0.3' stroke='%238A8576' stroke-width='.5' opacity='0.13'/%3E%3Cpath d='M140 94l4.5 0.7' stroke='%238A8576' stroke-width='.5' opacity='0.18'/%3E%3Cpath d='M133 33l-8.4 -0.8' stroke='%238A8576' stroke-width='.5' opacity='0.12'/%3E%3Cpath d='M266 168l5.2 -0.2' stroke='%238A8576' stroke-width='.5' opacity='0.16'/%3E%3Cpath d='M93 241l-8.2 0.4' stroke='%238A8576' stroke-width='.5' opacity='0.10'/%3E%3Cpath d='M162 134l-3.5 0.5' stroke='%238A8576' stroke-width='.5' opacity='0.13'/%3E%3Cpath d='M189 74l2.5 -0.2' stroke='%238A8576' stroke-width='.5' opacity='0.12'/%3E%3Cpath d='M139 241l-8.8 -0.6' stroke='%238A8576' stroke-width='.5' opacity='0.09'/%3E%3Cpath d='M182 109l-3.3 0.9' stroke='%238A8576' stroke-width='.5' opacity='0.08'/%3E%3Cpath d='M224 207l8.5 -0.4' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M179 242l8.9 -0.9' stroke='%238A8576' stroke-width='.5' opacity='0.16'/%3E%3Cpath d='M32 215l-0.7 0.6' stroke='%238A8576' stroke-width='.5' opacity='0.16'/%3E%3Cpath d='M274 244l-7.3 -0.0' stroke='%238A8576' stroke-width='.5' opacity='0.08'/%3E%3Cpath d='M279 91l3.8 -0.7' stroke='%238A8576' stroke-width='.5' opacity='0.10'/%3E%3Cpath d='M258 138l5.7 0.2' stroke='%238A8576' stroke-width='.5' opacity='0.13'/%3E%3Cpath d='M118 48l-1.8 0.3' stroke='%238A8576' stroke-width='.5' opacity='0.13'/%3E%3Cpath d='M163 48l-1.5 -0.8' stroke='%238A8576' stroke-width='.5' opacity='0.09'/%3E%3Cpath d='M187 63l-1.6 1.0' stroke='%238A8576' stroke-width='.5' opacity='0.18'/%3E%3Cpath d='M52 40l-0.8 0.8' stroke='%238A8576' stroke-width='.5' opacity='0.10'/%3E%3Cpath d='M162 232l5.2 0.6' stroke='%238A8576' stroke-width='.5' opacity='0.11'/%3E%3Cpath d='M84 80l-4.9 -0.5' stroke='%238A8576' stroke-width='.5' opacity='0.12'/%3E%3Cpath d='M56 71l-4.4 0.8' stroke='%238A8576' stroke-width='.5' opacity='0.10'/%3E%3Cpath d='M19 75l-5.1 0.1' stroke='%238A8576' stroke-width='.5' opacity='0.14'/%3E%3Cpath d='M30 139l-9.3 -1.0' stroke='%238A8576' stroke-width='.5' opacity='0.17'/%3E%3Cpath d='M69 134l-2.5 0.8' stroke='%238A8576' stroke-width='.5' opacity='0.10'/%3E%3Cpath d='M15 180l6.6 -0.6' stroke='%238A8576' stroke-width='.5' opacity='0.09'/%3E%3Cpath d='M154 53l2.1 0.5' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M2 191l4.2 -0.3' stroke='%238A8576' stroke-width='.5' opacity='0.08'/%3E%3Cpath d='M102 13l10.0 -0.9' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M274 244l6.4 -0.2' stroke='%238A8576' stroke-width='.5' opacity='0.12'/%3E%3Cpath d='M186 23l-9.4 -0.0' stroke='%238A8576' stroke-width='.5' opacity='0.13'/%3E%3Cpath d='M122 239l3.3 -0.7' stroke='%238A8576' stroke-width='.5' opacity='0.13'/%3E%3Cpath d='M196 119l-4.6 1.0' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M125 15l4.9 0.8' stroke='%238A8576' stroke-width='.5' opacity='0.12'/%3E%3Cpath d='M5 230l6.0 0.3' stroke='%238A8576' stroke-width='.5' opacity='0.12'/%3E%3Cpath d='M121 283l-1.3 -0.7' stroke='%238A8576' stroke-width='.5' opacity='0.09'/%3E%3Cpath d='M27 173l-2.7 0.5' stroke='%238A8576' stroke-width='.5' opacity='0.09'/%3E%3Cpath d='M16 43l6.1 -0.2' stroke='%238A8576' stroke-width='.5' opacity='0.14'/%3E%3Cpath d='M278 221l-6.6 -0.3' stroke='%238A8576' stroke-width='.5' opacity='0.10'/%3E%3Cpath d='M52 20l-2.3 0.5' stroke='%238A8576' stroke-width='.5' opacity='0.16'/%3E%3Cpath d='M241 90l6.7 -0.9' stroke='%238A8576' stroke-width='.5' opacity='0.17'/%3E%3Cpath d='M94 182l2.7 -0.8' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M206 267l2.8 0.7' stroke='%238A8576' stroke-width='.5' opacity='0.14'/%3E%3Cpath d='M184 59l-0.5 0.1' stroke='%238A8576' stroke-width='.5' opacity='0.08'/%3E%3Cpath d='M282 47l-2.8 -0.7' stroke='%238A8576' stroke-width='.5' opacity='0.18'/%3E%3Cpath d='M245 58l7.7 0.7' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M200 97l-2.2 -0.1' stroke='%238A8576' stroke-width='.5' opacity='0.16'/%3E%3Cpath d='M233 195l-3.8 -0.5' stroke='%238A8576' stroke-width='.5' opacity='0.12'/%3E%3Cpath d='M110 151l-6.4 -1.0' stroke='%238A8576' stroke-width='.5' opacity='0.18'/%3E%3Cpath d='M140 134l2.4 0.6' stroke='%238A8576' stroke-width='.5' opacity='0.16'/%3E%3Cpath d='M243 120l-8.7 -0.3' stroke='%238A8576' stroke-width='.5' opacity='0.12'/%3E%3Cpath d='M241 151l3.1 -0.9' stroke='%238A8576' stroke-width='.5' opacity='0.09'/%3E%3Cpath d='M277 94l4.4 -0.8' stroke='%238A8576' stroke-width='.5' opacity='0.16'/%3E%3Cpath d='M268 196l5.7 -0.9' stroke='%238A8576' stroke-width='.5' opacity='0.09'/%3E%3Cpath d='M184 208l-7.8 -0.7' stroke='%238A8576' stroke-width='.5' opacity='0.17'/%3E%3Cpath d='M86 243l5.9 0.4' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M66 250l2.2 -0.5' stroke='%238A8576' stroke-width='.5' opacity='0.11'/%3E%3Cpath d='M184 272l-0.9 -0.5' stroke='%238A8576' stroke-width='.5' opacity='0.18'/%3E%3Cpath d='M144 178l2.3 -0.5' stroke='%238A8576' stroke-width='.5' opacity='0.12'/%3E%3Cpath d='M60 121l2.7 -0.4' stroke='%238A8576' stroke-width='.5' opacity='0.11'/%3E%3Cpath d='M113 238l-4.7 0.5' stroke='%238A8576' stroke-width='.5' opacity='0.08'/%3E%3Cpath d='M257 290l-0.9 0.0' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M269 76l0.7 0.7' stroke='%238A8576' stroke-width='.5' opacity='0.15'/%3E%3Cpath d='M111 113l-2.6 -0.7' stroke='%238A8576' stroke-width='.5' opacity='0.11'/%3E%3Cpath d='M24 69l2.3 0.9' stroke='%238A8576' stroke-width='.5' opacity='0.11'/%3E%3Cpath d='M155 93l9.3 0.7' stroke='%238A8576' stroke-width='.5' opacity='0.17'/%3E%3Ctext x='210' y='250' font-family='Courier New,monospace' font-size='11' fill='%232A2A2A' opacity='.07'%3E%E2%80%94 1 %E2%80%94%3C/text%3E%3C/svg%3E");
+  --deco-size: 300px;
+  color-scheme: light;
+}
+
+/* Héraldique : parchemin enluminé, écus stylisés, émaux d’azur, de gueules et d’or */
+:root[data-theme="heraldique"] {
+  --paper: #E8DEC5;
+  --surface: #F5EEDB;
+  --ink: #2A1E14;
+  --muted: #5C4A36;
+  --line: #C4B08A;
+  --edge: #5A4630;
+  --dot: #DCCFAE;
+  --accent: #1F3A7A;
+  --accent-ink: #F8F2E2;
+  --accent-soft: #DCD9E6;
+  --warn: #7A4E00;
+  --danger: #8E1F2F;
+  --danger-soft: #EBCBC6;
+  --ok: #2F5A2A;
+  --halo: #B07D10;
+  --male: #1F3A7A;
+  --female: #8E1F2F;
+  --scrim: rgba(30, 20, 10, .5);
+  --f-display: "IM Fell English", "Iowan Old Style", Georgia, serif;
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cg transform='translate(40 40)' opacity='.22'%3E%3CclipPath id='c4040'%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z'/%3E%3C/clipPath%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z' fill='%231F3A7A'/%3E%3Cg clip-path='url(%23c4040)'%3E%3Cpath d='M12 0V28' stroke-width='12' stroke='%23B8860B'/%3E%3C/g%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z' fill='none' stroke='%235A4630' stroke-width='1'/%3E%3C/g%3E%3Cg transform='translate(200 120)' opacity='.22'%3E%3CclipPath id='c200120'%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z'/%3E%3C/clipPath%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z' fill='%238E1F2F'/%3E%3Cg clip-path='url(%23c200120)'%3E%3Cpath d='M0 8H24' stroke-width='16' stroke='%23E9DFC7'/%3E%3C/g%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z' fill='none' stroke='%235A4630' stroke-width='1'/%3E%3C/g%3E%3Cg transform='translate(110 230)' opacity='.22'%3E%3CclipPath id='c110230'%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z'/%3E%3C/clipPath%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z' fill='%232F5A2A'/%3E%3Cg clip-path='url(%23c110230)'%3E%3Cpath d='M0 0L24 24' stroke-width='9' stroke='%23B8860B'/%3E%3C/g%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z' fill='none' stroke='%235A4630' stroke-width='1'/%3E%3C/g%3E%3Cg transform='translate(260 270)' opacity='.22'%3E%3CclipPath id='c260270'%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z'/%3E%3C/clipPath%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z' fill='%231F3A7A'/%3E%3Cg clip-path='url(%23c260270)'%3E%3Cpath d='M0 0L24 24' stroke-width='9' stroke='%23E9DFC7'/%3E%3C/g%3E%3Cpath d='M0 0H24V12C24 22 12 28 12 28C12 28 0 22 0 12Z' fill='none' stroke='%235A4630' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E");
+  --deco-size: 320px;
+  color-scheme: light;
+}
+
+/* Terminal rétro : vert phosphore sur noir, lignes de balayage */
+:root[data-theme="terminal"] {
+  --paper: #040A05;
+  --surface: #08140A;
+  --ink: #9CFFAE;
+  --muted: #5FD47A;
+  --line: #1F5A2A;
+  --edge: #3FCF5C;
+  --dot: #0E2412;
+  --accent: #3DFF6E;
+  --accent-ink: #021006;
+  --accent-soft: #0F3A1A;
+  --warn: #E6FF6A;
+  --danger: #FF7A7A;
+  --danger-soft: #3A1010;
+  --ok: #9CFFAE;
+  --halo: #C6FF4A;
+  --male: #6AE0FF;
+  --female: #FF9AE0;
+  --scrim: rgba(0, 0, 0, .7);
+  --f-display: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='3'%3E%3Cpath d='M0 1.5H4' stroke='%23000' stroke-width='1' opacity='.35'/%3E%3C/svg%3E");
+  --deco-size: 4px 3px;
+  color-scheme: dark;
+}
+
+/* ---------- Touches propres ---------- */
+
+/* Constellations : fiches et liens qui brillent doucement */
+:root[data-theme="constellations"] .card {
+  box-shadow: 0 0 14px rgba(127, 160, 255, .18);
+}
+
+:root[data-theme="constellations"] .edges path {
+  filter: drop-shadow(0 0 2px rgba(143, 164, 240, .7));
+}
+
+/* Registre ancien : le prénom de la personne au centre commence par une lettrine */
+:root[data-theme="registre"] .card.is-focus .g::first-letter {
+  font-family: "IM Fell English", Georgia, serif;
+  font-size: 1.7em;
+  line-height: .8;
+  color: #7A2420;
+}
+
+/* Porcelaine : liseré doré à l'intérieur du bord des fiches */
+:root[data-theme="porcelaine"] .card {
+  box-shadow: inset 0 0 0 2px var(--surface), inset 0 0 0 3px #C9A227;
+}
+
+/* Herbier : liens en tiges, un peu plus épais */
+:root[data-theme="herbier"] .edges path {
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+/* Album : tirages photo à bords blancs, légèrement de travers, tenus par des coins */
+:root[data-theme="album"] .card {
+  border: 5px solid #FFFFFF;
+  box-shadow: 0 3px 8px rgba(40, 25, 10, .3);
+}
+
+:root[data-theme="album"] .card:nth-child(3n) {
+  rotate: -1deg;
+}
+
+:root[data-theme="album"] .card:nth-child(3n + 1) {
+  rotate: .8deg;
+}
+
+:root[data-theme="album"] .card::before,
+:root[data-theme="album"] .card::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #3A2C22;
+}
+
+:root[data-theme="album"] .card::before {
+  top: -7px;
+  left: -7px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+:root[data-theme="album"] .card::after {
+  right: -7px;
+  bottom: -7px;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* Machine à écrire et terminal : fiches de l'arbre en caractères de machine (l'interface garde sa
+   police, plus étroite, pour tenir sur une ligne) */
+:root[data-theme="machine"] .card,
+:root[data-theme="terminal"] .card {
+  font-family: var(--f-mono);
+}
+
+/* Machine à écrire : traits nets, sans arrondi */
+:root[data-theme="machine"] {
+  --r: 0;
+}
+
+:root[data-theme="machine"] .card {
+  border-radius: 0;
+}
+
+/* Héraldique : fiches bordées d'or */
+:root[data-theme="heraldique"] .card {
+  box-shadow: inset 0 0 0 1px #B07D10;
+}
+
+/* Terminal : texte qui luit, coins carrés, bords de l'écran assombris */
+:root[data-theme="terminal"] {
+  --r: 0;
+}
+
+:root[data-theme="terminal"] body {
+  text-shadow: 0 0 4px rgba(60, 255, 110, .35);
+}
+
+:root[data-theme="terminal"] .card {
+  border-radius: 0;
+}
+
+:root[data-theme="terminal"] .canvas {
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, .8);
+}
+
+/* Constellations : étoiles qui scintillent et étoiles filantes (ui/sky.js) */
+.sky {
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.sky svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+}
+
+.sky .twinkle {
+  fill: #FFFFFF;
+  opacity: 0;
+  animation: twinkle 3.2s ease-in-out forwards;
+}
+
+.sky .shoot {
+  opacity: 0;
+  animation: shoot 1.4s ease-out forwards;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: .95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes shoot {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(260px);
+  }
+}
