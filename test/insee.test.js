@@ -66,7 +66,8 @@ describe('INSEE : qui est vérifié, et avec quoi', () => {
   });
 
   test('date de l’acte reportée telle qu’on la saisit', () => {
-    assert.equal(actDateText('19721212'), '12/12/1972');
+    assert.equal(actDateText('19721212'), '12 Décembre 1972');
+    assert.equal(actDateText('19720300'), 'Mars 1972');
     assert.equal(actDateText('19720000'), '1972');
     assert.equal(actDateText(''), '');
     assert.equal(actPlace({ city: 'Tulle', dept: '19', country: 'France' }), 'Tulle (19)');
@@ -87,9 +88,31 @@ describe('INSEE : rapprochement et écarts', () => {
     const m = matchDeath('l', [act()]);
     const diffs = deathDifferences('l', m.act);
     assert.deepEqual(diffs.map((x) => [x.field, x.kind]), [['given', 'add'], ['deathDate', 'fix'], ['deathPlace', 'add']]);
-    assert.deepEqual(diffs[1].patch, { deathDate: '04/07/1995', deceased: true });
+    assert.deepEqual(diffs[1].patch, { deathDate: '04 Juillet 1995', deceased: true });
     assert.deepEqual(diffs[2].patch, { deathPlace: 'Limoges (87)' });
-    assert.equal(diffs[0].patch, undefined, 'les prénoms ne sont que signalés');
+    assert.deepEqual(diffs[0].patch, { given: 'Lucien Marcel' }, 'prénoms complets de l’état civil, reportables');
+  });
+
+  test('prénoms et nom de l’état civil reportables, accents de la fiche gardés', () => {
+    // Prénoms : ceux de la fiche gardent leur orthographe, les autres s'ajoutent dans l'ordre de l'acte
+    loadTree([lucien({ given: 'Marie-Hélène (dite Lily)', surname: 'Roche', sex: 'F', deathDate: '04/07/1995', deathPlace: 'Limoges (87)' })]);
+    let d = deathDifferences('l', act({ first: ['MARIE', 'HELENE', 'JEANNE'], last: 'ROCHE', sex: 'F' }));
+    assert.deepEqual(d.find((x) => x.field === 'given').patch, { given: 'Marie-Hélène Jeanne (dite Lily)' });
+    loadTree([lucien({ given: 'Lucien Paul', deathDate: '04/07/1995', deathPlace: 'Limoges (87)' })]);
+    d = deathDifferences('l', act());
+    assert.deepEqual(d.find((x) => x.field === 'given').patch, { given: 'Lucien Marcel Paul' }, 'prénom absent de l’acte gardé');
+    // Nom de naissance d'une femme : dans le nom de jeune fille, le nom d'usage reste
+    loadTree([lucien({ given: 'Marguerite', surname: 'Frisch', sex: 'F', deathDate: '04/07/1995', deathPlace: 'Limoges (87)' })]);
+    d = deathDifferences('l', act({ first: ['MARGUERITE'], last: 'DUTIN', sex: 'F' }));
+    assert.deepEqual(d.map((x) => [x.field, x.kind, x.insee]), [['name', 'fix', 'Dutin']]);
+    assert.deepEqual(d[0].patch, { maidenName: 'Dutin' });
+    // Déjà là : rien à reporter
+    loadTree([lucien({ given: 'Marguerite', surname: 'Frisch', maidenName: 'Dutin', sex: 'F', deathDate: '04/07/1995', deathPlace: 'Limoges (87)' })]);
+    assert.deepEqual(deathDifferences('l', act({ first: ['MARGUERITE'], last: 'DUTIN', sex: 'F' })), []);
+    // Homme : dans le nom ; particules en minuscules
+    loadTree([lucien({ surname: 'Lafontaine', deathDate: '04/07/1995', deathPlace: 'Limoges (87)', given: 'Lucien Marcel' })]);
+    d = deathDifferences('l', act({ last: "DE LA FONTAINE D'ARC" }));
+    assert.deepEqual(d[0].patch, { surname: "De la Fontaine d'Arc" });
   });
 
   test('marqué vivant mais décédé : signalé, et « Le » ou « St » ne font pas un écart de lieu', () => {
@@ -153,7 +176,7 @@ describe('INSEE : vérification et vue', () => {
 
     S.mode = 'local'; // enregistrement en mémoire du navigateur, sans serveur
     await A.applyInsee('l', 1);
-    assert.equal(S.people.get('l').deathDate, '04/07/1995');
+    assert.equal(S.people.get('l').deathDate, '04 Juillet 1995');
     assert.equal(S.people.get('l').deathPlace, undefined, 'un seul écart reporté');
     await A.applyInsee('l');
     assert.equal(S.people.get('l').deathPlace, 'Limoges (87)');
@@ -238,8 +261,8 @@ describe('INSEE : vérification et vue', () => {
     assert.match(out, /data-act="insee-apply"/);
     S.mode = 'local';
     await A.applyInsee('z');
-    assert.equal(S.people.get('z').deathDate, '04/07/1995');
-    assert.equal(S.people.get('z').birthDate, '12/03/1920');
+    assert.equal(S.people.get('z').deathDate, '04 Juillet 1995');
+    assert.equal(S.people.get('z').birthDate, '12 Mars 1920');
 
     // La confirmation vaut pour cet acte-là : un autre acte retenu redevient une piste
     S.mode = 'file';
