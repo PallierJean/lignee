@@ -167,12 +167,25 @@
   right: 0;
   z-index: 30;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
-  width: max-content;
-  min-width: 15rem;
+  width: 17rem;
+  max-width: calc(100vw - 32px);
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--r);
   background: var(--surface);
   box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+}
+
+/* Le contenu d'une balise details n'hérite pas du box-sizing de la page (Chrome) : rétabli ici */
+.appearance-menu,
+.appearance-menu * {
+  box-sizing: border-box;
+}
+
+.appearance-menu .fld,
+.appearance-menu select {
+  width: 100%;
+  min-width: 0;
 }
