@@ -57,10 +57,11 @@ const TYPES = {
   '.ged': 'text/plain; charset=utf-8',
 };
 
-// Ce que la page a le droit de charger : ses propres fichiers, les polices, le service de localisation
+// Ce que la page a le droit de charger : ses propres fichiers, les polices, le service de localisation ;
+// frame-ancestors : aucun autre site ne peut l'afficher dans un cadre
 const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
   + "font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://nominatim.openstreetmap.org https://api.github.com https://raw.githubusercontent.com; "
-  + "object-src 'none'; base-uri 'none'; form-action 'none'";
+  + "object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 function send(res, status, body, type = 'text/plain; charset=utf-8', headers = {}) {
   res.writeHead(status, {

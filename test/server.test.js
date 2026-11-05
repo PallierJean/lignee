@@ -164,6 +164,7 @@ describe('fichiers de l’application', () => {
     const res = await fetch(base);
     assert.equal(res.status, 200);
     assert.match(res.headers.get('content-type'), /text\/html/);
+    assert.match(res.headers.get('content-security-policy'), /frame-ancestors 'none'/);
   });
 
   test('pas de sortie du dossier de l’application', async () => {
