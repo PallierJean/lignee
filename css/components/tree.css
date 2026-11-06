@@ -1,8 +1,8 @@
 /* ==========================================================
-   Arbre : barre d'outils, toile pointée, traits, fiches
+   Tree: toolbar, dotted canvas, lines, cards
    ========================================================== */
 
-/* Barre d'outils au-dessus de l'arbre */
+/* Toolbar above the tree */
 .stage-bar {
   display: flex;
   flex-wrap: wrap;
@@ -25,7 +25,7 @@
   color: var(--muted);
 }
 
-/* Sélecteur du nombre de générations */
+/* Generation-count selector */
 .seg {
   display: inline-flex;
   border: 1px solid var(--line);
@@ -85,14 +85,14 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Toile : papier pointé qui défile dans les deux sens */
+/* Canvas: dotted paper that scrolls both ways */
 .canvas {
   flex: 1;
   min-height: 0;
   overflow: auto;
   position: relative;
   background-color: var(--paper);
-  /* Motif du thème choisi (--deco, css/tokens.css), sur la trame pointée */
+  /* Pattern of the chosen theme (--deco, css/tokens.css), over the dot grid */
   background-image: var(--deco, none), radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
   background-size: var(--deco-size, auto), 20px 20px;
   overscroll-behavior: contain;
@@ -109,7 +109,7 @@
   transform-origin: 0 0;
 }
 
-/* Traits de filiation et d'union (SVG) */
+/* Parentage and union lines (SVG) */
 .edges {
   position: absolute;
   left: 0;
@@ -150,7 +150,7 @@
   font-size: 12px;
 }
 
-/* Légende sous l'arbre */
+/* Legend under the tree */
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -174,11 +174,11 @@
   font-weight: 500;
 }
 
-/* Fiche d'une personne dans l'arbre */
+/* A person's card in the tree */
 .card {
   position: absolute;
-  width: 176px;   /* = CW dans js/config.js */
-  height: 88px;   /* = CH dans js/config.js */
+  width: 176px;   /* = CW in js/config.js */
+  height: 88px;   /* = CH in js/config.js */
   padding: 9px 11px 8px;
   display: flex;
   flex-direction: column;
@@ -186,7 +186,7 @@
   gap: 1px;
   text-align: left;
   font: inherit;
-  font-size: 15px; /* fiche à taille fixe : la taille du texte de l'interface ne s'y applique pas */
+  font-size: 15px; /* fixed-size card: the interface text size doesn't apply to it */
   color: var(--ink);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -198,7 +198,7 @@
     border-color .15s;
 }
 
-/* Contour selon le sexe : bleu pour un homme, rose pâle pour une femme */
+/* Outline by sex: blue for a man, pale pink for a woman */
 .card.is-M {
   border-color: var(--male);
 }
@@ -243,11 +243,11 @@
   text-overflow: ellipsis;
 }
 
-/* Nom de jeune fille, sur sa propre ligne sous le nom */
+/* Maiden name, on its own line under the name */
 .card .s.m {
   font-size: 11px;
   letter-spacing: .06em;
-  text-transform: none; /* « née » en minuscules, le nom déjà en capitales */
+  text-transform: none; /* "née" in lowercase, the name already in capitals */
   color: var(--muted);
 }
 
@@ -269,7 +269,7 @@
   vertical-align: -1px;
 }
 
-/* Conjoint d'un ancêtre, hors lignée directe (sans numéro Sosa) */
+/* Spouse of an ancestor, outside the direct line (no Sosa number) */
 .card.is-partner {
   background: var(--paper);
 }
@@ -278,7 +278,7 @@
   font-weight: 600;
 }
 
-/* Emplacement vide : « Ajouter le père », « Ajouter un enfant »… */
+/* Empty slot: "Add the father", "Add a child"… */
 .card.ph {
   border: 1.5px dashed var(--edge);
   background: var(--paper);
@@ -316,7 +316,7 @@
   }
 }
 
-/* État vide ou chargement */
+/* Empty or loading state */
 .empty {
   position: absolute;
   inset: 0;
@@ -356,7 +356,7 @@
   }
 }
 
-/* Téléphone : barre d'outils et légende sur une seule ligne, qu'on fait défiler du doigt */
+/* Phone: toolbar and legend on a single row, swiped sideways */
 @media (max-width: 600px) {
   .stage-bar,
   .legend {

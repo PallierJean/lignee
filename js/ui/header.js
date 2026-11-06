@@ -1,4 +1,4 @@
-/** En-tête (arbre ouvert, résumé, état de l'enregistrement), bandeau et barre d'outils de l'arbre. */
+/** Header (open tree, summary, save status), banner and tree toolbar. */
 import { renderRepoBanner } from './repo-link.js';
 import { S, isLoading, treeName } from '../state.js';
 import { $ } from '../utils/dom.js';
@@ -7,16 +7,16 @@ import { P, surname, ancestorDepth, descendantDepth } from '../model/people.js';
 import { t } from '../i18n.js';
 import { canUndo, canRedo } from '../services/history.js';
 
-const UP_MIN = 2; // au moins : les emplacements « ajouter un parent » vont jusque-là
-const DOWN_MIN = 1; // au moins : l'emplacement « ajouter un enfant » est à la première génération
-const SHOWN = 4; // valeurs visibles à la fois
+const UP_MIN = 2; // at least: the "add a parent" slots go up to there
+const DOWN_MIN = 1; // at least: the "add a child" slot is in the first generation
+const SHOWN = 4; // values visible at once
 
 /**
- * Boutons de 0 à `max` pour le réglage `kind` ('up' ou 'down'), valeur choisie `value`.
- * Fenêtre glissante : part de 0 et se décale quand le choix atteint son bord ; « … » avance ou recule d'un cran.
+ * Buttons from 0 to `max` for setting `kind` ('up' or 'down'), chosen value `value`.
+ * Sliding window: starts at 0 and shifts when the choice reaches its edge; "…" moves one step forward or back.
  */
 function generationButtons(kind, value, max, off) {
-  const cur = Math.min(value, max); // le réglage reste tel quel : il resservira dans un arbre plus profond
+  const cur = Math.min(value, max); // the setting stays as is: it will be used again in a deeper tree
   const count = Math.min(SHOWN, max + 1);
   const first = Math.min(Math.max(cur - count + 2, 0), max - count + 1);
   const last = first + count - 1;
@@ -28,10 +28,10 @@ function generationButtons(kind, value, max, off) {
   return shown.join('');
 }
 
-/** Boutons du nombre de générations et niveau de zoom. */
+/** Generation-count buttons and zoom level. */
 export function renderControls() {
   const off = S.full || S.fan ? ' disabled' : '';
-  // Jusqu'au plus lointain ancêtre et au dernier descendant de la personne choisie
+  // Up to the farthest ancestor and the last descendant of the chosen person
   const focus = P(S.focus) ? S.focus : null;
   $('#segUp').innerHTML = generationButtons('up', S.up, Math.max(focus ? ancestorDepth(focus) : 0, UP_MIN), off);
   $('#segDown').innerHTML = generationButtons('down', S.down, Math.max(focus ? descendantDepth(focus) : 0, DOWN_MIN), off);

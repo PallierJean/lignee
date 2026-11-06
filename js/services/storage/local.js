@@ -1,6 +1,6 @@
 /**
- * Mode « local » : stockage du navigateur (localStorage), quand l'application
- * est ouverte ailleurs (par exemple avec python3 -m http.server).
+ * "Local" mode: browser storage (localStorage), when the application
+ * is opened elsewhere (for example with python3 -m http.server).
  */
 import { S } from '../../state.js';
 import { TREES_KEY, TREE_KEY, DEFAULT_TREE, EXAMPLE_FILE } from '../../config.js';
@@ -14,17 +14,17 @@ function readJSON(key) {
     const raw = localStorage.getItem(key);
     return raw ? JSON.parse(raw) : null;
   } catch (e) {
-    return null; // données illisibles ou stockage bloqué
+    return null; // unreadable data or blocked storage
   }
 }
 
-/** Arbres gardés dans ce navigateur : [{ id, name, createdAt }]. */
+/** Trees kept in this browser: [{ id, name, createdAt }]. */
 export function readLocalTrees() {
   const list = readJSON(TREES_KEY);
   return Array.isArray(list) ? list.filter((t) => t && typeof t.id === 'string') : [];
 }
 
-/** Données d'un arbre du navigateur, en Map. */
+/** Data of a browser tree, as Maps. */
 export function readLocalData(id) {
   const data = readJSON(TREE_KEY + id) || {};
   return {
@@ -39,7 +39,7 @@ function writeLocalTrees() {
   ));
 }
 
-/** Première visite, aucun arbre dans ce navigateur : y range la famille d'exemple. */
+/** First visit, no tree in this browser: stores the example family there. */
 export async function seedExample() {
   if (readLocalTrees().length) return;
   try {
@@ -50,7 +50,7 @@ export async function seedExample() {
     localStorage.setItem(TREE_KEY + DEFAULT_TREE, JSON.stringify({ people: byId(people), unions: byId(unions) }));
     localStorage.setItem(TREES_KEY, JSON.stringify([{ id: DEFAULT_TREE, name, createdAt: 0 }]));
   } catch (e) {
-    /* fichier absent ou stockage bloqué : l'application démarre avec un arbre vide */
+    /* file missing or storage blocked: the application starts with an empty tree */
   }
 }
 
@@ -70,7 +70,7 @@ export function loadLocalTree() {
   S.unions = data.unions;
 }
 
-/** Enregistre l'arbre ouvert dans le navigateur. */
+/** Saves the open tree in the browser. */
 export function saveBrowserTree() {
   try {
     localStorage.setItem(TREE_KEY + S.tree, JSON.stringify({
@@ -87,7 +87,7 @@ export function deleteBrowserTree(id) {
   try {
     localStorage.removeItem(TREE_KEY + id);
   } catch (e) {
-    /* stockage bloqué */
+    /* storage blocked */
   }
 }
 

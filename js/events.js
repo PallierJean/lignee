@@ -1,6 +1,6 @@
 /**
- * Écoute des événements de la page.
- * Chaque élément cliquable porte un attribut data-act qui désigne l'action à lancer.
+ * Page event listeners.
+ * Each clickable element carries a data-act attribute naming the action to run.
  */
 import { S } from './state.js';
 import { avatarOf, birthSurname, DATED_SITUATIONS, situationOfUnion } from './model/people.js';
@@ -9,10 +9,10 @@ import * as A from './actions.js';
 import {
   openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo,
 } from './ui/transfer.js';
-import { renderRegistre } from './ui/registre.js';
+import { renderRegister } from './ui/register.js';
 import {
   startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail,
-} from './ui/analyse.js';
+} from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
   openMedia, closeMedia, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption,
@@ -29,16 +29,16 @@ import {
   openTrees, closeTrees, switchTree, newTree, askTree, cancelTreeEdit, submitRename, confirmDeleteTree,
 } from './ui/trees.js';
 
-/** Vrai si l'utilisateur est en train d'écrire dans un champ. */
+/** True if the user is typing in a field. */
 const typing = (el) => !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
 
-/** Formulaire sans photo : affiche l'avatar du sexe choisi. */
+/** Form with no photo: shows the avatar of the chosen sex. */
 function updateFormAvatar(sex) {
   const img = document.getElementById('f-avatar');
   if (img) img.src = avatarOf(sex);
 }
 
-/** Formulaire : accorde les libellés de la situation (« Marié », « Mariée ») au sexe choisi. */
+/** Form: inflects the situation labels ("Marié", "Mariée") for the chosen sex. */
 function updateSituationLabels(sex) {
   const select = document.getElementById('f-situ');
   if (!select) return;
@@ -46,23 +46,23 @@ function updateSituationLabels(sex) {
   select.innerHTML = situationOptions({ situation, sex });
 }
 
-/** Formulaire : indice de la dernière union, celle qui donne la situation (-1 s'il n'y en a pas). */
+/** Form: index of the last union, the one that sets the situation (-1 if there is none). */
 const lastUnionRow = () => (S.edit ? S.edit.unions.findLastIndex((u) => !u.removed) : -1);
 
-/** Formulaire : la cause ne s'affiche que pour un remariage, le conjoint décédé que pour un veuvage. */
+/** Form: the cause only shows for a remarriage, the deceased spouse only for a widowhood. */
 function updateUnionCause(i) {
   const remarried = document.getElementById('u-type-' + i).value === 'remarried';
   document.getElementById('u-cause-row-' + i).hidden = !remarried;
   document.getElementById('u-former-row-' + i).hidden = document.getElementById('u-cause-' + i).value !== 'widowed';
 }
 
-/** Formulaire : la situation suit la dernière union. */
+/** Form: the situation follows the last union. */
 function situationFromUnion(i) {
   if (i !== lastUnionRow()) return;
   const select = document.getElementById('f-situ');
   const type = document.getElementById('u-type-' + i).value;
   let end = document.getElementById('u-end-' + i).value;
-  // Union close par le décès de la personne elle-même : elle n'est pas veuve
+  // Union ended by the person's own death: they are not widowed
   if (end === 'death' && (document.getElementById('f-ddate').value.trim() || document.getElementById('f-deceased').checked)) end = '';
   const code = situationOfUnion(type, end);
   if (!code || (code === 'married' && select.value === 'remarried' && type !== 'remarried' && !end)) return;
@@ -71,7 +71,7 @@ function situationFromUnion(i) {
   document.getElementById('f-situdate').value = DATED_SITUATIONS.has(code) ? document.getElementById('u-date-' + i).value : '';
 }
 
-/** Formulaire : la dernière union suit la situation. */
+/** Form: the last union follows the situation. */
 function unionFromSituation(code) {
   const i = lastUnionRow();
   if (i < 0) return;
@@ -87,15 +87,15 @@ function unionFromSituation(code) {
 }
 
 /**
- * Formulaire : déduit le nom de naissance du nom du père (ou de la mère).
- * Il remplit le nom de famille quand les parents changent, et le nom de jeune fille d'une femme.
+ * Form: derives the birth surname from the father's (or the mother's).
+ * It fills the surname when the parents change, and a woman's maiden name.
  */
 function updateNames(parentsChanged) {
   const father = document.getElementById('f-father');
   if (!father) return;
   const auto = birthSurname(father.value, document.getElementById('f-mother').value);
   const fill = (input) => {
-    // On ne remplace pas un nom saisi à la main
+    // A surname typed by hand is not replaced
     const v = input.value.trim().toUpperCase();
     if (v && v !== (input.dataset.auto || '').toUpperCase()) return;
     input.value = auto;
@@ -106,7 +106,7 @@ function updateNames(parentsChanged) {
   if (sex && sex.value === 'F') fill(document.getElementById('f-maiden'));
 }
 
-/** Agrandit la photo d'une fiche au centre de l'écran. */
+/** Enlarges a record's photo in the middle of the screen. */
 function openPhotoZoom(img) {
   const big = document.getElementById('photoZoomImg');
   big.src = img.src;
@@ -118,22 +118,22 @@ function closePhotoZoom() {
   document.getElementById('photoZoom').hidden = true;
 }
 
-/** Désactive le bouton pendant une action longue. */
+/** Disables the button during a long action. */
 const once = (fn) => (el) => {
   el.disabled = true;
   return fn(el);
 };
 
 const CLICK_ACTIONS = {
-  // Photo de la fiche
+  // Record photo
   'photo-zoom': (el) => openPhotoZoom(el),
 
-  // Fiche en fenêtre
-  // Dans la roue, la fiche attend un instant : un double-clic recentre la roue (ui/fan-hover.js)
+  // Record dialog
+  // In the fan chart, the record waits a moment: a double-click recentres the fan (ui/fan-hover.js)
   'person-open': (el) => (el.closest('#fan') ? fanClick(el.dataset.id) : openPersonDlg(el.dataset.id)),
   'person-close': () => closePersonDlg(),
 
-  // Roue d'ascendance : revenir à la personne quittée (descendre : liste #fanKids, voir 'change')
+  // Fan chart: go back to the person left (going down: #fanKids list, see 'change')
   'fan-back': () => {
     const id = fanBack();
     if (id) A.setFocus(id);
@@ -143,13 +143,13 @@ const CLICK_ACTIONS = {
     A.setFocus(el.dataset.id);
   },
   'person-edit': (el) => {
-    if (S.edit) return A.setFocus(el.dataset.id); // affiche le message « Enregistrez ou annulez… »
+    if (S.edit) return A.setFocus(el.dataset.id); // shows the "Save or cancel…" message
     closePersonDlg();
     A.setFocus(el.dataset.id);
     A.startEdit(el.dataset.id);
   },
 
-  // Arbre et navigation
+  // Tree and navigation
   focus: (el) => A.setFocus(el.dataset.id, !!el.closest('#reglist')),
   tab: (el) => A.setTab(el.dataset.tab),
   up: (el) => A.setGenerations('up', +el.dataset.n),
@@ -164,8 +164,8 @@ const CLICK_ACTIONS = {
   undo: () => A.undo(),
   redo: () => A.redo(),
 
-  // Analyse
-  'analyse-view': (el) => A.setAnalyseView(el.dataset.view),
+  // Analysis
+  'analysis-view': (el) => A.setAnalysisView(el.dataset.view),
   'cal-month': (el) => A.shiftMonth(+el.dataset.d),
   'kin-open': (el) => A.openKin(el.dataset.id),
   'kin-show': () => A.showKin(),
@@ -189,7 +189,7 @@ const CLICK_ACTIONS = {
   'insee-ignore': (el) => A.ignoreInseeOf(el.dataset.id),
   'insee-confirm': (el) => A.confirmInseeOf(el.dataset.id),
 
-  // Galerie
+  // Gallery
   'media-open': (el) => openMedia(el.dataset.owner, el.dataset.id),
   'media-close': () => closeMedia(),
   'media-person': (el) => {
@@ -203,7 +203,7 @@ const CLICK_ACTIONS = {
   'caption-save': once(() => saveCaption()),
   'tag-remove': (el) => removeTag(+el.dataset.i),
 
-  // Collection d'arbres
+  // Tree collection
   'trees-open': () => openTrees(),
   'trees-close': () => closeTrees(),
   'tree-open': (el) => switchTree(el.dataset.id),
@@ -212,7 +212,7 @@ const CLICK_ACTIONS = {
   'tree-cancel': () => cancelTreeEdit(),
   'tree-delete-yes': once((el) => confirmDeleteTree(el.dataset.id)),
 
-  // Impression
+  // Printing
   'print-open': () => openPrint(),
   'print-close': () => closePrint(),
   'print-go': () => printTree(),
@@ -221,12 +221,12 @@ const CLICK_ACTIONS = {
     printFamilyBook(el.dataset.id);
   },
 
-  // Recherche rapide
+  // Quick search
   'find-pick': (el) => pickFind(el.dataset.id, (id) => A.setFocus(id, true)),
-  'find-all': () => showAllFind(() => A.setTab('registre')),
+  'find-all': () => showAllFind(() => A.setTab('register')),
   'spouse-pick': (el) => A.addDraftUnion(el.dataset.id),
 
-  // Ajout et modification
+  // Adding and editing
   new: () => A.startNew(),
   add: (el) => A.startAdd(el.dataset.rel, el.dataset.of, el.dataset.with),
   edit: () => A.startEdit(S.focus),
@@ -240,11 +240,11 @@ const CLICK_ACTIONS = {
   'src-remove': (el) => A.removeDraftSource(+el.dataset.i),
   'src-photo-remove': (el) => A.removeDraftSourcePhoto(+el.dataset.i),
 
-  // Suppression
+  // Deletion
   'delete-ask': (el) => A.confirmDelete(true, el.dataset.id || S.focus),
   'delete-no': () => A.confirmDelete(false),
   'delete-yes': once((el) => A.doDelete(el.dataset.id || S.focus)),
-  // Formulaire : la confirmation s'affiche sans redessiner la saisie en cours
+  // Form: the confirmation shows without redrawing the input in progress
   'form-delete-ask': (el) => {
     document.getElementById('f-delconfirm').hidden = false;
     el.hidden = true;
@@ -254,20 +254,20 @@ const CLICK_ACTIONS = {
     document.querySelector('.f-del').hidden = false;
   },
 
-  // Famille d'exemple
+  // Example family
   'banner-close': (el) => A.closeBanner(el.dataset.kind),
   'ex-ask': () => A.confirmRemoveExamples(true),
   'ex-no': () => A.confirmRemoveExamples(false),
   'ex-yes': once(() => A.removeExamples()),
 
-  // Importer, exporter
+  // Import, export
   'import-open': () => openTransfer('import'),
   'export-open': () => openTransfer('export'),
   'transfer-close': () => closeTransfer(),
   'export-ged': () => exportGedcom(),
   'export-json': () => exportBackup(),
   'export-csv': () => exportCsv(),
-  'registre-csv': () => {
+  'register-csv': () => {
     openTransfer('export');
     exportCsv();
   },
@@ -288,26 +288,26 @@ const CLICK_ACTIONS = {
 };
 
 export function bindEvents() {
-  // Un clic dans les suggestions ne doit pas retirer le curseur du champ de recherche
+  // A click in the suggestions must not take the cursor out of the search field
   document.getElementById('findList').addEventListener('mousedown', (ev) => ev.preventDefault());
   document.getElementById('find').addEventListener('focus', onFindInput);
   document.getElementById('find').addEventListener('blur', () => closeFind(false));
 
-  // Champ d'ajout d'une union : le formulaire est recréé à chaque rendu, d'où la délégation
+  // Add-a-union field: the form is recreated on every render, hence the delegation
   document.addEventListener('mousedown', (ev) => {
     if (ev.target.closest('#f-spouseList')) ev.preventDefault();
   });
-  // Visionneuse : survoler un nom identifié éclaire la personne sur la photo
+  // Viewer: hovering an identified name lights up the person on the photo
   document.addEventListener('mouseover', (ev) => highlightTag(ev.target, true));
   document.addEventListener('mouseout', (ev) => highlightTag(ev.target, false));
-  // Roue d'ascendance : étiquette et chemin au survol, double-clic pour recentrer
+  // Fan chart: label and path on hover, double-click to recentre
   document.addEventListener('mouseover', (ev) => fanHover(ev.target, true, ev));
   document.addEventListener('mouseout', (ev) => fanHover(ev.target, false, ev));
   document.addEventListener('mousemove', fanMove);
-  // Carte des lieux : molette pour zoomer, glisser pour se déplacer
+  // Places map: wheel to zoom, drag to move
   document.addEventListener('wheel', mapWheel, { passive: false });
   for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, mapDrag);
-  // Recadrage d'une photo : glisser, molette, curseur de zoom
+  // Photo crop: drag, wheel, zoom slider
   document.addEventListener('wheel', cropWheel, { passive: false });
   for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, cropDrag);
   document.addEventListener('dblclick', (ev) => {
@@ -326,15 +326,15 @@ export function bindEvents() {
   });
 
   document.addEventListener('click', (ev) => {
-    // Menu Affichage : un clic ailleurs le ferme
+    // Display menu: a click elsewhere closes it
     const look = document.getElementById('appearance');
     if (look.open && !look.contains(ev.target)) look.open = false;
-    // Photo agrandie : n'importe quel clic la ferme
+    // Enlarged photo: any click closes it
     if (!document.getElementById('photoZoom').hidden) {
       closePhotoZoom();
       return;
     }
-    // Clic sur le fond d'une fenêtre : on la ferme
+    // Click on a dialog's backdrop: it closes
     if (ev.target.id === 'transfer') {
       closeTransfer();
       return;
@@ -390,7 +390,7 @@ export function bindEvents() {
     if (el.id === 'f-media' && el.files.length) A.addDraftMedia([...el.files]);
     if (el.id === 'tagPerson' && el.value) addTag(el.value);
     if (el.id === 'kinA' || el.id === 'kinB') A.setKin(el.id, el.value);
-    // Ville ou pays changés : le département suit la ville, en France seulement
+    // City or country changed: the department follows the city, in France only
     if (el.id && (el.id.endsWith('-city') || el.id.endsWith('-country'))) departmentFromCity(el.id.replace(/-(city|country)$/, ''));
   });
 
@@ -404,7 +404,7 @@ export function bindEvents() {
     }
     if (ev.target.id === 'q') {
       S.query = ev.target.value;
-      renderRegistre();
+      renderRegister();
     }
   });
 
@@ -434,13 +434,13 @@ export function bindEvents() {
         return;
       }
     }
-    // Roue d'ascendance : les secteurs SVG ne sont pas des boutons natifs
+    // Fan chart: SVG sectors are not native buttons
     if (ev.key === 'Enter' && ev.target.closest && ev.target.closest('.fan-s')) {
       openPersonDlg(ev.target.closest('.fan-s').dataset.id);
       return;
     }
-    // Ctrl+Z / Ctrl+Maj+Z / Ctrl+Y : dans un champ, c'est l'annulation de la saisie
-    const key = String(ev.key || '').toLowerCase(); // pas de touche sur un remplissage automatique
+    // Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y: in a field, it's the input's own undo
+    const key = String(ev.key || '').toLowerCase(); // no key on an autofill
     const dialogOpen = ['transfer', 'printDlg', 'treesDlg', 'personDlg', 'mediaDlg', 'photoZoom'].some((id) => !document.getElementById(id).hidden);
     if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && (key === 'z' || key === 'y') && !typing(ev.target)
       && S.canWrite && !S.edit && !dialogOpen) {
@@ -449,13 +449,13 @@ export function bindEvents() {
       else A.undo();
       return;
     }
-    // Ctrl+B (Cmd+B sur Mac) : panneau, comme la barre latérale de VS Code
+    // Ctrl+B (Cmd+B on Mac): panel, like the VS Code side bar
     if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && key === 'b' && !typing(ev.target) && !dialogOpen) {
       ev.preventDefault();
       A.togglePanel();
       return;
     }
-    // Raccourcis : « / » ou Ctrl+K (Cmd+K sur Mac) pour rechercher
+    // Shortcuts: "/" or Ctrl+K (Cmd+K on Mac) to search
     const shortcut = (ev.key === '/' && !typing(ev.target) && !ev.ctrlKey && !ev.metaKey && !ev.altKey)
       || (key === 'k' && (ev.ctrlKey || ev.metaKey));
     if (shortcut && !dialogOpen) {

@@ -1,7 +1,7 @@
 /**
- * Sauvegarde Lignée (.json) : copie complète de l'arbre, restaurable à l'identique.
- * Format : { format: 'lignee', version: 1, name, exportedAt, people: [{id, ...}], unions: [{id, ...}] }
- * (name : nom de l'arbre, facultatif)
+ * Lignée backup (.json): full copy of the tree, restorable as is.
+ * Format: { format: 'lignee', version: 1, name, exportedAt, people: [{id, ...}], unions: [{id, ...}] }
+ * (name: tree name, optional)
  */
 import { S, treeName } from '../state.js';
 import { t } from '../i18n.js';
@@ -9,7 +9,7 @@ import { t } from '../i18n.js';
 const SAFE_ID = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
 const isSafeId = (s) => typeof s === 'string' && SAFE_ID.test(s) && s !== '.' && s !== '..';
 
-/** Sauvegarde de l'arbre ouvert, ou de l'arbre `src` ({ name, createdAt, people, unions } en Map). */
+/** Backup of the open tree, or of tree `src` ({ name, createdAt, people, unions } as Maps). */
 export function buildBackup(src) {
   const t = src || {
     name: treeName(),
@@ -28,7 +28,7 @@ export function buildBackup(src) {
   }, null, 2);
 }
 
-/** Lit une sauvegarde et renvoie { name, people: [{id, data}], unions: [{id, data}] }. */
+/** Reads a backup and returns { name, people: [{id, data}], unions: [{id, data}] }. */
 export function parseBackup(text) {
   const o = JSON.parse(text);
   if (!o || o.format !== 'lignee') throw new Error(t('backup.invalid'));

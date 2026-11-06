@@ -1,4 +1,4 @@
-/** Fiche d'une personne en lecture seule, ouverte au centre de l'écran par un clic dans l'arbre. */
+/** Read-only record of a person, opened in the middle of the screen by a click in the tree. */
 import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { longDate, yearOf } from '../utils/dates.js';
@@ -8,19 +8,19 @@ import {
   partnersOf, childrenOf, siblingsOf, situationText, eventsOf, eventLabel, sourcesOf, mediaOf, unionTypeLabel, unionEndText,
 } from '../model/people.js';
 import { occupationLabel } from '../model/occupations.js';
-import { sourcesHTML, mediaGrid } from './fiche.js';
+import { sourcesHTML, mediaGrid } from './record.js';
 
-let opener = null; // élément à qui rendre la main à la fermeture
+let opener = null; // element that gets focus back on close
 
 const sexClass = (p) => (p.sex === 'M' || p.sex === 'F' ? 'is-' + p.sex : '');
 
-/** Numéro Sosa affiché dans l'arbre, s'il y en a un. */
+/** Sosa number shown in the tree, if any. */
 function sosaOf(id) {
   const n = S.lastLayout && S.lastLayout.nodes.find((x) => x.id === id && x.sosa);
   return n ? n.sosa : null;
 }
 
-/** Bouton vers un proche : sa fiche remplace la fiche affichée. */
+/** Button to a relative: their record replaces the one shown. */
 function rel(id, sub) {
   const q = P(id);
   if (!q) return '';
@@ -35,7 +35,7 @@ function group(title, items, empty) {
     + (items.length ? items.join('') : `<p class="unknown">${empty}</p>`) + '</div></div>';
 }
 
-/** Ligne de la frise : symbole, date, événement et lieu. */
+/** Timeline row: symbol, date, event and place. */
 function event(sym, date, what, place) {
   return `<li><span class="pd-sym" aria-hidden="true">${sym}</span>`
     + `<span class="pd-d">${date ? esc(longDate(date)) : '—'}</span>`
@@ -130,7 +130,7 @@ function personHTML(id) {
     </footer>`;
 }
 
-/** Redessine la fiche ouverte (après un changement des données), ou la ferme si la personne n'existe plus. */
+/** Redraws the open record (after a data change), or closes it if the person no longer exists. */
 export function renderPersonDlg() {
   if (!S.popup) return;
   if (!S.people.has(S.popup)) {

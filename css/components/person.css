@@ -1,5 +1,5 @@
 /* ==========================================================
-   Fiche d'une personne en fenêtre (lecture seule)
+   Person record in a dialog (read-only)
    ========================================================== */
 
 .overlay.person-dlg {
@@ -43,7 +43,7 @@
   color: var(--ink);
 }
 
-/* En-tête : portrait, nom, années */
+/* Header: portrait, name, years */
 .pd-head {
   display: flex;
   gap: 14px;
@@ -56,7 +56,7 @@
   width: 64px;
   height: 78px;
   object-fit: cover;
-  object-position: 50% 18%; /* portrait : le visage est en haut */
+  object-position: 50% 18%; /* portrait: the face is at the top */
   border-radius: 5px;
   border: 2px solid var(--sexc);
   background: var(--paper);
@@ -120,7 +120,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Corps défilant */
+/* Scrolling body */
 .pd-body {
   overflow: auto;
   padding: 0 18px 16px;
@@ -143,7 +143,7 @@
   color: var(--edge);
 }
 
-/* Frise : naissance, unions, décès */
+/* Timeline: birth, unions, death */
 .pd-life {
   list-style: none;
   margin: 0;
@@ -173,7 +173,7 @@
   font-family: var(--f-mono);
   font-size: .7812rem;
   min-width: 0;
-  overflow-wrap: anywhere; /* date saisie en texte libre trop longue : passe à la ligne */
+  overflow-wrap: anywhere; /* free-text date too long: wraps */
   font-variant-numeric: tabular-nums;
 }
 
@@ -188,7 +188,7 @@
   margin-left: 6px;
 }
 
-/* Famille : quatre groupes sur deux colonnes */
+/* Family: four groups in two columns */
 .pd-family {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -265,7 +265,7 @@
   white-space: pre-line;
 }
 
-/* Pied : date de modification et actions */
+/* Footer: modification date and actions */
 .pd-foot {
   display: flex;
   flex-wrap: wrap;
@@ -283,7 +283,7 @@
   color: var(--muted);
 }
 
-/* Téléphone : la fiche monte du bas de l'écran, une seule colonne */
+/* Phone: the record slides up from the bottom of the screen, a single column */
 @media (max-width: 560px) {
   .overlay.person-dlg {
     align-items: flex-end;

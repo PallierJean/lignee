@@ -1,5 +1,5 @@
 /* ==========================================================
-   Onglet Analyse, sources et événements de la fiche
+   Analysis tab, sources and events of the record
    ========================================================== */
 
 .seg.an-views {
@@ -32,7 +32,7 @@
   margin-top: 4px;
 }
 
-/* Résultat du lien de parenté */
+/* Kinship result */
 .kin-result {
   margin-top: 16px;
   padding: 14px;
@@ -79,7 +79,7 @@
   border-left-color: var(--line);
 }
 
-/* Écarts avec l'acte INSEE : une ligne par information, « Reporter » au bout */
+/* Differences with the INSEE certificate: one row per item, "Report" at the end */
 .ins-diffs {
   margin: 6px 0 4px;
   padding-left: 18px;
@@ -100,7 +100,7 @@
   margin-top: 12px;
 }
 
-/* Vue INSEE hors du serveur local : fonctionnalité de la version locale */
+/* INSEE view outside the local server: feature of the local version */
 .ins-local p {
   margin: 0 0 8px;
 }
@@ -110,7 +110,7 @@
   padding-left: 20px;
 }
 
-/* Connexion à matchID : adresse, puis code reçu par e-mail */
+/* matchID sign-in: address, then code received by e-mail */
 .ins-login.warn {
   border-left: 3px solid var(--warn);
   padding-left: 10px;
@@ -136,7 +136,7 @@
   margin-top: 4px;
 }
 
-/* Classements et complétude : barres fines d'une seule couleur */
+/* Rankings and completeness: thin single-colour bars */
 .bars {
   display: flex;
   flex-direction: column;
@@ -179,7 +179,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Éphémérides */
+/* Anniversaries */
 .cal-head {
   display: flex;
   align-items: center;
@@ -213,7 +213,7 @@
   flex: none;
 }
 
-/* Sources d'une fiche */
+/* A record's sources */
 .srcs {
   list-style: none;
   margin: 0;
@@ -269,7 +269,7 @@
   font-size: .8125rem;
 }
 
-.fiche-tools {
+.record-tools {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 16px;
@@ -280,7 +280,7 @@
   margin-top: 10px;
 }
 
-/* Lien de parenté surligné dans l'arbre */
+/* Kinship link highlighted in the tree */
 .tree.has-path .card:not(.on-path) {
   opacity: .35;
 }
@@ -294,7 +294,7 @@
   stroke-width: 3;
 }
 
-/* Huit vues : deux rangées égales */
+/* Eight views: two equal rows */
 .seg.an-views {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -314,7 +314,7 @@
   padding: 5px 12px;
 }
 
-/* Doublons */
+/* Duplicates */
 .dup-names {
   display: flex;
   flex-direction: column;
@@ -333,7 +333,7 @@
   margin: 4px 0 8px;
 }
 
-/* Frise */
+/* Timeline */
 .tls {
   list-style: none;
   margin: 12px 0 0;
@@ -383,7 +383,7 @@
   font-style: normal;
 }
 
-/* Carte */
+/* Map */
 .map {
   display: block;
   width: 100%;
@@ -417,7 +417,7 @@
   cursor: pointer;
 }
 
-/* Carte explorable (ui/places.js) : glisser pour se déplacer, clic sur une commune */
+/* Explorable map (ui/places.js): drag to move, click a commune */
 .map-tools {
   margin-top: 4px;
 }
@@ -475,9 +475,9 @@
   font-size: .8438rem;
 }
 
-/* Roue d'ascendance */
+/* Fan chart */
 .fan {
-  position: relative; /* au-dessus des empreintes du thème Maraudeur (ui/footprints.js) */
+  position: relative; /* above the Marauder theme's footprints (ui/footprints.js) */
   display: flex;
   justify-content: center;
   padding: 20px;
@@ -496,7 +496,7 @@
   cursor: pointer;
 }
 
-/* Couleurs du thème (voir paint dans tree/fan.js) */
+/* Theme colours (see paint in tree/fan.js) */
 .fan-text {
   fill: var(--ink);
 }
@@ -537,7 +537,7 @@
   stroke-width: 2.5;
 }
 
-/* Survol d'un ancêtre : son chemin jusqu'au centre reste net, le reste s'estompe (ui/fan-hover.js) */
+/* Hovering an ancestor: its path to the centre stays sharp, the rest fades (ui/fan-hover.js) */
 .fan-s,
 .fan-empty {
   transition: opacity .15s;
@@ -553,7 +553,7 @@
   stroke-width: 2.5;
 }
 
-/* Barre de la roue, au-dessus d'elle, collée à gauche de la zone visible */
+/* Fan chart bar, above it, stuck to the left of the visible area */
 .fan-nav {
   position: sticky;
   left: 0;
@@ -579,7 +579,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
 }
 
-/* Place pour la flèche de la liste « Descendre vers… » */
+/* Room for the arrow of the "Go down to…" list */
 .fan-nav select.btn {
   padding-right: 30px;
 }
@@ -592,7 +592,7 @@
   font-size: .7812rem;
 }
 
-/* Étiquette d'un ancêtre, près de la souris */
+/* An ancestor's label, near the mouse */
 .fan-tip {
   position: fixed;
   z-index: 20;
@@ -631,7 +631,7 @@
   color: rgba(255, 255, 255, .6);
 }
 
-/* Galerie */
+/* Gallery */
 .meds {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
@@ -653,7 +653,7 @@
   border-color: var(--accent);
 }
 
-/* Vignette : nombre de personnes identifiées, dans le coin */
+/* Thumbnail: number of people identified, in the corner */
 .med-n {
   position: absolute;
   right: 4px;
@@ -707,7 +707,7 @@
   margin: 0 0 8px;
 }
 
-/* Légende de la photo, modifiable sur place */
+/* Photo caption, editable in place */
 .media-text .link {
   margin-left: 6px;
 }
@@ -728,8 +728,8 @@
   border-radius: 4px;
 }
 
-/* Personne identifiée : repère invisible sur le visage ; au survol (du visage ou du nom), le visage
-   s'éclaire, le reste de la photo s'assombrit et une étiquette donne le nom et les années */
+/* Identified person: invisible marker on the face; on hover (of the face or the name), the face
+   lights up, the rest of the photo darkens and a label gives the name and years */
 .media-pic {
   overflow: hidden;
   border-radius: 4px;
@@ -781,7 +781,7 @@
   pointer-events: none;
 }
 
-/* Petite pointe vers le visage, même quand l'étiquette glisse près d'un bord (--dx, voir fitLabel) */
+/* Small tip towards the face, even when the label slides near an edge (--dx, see fitLabel) */
 .tag-name::before {
   content: '';
   position: absolute;
@@ -816,7 +816,7 @@
   transform: translate(calc(-50% + var(--dx, 0px)), 0);
 }
 
-/* Visage en bas de la photo : l'étiquette au-dessus */
+/* Face at the bottom of the photo: the label above */
 .tag-pin.up .tag-name {
   top: auto;
   bottom: calc(100% + 10px);
@@ -829,7 +829,7 @@
   border-top-color: rgba(16, 24, 22, .78);
 }
 
-/* Repère en attente d'une personne : un point visible */
+/* Marker waiting for a person: a visible dot */
 .tag-pin.new {
   width: 24px;
   border-color: #fff;
@@ -866,12 +866,12 @@
   min-width: 0;
 }
 
-/* Fiches à l'écran : la rangée de la roue ne doit pas être comprimée */
+/* Records on screen: the fan chart row must not be squeezed */
 .canvas .fan svg text {
   pointer-events: none;
 }
 
-/* Lignée directe de la personne centrale */
+/* Direct line of the focus person */
 .card.is-line {
   border-color: var(--halo);
   box-shadow: 0 0 0 2px var(--halo), 0 0 14px 4px color-mix(in srgb, var(--halo) 45%, transparent);

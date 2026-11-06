@@ -1,15 +1,15 @@
-/** Éphémérides : naissances, unions et décès qui tombent un jour ou un mois donné. */
+/** Anniversaries: births, unions and deaths falling on a given day or month. */
 import { S } from '../state.js';
 import { dateParts } from '../utils/dates.js';
 import { partnersOf, DATED_SITUATIONS } from './people.js';
 
-/** Dates exactes (ni « vers », ni « avant », ni « après ») avec au moins le mois. */
+/** Exact dates (not "about", "before" or "after") with at least the month. */
 function parts(s) {
   const p = dateParts(s);
   return p && !p.q && p.m ? { y: p.y, m: p.m, d: p.d || null } : null;
 }
 
-/** Tous les anniversaires : [{ kind: 'birth'|'death'|'union', y, m, d, ids }]. */
+/** All anniversaries: [{ kind: 'birth'|'death'|'union', y, m, d, ids }]. */
 export function allDates() {
   const out = [];
   const add = (kind, date, ids) => {
@@ -19,7 +19,7 @@ export function allDates() {
   for (const [id, p] of S.people) {
     add('birth', p.birthDate, [id]);
     add('death', p.deathDate, [id]);
-    // Date de mariage sans union enregistrée (conjoint absent de l'arbre)
+    // Marriage date with no recorded union (spouse not in the tree)
     if (DATED_SITUATIONS.has(p.situation) && !partnersOf(id).some((x) => x.uid)) add('union', p.situationDate, [id]);
   }
   for (const u of S.unions.values()) {
@@ -30,10 +30,10 @@ export function allDates() {
 
 const byDay = (a, b) => (a.d || 99) - (b.d || 99) || a.y - b.y;
 
-/** Dates du mois `m` (1 à 12), par jour ; celles sans jour connu à la fin. */
+/** Dates in month `m` (1 to 12), by day; those with no known day at the end. */
 export const datesOfMonth = (m) => allDates().filter((x) => x.m === m).sort(byDay);
 
-/** Dates du jour. Un 29 février se fête le 28 les années non bissextiles. */
+/** Today's dates. A 29 February is celebrated on the 28th in non-leap years. */
 export function datesOfDay(now = new Date()) {
   const m = now.getMonth() + 1;
   const d = now.getDate();

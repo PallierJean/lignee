@@ -1,6 +1,6 @@
 /**
- * Apparence de l'interface : thème de couleur (attribut data-theme de <html>, voir css/tokens.css)
- * et taille du texte (attribut data-text, voir css/base.css).
+ * Interface appearance: colour theme (data-theme attribute on <html>, see css/tokens.css)
+ * and text size (data-text attribute, see css/base.css).
  */
 import { S } from '../state.js';
 import { $ } from '../utils/dom.js';
@@ -10,11 +10,11 @@ import { setRain } from './rain.js';
 import { setAmbient } from './ambient.js';
 
 /**
- * Thème de la saison à la date `d` : Noël du 1er décembre à l'Épiphanie, Halloween du 20 octobre
- * au 2 novembre, puis printemps, été et automne ; en plein hiver, le thème du système.
+ * Seasonal theme on date `d`: Christmas from 1 December to Epiphany, Halloween from 20 October
+ * to 2 November, then spring, summer and autumn; in midwinter, the system theme.
  */
 export function seasonTheme(d = new Date()) {
-  const md = (d.getMonth() + 1) * 100 + d.getDate(); // 1105 : 5 novembre
+  const md = (d.getMonth() + 1) * 100 + d.getDate(); // 1105: 5 November
   if (md >= 1201 || md <= 106) return 'noel';
   if (md >= 1020 && md <= 1102) return 'halloween';
   if (md >= 320 && md < 621) return 'printemps';
@@ -23,7 +23,7 @@ export function seasonTheme(d = new Date()) {
   return 'auto';
 }
 
-/** Applique le thème et la taille du texte choisis, et met les sélecteurs à jour. */
+/** Applies the chosen theme and text size, and updates the selectors. */
 export function applyTheme() {
   const root = document.documentElement.dataset;
   const theme = S.theme === 'season' ? seasonTheme() : S.theme;

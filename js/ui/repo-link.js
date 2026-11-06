@@ -1,6 +1,6 @@
 /**
- * Dépôt GitHub relié à l'arbre ouvert : bandeau et sauvegarde.
- * L'adresse du dépôt est retenue pour chaque arbre ; le jeton reste en mémoire, jamais enregistré.
+ * GitHub repository linked to the open tree: banner and save.
+ * The repository address is remembered per tree; the token stays in memory, never stored.
  */
 import { S, treeName } from '../state.js';
 import { REPO_KEY } from '../config.js';
@@ -15,7 +15,7 @@ function savedRepos() {
   try {
     return JSON.parse(localStorage.getItem(REPO_KEY)) || {};
   } catch (e) {
-    return {}; // données illisibles ou stockage bloqué
+    return {}; // unreadable data or blocked storage
   }
 }
 
@@ -23,11 +23,11 @@ function writeRepos(all) {
   try {
     localStorage.setItem(REPO_KEY, JSON.stringify(all));
   } catch (e) {
-    /* stockage bloqué : le lien dure jusqu'à la fermeture de la page */
+    /* storage blocked: the link lasts until the page is closed */
   }
 }
 
-/** Dépôt retenu pour l'arbre ouvert : { name, path, head }, ou null. */
+/** Repository remembered for the open tree: { name, path, head }, or null. */
 export const savedRepo = () => savedRepos()[S.tree] || null;
 
 const remember = (link) => writeRepos({ ...savedRepos(), [link.tree]: { name: link.name, path: link.path, head: link.repo.head } });
@@ -40,7 +40,7 @@ function setLink(repo, path, photos, mustConfirm) {
   remember(S.repoLink);
 }
 
-/** Relie l'arbre importé au dépôt. En lecture seule, rien de ce qui contient le jeton n'est gardé. */
+/** Links the imported tree to the repository. In read-only mode, nothing containing the token is kept. */
 export function linkRepo(repo, backup, photos) {
   if (repo.write) {
     setLink(repo, backup.path, photos, false);
@@ -49,20 +49,20 @@ export function linkRepo(repo, backup, photos) {
   S.repoLink = { tree: S.tree, name: repo.name, path: backup.path };
 }
 
-/** Fichiers de l'arbre ouvert dans ce dépôt : celui déjà suivi, celui qui porte son nom. */
+/** Files of the open tree in this repository: the one already tracked, the one bearing its name. */
 function treePaths(repo) {
   const known = savedRepo();
   const slug = norm(treeName()).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'arbre';
   return [known && known.name === repo.name ? known.path : '', `${slug}.json`];
 }
 
-/** Vrai si le dépôt contient déjà la sauvegarde de l'arbre ouvert. */
+/** True if the repository already holds the open tree's backup. */
 export const holdsTree = (repo) => repo.backups.some((b) => treePaths(repo).includes(b.path));
 
 /**
- * Relie l'arbre ouvert au dépôt, vide ou non. Reprend la sauvegarde déjà suivie, celle qui porte
- * le nom de l'arbre ou la seule du dépôt ; sinon un nouveau fichier, nommé d'après l'arbre.
- * Remplacer une sauvegarde qu'on n'a pas écrite soi-même demandera une confirmation.
+ * Links the open tree to the repository, empty or not. Resumes the backup already tracked, the one
+ * named after the tree or the only one in the repository; otherwise a new file, named after the tree.
+ * Replacing a backup you didn't write yourself will ask for confirmation.
  */
 export async function connectTree(repo) {
   const known = savedRepo();
@@ -115,7 +115,7 @@ export function confirmRepoSave(show) {
   renderRepoBanner();
 }
 
-/** Sauvegarde l'arbre ouvert dans le dépôt relié, après confirmation s'il faut remplacer une sauvegarde. */
+/** Saves the open tree to the linked repository, after confirmation if a backup must be replaced. */
 export async function saveRepo(confirmed) {
   const link = S.repoLink;
   if (!link || !link.repo || link.tree !== S.tree) return;
@@ -137,7 +137,7 @@ export async function saveRepo(confirmed) {
   renderRepoBanner();
 }
 
-/** Oublie le dépôt de l'arbre ouvert et, avec lui, le jeton. */
+/** Forgets the open tree's repository and, with it, the token. */
 export function forgetRepo() {
   if (S.repoLink && S.repoLink.tree === S.tree) S.repoLink = null;
   const { [S.tree]: dropped, ...others } = savedRepos();

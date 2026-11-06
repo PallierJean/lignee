@@ -1,9 +1,9 @@
-/** Fenêtres « Importer » et « Exporter » : GEDCOM, sauvegarde Lignée et dépôt GitHub. */
+/** "Import" and "Export" dialogs: GEDCOM, Lignée backup and GitHub repository. */
 import { S, services, treeName } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { pool, norm } from '../utils/helpers.js';
 import { mapOf, dbSet, saveLocal, storePhotos, buildPortableBackup, beginAction, commitAction, track } from '../services/storage.js';
-import { buildRegistreCsv } from '../services/csv.js';
+import { buildRegisterCsv } from '../services/csv.js';
 import { buildGedcom, parseGedcom } from '../services/gedcom.js';
 import { parseBackup } from '../services/backup.js';
 import { openRepo, attachPhotos } from '../services/github.js';
@@ -15,18 +15,18 @@ import { t } from '../i18n.js';
 
 const inClaude = () => !!(window.claude && window.claude.use);
 
-/** Début du nom des fichiers exportés, d'après le nom de l'arbre : « lignee-famille-dupont ». */
+/** Start of exported file names, from the tree name: "lignee-famille-dupont". */
 const fileBase = () => ['lignee', norm(treeName()).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')]
   .filter(Boolean).join('-');
 
-/* ---------- Ouverture / fermeture ---------- */
+/* ---------- Opening / closing ---------- */
 
-/* Dépôt GitHub en cours de lecture, quand il faut choisir entre plusieurs sauvegardes */
+/* GitHub repository being read, when a choice must be made between several backups */
 let openedRepo = null;
-/* Dépôt d'où vient l'import en attente : { repo, backup, photos } */
+/* Repository the pending import comes from: { repo, backup, photos } */
 let pendingRepo = null;
 
-/** Ouvre la fenêtre sur l'import ou l'export, jamais les deux à la fois. */
+/** Opens the dialog on import or export, never both at once. */
 export function openTransfer(mode) {
   $('#transfer').hidden = false;
   $('#trTitle').textContent = t(mode === 'import' ? 'btn.import' : 'btn.export');
@@ -49,13 +49,13 @@ export function openTransfer(mode) {
 export function closeTransfer() {
   $('#transfer').hidden = true;
   $('#repoToken').value = '';
-  openedRepo = null; // ils gardent le jeton pour lire les photos
+  openedRepo = null; // they keep the token to read the photos
   pendingRepo = null;
 }
 
 /* ---------- Export ---------- */
 
-/** Téléchargement direct (navigateur classique, hors claude.ai). */
+/** Direct download (regular browser, outside claude.ai). */
 function downloadBlob(filename, text, type) {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a');
@@ -68,10 +68,10 @@ function downloadBlob(filename, text, type) {
 }
 
 /**
- * Propose le fichier à l'utilisateur.
- * - Hors claude.ai : téléchargement direct.
- * - Dans claude.ai : service de téléchargement de la plateforme,
- *   sinon affichage du texte à copier.
+ * Offers the file to the user.
+ * - Outside claude.ai: direct download.
+ * - In claude.ai: the platform's download service,
+ *   otherwise the text is shown for copying.
  */
 async function saveFile({ filename, standaloneName = filename, type, text, hint, standaloneHint = hint }) {
   const hintEl = $('#exportHint');
@@ -116,7 +116,7 @@ export async function exportGedcom() {
   }
   const name = fileBase() + '.ged';
   await saveFile({
-    filename: name + '.txt',               // claude.ai n'accepte pas l'extension .ged
+    filename: name + '.txt',               // claude.ai doesn't accept the .ged extension
     standaloneName: name,
     type: 'text/plain;charset=utf-8',
     text: buildGedcom(),
@@ -144,7 +144,7 @@ export async function exportCsv() {
     return;
   }
   const name = fileBase() + '-' + t('tr.csvSuffix') + '.csv';
-  await saveFile({ filename: name, type: 'text/csv;charset=utf-8', text: buildRegistreCsv(), hint: t('tr.csvHint', name) });
+  await saveFile({ filename: name, type: 'text/csv;charset=utf-8', text: buildRegisterCsv(), hint: t('tr.csvHint', name) });
 }
 
 export async function copyExport() {
@@ -161,7 +161,7 @@ export async function copyExport() {
 
 /* ---------- Import ---------- */
 
-/** Met en attente ce qui a été lu et propose de l'importer. */
+/** Holds what was read and offers to import it. */
 function offerImport(result, source, note = '', actions = null) {
   S.pending = result;
   $('#importInfo').innerHTML = `<p>${t('tr.found', result.people.length, result.unions.length, esc(source))}</p>${note}`
@@ -171,7 +171,7 @@ function offerImport(result, source, note = '', actions = null) {
     + '</div>';
 }
 
-/** Lit le fichier choisi et affiche ce qu'il contient, sans encore l'importer. */
+/** Reads the chosen file and shows what it contains, without importing it yet. */
 export async function readImportFile(input) {
   const file = input.files && input.files[0];
   const info = $('#importInfo');
@@ -200,14 +200,14 @@ function repoFailed(e) {
   $('#importInfo').innerHTML = `<p class="err">${t('tr.repoErr.' + (e.code || 'failed'))}</p>`;
 }
 
-/** Vrai si l'arbre ouvert contient autre chose que la famille d'exemple. */
+/** True if the open tree contains something other than the example family. */
 const ownTree = () => [...S.people.values()].some((p) => !p.example);
 
-/** Autre choix quand le dépôt contient une autre sauvegarde : y relier l'arbre ouvert, s'il a du contenu. */
+/** Alternative when the repository holds another backup: link the open tree to it, if it has content. */
 const connectChoice = (repo) => (repo.write && ownTree()
   ? `<button class="btn" type="button" data-act="repo-connect-open">${t('tr.repoConnectTree', esc(treeName()))}</button>` : '');
 
-/** Charge les photos de la sauvegarde choisie et l'ouvre dans un nouvel arbre, sauf si un choix reste à faire. */
+/** Loads the photos of the chosen backup and opens it in a new tree, unless a choice remains to be made. */
 async function offerRepoBackup(repo, backup) {
   $('#importInfo').innerHTML = `<p>${t('tr.repoLoading')}</p>`;
   const { found, missing, photos } = await attachPhotos(repo, backup);
@@ -222,7 +222,7 @@ async function offerRepoBackup(repo, backup) {
   if (!S.pending && missing) toast(t('tr.repoPhotos', found, missing));
 }
 
-/** Relie l'arbre ouvert au dépôt. La famille d'exemple n'y part pas : un nouvel arbre prend sa place. */
+/** Links the open tree to the repository. The example family doesn't go there: a new tree takes its place. */
 async function connectOpenTree(repo) {
   if (S.people.size && !ownTree() && !(await newTree(repo.name.split('/').pop()))) return;
   await connectTree(repo);
@@ -230,8 +230,8 @@ async function connectOpenTree(repo) {
 }
 
 /**
- * Lit le dépôt indiqué et fait ce que le jeton et son contenu permettent : relier l'arbre ouvert s'il
- * n'y a rien à charger ou s'il y a déjà sa sauvegarde ; sinon ouvrir celle du dépôt dans un nouvel arbre.
+ * Reads the given repository and does what the token and its content allow: link the open tree if
+ * there's nothing to load or if its backup is already there; otherwise open the repository's backup in a new tree.
  */
 export async function connectRepo(button) {
   const info = $('#importInfo');
@@ -241,7 +241,7 @@ export async function connectRepo(button) {
   button.disabled = true;
   info.innerHTML = `<p>${t('tr.repoLoading')}</p>`;
   const token = $('#repoToken').value.trim();
-  $('#repoToken').value = ''; // effacé dès sa lecture, même si le chargement échoue
+  $('#repoToken').value = ''; // cleared as soon as it is read, even if loading fails
   try {
     const repo = await openRepo($('#repoUrl').value, token, true);
     if (!repo.backups.length && !repo.write) throw Object.assign(new Error('needWrite'), { code: token ? 'readOnly' : 'needToken' });
@@ -265,7 +265,7 @@ export async function connectRepo(button) {
   }
 }
 
-/** Relie au dépôt lu l'arbre ouvert, plutôt que d'en importer la sauvegarde : le bouton de sauvegarde apparaît. */
+/** Links the open tree to the repository read, rather than importing its backup: the save button appears. */
 export async function connectOpenedRepo() {
   const repo = openedRepo || (pendingRepo && pendingRepo.repo);
   if (!repo) return;
@@ -279,7 +279,7 @@ export async function connectOpenedRepo() {
   }
 }
 
-/** Sauvegarde choisie parmi celles du dépôt. */
+/** Backup chosen among those in the repository. */
 export async function pickRepoBackup(i) {
   const repo = openedRepo;
   if (!repo || !repo.backups[i]) return;
@@ -292,8 +292,8 @@ export async function pickRepoBackup(i) {
 }
 
 /**
- * Ajoute à l'arbre les personnes puis les unions lues, dans l'arbre ouvert ou dans
- * un nouvel arbre (asNew). Reprend là où il s'est arrêté en cas d'erreur.
+ * Adds the people then the unions read, to the open tree or to
+ * a new tree (asNew). Resumes where it stopped in case of error.
  */
 export async function importGo(asNew) {
   const result = S.pending;
@@ -301,7 +301,7 @@ export async function importGo(asNew) {
   const info = $('#importInfo');
   if (asNew) {
     if (!(await newTree(result.name || result.fileName || t('tr.importedName')))) return;
-    $('#transfer').hidden = false; // l'ouverture de l'arbre ne ferme pas cette fenêtre
+    $('#transfer').hidden = false; // opening the tree doesn't close this dialog
   }
   const wasEmpty = S.people.size === 0;
 
@@ -326,23 +326,23 @@ export async function importGo(asNew) {
     };
     await pool(items.filter(([c]) => c === 'people'), 4, write);
     await pool(items.filter(([c]) => c === 'unions'), 4, write);
-    await storePhotos(); // mode file : les photos importées deviennent des fichiers
+    await storePhotos(); // file mode: imported photos become files
     if (S.mode !== 'db') await saveLocal();
     commitAction();
 
-    // Un arbre qui contenait déjà d'autres personnes ne repart pas vers le dépôt
+    // A tree that already had other people doesn't go back to the repository
     if (pendingRepo && pendingRepo.backup === result && (asNew || wasEmpty)) linkRepo(pendingRepo.repo, result, pendingRepo.photos);
     pendingRepo = null;
     S.pending = null;
     const n = result.people.length;
     info.innerHTML = `<p class="okmsg">${t('tr.doneInfo', n)}</p>`;
-    if (wasEmpty) S.focus = null; // laisse choisir la personne la mieux renseignée
+    if (wasEmpty) S.focus = null; // lets the best-documented person be chosen
     S.scrollPending = true;
     afterData();
     toast(t('tr.done'));
     if (asNew) closeTransfer();
   } catch (e) {
-    if (S.mode !== 'db') await Promise.resolve(saveLocal()).catch(() => {}); // message déjà affiché
+    if (S.mode !== 'db') await Promise.resolve(saveLocal()).catch(() => {}); // message already shown
     commitAction();
     info.innerHTML = `<p class="err">${t('tr.stopped', done, total)}</p>`
       + `<button class="btn primary" type="button" data-act="import-go">${t('tr.resume')}</button>`;

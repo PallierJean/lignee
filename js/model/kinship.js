@@ -1,20 +1,20 @@
 /**
- * Lien de parenté entre deux personnes.
+ * Kinship between two people.
  *
- * relationship(a, b) renvoie { type, ... } :
- * - 'same' : la même personne ;
- * - 'spouse' : conjoints ;
- * - 'blood' : { da, db, half, ancestors, path } : da et db comptent les générations de a et de b
- *   jusqu'à l'ancêtre commun le plus proche ; ancestors : cet ancêtre, ou le couple ;
- * - 'alliance' : lien par un conjoint : { via, viaSide, blood, path }. viaSide = 'a' : `via` est
- *   conjoint de a et parent de sang de b ; 'b' : conjoint de b et parent de sang de a ;
- * - 'none' : aucun lien trouvé.
- * `path` va de a à b, personne par personne.
+ * relationship(a, b) returns { type, ... }:
+ * - 'same': the same person;
+ * - 'spouse': spouses;
+ * - 'blood': { da, db, half, ancestors, path }: da and db count the generations from a and from b
+ *   to the nearest common ancestor; ancestors: that ancestor, or the couple;
+ * - 'alliance': link through a spouse: { via, viaSide, blood, path }. viaSide = 'a': `via` is
+ *   a's spouse and a blood relative of b; 'b': b's spouse and a blood relative of a;
+ * - 'none': no link found.
+ * `path` goes from a to b, person by person.
  */
 import { S } from '../state.js';
 import { P, partnersOf } from './people.js';
 
-/** Ancêtres et personne elle-même : id -> { d: générations, from: enfant par lequel on arrive }. */
+/** Ancestors and the person themself: id -> { d: generations, from: child it is reached through }. */
 function ancestors(id) {
   const seen = new Map([[id, { d: 0, from: null }]]);
   const queue = [id];
@@ -31,7 +31,7 @@ function ancestors(id) {
   return seen;
 }
 
-/** Chemin d'un ancêtre jusqu'à la personne d'où part la table `up`. */
+/** Path from an ancestor down to the person the `up` table starts from. */
 function descent(up, ancestor) {
   const path = [ancestor];
   while (up.get(path[path.length - 1]).from) path.push(up.get(path[path.length - 1]).from);
@@ -43,7 +43,7 @@ const bothParents = (id) => {
   return S.people.has(p.fatherId) && S.people.has(p.motherId);
 };
 
-/** Parenté de sang de a et b, ou null. */
+/** Blood kinship of a and b, or null. */
 function blood(a, b) {
   const up = ancestors(a);
   const down = ancestors(b);
@@ -63,9 +63,9 @@ function blood(a, b) {
   const da = up.get(first).d;
   const db = down.get(first).d;
   const pair = common.filter((id) => up.get(id).d === da);
-  const fromA = descent(up, first);    // ancêtre, ..., a
-  const fromB = descent(down, first);  // ancêtre, ..., b
-  // Demi-frères : un seul parent commun, alors que les deux parents de chacun sont connus
+  const fromA = descent(up, first);    // ancestor, ..., a
+  const fromB = descent(down, first);  // ancestor, ..., b
+  // Half-siblings: a single shared parent, while both parents of each are known
   const half = da > 0 && db > 0 && pair.length === 1 && bothParents(fromA[1]) && bothParents(fromB[1]);
   return { type: 'blood', da, db, half, ancestors: pair, path: [...fromA.reverse(), ...fromB.slice(1)] };
 }

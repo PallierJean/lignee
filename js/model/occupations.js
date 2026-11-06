@@ -1,12 +1,12 @@
 /**
- * Traduction des professions : la valeur saisie est du texte libre, gardée telle quelle.
- * À l'affichage, un métier connu de ce dictionnaire passe dans la langue choisie ;
- * un intitulé absent, ou déjà dans la bonne langue, ne change pas.
+ * Occupation translation: the value entered is free text, kept as is.
+ * When displayed, an occupation known to this dictionary is shown in the chosen language;
+ * a missing title, or one already in the right language, is unchanged.
  */
 import { getLang } from '../i18n.js';
 import { norm } from '../utils/helpers.js';
 
-/** [masculin, féminin, anglais] ; plusieurs métiers français peuvent partager un mot anglais. */
+/** [masculine, feminine, English]; several French occupations may share an English word. */
 const OCCUPATIONS = [
   ['Agriculteur', 'Agricultrice', 'Farmer'],
   ['Cultivateur', 'Cultivatrice', 'Farmer'],
@@ -89,7 +89,7 @@ const OCCUPATIONS = [
   ['Visiteur médical', 'Visiteuse médicale', 'Medical visitor'],
 ];
 
-/** Clé de comparaison : ni casse, ni accents, ni espaces en trop. */
+/** Comparison key: no case, no accents, no extra spaces. */
 const key = (s) => norm(s).trim().replace(/\s+/g, ' ');
 
 const FRENCH = new Map();
@@ -105,7 +105,7 @@ function translate(text, sex) {
   return !FRENCH.has(k) && ENGLISH.has(k) ? ENGLISH.get(k)[sex === 'F' ? 1 : 0] : text;
 }
 
-/** Profession d'une personne dans la langue choisie ; « Baker / Boulanger » donne un seul mot. */
+/** A person's occupation in the chosen language; "Baker / Boulanger" gives a single word. */
 export function occupationLabel(p) {
   const parts = String((p && p.occupation) || '').split('/').map((x) => translate(x.trim(), p && p.sex)).filter(Boolean);
   return [...new Map(parts.map((x) => [key(x), x])).values()].join(' / ');

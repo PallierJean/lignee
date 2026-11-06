@@ -37,13 +37,13 @@ lignee/
 │       ├── tree.css            Barre d'outils, toile, traits, fiches de l'arbre
 │       ├── panel.css           Onglets, fiche détaillée
 │       ├── form.css            Formulaire d'ajout et de modification
-│       ├── registre.css        Liste par nom de famille
+│       ├── register.css        Liste par nom de famille
 │       ├── search.css          Recherche rapide et suggestions
 │       ├── modal.css           Fenêtres Importer et Exporter
 │       ├── person.css          Fiche d'une personne en fenêtre
 │       ├── print.css           Fenêtre Imprimer, feuille imprimée
 │       ├── trees.css           Bouton « Arbre », fenêtre Mes arbres
-│       ├── analyse.css         Onglet Analyse, sources, roue d'ascendance, galerie
+│       ├── analysis.css        Onglet Analyse, sources, roue d'ascendance, galerie
 │       └── toast.css           Messages de confirmation
 ├── js/
 │   ├── main.js                 Point d'entrée : choix du stockage, démarrage
@@ -96,16 +96,16 @@ lignee/
 │   └── ui/
 │       ├── render.js           Rendu général
 │       ├── header.js           En-tête, bandeau, barre d'outils
-│       ├── fiche.js            Fiche détaillée d'une personne
+│       ├── record.js           Fiche détaillée d'une personne
 │       ├── person-dlg.js       Fiche d'une personne en fenêtre, au clic dans l'arbre
 │       ├── form.js             Formulaire
-│       ├── registre.js         Registre par nom de famille
+│       ├── register.js         Registre par nom de famille
 │       ├── search.js           Recherche rapide de l'en-tête
 │       ├── repo-link.js        Bandeau du dépôt GitHub lié et envoi de l'arbre
 │       ├── transfer.js         Fenêtres Importer et Exporter
 │       ├── print.js            Impression : arbre, roue (une ou plusieurs feuilles), livret (A4)
 │       ├── booklet.js          Pages du livret de famille
-│       ├── analyse.js          Onglet Analyse
+│       ├── analysis.js         Onglet Analyse
 │       ├── places.js           Carte des lieux en SVG
 │       ├── media.js            Visionneuse de la galerie, identification sur les photos
 │       ├── trees.js            Fenêtre Mes arbres : ouvrir, créer, renommer, supprimer

@@ -1,4 +1,4 @@
-/** Départements français : numéro -> nom, pour nommer le département d'un lieu (« 19 » : Corrèze). */
+/** French departments: number -> name, to name a place's department ("19": Corrèze). */
 import { norm } from '../utils/helpers.js';
 
 export const DEPARTMENTS = {
@@ -25,7 +25,7 @@ export const DEPARTMENTS = {
   '971': 'Guadeloupe', '972': 'Martinique', '973': 'Guyane', '974': 'La Réunion', '975': 'Saint-Pierre-et-Miquelon', '976': 'Mayotte',
 };
 
-/** Nom du département pour un numéro (« 19 », « 9 », « 2a ») ; vide si ce n'est pas un numéro connu. */
+/** Department name for a number ("19", "9", "2a"); empty if it is not a known number. */
 export function departmentName(code) {
   const c = String(code || '').trim().toUpperCase();
   return DEPARTMENTS[/^\d$/.test(c) ? '0' + c : c] || '';
@@ -33,7 +33,7 @@ export function departmentName(code) {
 
 const BY_NAME = new Map(Object.entries(DEPARTMENTS).map(([code, name]) => [norm(name).replace(/[^a-z]/g, ''), code]));
 
-/** Numéro du département saisi, par son numéro ou son nom (« 9 », « Corrèze », « correze ») ; vide sinon. */
+/** Number of the department entered by number or name ("9", "Corrèze", "correze"); empty otherwise. */
 export function departmentCode(value) {
   const c = String(value || '').trim().toUpperCase();
   const code = /^\d$/.test(c) ? '0' + c : c;

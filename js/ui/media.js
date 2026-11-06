@@ -1,6 +1,6 @@
 /**
- * Visionneuse de la galerie : une photo ou un document, avec les personnes identifiées.
- * Un clic sur l'image place un repère, puis on choisit la personne.
+ * Gallery viewer: a photo or a document, with the people identified.
+ * A click on the image places a marker, then you choose the person.
  */
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
@@ -11,25 +11,25 @@ import { afterData } from './render.js';
 import { personOptions } from './form.js';
 import { toast } from './toast.js';
 
-let current = null;  // { owner, id } : photo affichée
-let pin = null;      // { x, y } : repère en attente d'une personne
-let editing = false; // légende en cours de modification
+let current = null;  // { owner, id }: photo shown
+let pin = null;      // { x, y }: marker waiting for a person
+let editing = false; // caption being edited
 
 const item = () => current && mediaList(P(current.owner)).find((m) => m.id === current.id);
 
-/** Repères d'une image, avec des positions numériques : elles peuvent venir d'un fichier importé. */
+/** Markers of an image, with numeric positions: they may come from an imported file. */
 const tagsOf = (m) => (Array.isArray(m.tags) ? m.tags : [])
   .filter((x) => x && typeof x === 'object')
   .map((x) => ({ ...x, x: Math.min(100, Math.max(0, +x.x || 0)), y: Math.min(100, Math.max(0, +x.y || 0)) }));
 
-/** Étiquette d'un visage : prénom, nom et années de vie. */
+/** A face's label: first name, surname and lifespan. */
 function tagLabel(p) {
   const years = lifeYears(p);
   return `<span class="tag-name"><b>${esc(given(p))} <span class="sur">${esc(surname(p) || maiden(p))}</span></b>`
     + (years ? `<small>${esc(years)}</small>` : '') + '</span>';
 }
 
-/** Visage en bas de la photo : l'étiquette au-dessus. Sur les côtés, voir fitLabel. */
+/** Face at the bottom of the photo: the label above. On the sides, see fitLabel. */
 const pinSide = (x) => (x.y > 70 ? ' up' : '');
 
 export function renderMedia() {
@@ -40,14 +40,14 @@ export function renderMedia() {
     return;
   }
   const tags = tagsOf(m);
-  // Repères invisibles sur les visages : ils s'éclairent au survol, du visage ou du nom dans la liste (highlightTag)
+  // Invisible markers on faces: they light up on hover, of the face or of the name in the list (highlightTag)
   const shown = tags.filter((x) => P(x.id));
   const marks = shown.map((x) => `<button class="tag-pin${pinSide(x)}" type="button" data-tag="${tags.indexOf(x)}" data-style="left:${x.x}%;top:${x.y}%"`
     + ` data-act="media-person" data-id="${esc(x.id)}" aria-label="${esc(fullName(P(x.id)))}">${tagLabel(P(x.id))}</button>`).join('');
   const names = shown.map((x) => `<li data-tag="${tags.indexOf(x)}">`
     + `<button class="link" type="button" data-act="media-person" data-id="${esc(x.id)}">${esc(fullName(P(x.id)))}</button>`
     + (S.canWrite ? ` <button class="link" type="button" data-act="tag-remove" data-i="${tags.indexOf(x)}">${t('med.untag')}</button>` : '') + '</li>').join('');
-  // Les personnes nommées dans la légende, pas encore identifiées, en tête de la liste
+  // People named in the caption, not yet identified, at the top of the list
   const tagged = new Set(tags.map((x) => x.id));
   const named = peopleNamedIn([m.title, m.note].join(' ')).filter((id) => !tagged.has(id));
   const options = named.length
@@ -58,7 +58,7 @@ export function renderMedia() {
     ? `<div class="row-btns tag-pick"><select id="tagPerson" aria-label="${t('med.who')}"><option value="">${t('med.who')}</option>${options}</select>`
       + `<button class="btn small" type="button" data-act="tag-cancel">${t('cancel')}</button></div>`
     : '';
-  // La consigne au-dessus de l'image : c'est là qu'on clique
+  // The instruction above the image: that's where you click
   const hint = S.canWrite && !pin ? `<p class="hint tag-hint">${t('med.hint')}</p>` : '';
   setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(m.title || t('med.untitled'))}</h2>`
     + `<button class="icon-btn" type="button" data-act="media-close" aria-label="${t('close')}">×</button></div>`
@@ -70,8 +70,8 @@ export function renderMedia() {
 }
 
 /**
- * Garde l'étiquette d'un visage dans la photo : près d'un bord, elle glisse vers l'intérieur (--dx)
- * et sa pointe reste sur le visage ; plus large que la photo, elle passe à la ligne.
+ * Keeps a face's label inside the photo: near an edge, it slides inwards (--dx)
+ * and its tip stays on the face; wider than the photo, it wraps.
  */
 function fitLabel(pin) {
   const label = pin.querySelector('.tag-name');
@@ -85,7 +85,7 @@ function fitLabel(pin) {
   label.style.setProperty('--dx', `${Math.round(dx)}px`);
 }
 
-/** Survol (ou focus) d'un visage, ou d'un nom de la liste qui éclaire alors sa personne sur la photo. */
+/** Hover (or focus) of a face, or of a name in the list, which then lights up its person on the photo. */
 export function highlightTag(target, on) {
   if (!target || !target.closest) return;
   const row = target.closest('.tag-list [data-tag]');
@@ -95,7 +95,7 @@ export function highlightTag(target, on) {
   if (row) pin.classList.toggle('lit', on);
 }
 
-/** Légende sous l'image : titre, date et texte ; modifiables sur place. */
+/** Caption under the image: title, date and text; editable in place. */
 function caption(m) {
   if (editing) {
     const off = S.busy ? ' disabled' : '';
@@ -111,10 +111,10 @@ function caption(m) {
   return text || change ? `<p class="media-text">${esc(text)}${change}</p>` : '';
 }
 
-/** Ouvre ou ferme la modification de la légende. */
+/** Opens or closes caption editing. */
 export function editCaption(on) {
   if (on && S.edit && S.edit.id === current.owner) {
-    toast(t('finishFirst')); // le formulaire de la fiche réécrirait la galerie en l'enregistrant
+    toast(t('finishFirst')); // the record form would rewrite the gallery when saving
     return;
   }
   editing = on;
@@ -122,7 +122,7 @@ export function editCaption(on) {
   renderMedia();
 }
 
-/** Enregistre le titre, la date et la légende saisis. */
+/** Saves the title, date and caption entered. */
 export async function saveCaption() {
   const m = item();
   if (!m || !S.canWrite) return;
@@ -153,9 +153,9 @@ export function closeMedia() {
   $('#mediaDlg').hidden = true;
 }
 
-/** Clic sur l'image : position du repère, en pourcentage de l'image. */
+/** Click on the image: marker position, as a percentage of the image. */
 export function placePin(el, ev) {
-  // Pendant la saisie de la légende, un clic sur l'image ne doit pas redessiner (et effacer) les champs
+  // While typing the caption, a click on the image must not redraw (and clear) the fields
   if (!S.canWrite || editing || !item() || ev.target.closest('.tag-pin')) return;
   const box = el.querySelector('img').getBoundingClientRect();
   pin = {

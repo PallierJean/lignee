@@ -1,8 +1,8 @@
 /* ==========================================================
-   Badges et pastilles : statut, numéro Sosa, sexe, étiquette
+   Badges and dots: status, Sosa number, sex, label
    ========================================================== */
 
-/* Pastille d'état de l'enregistrement (en-tête) */
+/* Save status dot (header) */
 .pill {
   display: inline-flex;
   align-items: center;
@@ -30,7 +30,7 @@
   background: var(--warn);
 }
 
-/* Numéro Sosa */
+/* Sosa number */
 .sosa {
   flex: none;
   font-family: var(--f-mono);
@@ -43,7 +43,7 @@
   background: var(--surface);
 }
 
-/* Symbole du sexe : carré = homme, rond = femme, losange = non précisé */
+/* Sex symbol: square = male, circle = female, diamond = unspecified */
 .sx {
   display: inline-block;
   flex: none;
@@ -61,7 +61,7 @@
   transform: rotate(45deg) scale(.8);
 }
 
-/* Étiquette « exemple » */
+/* "example" label */
 .tag {
   font-family: var(--f-mono);
   text-transform: none;

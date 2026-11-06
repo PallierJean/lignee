@@ -1,27 +1,27 @@
 /**
- * Thème « Matrix » : une pluie de signes verts défile sur la toile, sous l'arbre. Chaque colonne
- * tombe à sa vitesse ; la tête de la goutte est presque blanche, la traînée s'éteint peu à peu
- * (on efface un peu de l'image à chaque image, la toile reste transparente). Les signes sont des
- * katakana et des chiffres, retournés comme dans le film. Arrêtée hors de ce thème ou si le système
- * demande moins d'animations (une pluie figée reste dans le fond), en pause quand l'onglet est caché.
+ * "Matrix" theme: a rain of green glyphs scrolls on the canvas, under the tree. Each column
+ * falls at its own speed; the head of the drop is almost white, the trail fades little by little
+ * (a bit of the image is erased each frame, the canvas stays transparent). The glyphs are
+ * katakana and digits, mirrored as in the film. Stopped outside this theme or if the system
+ * asks for reduced motion (a still rain stays in the background), paused when the tab is hidden.
  */
 import { reduced } from '../config.js';
 
-const SIZE = 16;     // px : largeur d'une colonne, hauteur d'un signe
+const SIZE = 16;     // px: column width, glyph height
 const FRAME = 55;    // ms entre deux images
 const GLYPHS = 'ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789Z:=*+-<>¦';
 const FONT = `${SIZE - 2}px "IBM Plex Mono", "MS Gothic", "Hiragino Kaku Gothic Pro", "Noto Sans CJK JP", monospace`;
 
 let layer = null;
 let timer = null;
-let drops = [];      // par colonne : { y (en signes), speed }
+let drops = [];      // per column: { y (in glyphs), speed }
 
 const pick = () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
 
-/** Une colonne repart d'en haut, à une hauteur et une vitesse au hasard. */
+/** A column restarts from the top, at a random height and speed. */
 const drop = (h) => ({ y: -Math.random() * (h / SIZE), speed: 0.45 + Math.random() * 0.8 });
 
-/** Une image : la traînée s'éteint un peu, chaque colonne avance et dessine son signe. */
+/** One frame: the trail fades a little, each column advances and draws its glyph. */
 function frame() {
   if (document.hidden) return;
   const canvas = layer.firstChild;
@@ -38,7 +38,7 @@ function frame() {
   }
   const ctx = canvas.getContext('2d');
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  // La traînée s'éteint : on retire un peu de chaque pixel
+  // The trail fades: a little is taken off each pixel
   ctx.globalCompositeOperation = 'destination-out';
   ctx.fillStyle = 'rgba(0, 0, 0, .11)';
   ctx.fillRect(0, 0, w, h);
@@ -52,7 +52,7 @@ function frame() {
     if (row === before || row < 0) return;
     const x = i * SIZE;
     const y = row * SIZE;
-    // Le signe d'avant redevient vert, la tête est presque blanche ; signes retournés
+    // The previous glyph turns green again, the head is almost white; mirrored glyphs
     ctx.clearRect(x, y - SIZE, SIZE, SIZE);
     ctx.save();
     ctx.translate(x + SIZE, 0);
@@ -66,7 +66,7 @@ function frame() {
   });
 }
 
-/** Lance (`on`) ou arrête la pluie. */
+/** Starts (`on`) or stops the rain. */
 export function setRain(on) {
   const box = document.getElementById('canvas');
   const can = on && !reduced && box && typeof document.createElement('canvas').getContext === 'function';

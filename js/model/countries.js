@@ -1,7 +1,7 @@
 /**
- * Pays, en français et en anglais, pour le champ Pays des lieux. Liste figée (codes ISO 3166 actuels,
- * noms de la norme Unicode CLDR), plus trois pays disparus qu'on rencontre en généalogie. Les départements
- * et collectivités d'outre-mer en sont absents : ils sont en France.
+ * Countries, in French and English, for the Country field of places. Fixed list (current ISO 3166 codes,
+ * names from Unicode CLDR), plus three former countries met in genealogy. Overseas departments
+ * and collectivities are not listed: they are in France.
  */
 import { norm } from '../utils/helpers.js';
 
@@ -246,8 +246,8 @@ export const COUNTRIES = [
 const key = (s) => norm(s).replace(/[^a-z]+/g, ' ').trim();
 const KNOWN = new Map(COUNTRIES.flatMap(([fr, en]) => [[key(fr), fr], [key(en), fr]]));
 
-/** Nom français du pays saisi (en français ou en anglais, sans tenir compte de la casse ni des accents) ; vide s'il est inconnu. */
+/** French name of the country entered (in French or English, ignoring case and accents); empty if unknown. */
 export const countryName = (s) => KNOWN.get(key(s)) || '';
 
-/** Vrai pour un pays vide ou la France : les lieux sont en France par défaut. */
+/** True for an empty country or France: places are in France by default. */
 export const isFrance = (s) => !String(s || '').trim() || countryName(s) === 'France';
