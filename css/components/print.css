@@ -448,6 +448,7 @@
   width: 17mm;
   height: 21mm;
   object-fit: cover;
+  object-position: 50% 18%; /* portrait : le visage est en haut */
   margin: .5mm 4mm 1mm 0;
   border-radius: 1mm;
   border: .2mm solid #C8D2CD;
