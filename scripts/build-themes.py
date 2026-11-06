@@ -1,4 +1,4 @@
-"""Génère css/themes.css : huit thèmes illustrés (palettes, motifs de fond, touches propres)."""
+"""Génère css/themes.css : thèmes illustrés (palettes, motifs de fond, touches propres)."""
 import math, random
 from urllib.parse import quote
 random.seed(7)  # motifs reproductibles
@@ -150,36 +150,58 @@ def castle():
         "<path d='M20 200c40 10 80-6 120 4s80 8 110-2' stroke-dasharray='2 4'/></g>" + seal)
 
 def floor_plan():
-    """Plan de demeure : pièces, tours rondes, galeries en arc, escaliers, couloirs, noms de lieux."""
+    """Grand plan de demeure, sans répétition : ailes découpées en pièces, tours rondes, galeries en
+    arc, escaliers, couloirs entre les ailes, et des lieux nommés, tous différents. Tiré au hasard une
+    fois pour toutes (graine fixe), étiré sur toute la toile."""
+    rnd = random.Random(1611)
+    W, H = 1600, 1000
     b = ''
-    rooms = [(20, 20, 120, 80), (140, 20, 70, 80), (20, 100, 60, 90), (80, 100, 130, 45), (80, 145, 60, 45), (140, 145, 70, 45),
-             (330, 330, 110, 70), (440, 330, 90, 70), (330, 400, 60, 110), (390, 400, 140, 55), (390, 455, 70, 55), (460, 455, 70, 55),
-             (30, 380, 150, 26), (30, 406, 150, 26), (30, 432, 150, 26)]
-    for x, y, w, h in rooms:
-        b += f"<rect x='{x}' y='{y}' width='{w}' height='{h}'/>"
-    # Portes : des quarts de cercle
-    for x, y in ((60, 100), (175, 100), (110, 145), (370, 400), (440, 365), (420, 455)):
-        b += f"<path d='M{x} {y}a10 10 0 0 1 10 10' stroke-dasharray='1.5 2'/>"
-    # Tour ronde : cercles concentriques et rayons
-    for cx, cy, r in ((440, 110, 62), (110, 300, 34)):
+    # Ailes : un rectangle découpé en pièces par des coupes successives
+    def split(x, y, w, h, depth):
+        nonlocal b
+        if depth == 0 or (w < 70 and h < 70):
+            b += f"<rect x='{x:.0f}' y='{y:.0f}' width='{w:.0f}' height='{h:.0f}'/>"
+            # une porte en quart de cercle sur un mur
+            b += f"<path d='M{x + w * .3:.0f} {y + h:.0f}a9 9 0 0 1 9-9' stroke-dasharray='1.5 2'/>"
+            return
+        if w > h:
+            cut = w * rnd.uniform(.35, .65)
+            split(x, y, cut, h, depth - 1)
+            split(x + cut, y, w - cut, h, depth - 1)
+        else:
+            cut = h * rnd.uniform(.35, .65)
+            split(x, y, w, cut, depth - 1)
+            split(x, y + cut, w, h - cut, depth - 1)
+    wings = [(70, 90, 330, 220), (470, 60, 260, 150), (1050, 80, 380, 200), (90, 600, 300, 260), (600, 700, 360, 190), (1120, 560, 330, 300)]
+    for x, y, w, h in wings:
+        b += f"<rect x='{x - 4}' y='{y - 4}' width='{w + 8}' height='{h + 8}' stroke-width='1.6'/>"
+        split(x, y, w, h, 4)
+    # Couloirs entre les ailes
+    b += ("<path d='M400 200H470M730 140C850 140 930 180 1050 180M235 310V600M780 210V700M1240 280V560M390 730H600M960 800H1120' "
+          "stroke-dasharray='4 4'/>")
+    # Tours rondes : cercles concentriques et rayons
+    for cx, cy, r in ((560, 420, 70), (1480, 430, 46), (40, 470, 34)):
         b += f"<circle cx='{cx}' cy='{cy}' r='{r}'/><circle cx='{cx}' cy='{cy}' r='{r * .72:.0f}'/><circle cx='{cx}' cy='{cy}' r='{r * .3:.0f}'/>"
         b += ''.join(f"<path d='M{cx + r * .3 * math.cos(a):.1f} {cy + r * .3 * math.sin(a):.1f}L{cx + r * .72 * math.cos(a):.1f} {cy + r * .72 * math.sin(a):.1f}'/>" for a in [k * math.pi / 6 for k in range(12)])
-    # Galerie en arc de cercle, avec ses gradins
-    cx, cy = 300, 600
-    for r in (150, 170, 190, 210):
-        b += f"<path d='M{cx - r * .87:.0f} {cy - r * .5:.0f}A{r} {r} 0 0 1 {cx + r * .5:.0f} {cy - r * .87:.0f}'/>"
-    b += ''.join(f"<path d='M{cx + 150 * math.cos(a):.1f} {cy + 150 * math.sin(a):.1f}L{cx + 210 * math.cos(a):.1f} {cy + 210 * math.sin(a):.1f}'/>" for a in [-math.pi * 5 / 6 + k * math.pi / 18 for k in range(10)])
-    # Escaliers et couloirs
-    b += ''.join(f"<path d='M{232 + k * 6} 40v40'/>" for k in range(8))
-    b += "<rect x='228' y='36' width='52' height='48'/>"
-    b += "<path d='M210 60H330M300 60V230M300 230H530M190 230H300' stroke-dasharray='3 3'/>"
-    b += "<path d='M200 310c30 -20 60 20 90 0s60 20 90 0' />"
-    labels = ((70, 64, 'Grenier'), (175, 64, 'Lingerie'), (145, 125, 'Bibliothèque'), (50, 150, 'Cellier'),
-              (385, 370, 'Salon'), (485, 370, 'Chambre'), (460, 432, 'Salle des archives'), (105, 398, 'Galerie des portraits'),
-              (440, 205, 'Tour du guet'), (300, 352, 'Jardin'), (254, 98, 'Escalier'))
+    # Galeries en arc de cercle, avec leurs gradins
+    for cx, cy, r0, a0, a1 in ((900, 520, 120, -2.6, -0.5), (1500, 980, 180, -3.0, -1.7)):
+        for r in (r0, r0 + 18, r0 + 36, r0 + 54):
+            b += f"<path d='M{cx + r * math.cos(a0):.0f} {cy + r * math.sin(a0):.0f}A{r} {r} 0 0 1 {cx + r * math.cos(a1):.0f} {cy + r * math.sin(a1):.0f}'/>"
+        b += ''.join(f"<path d='M{cx + r0 * math.cos(a):.1f} {cy + r0 * math.sin(a):.1f}L{cx + (r0 + 54) * math.cos(a):.1f} {cy + (r0 + 54) * math.sin(a):.1f}'/>" for a in [a0 + k * (a1 - a0) / 12 for k in range(13)])
+    # Escaliers
+    for x, y in ((420, 120), (990, 600), (300, 470)):
+        b += f"<rect x='{x}' y='{y}' width='48' height='44'/>" + ''.join(f"<path d='M{x + 4 + k * 6} {y}v44'/>" for k in range(7))
+    # Jardin : allées et parterres
+    b += "<path d='M60 960C200 900 330 990 460 930S700 960 820 930' /><circle cx='1000' cy='380' r='22'/><circle cx='1000' cy='380' r='8'/>"
+    labels = ((180, 140, 'Grenier'), (320, 260, 'Lingerie'), (560, 110, 'Bibliothèque'), (150, 280, 'Cellier'),
+              (1150, 130, 'Chapelle'), (1350, 240, 'Cuisine'), (560, 425, 'Tour du guet'), (1480, 434, 'Pigeonnier'),
+              (180, 660, 'Salle des archives'), (320, 830, 'Galerie des portraits'), (700, 760, 'Salle d’armes'),
+              (880, 860, 'Orangerie'), (1200, 620, 'Écurie'), (1360, 820, 'Salon'), (900, 470, 'Cour d’honneur'),
+              (1000, 418, 'Puits'), (440, 960, 'Verger'), (1240, 420, 'Escalier d’honneur'), (40, 474, 'Tourelle'),
+              (650, 640, 'Jardin'))
     t = ''.join(f"<text x='{x}' y='{y}' text-anchor='middle'>{n}</text>" for x, y, n in labels)
-    return svg(560, 560, f"<g fill='none' stroke='{INK}' stroke-width='.9' opacity='.32'>{b}</g>"
-               f"<g {SERIF} font-style='italic' font-size='10' fill='{INK}' opacity='.45'>{t}</g>")
+    return svg(W, H, f"<g fill='none' stroke='{INK}' stroke-width='.9' opacity='.32'>{b}</g>"
+               f"<g {SERIF} font-style='italic' font-size='12' fill='{INK}' opacity='.45'>{t}</g>")
 
 def border_band():
     """Bordure de carte : double filet, graduations, devise latine qui court tout du long."""
@@ -198,10 +220,20 @@ out.append(f"""
    rouge au milieu du haut, plis du parchemin, plan de demeure à l'encre ; les empreintes et le nom
    de qui marche sont dessinés par ui/footprints.js. Fixes, même sans animation. */
 :root[data-theme="maraudeur"] .canvas {{
-  background-image: {uri(border_band())}, {uri(border_band())}, {uri(castle())}, {FOLDS}, {uri(floor_plan())}, var(--deco), radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
-  background-position: top 4px left 0, bottom 4px left 0, top 40px center, 0 0, 0 0, 0 0, 30px 40px, 0 0, 0 0;
-  background-repeat: repeat-x, repeat-x, no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat, repeat;
-  background-size: 400px 30px, 400px 30px, 216px 184px, 100% 100%, 100% 100%, 100% 100%, 560px 560px, var(--deco-size), 20px 20px;
+  background-image: {uri(border_band())}, {uri(border_band())}, {uri(castle())}, {FOLDS}, {uri(floor_plan())}, radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
+  background-position: top 4px left 0, bottom 4px left 0, top 40px center, 0 0, 0 0, 0 0, center, 0 0;
+  background-repeat: repeat-x, repeat-x, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+  background-size: 400px 30px, 400px 30px, 216px 184px, 100% 100%, 100% 100%, 100% 100%, cover, 20px 20px;
+}}
+
+/* Moins d'animations : pas d'empreintes qui marchent, mais celles du motif (fixes) par-dessus le plan */
+@media (prefers-reduced-motion: reduce) {{
+  :root[data-theme="maraudeur"] .canvas {{
+    background-image: {uri(border_band())}, {uri(border_band())}, {uri(castle())}, var(--deco), {FOLDS}, {uri(floor_plan())}, radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
+    background-position: top 4px left 0, bottom 4px left 0, top 40px center, 0 0, 0 0, 0 0, 0 0, center, 0 0;
+    background-repeat: repeat-x, repeat-x, no-repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+    background-size: 400px 30px, 400px 30px, 216px 184px, var(--deco-size), 100% 100%, 100% 100%, 100% 100%, cover, 20px 20px;
+  }}
 }}
 """)
 
