@@ -368,10 +368,19 @@ out.append("""
   left: 0;
 }
 
+/* Grand Line : la toile est une case de manga, bordée d'un épais trait d'encre */
+:root[data-theme="grandline"] .canvas {
+  box-shadow: inset 0 0 0 4px #141414, inset 0 0 0 7px #FFFFFF;
+}
+
 /* Grand Line : fiches en avis de recherche, la personne au centre « WANTED » */
 :root[data-theme="grandline"] .card {
-  background: linear-gradient(180deg, #FFF8E6, #F6E7C1);
-  box-shadow: 0 3px 8px rgba(20, 33, 61, .18);
+  background: linear-gradient(180deg, #FFF8E6, #F3E2B6);
+}
+
+/* Ombre d'encre franche, sauf sur la lignée directe qui garde son halo */
+:root[data-theme="grandline"] .card:not(.is-line) {
+  box-shadow: 3px 3px 0 #141414;
 }
 
 :root[data-theme="grandline"] .card.is-focus {
