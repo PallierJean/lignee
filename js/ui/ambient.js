@@ -4,10 +4,11 @@
  * citrouilles qui vacillent, brume, araignée, chauves-souris et fantômes ; au printemps, branches
  * de cerisier en fleur, prairie fleurie, pétales, papillons et hirondelles ; l'été, la plage
  * (vagues, écume, baigneurs flous, petit requin, mouettes) ; en automne, des arbres qui perdent
- * leurs feuilles de couleur au gré des coups de vent ; sur Grand Line, un navire pirate qui vogue
- * sur une mer de manga, îles, mouettes et monstre marin. Chaque objet a sa taille, sa vitesse et
- * son balancement, tirés au hasard. Arrêtées hors de ces thèmes ou si le système demande moins
- * d'animations (le motif du fond reste), en pause quand l'onglet est caché.
+ * leurs feuilles de couleur au gré des coups de vent ; sur Grand Line, une planche de manga (trait
+ * d'encre, trame, onomatopées) où vogue un navire pirate, avec îles, mouettes, chapeau de paille
+ * emporté par le vent et monstre marin. Chaque objet a sa taille, sa vitesse et son balancement,
+ * tirés au hasard. Arrêtées hors de ces thèmes ou si le système demande moins d'animations (le
+ * motif du fond reste), en pause quand l'onglet est caché.
  */
 import { reduced } from '../config.js';
 
@@ -559,116 +560,162 @@ function garland(ctx, w, h, now) {
   }
 }
 
-/* ---------- Grand Line : la mer d'aventure, le navire, le monstre marin ---------- */
+/* ---------- Grand Line : une planche de manga d'aventure en mer ---------- */
 
-/** Gros nuage de coton : des bulles blanches, ombrées de bleu par-dessous. */
-function cloud(ctx, x, y, s) {
-  const puffs = [[-34, 6, 18], [-14, -6, 24], [10, -10, 26], [32, 2, 20], [0, 8, 22]];
-  ctx.fillStyle = 'rgba(160, 200, 230, .55)';
-  ctx.beginPath();
-  for (const [dx, dy, r] of puffs) ctx.arc(x + dx * s, y + (dy + 5) * s, r * s, 0, TAU);
+const INK = '#141414';           // encre du trait
+const SFX_FONT = '"Noto Sans CJK JP", "Hiragino Kaku Gothic Pro", "Yu Gothic", "Meiryo", sans-serif';
+
+/** Trame de points, comme sur une planche imprimée (motif répété, préparé une fois). */
+function screentone(ctx, s) {
+  if (!s.tone) {
+    const tile = document.createElement('canvas');
+    tile.width = 7;
+    tile.height = 7;
+    const t = tile.getContext('2d');
+    t.fillStyle = INK;
+    t.beginPath();
+    t.arc(3.5, 3.5, 1.1, 0, TAU);
+    t.fill();
+    s.tone = ctx.createPattern(tile, 'repeat');
+  }
+  return s.tone;
+}
+
+/** Remplit puis cerne d'encre le tracé courant. */
+function inked(ctx, fill, width = 2) {
+  ctx.fillStyle = fill;
   ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+/** Nuage de manga : des bulles blanches cernées d'encre (le trait ne reste qu'au contour). */
+function mangaCloud(ctx, x, y, s) {
+  const puffs = [[-36, 6, 18], [-15, -6, 24], [10, -11, 27], [34, 2, 20], [0, 9, 22]];
+  const path = () => {
+    ctx.beginPath();
+    for (const [dx, dy, r] of puffs) {
+      ctx.moveTo(x + (dx + r) * s, y + dy * s);
+      ctx.arc(x + dx * s, y + dy * s, r * s, 0, TAU);
+    }
+  };
+  path();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 5 * s;
+  ctx.stroke();
+  path();
   ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.fillStyle = 'rgba(120, 170, 215, .35)'; // ombre sous le nuage
   ctx.beginPath();
-  for (const [dx, dy, r] of puffs) ctx.arc(x + dx * s, y + dy * s, r * s, 0, TAU);
+  ctx.ellipse(x, y + 16 * s, 40 * s, 8 * s, 0, 0, Math.PI);
   ctx.fill();
 }
 
-/** Soleil de manga : un disque et des rayons qui tournent lentement. */
+/** Soleil de manga : disque cerné et rayons pointus qui tournent lentement. */
 function mangaSun(ctx, x, y, now) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(now / 9000);
-  ctx.fillStyle = 'rgba(255, 214, 90, .5)';
   for (let k = 0; k < 12; k++) {
     ctx.rotate(TAU / 12);
     ctx.beginPath();
-    ctx.moveTo(-7, 42);
-    ctx.lineTo(0, 78);
-    ctx.lineTo(7, 42);
-    ctx.fill();
+    ctx.moveTo(-8, 42);
+    ctx.lineTo(0, 82);
+    ctx.lineTo(8, 42);
+    inked(ctx, '#FFC93C', 1.5);
   }
   ctx.restore();
-  ctx.fillStyle = '#FFD45A';
   ctx.beginPath();
-  ctx.arc(x, y, 34, 0, TAU);
-  ctx.fill();
+  ctx.arc(x, y, 36, 0, TAU);
+  inked(ctx, '#FFE066', 2.5);
 }
 
-/** Île à l'horizon : une butte de sable et un palmier. */
+/** Île : butte de sable, rochers et palmier, cernés d'encre. */
 function island(ctx, x, y, s) {
-  ctx.fillStyle = '#E8CF8E';
   ctx.beginPath();
-  ctx.ellipse(x, y, 46 * s, 12 * s, 0, Math.PI, 0);
-  ctx.fill();
-  ctx.strokeStyle = '#7A5228';
-  ctx.lineWidth = 3 * s;
+  ctx.ellipse(x, y, 52 * s, 14 * s, 0, Math.PI, 0);
+  inked(ctx, '#EBCB7E', 2);
   ctx.beginPath();
-  ctx.moveTo(x - 4 * s, y - 8 * s);
-  ctx.quadraticCurveTo(x + 2 * s, y - 30 * s, x + 10 * s, y - 46 * s);
+  ctx.moveTo(x - 6 * s, y - 10 * s);
+  ctx.quadraticCurveTo(x + 2 * s, y - 34 * s, x + 12 * s, y - 52 * s);
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 6 * s;
   ctx.stroke();
-  ctx.fillStyle = '#2E9447';
-  for (const a of [-2.6, -2, -1.2, -0.5, 0.2]) {
+  ctx.strokeStyle = '#8A5A2B';
+  ctx.lineWidth = 3.5 * s;
+  ctx.stroke();
+  for (const a of [-2.7, -2.1, -1.3, -0.6, 0.1]) {
     ctx.beginPath();
-    ctx.ellipse(x + 10 * s + Math.cos(a) * 14 * s, y - 46 * s + Math.sin(a) * 6 * s, 15 * s, 4 * s, a, 0, TAU);
-    ctx.fill();
+    ctx.ellipse(x + 12 * s + Math.cos(a) * 15 * s, y - 52 * s + Math.sin(a) * 7 * s, 17 * s, 4.5 * s, a, 0, TAU);
+    inked(ctx, '#2FAA52', 1.5);
   }
 }
 
-/** Rangée de vagues de manga : une ligne qui ondule et ses crêtes d'écume en volutes. */
+/** Rangée de vagues de manga : la mer cernée d'encre au sommet, crêtes d'écume en volutes. */
 function mangaWaves(ctx, y, w, now, speed, amp, color, foam) {
   const shift = (now / speed) % 120;
-  ctx.fillStyle = color;
+  const at = (x) => y + Math.sin((x - shift) / 19) * amp;
   ctx.beginPath();
-  ctx.moveTo(0, y + 200);
-  for (let x = -120 + shift; x <= w + 120; x += 10) ctx.lineTo(x, y + Math.sin((x - shift) / 19) * amp);
-  ctx.lineTo(w + 120, y + 200);
+  ctx.moveTo(-120, y + 400);
+  for (let x = -120 + shift; x <= w + 120; x += 10) ctx.lineTo(x, at(x));
+  ctx.lineTo(w + 120, y + 400);
   ctx.closePath();
+  ctx.fillStyle = color;
   ctx.fill();
+  ctx.beginPath();
+  for (let x = -120 + shift; x <= w + 120; x += 10) {
+    if (x === -120 + shift) ctx.moveTo(x, at(x));
+    else ctx.lineTo(x, at(x));
+  }
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2;
+  ctx.stroke();
   if (!foam) return;
-  ctx.fillStyle = 'rgba(255, 255, 255, .85)';
   for (let x = -120 + shift; x <= w + 120; x += 120) {
     const cy = y - amp;
     ctx.beginPath();
-    ctx.moveTo(x, cy + 4);
-    ctx.quadraticCurveTo(x + 14, cy - 12, x + 30, cy + 2);
-    ctx.quadraticCurveTo(x + 22, cy - 2, x + 20, cy + 6);
-    ctx.quadraticCurveTo(x + 14, cy - 4, x, cy + 4);
-    ctx.fill();
+    ctx.moveTo(x, cy + 5);
+    ctx.quadraticCurveTo(x + 16, cy - 14, x + 34, cy + 2);
+    ctx.quadraticCurveTo(x + 26, cy - 3, x + 22, cy + 7);
+    ctx.quadraticCurveTo(x + 15, cy - 5, x, cy + 5);
+    inked(ctx, '#FFFFFF', 1.6);
   }
 }
 
-/** Tête de mort et tibias croisés, pour la voile et le pavillon. */
+/** Tête de mort et tibias croisés, cernés : pour la voile et le pavillon. */
 function skull(ctx, x, y, s, ink, bone) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(s, s);
-  ctx.strokeStyle = bone;
-  ctx.lineWidth = 3;
   ctx.lineCap = 'round';
+  for (const [width, color] of [[6, ink], [3.4, bone]]) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(-12, 13);
+    ctx.lineTo(12, -2);
+    ctx.moveTo(12, 13);
+    ctx.lineTo(-12, -2);
+    ctx.stroke();
+  }
   ctx.beginPath();
-  ctx.moveTo(-11, 12);
-  ctx.lineTo(11, -2);
-  ctx.moveTo(11, 12);
-  ctx.lineTo(-11, -2);
-  ctx.stroke();
-  ctx.fillStyle = bone;
-  ctx.beginPath();
-  ctx.arc(0, -4, 8, 0, TAU);
-  ctx.fill();
-  ctx.fillRect(-4, 2, 8, 5);
+  ctx.arc(0, -5, 8.5, 0, TAU);
+  ctx.rect(-4.5, 1, 9, 6);
+  inked(ctx, bone, 1.4);
   ctx.fillStyle = ink;
   ctx.beginPath();
-  ctx.arc(-3, -5, 2.2, 0, TAU);
-  ctx.arc(3, -5, 2.2, 0, TAU);
+  ctx.arc(-3.2, -5.5, 2.4, 0, TAU);
+  ctx.arc(3.2, -5.5, 2.4, 0, TAU);
   ctx.fill();
   ctx.restore();
 }
 
 /**
- * Navire pirate à tête de mouton, vu de profil (cap à droite si dir = 1) : coque de planches,
- * figure de proue en mouton laineux, mât et nid-de-pie, grande voile gonflée à tête de mort, foc,
- * pavillon qui claque au vent. Il tangue sur la houle.
+ * Navire pirate à tête de mouton, cerné d'encre comme dans un manga (cap à droite si dir = 1) :
+ * coque de planches, figure de proue laineuse, mât et nid-de-pie, grande voile gonflée à tête de
+ * mort, foc, pavillon qui claque. Il tangue sur la houle.
  */
 function pirateShip(ctx, x, y, s, dir, now) {
   const roll = Math.sin(now / 900) * 0.05;
@@ -677,189 +724,297 @@ function pirateShip(ctx, x, y, s, dir, now) {
   ctx.translate(x, y + bob);
   ctx.rotate(roll);
   ctx.scale(s * dir, s);
-  // Coque
-  ctx.fillStyle = '#8B5A2B';
+  ctx.lineJoin = 'round';
+  // Mât, foc et grande voile (derrière la coque)
   ctx.beginPath();
-  ctx.moveTo(-64, -24);
-  ctx.lineTo(-50, -24);
+  ctx.rect(-3, -134, 6, 128);
+  inked(ctx, '#7A4A22', 1.6);
+  ctx.beginPath();
+  ctx.moveTo(4, -120);
+  ctx.quadraticCurveTo(42, -70, 74, -24);
+  ctx.lineTo(6, -28);
+  ctx.closePath();
+  inked(ctx, '#FFFDF4', 2);
+  const puff = 9 + Math.sin(now / 600) * 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-48, -104);
+  ctx.quadraticCurveTo(0, -104 + puff / 2, 42, -104);
+  ctx.quadraticCurveTo(42 + puff, -72, 42, -38);
+  ctx.quadraticCurveTo(0, -38 + puff, -48, -38);
+  ctx.quadraticCurveTo(-48 + puff, -72, -48, -104);
+  inked(ctx, '#FFFDF4', 2.2);
+  ctx.strokeStyle = 'rgba(20, 20, 20, .25)'; // plis de la toile
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-30, -98);
+  ctx.quadraticCurveTo(-26 + puff / 2, -72, -30, -44);
+  ctx.moveTo(24, -98);
+  ctx.quadraticCurveTo(28 + puff / 2, -72, 24, -44);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.rect(-52, -108, 98, 5);
+  inked(ctx, '#7A4A22', 1.4);
+  skull(ctx, -3, -72, 1.5, INK, '#FFFFFF');
+  // Nid-de-pie et pavillon noir qui claque au vent
+  ctx.beginPath();
+  ctx.rect(-10, -120, 20, 8);
+  inked(ctx, '#8B5A2B', 1.4);
+  ctx.beginPath();
+  ctx.moveTo(3, -152);
+  for (let k = 0; k <= 4; k++) ctx.lineTo(3 - k * 9, -152 + Math.sin(now / 130 + k) * 3 * (k / 4));
+  for (let k = 4; k >= 0; k--) ctx.lineTo(3 - k * 9, -134 + Math.sin(now / 130 + k) * 3 * (k / 4));
+  ctx.closePath();
+  inked(ctx, INK, 1);
+  skull(ctx, -15, -144, 0.48, INK, '#FFFFFF');
+  // Coque de planches
+  ctx.beginPath();
+  ctx.moveTo(-66, -26);
+  ctx.lineTo(-50, -26);
   ctx.lineTo(-50, -8);
   ctx.lineTo(52, -8);
-  ctx.quadraticCurveTo(66, -12, 72, -22);
-  ctx.quadraticCurveTo(70, 12, 40, 24);
-  ctx.lineTo(-44, 24);
-  ctx.quadraticCurveTo(-62, 14, -64, -24);
+  ctx.quadraticCurveTo(66, -12, 74, -24);
+  ctx.quadraticCurveTo(72, 12, 40, 26);
+  ctx.lineTo(-44, 26);
+  ctx.quadraticCurveTo(-64, 14, -66, -26);
   ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = '#5E3A17';
+  inked(ctx, '#A0662F', 2.6);
+  ctx.strokeStyle = INK;
   ctx.lineWidth = 1.2;
   ctx.beginPath();
-  for (const yy of [2, 10, 17]) {
-    ctx.moveTo(-58, yy);
-    ctx.lineTo(56, yy);
+  for (const yy of [3, 11, 18]) {
+    ctx.moveTo(-60, yy);
+    ctx.lineTo(58, yy);
   }
   ctx.stroke();
-  ctx.fillStyle = '#C08A4A'; // bastingage
-  ctx.fillRect(-50, -12, 102, 4);
-  ctx.fillStyle = '#F2E2B8'; // hublots
+  ctx.beginPath();
+  ctx.rect(-50, -13, 102, 5);
+  inked(ctx, '#D39A55', 1.4);
   for (const hx of [-30, -10, 10, 30]) {
     ctx.beginPath();
-    ctx.arc(hx, 4, 3, 0, TAU);
-    ctx.fill();
+    ctx.arc(hx, 6, 3.4, 0, TAU);
+    inked(ctx, '#FFE7A3', 1.2);
   }
-  // Figure de proue : un mouton laineux
-  ctx.fillStyle = '#FFF6DE';
-  for (const [dx, dy, r] of [[76, -30, 7], [83, -34, 6], [86, -26, 6], [79, -22, 6], [71, -24, 5]]) {
-    ctx.beginPath();
+  // Figure de proue : un mouton laineux, cerné, à corne en spirale
+  ctx.beginPath();
+  for (const [dx, dy, r] of [[78, -32, 8], [86, -36, 7], [90, -27, 7], [82, -22, 7], [72, -25, 6]]) {
+    ctx.moveTo(dx + r, dy);
     ctx.arc(dx, dy, r, 0, TAU);
-    ctx.fill();
   }
-  ctx.fillStyle = '#3A2A1E';
-  ctx.beginPath();
-  ctx.arc(85, -30, 1.6, 0, TAU);
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.fillStyle = '#FFF6DE';
   ctx.fill();
-  ctx.strokeStyle = '#E8C46A'; // corne en spirale
+  ctx.fillStyle = INK;
+  ctx.beginPath();
+  ctx.arc(89, -32, 1.8, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.arc(78, -34, 4.5, Math.PI * 0.2, Math.PI * 1.9);
+  ctx.stroke();
+  ctx.strokeStyle = '#E8C46A';
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** Monstre marin : une tête de serpent géant cernée d'encre, qui surgit puis replonge. `age` : 0 à 1. */
+function seaMonster(ctx, x, base, age, now) {
+  const rise = Math.sin(Math.min(1, age) * Math.PI);
+  const top = base - rise * 170;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x - 140, 0, 280, base + 4);
+  ctx.clip();
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x - 28, base + 10);
+  ctx.quadraticCurveTo(x - 32, top + 66, x - 10, top + 22);
+  ctx.quadraticCurveTo(x + 12, top, x + 38, top + 14);
+  ctx.quadraticCurveTo(x + 58, top + 26, x + 44, top + 44);
+  ctx.quadraticCurveTo(x + 22, top + 48, x + 16, top + 66);
+  ctx.quadraticCurveTo(x + 14, top + 110, x + 28, base + 10);
+  ctx.closePath();
+  inked(ctx, '#3FA36B', 2.6);
+  ctx.beginPath(); // ventre
+  ctx.moveTo(x + 16, top + 68);
+  ctx.quadraticCurveTo(x + 14, top + 110, x + 26, base + 10);
+  ctx.lineTo(x + 19, base + 10);
+  ctx.quadraticCurveTo(x + 8, top + 110, x + 11, top + 68);
+  inked(ctx, '#F1E3A0', 1.4);
+  for (let k = 0; k < 5; k++) { // crête
+    const cy = top + 22 + k * 20;
+    ctx.beginPath();
+    ctx.moveTo(x - 14 - k * 2, cy);
+    ctx.lineTo(x - 34 - k * 2, cy + 7);
+    ctx.lineTo(x - 16 - k * 2, cy + 14);
+    inked(ctx, '#1F7A4C', 1.4);
+  }
+  ctx.beginPath(); // gueule
+  ctx.moveTo(x + 44, top + 34);
+  ctx.lineTo(x + 26, top + 36);
+  ctx.strokeStyle = INK;
   ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(76, -32, 4, Math.PI * 0.2, Math.PI * 1.9);
   ctx.stroke();
-  // Mât, nid-de-pie
-  ctx.fillStyle = '#6B4423';
-  ctx.fillRect(-3, -132, 6, 124);
-  ctx.fillRect(-9, -116, 18, 7);
-  // Foc : voile triangulaire vers la proue
-  ctx.fillStyle = '#FFFDF4';
+  ctx.beginPath(); // œil
+  ctx.arc(x + 24, top + 16, 7, 0, TAU);
+  inked(ctx, '#FFFFFF', 2);
+  ctx.fillStyle = INK;
   ctx.beginPath();
-  ctx.moveTo(4, -118);
-  ctx.quadraticCurveTo(40, -70, 70, -26);
-  ctx.lineTo(6, -30);
+  ctx.arc(x + 26 + Math.sin(now / 500) * 2, top + 16, 3.4, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+  for (let k = 0; k < 8; k++) { // gerbe d'écume
+    ctx.beginPath();
+    ctx.arc(x - 34 + k * 10, base - 2 - Math.abs(Math.sin(now / 160 + k)) * 8 * rise, 5.5, 0, TAU);
+    inked(ctx, '#FFFFFF', 1.4);
+  }
+}
+
+/** Lignes de vitesse : des rayons d'encre qui partent d'un point, pour un moment fort. */
+function speedLines(ctx, x, y, w, h, strength, now) {
+  const far = Math.hypot(w, h);
+  ctx.save();
+  ctx.strokeStyle = `rgba(20, 20, 20, ${(0.28 * strength).toFixed(2)})`;
+  for (let k = 0; k < 64; k++) {
+    const a = (k / 64) * TAU + Math.sin(k * 12.9898) * 0.04;
+    const inner = 110 + ((k * 37) % 60) + Math.sin(now / 90 + k) * 6;
+    ctx.lineWidth = 1 + (k % 3);
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(a) * inner, y + Math.sin(a) * inner);
+    ctx.lineTo(x + Math.cos(a) * far, y + Math.sin(a) * far);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** Onomatopée de manga : grosses lettres noires cernées de blanc, qui surgissent. */
+function sfx(ctx, text, x, y, size, rot, pop) {
+  const k = pop < 1 ? 0.5 + 0.7 * Math.sin((pop * Math.PI) / 2) : 1.2 - Math.min(0.2, (pop - 1) * 0.4);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.scale(k, k);
+  ctx.font = `900 ${size}px ${SFX_FONT}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = size / 6;
+  ctx.strokeText(text, 0, 0);
+  ctx.fillStyle = INK;
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
+}
+
+/** Chapeau de paille emporté par le vent : il traverse le ciel en tournoyant. */
+function strawHat(ctx, hat, now) {
+  ctx.save();
+  ctx.translate(hat.x, hat.y + Math.sin(now / 500 + hat.phase) * 18);
+  ctx.rotate(Math.sin(now / 400 + hat.phase) * 0.5);
+  ctx.scale(hat.s, hat.s);
+  ctx.beginPath();
+  ctx.ellipse(0, 6, 34, 9, 0, 0, TAU); // bord
+  inked(ctx, '#F2C24E', 2.2);
+  ctx.beginPath();
+  ctx.moveTo(-17, 4);
+  ctx.bezierCurveTo(-18, -20, 18, -20, 17, 4); // calotte
+  inked(ctx, '#F2C24E', 2.2);
+  ctx.beginPath();
+  ctx.moveTo(-17, 3);
+  ctx.bezierCurveTo(-17, -4, 17, -4, 17, 3); // ruban rouge
+  ctx.lineTo(17.5, -2);
+  ctx.bezierCurveTo(17, -9, -17, -9, -17.5, -2);
   ctx.closePath();
-  ctx.fill();
-  // Grande voile gonflée, frappée d'une tête de mort
-  const puff = 8 + Math.sin(now / 600) * 2;
-  ctx.fillStyle = '#FFFDF4';
-  ctx.strokeStyle = '#D9CBA8';
-  ctx.lineWidth = 1.2;
+  inked(ctx, '#D7263D', 1.6);
+  ctx.strokeStyle = 'rgba(140, 100, 30, .55)'; // tressage
+  ctx.lineWidth = 0.8;
   ctx.beginPath();
-  ctx.moveTo(-46, -104);
-  ctx.quadraticCurveTo(0, -104 + puff / 2, 40, -104);
-  ctx.quadraticCurveTo(40 + puff, -72, 40, -40);
-  ctx.quadraticCurveTo(0, -40 + puff, -46, -40);
-  ctx.quadraticCurveTo(-46 + puff, -72, -46, -104);
-  ctx.fill();
+  for (let a = -28; a <= 28; a += 7) {
+    ctx.moveTo(a, 1);
+    ctx.lineTo(a * 1.12, 12);
+  }
   ctx.stroke();
-  ctx.fillStyle = '#6B4423';
-  ctx.fillRect(-50, -107, 94, 4);
-  skull(ctx, -2, -72, 1.4, '#FFFDF4', '#1C1C1C');
-  // Pavillon noir qui claque au vent
-  ctx.fillStyle = '#1C1C1C';
-  ctx.beginPath();
-  ctx.moveTo(3, -150);
-  for (let k = 0; k <= 4; k++) ctx.lineTo(3 - k * 8, -150 + Math.sin(now / 140 + k) * 2.5 * (k / 4));
-  for (let k = 4; k >= 0; k--) ctx.lineTo(3 - k * 8, -134 + Math.sin(now / 140 + k) * 2.5 * (k / 4));
-  ctx.closePath();
-  ctx.fill();
-  skull(ctx, -13, -142, 0.45, '#1C1C1C', '#FFFFFF');
-  ctx.fillStyle = '#6B4423';
-  ctx.fillRect(1, -152, 3, 22);
   ctx.restore();
 }
 
 /**
- * Monstre marin : une tête de serpent géant qui surgit des flots, regarde autour, puis replonge
- * dans une gerbe d'écume. `age` va de 0 à 1.
+ * La planche : ciel tramé, soleil, nuages, îles, mer en couches cernées d'encre, navire, mouettes ;
+ * de temps en temps, un monstre marin qui surgit (lignes de vitesse et « ドン!! »), un « ザザーン »
+ * de vagues, un chapeau de paille emporté par le vent.
  */
-function seaMonster(ctx, x, base, age, now) {
-  const rise = Math.sin(Math.min(1, age) * Math.PI); // monte puis redescend
-  const top = base - rise * 150;
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x - 120, 0, 240, base + 4); // rien sous la surface
-  ctx.clip();
-  ctx.fillStyle = '#4C8C6A';
-  ctx.beginPath();
-  ctx.moveTo(x - 26, base + 10);
-  ctx.quadraticCurveTo(x - 30, top + 60, x - 10, top + 20);
-  ctx.quadraticCurveTo(x + 10, top, x + 34, top + 14);
-  ctx.quadraticCurveTo(x + 50, top + 24, x + 40, top + 40);
-  ctx.quadraticCurveTo(x + 20, top + 44, x + 14, top + 60);
-  ctx.quadraticCurveTo(x + 12, top + 100, x + 26, base + 10);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#E3D9A0'; // ventre
-  ctx.beginPath();
-  ctx.moveTo(x + 14, top + 62);
-  ctx.quadraticCurveTo(x + 12, top + 100, x + 24, base + 10);
-  ctx.lineTo(x + 18, base + 10);
-  ctx.quadraticCurveTo(x + 6, top + 100, x + 10, top + 62);
-  ctx.fill();
-  ctx.fillStyle = '#2F6B4C'; // crête
-  for (let k = 0; k < 5; k++) {
-    const cy = top + 20 + k * 18;
-    ctx.beginPath();
-    ctx.moveTo(x - 14 - k * 2, cy);
-    ctx.lineTo(x - 30 - k * 2, cy + 6);
-    ctx.lineTo(x - 16 - k * 2, cy + 12);
-    ctx.fill();
-  }
-  ctx.fillStyle = '#FFFFFF'; // œil qui regarde
-  ctx.beginPath();
-  ctx.arc(x + 22, top + 16, 6, 0, TAU);
-  ctx.fill();
-  ctx.fillStyle = '#1C1C1C';
-  ctx.beginPath();
-  ctx.arc(x + 23 + Math.sin(now / 500) * 2, top + 16, 3, 0, TAU);
-  ctx.fill();
-  ctx.restore();
-  // Gerbe d'écume au pied
-  ctx.fillStyle = `rgba(255, 255, 255, ${(0.4 + 0.5 * rise).toFixed(2)})`;
-  for (let k = 0; k < 7; k++) {
-    ctx.beginPath();
-    ctx.arc(x - 30 + k * 10, base - 2 - Math.abs(Math.sin(now / 160 + k)) * 6 * rise, 5, 0, TAU);
-    ctx.fill();
-  }
-}
-
-/** La scène : ciel, soleil, nuages, îles, mer en couches, navire, mouettes et, parfois, le monstre. */
 function grandLine(ctx, s, now, w, h) {
   const horizon = h * 0.6;
   const sky = ctx.createLinearGradient(0, 0, 0, horizon);
-  sky.addColorStop(0, '#7EC8F0');
-  sky.addColorStop(1, '#D8F0FB');
+  sky.addColorStop(0, '#3FA9E6');
+  sky.addColorStop(1, '#C9ECFA');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, horizon);
-  mangaSun(ctx, w * 0.84, h * 0.16, now);
-  for (const c of s.clouds) {
-    const x = ((c.x + now / c.speed) % (w + 300)) - 150;
-    cloud(ctx, x, c.y * h, c.s);
-  }
-  island(ctx, w * 0.18, horizon + 2, 0.9);
-  island(ctx, w * 0.7, horizon + 2, 0.6);
-  // Mer : du lointain au proche
-  mangaWaves(ctx, horizon, w, now, 90, 2, '#5DB6E3', false);
-  mangaWaves(ctx, horizon + h * 0.07, w, now, 60, 4, '#3D9FD6', true);
-  // Monstre marin, de temps en temps, au loin
-  if (!s.monster && now > s.nextMonster) s.monster = { x: rand(0.15, 0.85) * w, born: now };
+  // Trame dans le haut du ciel
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = screentone(ctx, s);
+  ctx.fillRect(0, 0, w, horizon * 0.6);
+  ctx.restore();
+  mangaSun(ctx, w * 0.85, h * 0.16, now);
+  for (const c of s.clouds) mangaCloud(ctx, ((c.x + now / c.speed) % (w + 300)) - 150, c.y * h, c.s);
+  island(ctx, w * 0.16, horizon + 2, 0.95);
+  island(ctx, w * 0.72, horizon + 2, 0.6);
+  mangaWaves(ctx, horizon, w, now, 90, 2, '#6CC3EC', false);
+  mangaWaves(ctx, horizon + h * 0.07, w, now, 60, 4, '#3DA2DA', true);
+  // Monstre marin : il surgit, lignes de vitesse et « ドン!! », puis replonge
+  if (!s.monster && now > s.nextMonster) s.monster = { x: rand(0.2, 0.8) * w, born: now };
   if (s.monster) {
     const age = (now - s.monster.born) / 7000;
-    seaMonster(ctx, s.monster.x, horizon + h * 0.08, age, now);
+    const base = horizon + h * 0.08;
+    const peak = Math.max(0, Math.sin(Math.min(1, age) * Math.PI));
+    if (age > 0.12 && age < 0.8) speedLines(ctx, s.monster.x + 20, base - 120 * peak, w, h, peak, now);
+    seaMonster(ctx, s.monster.x, base, age, now);
+    // En haut, dans le ciel : au milieu de la toile, les fiches de l'arbre le cacheraient
+    if (age > 0.18 && age < 0.85) sfx(ctx, 'ドン!!', s.monster.x < w / 2 ? w * 0.3 : w * 0.62, h * 0.11, 92, -0.15, (age - 0.18) * 8);
     if (age > 1) {
       s.monster = null;
-      s.nextMonster = now + rand(18000, 32000);
+      s.nextMonster = now + rand(16000, 28000);
     }
   }
-  // Le navire traverse en boucle, de gauche à droite, au bas de la toile (sous les fiches de l'arbre)
-  const crossing = (w + 400) / 0.035; // ms pour traverser
+  // Le navire traverse en boucle au bas de la toile, sous les fiches de l'arbre
+  const crossing = (w + 400) / 0.035;
   const shipX = ((now % crossing) / crossing) * (w + 400) - 200;
   const shipY = h * 0.9;
-  ctx.fillStyle = 'rgba(255, 255, 255, .6)'; // sillage
-  for (let k = 1; k < 6; k++) {
+  for (let k = 1; k < 6; k++) { // sillage
     ctx.beginPath();
-    ctx.ellipse(shipX - k * 26, shipY + 18 + Math.sin(now / 300 + k) * 2, 14 - k, 3, 0, 0, TAU);
-    ctx.fill();
+    ctx.ellipse(shipX - k * 28, shipY + 20 + Math.sin(now / 300 + k) * 2, 15 - k, 3.5, 0, 0, TAU);
+    inked(ctx, '#FFFFFF', 1.2);
   }
-  mangaWaves(ctx, horizon + h * 0.17, w, now, 40, 6, '#2A86C2', true);
+  mangaWaves(ctx, horizon + h * 0.17, w, now, 40, 6, '#2B88C8', true);
   pirateShip(ctx, shipX, shipY, Math.min(1.4, h / 540), 1, now);
-  mangaWaves(ctx, h * 0.93, w, now, 28, 8, '#1C6FA8', true);
+  mangaWaves(ctx, h * 0.93, w, now, 28, 8, '#1A6AA6', true);
+  // « ザザーン » : le bruit des vagues, de temps en temps, sur l'eau
+  if (!s.wash && now > s.nextWash) s.wash = { x: rand(0.1, 0.9) * w, born: now };
+  if (s.wash) {
+    const age = (now - s.wash.born) / 2600;
+    if (age > 1) {
+      s.wash = null;
+      s.nextWash = now + rand(9000, 16000);
+    } else {
+      ctx.save();
+      ctx.globalAlpha = Math.sin(age * Math.PI);
+      sfx(ctx, 'ザザーン', s.wash.x, h * 0.965, 34, -0.08, age * 4);
+      ctx.restore();
+    }
+  }
+  // Chapeau de paille emporté par le vent
+  if (!s.hat && now > s.nextHat) s.hat = { x: -60, y: rand(0.12, 0.4) * h, s: rand(0.9, 1.2), speed: rand(2.2, 3.2), phase: rand(0, TAU) };
+  if (s.hat) {
+    s.hat.x += s.hat.speed;
+    strawHat(ctx, s.hat, now);
+    if (s.hat.x > w + 80) {
+      s.hat = null;
+      s.nextHat = now + rand(20000, 35000);
+    }
+  }
   // Mouettes
   release(s.gulls, 4, 0.01, () => ({ ...flyer(w, h, [1, 2], [8, 12]), y: rand(0.08, 0.4) * h }));
   s.gulls = s.gulls.filter((b) => {
@@ -1196,7 +1351,8 @@ const SCENES = {
   grandline: {
     make: () => ({
       clouds: [{ x: 0, y: 0.12, s: 1.1, speed: 70 }, { x: 420, y: 0.24, s: 0.8, speed: 95 }, { x: 900, y: 0.08, s: 0.9, speed: 80 }, { x: 1300, y: 0.3, s: 0.7, speed: 110 }],
-      gulls: [], monster: null, nextMonster: Date.now() + 6000,
+      gulls: [], monster: null, nextMonster: Date.now() + 5000,
+      wash: null, nextWash: Date.now() + 2500, hat: null, nextHat: Date.now() + 9000, tone: null,
     }),
     draw: (ctx, s, now, w, h) => grandLine(ctx, s, now, w, h),
   },
