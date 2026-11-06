@@ -120,3 +120,40 @@ input[type="file"] {
   height: 100%;
   object-fit: contain;
 }
+
+/* Recadrage d'une photo (ui/crop.js) : la photo glisse derrière un cadre portrait 4:5 */
+.crop-sheet {
+  max-width: 360px;
+  align-items: center;
+}
+
+.crop-stage {
+  position: relative;
+  width: 288px;   /* = FRAME dans ui/crop.js */
+  height: 360px;
+  overflow: hidden;
+  border-radius: 6px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  background: var(--paper);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.crop-stage:active {
+  cursor: grabbing;
+}
+
+.crop-stage img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.crop-sheet .fld {
+  width: 100%;
+}
