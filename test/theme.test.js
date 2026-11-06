@@ -92,7 +92,7 @@ describe('thèmes de couleur', () => {
     // Thèmes illustrés : texte lisible (AA) sur les panneaux, et sur le fond pour le texte principal
     const illustrated = readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8');
     const blocks = [...illustrated.matchAll(/:root\[data-theme="([\w-]+)"\] \{([^}]*--paper[^}]*)\}/g)];
-    assert.equal(blocks.length, 3, 'trois thèmes illustrés');
+    assert.equal(blocks.length, 4, 'quatre thèmes illustrés');
     for (const [, theme, block] of blocks) {
       const tv = Object.fromEntries([...block.matchAll(/--([\w-]+): (#[0-9A-F]{6});/gi)].map((m) => [m[1], m[2]]));
       for (const k of ['ink', 'muted', 'warn', 'danger', 'ok']) assert.ok(ratio(tv[k], tv.surface) >= 4.5, `${theme} : --${k}`);
@@ -319,6 +319,9 @@ describe('animations des thèmes fêtes et saisons', () => {
       assert.ok(automne.has('bezierCurveTo') && automne.has('lineTo'));
       const ete = drawn('ete');
       assert.ok(ete.has('lineTo') && ete.has('closePath') && ete.has('arc'), 'mer, rivage et baigneurs');
+      // Grand Line : ciel, mer, navire (coque, voile, pavillon) et nuages
+      const sea = drawn('grandline');
+      assert.ok(sea.has('fillRect') && sea.has('quadraticCurveTo') && sea.has('arc') && sea.has('ellipse'), 'ciel, mer et navire');
       // Halloween : chauves-souris et fantômes lâchés au hasard (ici, à coup sûr)
       Math.random = () => 0.001;
       assert.ok(drawn('halloween').has('quadraticCurveTo'));

@@ -137,7 +137,8 @@ chacun leur taille, leur vitesse et leur balancement, tirés au hasard) :
   (le vrai ciel de Bordeaux, 28 constellations placées par `model/sky.js` d'après le temps sidéral ;
   il part de l'heure réelle et tourne en accéléré, `ui/sky.js`), 🏺 Porcelaine de Limoges (décor de
   faïence en bleu de four et or, fiches en plaques émaillées), 💊 Matrix (pluie de signes verts,
-  `ui/rain.js`).
+  `ui/rain.js`), 🏴‍☠️ Grand Line (mer de manga, navire pirate à tête de mouton qui vogue, îles,
+  mouettes, monstre marin ; la personne au centre est « WANTED »).
 
 Palettes et motifs des thèmes « Univers » sont générés par `scripts/build-themes.py` dans
 `css/themes.css`. Si le système demande moins d'animations, les animations s'arrêtent et le motif
