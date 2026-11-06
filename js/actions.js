@@ -25,6 +25,7 @@ import { updatePrintInfo } from './ui/print.js';
 import { applyTheme } from './ui/theme.js';
 import { renderPersonDlg } from './ui/person-dlg.js';
 import { photoFromFile, DOCUMENT_SIDE } from './utils/image.js';
+import { cropPhoto } from './ui/crop.js';
 
 /** Situations partagées avec le conjoint actuel. */
 const COUPLE_SITUATIONS = new Set(['married', 'remarried', 'pacs', 'cohabiting']);
@@ -481,17 +482,18 @@ export function removeDraftSourcePhoto(i) {
   renderSide(true);
 }
 
-/** Photo choisie dans le formulaire : réduite puis gardée dans le brouillon. */
+/** Photo choisie dans le formulaire : recadrée en portrait, puis gardée dans le brouillon. */
 export async function setDraftPhoto(file) {
   if (!S.edit || !file) return;
   const token = S.edit.token;
   let photo;
   try {
-    photo = await photoFromFile(file);
+    photo = await cropPhoto(file);
   } catch (err) {
     toast(err.message, true);
     return;
   }
+  if (!photo) return; // recadrage annulé
   if (!S.edit || S.edit.token !== token) return; // formulaire fermé entre-temps
   captureDraft();
   S.edit.draft.photo = photo;

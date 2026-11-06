@@ -321,6 +321,21 @@
     <div class="sheet media-sheet" id="mediaCard" role="dialog" aria-modal="true" aria-labelledby="mdTitle"></div>
   </div>
 
+  <!-- Recadrage de la photo d'une fiche, au moment de la choisir (ui/crop.js) -->
+  <div class="overlay" id="cropDlg" hidden>
+    <div class="sheet crop-sheet" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+      <h2 id="cropTitle" data-i18n="crop.title">Recadrer la photo</h2>
+      <p class="hint" data-i18n="crop.hint">Faites glisser la photo et zoomez pour placer le visage dans le cadre.</p>
+      <div class="crop-stage" id="cropStage"><img id="cropImg" src="" alt="" draggable="false"></div>
+      <label class="fld"><span data-i18n="crop.zoom">Zoom</span>
+        <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1"></label>
+      <div class="row-btns">
+        <button class="btn primary" type="button" data-act="crop-ok" data-i18n="crop.ok">Recadrer</button>
+        <button class="btn" type="button" data-act="crop-cancel" data-i18n="cancel">Annuler</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Agrandissement de la photo d'une fiche : un clic n'importe où le ferme -->
   <div class="overlay photo-zoom" id="photoZoom" hidden>
     <img id="photoZoomImg" src="" alt="">

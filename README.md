@@ -241,8 +241,10 @@ Une personne :
 
 `photo` (facultatif) est une image JPEG intégrée en data URL (`data:image/jpeg;base64,…`),
 ou, avec `server.js`, une référence `photos/<fichier>` (voir plus haut).
-Elle est choisie dans le formulaire, réduite à 320 pixels de côté au plus (quelques
-dizaines de Ko), et affichée en haut de la fiche. Sans photo, la fiche montre
+Elle est choisie dans le formulaire puis recadrée (`ui/crop.js`) : la photo glisse et se zoome
+derrière un cadre portrait 4:5, et seule la partie cadrée est gardée, en 256 × 320 pixels (quelques
+dizaines de Ko). Elle est affichée en haut de la fiche, cadrée vers le haut (le visage) quand une
+photo plus ancienne n'a pas ces proportions. Sans photo, la fiche montre
 `images/avatar_femme.jpeg` ou `images/avatar_homme.jpeg` selon le sexe
 (`images/avatar_neutre.jpeg` s'il n'est pas précisé). Elle n'est pas exportée en GEDCOM ;
 la sauvegarde .json la conserve.
