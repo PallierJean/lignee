@@ -24,6 +24,7 @@ export const S = {
   fan: false,            // fan chart instead of the tree
   line: true,            // halo on the focus person's direct line
   panel: true,           // record/register panel shown
+  sheet: false,          // phone: record/register panel open over the tree
   closed: {},            // closed banners: ex (example family), local (local mode)
   theme: 'auto',         // colour theme: see THEMES in config.js
   textSize: 'normal',    // interface text size: see TEXT_SIZES in config.js

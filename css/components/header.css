@@ -108,6 +108,19 @@
   .top-actions .btn {
     padding: 6px 10px;
   }
+
+  /* Phone: the header stays short so the tree gets the screen */
+  .sum {
+    display: none;
+  }
+
+  .top {
+    gap: 8px;
+  }
+
+  .top-actions .pill > span {
+    display: none;
+  }
 }
 
 /* Language button: FR / EN */
