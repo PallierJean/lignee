@@ -1,5 +1,15 @@
 # Historique des versions
 
+## [1.19.0](https://github.com/PallierJean/lignee/compare/v1.18.0...v1.19.0) (2026-11-06)
+
+### Features
+
+* Grand Line, l'équipage sur le pont du navire pirate ([8f95c15](https://github.com/PallierJean/lignee/commit/8f95c150a6940f89c02b2f1a0a0c5c7662ed53bc))
+* Grand Line, la marine poursuit le navire et le matelot aux bras élastiques rattrape son chapeau ([4d2188f](https://github.com/PallierJean/lignee/commit/4d2188f19213b2e11134849888a10831cb2ee323))
+* Grand Line, un navire de la marine à figure de proue de bouledogue ([bf1d592](https://github.com/PallierJean/lignee/commit/bf1d592324999490f13cfd42ecf245521198d861))
+* Grand Line, une vraie planche de manga ([81dd8e8](https://github.com/PallierJean/lignee/commit/81dd8e834b14774d5df15414486ef9d9c4173705))
+* thème Grand Line, un navire pirate sur une mer de manga ([da9308e](https://github.com/PallierJean/lignee/commit/da9308e2ea06f6f55049fdb7164b08a113768358))
+
 ## [1.18.0](https://github.com/PallierJean/lignee/compare/v1.17.0...v1.18.0) (2026-11-06)
 
 ### Features
