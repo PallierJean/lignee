@@ -372,6 +372,27 @@
   animation: step-print 6.5s linear forwards;
 }
 
+/* Le parchemin au nom de la personne qui marche : il apparaît, la suit, puis s'efface */
+.steps .step-name {
+  opacity: 0;
+  transition: opacity .8s, transform .35s ease-out;
+}
+
+.steps .step-name.on {
+  opacity: .92;
+}
+
+.steps .step-name path {
+  fill: #F3E4BC;
+  stroke: #4A2A18;
+  stroke-width: .8;
+}
+
+.steps .step-name text {
+  font: italic 12px "IM Fell English", Georgia, serif;
+  fill: #3A2414;
+}
+
 /* Le pas s'imprime d'un coup, pâlit, puis s'efface */
 @keyframes step-print {
   0% {

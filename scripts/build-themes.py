@@ -128,30 +128,10 @@ out.append(f"""
 }}
 """)
 
-# ---------- Carte du Maraudeur : ornements dessinés à l'encre (inspirés de l'affiche, sans en copier
-# ni les textes ni l'emblème) : banderole, château et losange rouge, saule, rose des vents ----------
+# ---------- Carte du Maraudeur : plan de demeure à l'encre, bordures à devise, cartouche du château,
+# plis du parchemin (inspiré de la carte du roman, sans en copier ni les textes ni l'emblème) ----------
 INK = '#4A2A18'
 SERIF = "font-family='IM Fell English, Georgia, serif'"
-
-def banner():
-    """Banderole calligraphiée et ses arabesques : « Itinerarium familiae », et une ligne d'annonce."""
-    swirl = ("M20 70C10 40 40 20 60 40S50 80 30 66"  # arabesque de gauche
-             "M300 70C310 40 280 20 260 40S270 80 290 66")
-    ribbon = "M40 48C90 28 230 28 280 48L272 66C222 48 98 48 48 66Z"
-    return svg(320, 130,
-        f"<g fill='none' stroke='{INK}' stroke-linecap='round' opacity='.6'>"
-        f"<path d='{swirl}' stroke-width='1.4'/>"
-        "<path d='M60 40c20-25 60-30 100-28s80 3 100 28' stroke-width='.9'/>"
-        "<path d='M14 80c10 18 40 22 60 12M306 80c-10 18-40 22-60 12' stroke-width='1'/></g>"
-        f"<path d='{ribbon}' fill='#EAD9B0' stroke='{INK}' stroke-width='1.3' opacity='.85'/>"
-        f"<path d='M48 66l-14 8 8-14M272 66l14 8-8-14' fill='none' stroke='{INK}' stroke-width='1.1' opacity='.7'/>"
-        f"<path id='rb' d='M52 57C100 40 220 40 268 57' fill='none'/>"
-        f"<text {SERIF} font-size='12' letter-spacing='1.5' fill='{INK}' opacity='.85'>"
-        "<textPath href='#rb' startOffset='50%' text-anchor='middle'>ITINERARIUM FAMILIAE</textPath></text>"
-        f"<text x='160' y='96' {SERIF} font-style='italic' font-size='13' fill='{INK}' text-anchor='middle' opacity='.75'>"
-        "les ancêtres ont l’honneur</text>"
-        f"<text x='160' y='114' {SERIF} font-style='italic' font-size='13' fill='{INK}' text-anchor='middle' opacity='.75'>"
-        "de vous présenter</text>")
 
 def castle():
     """Château à tourelles, à l'encre, barré d'un losange rouge : « La carte de Lignée »."""
@@ -169,39 +149,59 @@ def castle():
         f"<g fill='none' stroke='{INK}' stroke-width='1.2' stroke-linejoin='round' opacity='.6'>{towers}<path d='{walls}'/>"
         "<path d='M20 200c40 10 80-6 120 4s80 8 110-2' stroke-dasharray='2 4'/></g>" + seal)
 
-def willow():
-    """Saule croqué à la plume : tronc noueux, branches qui retombent."""
-    b = "<path d='M100 200C96 160 108 130 98 100S104 60 100 40' stroke-width='4'/>"
-    for i in range(16):
-        x0 = 100 + (i - 8) * 3
-        dx = (i - 8) * 9
-        b += f"<path d='M{x0} {50 + abs(i - 8) * 3}C{x0 + dx * .6} {20 + i % 3 * 6} {x0 + dx} {60} {x0 + dx * 1.1} {120 + (i % 4) * 14}' stroke-width='.9'/>"
-    return svg(200, 210, f"<g fill='none' stroke='{INK}' stroke-linecap='round' opacity='.5'>{b}</g>")
+def floor_plan():
+    """Plan de demeure : pièces, tours rondes, galeries en arc, escaliers, couloirs, noms de lieux."""
+    b = ''
+    rooms = [(20, 20, 120, 80), (140, 20, 70, 80), (20, 100, 60, 90), (80, 100, 130, 45), (80, 145, 60, 45), (140, 145, 70, 45),
+             (330, 330, 110, 70), (440, 330, 90, 70), (330, 400, 60, 110), (390, 400, 140, 55), (390, 455, 70, 55), (460, 455, 70, 55),
+             (30, 380, 150, 26), (30, 406, 150, 26), (30, 432, 150, 26)]
+    for x, y, w, h in rooms:
+        b += f"<rect x='{x}' y='{y}' width='{w}' height='{h}'/>"
+    # Portes : des quarts de cercle
+    for x, y in ((60, 100), (175, 100), (110, 145), (370, 400), (440, 365), (420, 455)):
+        b += f"<path d='M{x} {y}a10 10 0 0 1 10 10' stroke-dasharray='1.5 2'/>"
+    # Tour ronde : cercles concentriques et rayons
+    for cx, cy, r in ((440, 110, 62), (110, 300, 34)):
+        b += f"<circle cx='{cx}' cy='{cy}' r='{r}'/><circle cx='{cx}' cy='{cy}' r='{r * .72:.0f}'/><circle cx='{cx}' cy='{cy}' r='{r * .3:.0f}'/>"
+        b += ''.join(f"<path d='M{cx + r * .3 * math.cos(a):.1f} {cy + r * .3 * math.sin(a):.1f}L{cx + r * .72 * math.cos(a):.1f} {cy + r * .72 * math.sin(a):.1f}'/>" for a in [k * math.pi / 6 for k in range(12)])
+    # Galerie en arc de cercle, avec ses gradins
+    cx, cy = 300, 600
+    for r in (150, 170, 190, 210):
+        b += f"<path d='M{cx - r * .87:.0f} {cy - r * .5:.0f}A{r} {r} 0 0 1 {cx + r * .5:.0f} {cy - r * .87:.0f}'/>"
+    b += ''.join(f"<path d='M{cx + 150 * math.cos(a):.1f} {cy + 150 * math.sin(a):.1f}L{cx + 210 * math.cos(a):.1f} {cy + 210 * math.sin(a):.1f}'/>" for a in [-math.pi * 5 / 6 + k * math.pi / 18 for k in range(10)])
+    # Escaliers et couloirs
+    b += ''.join(f"<path d='M{232 + k * 6} 40v40'/>" for k in range(8))
+    b += "<rect x='228' y='36' width='52' height='48'/>"
+    b += "<path d='M210 60H330M300 60V230M300 230H530M190 230H300' stroke-dasharray='3 3'/>"
+    b += "<path d='M200 310c30 -20 60 20 90 0s60 20 90 0' />"
+    labels = ((70, 64, 'Grenier'), (175, 64, 'Lingerie'), (145, 125, 'Bibliothèque'), (50, 150, 'Cellier'),
+              (385, 370, 'Salon'), (485, 370, 'Chambre'), (460, 432, 'Salle des archives'), (105, 398, 'Galerie des portraits'),
+              (440, 205, 'Tour du guet'), (300, 352, 'Jardin'), (254, 98, 'Escalier'))
+    t = ''.join(f"<text x='{x}' y='{y}' text-anchor='middle'>{n}</text>" for x, y, n in labels)
+    return svg(560, 560, f"<g fill='none' stroke='{INK}' stroke-width='.9' opacity='.32'>{b}</g>"
+               f"<g {SERIF} font-style='italic' font-size='10' fill='{INK}' opacity='.45'>{t}</g>")
 
-def compass():
-    """Rose des vents à huit branches et ses points cardinaux."""
-    pts = ''
-    for k in range(8):
-        a = k * math.pi / 4
-        long = 46 if k % 2 == 0 else 26
-        x, y = 70 + long * math.sin(a), 70 - long * math.cos(a)
-        lx, ly = 70 + 7 * math.sin(a + math.pi / 2), 70 - 7 * math.cos(a + math.pi / 2)
-        rx, ry = 70 + 7 * math.sin(a - math.pi / 2), 70 - 7 * math.cos(a - math.pi / 2)
-        fill = INK if k % 2 == 0 else 'none'
-        pts += f"<path d='M{x:.1f} {y:.1f}L{lx:.1f} {ly:.1f}L70 70L{rx:.1f} {ry:.1f}Z' fill='{fill}' fill-opacity='.55'/>"
-    letters = ''.join(f"<text x='{x}' y='{y}' {SERIF} font-size='12' fill='{INK}' text-anchor='middle'>{t}</text>"
-                      for x, y, t in ((70, 16, 'N'), (70, 134, 'S'), (128, 74, 'E'), (12, 74, 'O')))
-    return svg(140, 140, f"<g stroke='{INK}' stroke-width='.9' opacity='.6'><circle cx='70' cy='70' r='34' fill='none'/>"
-               f"<circle cx='70' cy='70' r='30' fill='none' stroke-dasharray='1 3'/>{pts}</g><g opacity='.65'>{letters}</g>")
+def border_band():
+    """Bordure de carte : double filet, graduations, devise latine qui court tout du long."""
+    ticks = ''.join(f"<path d='M{x} 2v{6 if x % 40 == 0 else 3}'/>" for x in range(0, 400, 10))
+    return svg(400, 30, f"<g stroke='{INK}' opacity='.55'><path d='M0 1.5H400M0 28.5H400' stroke-width='1.2'/>"
+               f"<path d='M0 10.5H400M0 24H400' stroke-width='.5'/>{ticks}</g>"
+               f"<text x='200' y='21' {SERIF} font-size='9' letter-spacing='2' fill='{INK}' text-anchor='middle' opacity='.6'>"
+               "FAMILIA EST MEMORIA · OMNIBVS MAIORIBVS HONOR ·</text>")
+
+FOLDS = ("linear-gradient(90deg, transparent calc(33.3% - 2px), rgba(90, 60, 30, .16) 33.3%, rgba(255, 250, 235, .35) calc(33.3% + 1px), transparent calc(33.3% + 4px)), "
+         "linear-gradient(90deg, transparent calc(66.6% - 2px), rgba(90, 60, 30, .16) 66.6%, rgba(255, 250, 235, .35) calc(66.6% + 1px), transparent calc(66.6% + 4px)), "
+         "linear-gradient(0deg, transparent calc(50% - 2px), rgba(90, 60, 30, .14) 50%, rgba(255, 250, 235, .3) calc(50% + 1px), transparent calc(50% + 4px))")
 
 out.append(f"""
-/* Carte du Maraudeur : ornements à l'encre aux coins de la toile (banderole, saule, château et
-   losange rouge, rose des vents), sur le parchemin et ses tracés ; fixes, même sans animation */
+/* Carte du Maraudeur : bordures à devise en haut et en bas, cartouche du château et de son losange
+   rouge au milieu du haut, plis du parchemin, plan de demeure à l'encre ; les empreintes et le nom
+   de qui marche sont dessinés par ui/footprints.js. Fixes, même sans animation. */
 :root[data-theme="maraudeur"] .canvas {{
-  background-image: {uri(banner())}, {uri(willow())}, {uri(castle())}, {uri(compass())}, var(--deco), radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
-  background-position: top 10px left 14px, top 6px right 10px, bottom 6px left 10px, bottom 14px right 16px, 0 0, 0 0;
-  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat;
-  background-size: 320px 130px, 200px 210px, 270px 230px, 140px 140px, var(--deco-size), 20px 20px;
+  background-image: {uri(border_band())}, {uri(border_band())}, {uri(castle())}, {FOLDS}, {uri(floor_plan())}, var(--deco), radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
+  background-position: top 4px left 0, bottom 4px left 0, top 40px center, 0 0, 0 0, 0 0, 30px 40px, 0 0, 0 0;
+  background-repeat: repeat-x, repeat-x, no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat, repeat;
+  background-size: 400px 30px, 400px 30px, 216px 184px, 100% 100%, 100% 100%, 100% 100%, 560px 560px, var(--deco-size), 20px 20px;
 }}
 """)
 
