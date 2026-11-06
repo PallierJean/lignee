@@ -1,5 +1,7 @@
 /** Header (open tree, summary, save status), banner and tree toolbar. */
-import { renderRepoBanner } from './repo-link.js';
+import { renderRepoBanner, savedRepo } from './repo-link.js';
+import { lastExport } from '../services/exported.js';
+import { EXPORT_STALE, BANNER_SNOOZE } from '../config.js';
 import { S, isLoading, treeName } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { yearOf } from '../utils/dates.js';
@@ -96,11 +98,39 @@ function renderStatus() {
   el.lastElementChild.textContent = text;
 }
 
+const DAY = 86400000;
+
+/**
+ * Local mode warning: the tree only lives in this browser. Shown while the tree has people of its
+ * own, isn't linked to a GitHub repository, and wasn't exported in the last EXPORT_STALE days;
+ * closing it hides it for BANNER_SNOOZE days. Returns the number of days since the last export
+ * (0: never), or null when there is nothing to remind.
+ */
+export function localWarning(now = Date.now()) {
+  if (S.mode !== 'local' || ![...S.people.values()].some((p) => !p.example)) return null;
+  if ((S.repoLink && S.repoLink.tree === S.tree) || savedRepo()) return null;
+  const last = lastExport();
+  if (last && now - last < EXPORT_STALE * DAY) return null;
+  const closed = S.closed.local;
+  if (typeof closed === 'number' && now - closed < BANNER_SNOOZE * DAY) return null;
+  return last ? Math.max(1, Math.floor((now - last) / DAY)) : 0;
+}
+
 function renderBanner() {
   const banner = $('#banner');
   const examples = [...S.people.values()].filter((p) => p.example).length;
   const closeBtn = (kind) => `<button class="icon-btn" type="button" data-act="banner-close" data-kind="${kind}" aria-label="${t('close')}" title="${t('close')}">×</button>`;
+  const days = localWarning();
 
+  if (days !== null) {
+    banner.hidden = false;
+    banner.className = 'banner warn';
+    banner.innerHTML = `<p>${t('local.banner')} ${days ? t('local.last', days) : t('local.never')}</p>`
+      + `<div class="acts"><button class="btn small primary" type="button" data-act="export-open">${t('local.export')}</button>`
+      + `<button class="btn small" type="button" data-act="repo-link-open">${t('local.github')}</button>${closeBtn('local')}</div>`;
+    return;
+  }
+  banner.className = 'banner';
   if (examples && !S.closed.ex) {
     let actions = '';
     if (S.canWrite) {
@@ -113,9 +143,6 @@ function renderBanner() {
     banner.hidden = false;
     banner.innerHTML = `<p>${t('ex.banner')}</p>`
       + `<div class="acts">${actions}${closeBtn('ex')}</div>`;
-  } else if (S.mode === 'local' && !S.closed.local) {
-    banner.hidden = false;
-    banner.innerHTML = `<p>${t('local.banner')}</p><div class="acts">${closeBtn('local')}</div>`;
   } else {
     banner.hidden = true;
   }
