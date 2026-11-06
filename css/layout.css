@@ -56,14 +56,12 @@
     flex-direction: column;
   }
 
+  /* L'arbre prend presque tout l'écran quand on y arrive : la barre et la légende ne le mangent pas */
   .stage {
-    height: 480px;
+    height: calc(100vh - 24px);
+    height: calc(100dvh - 24px);
+    min-height: 420px;
+    max-height: 900px;
     flex: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .stage {
-    height: 430px;
   }
 }
