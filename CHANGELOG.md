@@ -1,5 +1,30 @@
 # Historique des versions
 
+## [1.17.0](https://github.com/PallierJean/lignee/compare/v1.16.0...v1.17.0) (2026-11-06)
+
+### Features
+
+* automne aux arbres qui perdent leurs feuilles, été à la plage ([13f779a](https://github.com/PallierJean/lignee/commit/13f779a5144c30eacbb0ed567b4788916b7b4aef))
+* avatar neutre quand le sexe n'est pas précisé ([400b3e1](https://github.com/PallierJean/lignee/commit/400b3e1fa7853242c4404bf45431f1bd7e6d0c1d))
+* Carte du Maraudeur, ornements à l'encre aux coins de la toile ([f7b6087](https://github.com/PallierJean/lignee/commit/f7b6087c6bcf34a6b3bc40111b459c3d8fc3f274))
+* Carte du Maraudeur, plan de demeure et promeneurs nommés ([507851f](https://github.com/PallierJean/lignee/commit/507851f96ed23d44aafa559464264489f7614eea))
+* Constellations en temps réel, plus grandes et plus espacées ([5dc24d4](https://github.com/PallierJean/lignee/commit/5dc24d4a30106e7419488e0a5d0f6ce0387cc5dc))
+* Constellations, constellations vivantes et brillantes ([066172a](https://github.com/PallierJean/lignee/commit/066172a0a49a0c983ee26e99d5cded6cb14332fc))
+* Été, un petit requin dans l'eau ([5381c8f](https://github.com/PallierJean/lignee/commit/5381c8f16967caed12a4865f31e9db44e611b806))
+* fêtes et saisons animées ; fiches lisibles sur le ciel étoilé ([e67633a](https://github.com/PallierJean/lignee/commit/e67633ac1950a4d888fc5d9274a6179eda4a8033))
+* Halloween et printemps plus vivants, ciel qui tourne, porcelaine dorée ([37e0caf](https://github.com/PallierJean/lignee/commit/37e0caf651f41eecce55a19d72ff0016afd8c47f))
+* huit thèmes illustrés à l'essai ([0df039b](https://github.com/PallierJean/lignee/commit/0df039bf252a04bbfcd3abab4ef8b3107f22d986))
+* Noël, guirlande tout autour de la toile ([a068b64](https://github.com/PallierJean/lignee/commit/a068b642b712f9edc13d329f1b4041b5176150fb))
+* Porcelaine plus franche, la personne au centre en plaque cerclée ([856d41a](https://github.com/PallierJean/lignee/commit/856d41ac8d14ac4286270bc222ac8ee4edcc212f))
+* thème Matrice, porcelaine retravaillée, cinq thèmes retirés ([9a3dc97](https://github.com/PallierJean/lignee/commit/9a3dc97a24b87eec641620397371965012bb4ef0))
+* vrai ciel de Bordeaux, neige de Noël, Matrix ([29c6f96](https://github.com/PallierJean/lignee/commit/29c6f96157fbf5f242dd454963144560a88cb548))
+
+### Bug Fixes
+
+* défilement à la taille de l'arbre, menu « Aa » contenu ([daeea20](https://github.com/PallierJean/lignee/commit/daeea2036161a4e2e285c322bd8d3382876a5a56))
+* message clair quand le port du serveur est déjà pris ([f451a35](https://github.com/PallierJean/lignee/commit/f451a3535ff172b5d90e2427904552edc07a2543))
+* Porcelaine moins lumineuse ([4164c2c](https://github.com/PallierJean/lignee/commit/4164c2c378fe5bd226c65bc679c2fe8594be5ac5))
+
 ## [1.16.0](https://github.com/PallierJean/lignee/compare/v1.15.0...v1.16.0) (2026-11-05)
 
 ### Features
