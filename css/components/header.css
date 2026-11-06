@@ -94,6 +94,14 @@
   .brand h1 {
     font-size: 1.6875rem;
   }
+
+  .top-actions {
+    gap: 6px;
+  }
+
+  .top-actions .btn {
+    padding: 6px 10px;
+  }
 }
 
 /* Bouton de langue : FR / EN */
