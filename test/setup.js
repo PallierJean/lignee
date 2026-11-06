@@ -81,6 +81,18 @@ const memo = (map, key) => {
 Object.defineProperty(globalThis, 'localStorage', { value: new MemoryStorage(), configurable: true, writable: true });
 globalThis.window = globalThis;
 globalThis.requestAnimationFrame = (fn) => fn();
+// Window listeners (popstate) go with the document's, fired by fire()
+globalThis.addEventListener = (type, fn) => { (listeners[type] = listeners[type] || []).push(fn); };
+// History of the page: the phone side panel adds an entry, the Back button removes it
+const entries = [null];
+globalThis.history = {
+  get state() { return entries[entries.length - 1]; },
+  pushState(state) { entries.push(state); },
+  back() {
+    if (entries.length > 1) entries.pop();
+    fire('popstate', { state: this.state });
+  },
+};
 globalThis.document = {
   documentElement: new FakeElement('html'),
   body: new FakeElement('body'),
