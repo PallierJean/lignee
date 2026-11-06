@@ -634,6 +634,52 @@ describe('événements de la page', () => {
     return ev;
   };
 
+  test('phone: the side panel opens over the tree, the Back button closes it', () => {
+    globalThis.matchMedia = () => ({ matches: true });
+    try {
+      click({ act: 'tab', tab: 'register' });
+      assert.equal(S.sheet, true);
+      assert.match(el('main').className, /\bsheet\b/);
+      assert.deepEqual(history.state, { sheet: true });
+      click({ act: 'sheet-close' });
+      assert.equal(S.sheet, false);
+      assert.equal(history.state, null, 'its history entry is gone');
+      A.startEdit(camille);
+      assert.equal(S.sheet, true, 'editing opens it');
+      history.back();
+      assert.equal(S.sheet, false);
+      assert.ok(S.edit, 'the input is kept for later');
+      click({ act: 'panel' });
+      assert.equal(S.sheet, true, 'the panel button opens it again');
+      assert.equal(S.panel, true, 'the desktop setting is unchanged');
+      A.cancelEdit();
+      click({ act: 'sheet-close' });
+    } finally {
+      delete globalThis.matchMedia;
+    }
+  });
+
+  test('pinching the tree with two fingers zooms one step at a time', () => {
+    const onCanvas = { closest: (sel) => (sel === '#canvas' ? {} : null) };
+    const touch = (type, pointerId, x) => fire(type, { type, pointerId, pointerType: 'touch', clientX: x, clientY: 100, target: onCanvas });
+    S.zoom = 1;
+    touch('pointerdown', 1, 100);
+    touch('pointerdown', 2, 200);
+    touch('pointermove', 2, 220);
+    assert.equal(S.zoom, 1, 'a small spread does nothing');
+    touch('pointermove', 2, 240);
+    const zoomed = S.zoom;
+    assert.ok(zoomed > 1, 'spread: zoom in');
+    touch('pointermove', 2, 180);
+    assert.ok(S.zoom < zoomed, 'pinch: zoom out');
+    touch('pointerup', 1, 100);
+    touch('pointerup', 2, 180);
+    const after = S.zoom;
+    touch('pointermove', 2, 400);
+    assert.equal(S.zoom, after, 'fingers lifted: nothing more');
+    fire('pointerdown', { type: 'pointerdown', pointerId: 3, pointerType: 'mouse', clientX: 0, clientY: 0, target: onCanvas });
+  });
+
   test('chaque bouton lance son action', async () => {
     click({ act: 'tab', tab: 'register' });
     assert.equal(S.tab, 'register');
