@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.19.1](https://github.com/PallierJean/lignee/compare/v1.19.0...v1.19.1) (2026-11-06)
+
+### Bug Fixes
+
+* make the tree usable on phones ([1dfa6b9](https://github.com/PallierJean/lignee/commit/1dfa6b904463b72ab0099624e3080217c52aebd7))
+
 ## [1.19.0](https://github.com/PallierJean/lignee/compare/v1.18.0...v1.19.0) (2026-11-06)
 
 ### Features
