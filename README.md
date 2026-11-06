@@ -122,12 +122,27 @@ lignee/
 ## Thèmes de couleur
 
 Le menu « Aa » de l'en-tête (`ui/theme.js`) change les couleurs : automatique (clair ou sombre selon
-le système), clair, sombre, ou un thème illustré d'un motif discret sur la toile de l'arbre :
-🎄 Noël, 🎃 Halloween, 🌸 Printemps, ☀️ Été, 🍂 Automne, et 🪄 Carte du Maraudeur (parchemin, encre
-sépia, empreintes de pas rouges qui s'impriment pas à pas puis s'effacent, chaque trajet tiré au
-hasard (`ui/footprints.js`), fixes si le système
-demande moins d'animations, titres en IM Fell English). « Selon la saison » passe de l'un à l'autre
-avec la date (Noël du 1er décembre à l'Épiphanie, Halloween du 20 octobre au 2 novembre).
+le système), clair, sombre, ou un thème illustré, animé sur un calque sous l'arbre (les objets ont
+chacun leur taille, leur vitesse et leur balancement, tirés au hasard) :
+
+- **Fêtes et saisons** (`ui/ambient.js`) : 🎄 Noël (neige, guirlande tout autour de la toile),
+  🎃 Halloween (lune et nuages, citrouilles à la bougie vacillante, brume, araignée, chauves-souris
+  et leurs nuées, fantômes), 🌸 Printemps (branches de cerisier en fleur, prairie de tulipes et de
+  pâquerettes, pétales, papillons, hirondelles), ☀️ Été (plage : vagues, écume, baigneurs flous,
+  petit requin, mouettes), 🍂 Automne (arbres qui perdent leurs feuilles de couleur au gré du vent,
+  tapis de feuilles au sol). « Selon la saison » passe de l'un à l'autre avec la date (Noël du
+  1er décembre à l'Épiphanie, Halloween du 20 octobre au 2 novembre).
+- **Univers** : 🪄 Carte du Maraudeur (parchemin à plan de demeure, bordures à devise, plis ;
+  empreintes rouges suivies du nom d'une personne de l'arbre, `ui/footprints.js`), ✨ Constellations
+  (le vrai ciel de Bordeaux, 28 constellations placées par `model/sky.js` d'après le temps sidéral ;
+  il part de l'heure réelle et tourne en accéléré, `ui/sky.js`), 🏺 Porcelaine de Limoges (décor de
+  faïence en bleu de four et or, fiches en plaques émaillées), 💊 Matrix (pluie de signes verts,
+  `ui/rain.js`).
+
+Palettes et motifs des thèmes « Univers » sont générés par `scripts/build-themes.py` dans
+`css/themes.css`. Si le système demande moins d'animations, les animations s'arrêtent et le motif
+fixe du fond reste (ciel immobile pour Constellations).
+
 Trois thèmes d'accessibilité, sans motif et aux contours de fiche plus épais : « Daltonisme »
 (palette d'Okabe et Ito : hommes en bleu, femmes en orange, alertes sans opposition rouge-vert),
 « Contraste élevé » (noir sur blanc, texte contrasté à 7:1 au moins) et « Contraste élevé sombre »
