@@ -81,6 +81,32 @@
   color-scheme: dark;
 }
 
+/* Grand Line : ciel d’aventure et mer de manga, un navire pirate à tête de mouton qui vogue, îles, mouettes et monstre marin (ui/ambient.js) ; la personne au centre est recherchée (WANTED) */
+:root[data-theme="grandline"] {
+  --paper: #CFEAF8;
+  --surface: #FFF8E6;
+  --ink: #14213D;
+  --muted: #3F4A66;
+  --line: #E2CFA0;
+  --edge: #7A4E24;
+  --dot: #B8DDF0;
+  --accent: #C41E3A;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #FBE3C2;
+  --warn: #7A4E00;
+  --danger: #A3172E;
+  --danger-soft: #F8D7D2;
+  --ok: #22693A;
+  --halo: #E8A317;
+  --male: #1F5FA8;
+  --female: #C83E78;
+  --scrim: rgba(10, 30, 60, .45);
+  --f-display: "Gloock", Georgia, serif;
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect width='240' height='200' fill='%23BFE3F5'/%3E%3Cpath d='M-30 20q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M30 20q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M90 20q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M150 20q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M210 20q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M0 56q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M60 56q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M120 56q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M180 56q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M-30 92q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M30 92q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M90 92q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M150 92q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M210 92q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M0 128q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M60 128q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M120 128q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M180 128q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M-30 164q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M30 164q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M90 164q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M150 164q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3Cpath d='M210 164q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='%23FFFFFF' opacity='.55'/%3E%3C/svg%3E");
+  --deco-size: 240px 200px;
+  color-scheme: light;
+}
+
 /* Matrix : pluie figée dans le fond pour qui a demandé moins d'animations */
 @media (prefers-reduced-motion: reduce) {
   :root[data-theme="matrix"] {
@@ -223,6 +249,31 @@
   position: absolute;
   top: 0;
   left: 0;
+}
+
+/* Grand Line : fiches en avis de recherche, la personne au centre « WANTED » */
+:root[data-theme="grandline"] .card {
+  background: linear-gradient(180deg, #FFF8E6, #F6E7C1);
+  box-shadow: 0 3px 8px rgba(20, 33, 61, .18);
+}
+
+:root[data-theme="grandline"] .card.is-focus {
+  border-color: #C41E3A;
+}
+
+:root[data-theme="grandline"] .card.is-focus::after {
+  content: 'WANTED';
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  padding: 1px 5px;
+  border: 1.5px solid #C41E3A;
+  border-radius: 2px;
+  color: #C41E3A;
+  font: 700 10px/1.2 var(--f-display);
+  letter-spacing: .12em;
+  transform: rotate(-8deg);
+  opacity: .9;
 }
 
 /* Constellations : le vrai ciel de Bordeaux, dessiné par ui/sky.js sous l'arbre */
