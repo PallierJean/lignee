@@ -24,7 +24,7 @@ def porcelaine():
     def medallion(cx, cy):
         petals = ''.join(f"<ellipse cx='{cx}' cy='{cy - 15}' rx='6.5' ry='15' transform='rotate({a} {cx} {cy})'/>" for a in range(0, 360, 45))
         pearls = ''.join(f"<circle cx='{cx + 33*math.cos(math.radians(a)):.1f}' cy='{cy + 33*math.sin(math.radians(a)):.1f}' r='1.6' fill='{G if a % 30 else C}'/>" for a in range(0, 360, 15))
-        return (f"<g opacity='.48'><circle cx='{cx}' cy='{cy}' r='44' fill='none' stroke='{C}' stroke-width='1.8'/>"
+        return (f"<g opacity='.4'><circle cx='{cx}' cy='{cy}' r='44' fill='none' stroke='{C}' stroke-width='1.8'/>"
                 f"<circle cx='{cx}' cy='{cy}' r='39' fill='none' stroke='{C}' stroke-width='.7'/>"
                 f"<g>{pearls}</g>"
                 f"<g fill='{C}' fill-opacity='.5' stroke='{C}' stroke-width='.9'>{petals}</g>"
@@ -89,7 +89,7 @@ THEMES = [
         ok='#8FE3C0', halo='#FFE7A3', male='#7FB2FF', female='#F5A3D0', scrim='rgba(2, 4, 16, .7)'),
    stars(), '400px', {}),
   ('porcelaine', 'Porcelaine de Limoges : émail blanc, décor de faïence en bleu de four (médaillons, rinceaux, fleurettes), filets et perles d’or ; frises festonnées, fiches en plaques émaillées, la personne au centre en bleu de four', 'light',
-   dict(paper='#FBF9F3', surface='#FFFFFF', ink='#10224A', muted='#45567C', line='#C6D0E4', edge='#1A3F8F', dot='#ECE6D8',
+   dict(paper='#ECE7DA', surface='#F8F5EC', ink='#10224A', muted='#42537A', line='#C3C9D8', edge='#1A3F8F', dot='#DFD8C6',
         accent='#1A3F8F', **{'accent-ink': '#FFFFFF', 'accent-soft': '#DCE5F5'}, warn='#7A5200', danger='#A3263A', **{'danger-soft': '#F6DDE2'},
         ok='#2A6A4A', halo='#B8901A', male='#2E5A9E', female='#B04A7A', scrim='rgba(10, 20, 40, .45)'),
    porcelaine(), '360px', {'--frieze': uri(porcelain_frieze())}),
@@ -234,7 +234,7 @@ out.append("""
 :root[data-theme="porcelaine"] .stage,
 :root[data-theme="porcelaine"] .side {
   border-color: #C9A227;
-  box-shadow: inset 0 0 0 3px #FFFFFF, inset 0 0 0 4px rgba(31, 70, 144, .35), 0 6px 18px rgba(16, 34, 74, .08);
+  box-shadow: inset 0 0 0 3px #F8F5EC, inset 0 0 0 4px rgba(31, 70, 144, .35), 0 6px 18px rgba(16, 34, 74, .08);
 }
 
 :root[data-theme="porcelaine"] .tabs {
@@ -245,13 +245,13 @@ out.append("""
 /* Fiches : plaques émaillées, reflet du vernis, liseré d'or à l'intérieur du bord */
 :root[data-theme="porcelaine"] .card {
   border-radius: 10px;
-  background: radial-gradient(120% 90% at 28% 18%, #FFFFFF 0%, #F7F9FD 55%, #E8EEF8 100%);
-  box-shadow: inset 0 0 0 2px #FFFFFF, inset 0 0 0 3.5px #C9A227, inset 0 0 0 5px #FFFFFF, inset 0 0 0 5.6px rgba(201, 162, 39, .6), 0 2px 6px rgba(16, 34, 74, .12);
+  background: radial-gradient(120% 90% at 28% 18%, #FBF9F3 0%, #F2F0E8 55%, #E3E6EC 100%);
+  box-shadow: inset 0 0 0 2px #FBF9F3, inset 0 0 0 3.5px #C9A227, inset 0 0 0 5px #FBF9F3, inset 0 0 0 5.6px rgba(201, 162, 39, .6), 0 2px 6px rgba(16, 34, 74, .14);
 }
 
 /* Fiches « Ajouter » : un simple cadre pointillé, sans filets */
 :root[data-theme="porcelaine"] .card.ph {
-  background: rgba(255, 255, 255, .7);
+  background: rgba(248, 245, 236, .7);
   box-shadow: none;
 }
 
@@ -268,8 +268,8 @@ out.append("""
 /* La personne au centre : plaque blanche cerclée de filets d'or et de bleu de four, nom en bleu */
 :root[data-theme="porcelaine"] .card.is-focus {
   border-color: #1A3F8F;
-  background: radial-gradient(120% 90% at 28% 18%, #FFFFFF 0%, #F1F5FD 55%, #DFE8F8 100%);
-  box-shadow: inset 0 0 0 2px #FFFFFF, inset 0 0 0 4px #C9A227, inset 0 0 0 6px #FFFFFF, inset 0 0 0 7px #1A3F8F, 0 4px 14px rgba(16, 34, 74, .25);
+  background: radial-gradient(120% 90% at 28% 18%, #FBF9F3 0%, #E9EDF5 55%, #D6DFEF 100%);
+  box-shadow: inset 0 0 0 2px #FBF9F3, inset 0 0 0 4px #C9A227, inset 0 0 0 6px #FBF9F3, inset 0 0 0 7px #1A3F8F, 0 4px 14px rgba(16, 34, 74, .25);
 }
 
 :root[data-theme="porcelaine"] .card.is-focus .g {
