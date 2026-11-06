@@ -277,7 +277,7 @@ describe('pluie du thème Matrix', () => {
 
 describe('animations des thèmes fêtes et saisons', () => {
   test('chaque thème a sa scène ; une seule animation à la fois ; arrêtée hors de ces thèmes', async () => {
-    const { setAmbient } = await import('../js/ui/ambient.js');
+    const { setAmbient, ambientState } = await import('../js/ui/ambient.js');
     const calls = [];
     const ctx = new Proxy({}, {
       get: (target, key) => (key in target ? target[key] : (...args) => calls.push([key, ...args])),
@@ -322,6 +322,24 @@ describe('animations des thèmes fêtes et saisons', () => {
       // Grand Line : ciel, mer, navire (coque, voile, pavillon) et nuages
       const sea = drawn('grandline');
       assert.ok(sea.has('fillRect') && sea.has('quadraticCurveTo') && sea.has('arc') && sea.has('ellipse'), 'ciel, mer et navire');
+      assert.ok(calls.some((c) => c[0] === 'fillText' && c[1] === 'MARINE'), 'la marine le poursuit');
+      // Le navire pirate au milieu de la toile : la marine tire, le vent emporte le chapeau
+      const now = Date.now;
+      const from = now();
+      Date.now = () => 650 / 0.035 + now() - from; // (instant × vitesse) modulo la traversée : x = 450
+      try {
+        setAmbient('auto');
+        drawn('grandline');
+        const state = ambientState();
+        Object.assign(state, { nextShot: 0, nextBlow: 0 });
+        await new Promise((r) => setTimeout(r, 200));
+        assert.ok(state.shot, 'un tir de canon');
+        assert.equal(state.hat.mode, 'fly', 'le chapeau s\'envole');
+        const words = calls.filter((c) => c[0] === 'fillText').map((c) => c[1]);
+        assert.ok(words.includes('ドーン!'));
+      } finally {
+        Date.now = now;
+      }
       // Halloween : chauves-souris et fantômes lâchés au hasard (ici, à coup sûr)
       Math.random = () => 0.001;
       assert.ok(drawn('halloween').has('quadraticCurveTo'));

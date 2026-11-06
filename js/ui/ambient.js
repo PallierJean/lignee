@@ -5,8 +5,9 @@
  * de cerisier en fleur, prairie fleurie, pétales, papillons et hirondelles ; l'été, la plage
  * (vagues, écume, baigneurs flous, petit requin, mouettes) ; en automne, des arbres qui perdent
  * leurs feuilles de couleur au gré des coups de vent ; sur Grand Line, une planche de manga (trait
- * d'encre, trame, onomatopées) où vogue un navire pirate, avec îles, mouettes, chapeau de paille
- * emporté par le vent et monstre marin. Chaque objet a sa taille, sa vitesse et son balancement,
+ * d'encre, trame, onomatopées) où vogue un navire pirate, poursuivi par la marine qui tire au
+ * canon, dont le matelot aux bras élastiques rattrape son chapeau de paille ; îles, mouettes et
+ * monstre marin. Chaque objet a sa taille, sa vitesse et son balancement,
  * tirés au hasard. Arrêtées hors de ces thèmes ou si le système demande moins d'animations (le
  * motif du fond reste), en pause quand l'onglet est caché.
  */
@@ -712,12 +713,138 @@ function skull(ctx, x, y, s, ink, bone) {
   ctx.restore();
 }
 
+// Le matelot, dans le repère du navire : tête, épaule droite (d'où part le bras élastique)
+const SAILOR = { head: [-27, -52], shoulder: [-19, -41] };
+const SKIN = '#F2C29B';
+
+/** Matelot original : cheveux noirs en bataille, marinière rayée ; bras droit le long du corps s'il n'est pas étiré. */
+function sailor(ctx, armOut) {
+  const [hx, hy] = SAILOR.head;
+  ctx.beginPath(); // jambes (le bas est caché par la coque)
+  ctx.rect(-33, -26, 5, 18);
+  ctx.rect(-26, -26, 5, 18);
+  inked(ctx, '#2B2D42', 1.2);
+  ctx.beginPath(); // marinière
+  ctx.roundRect(-36, -46, 18, 22, 4);
+  inked(ctx, '#FFFFFF', 1.6);
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = '#1F3A6E';
+  for (let y = -44; y < -24; y += 4) ctx.fillRect(-36, y, 18, 1.8);
+  ctx.restore();
+  for (const [x0, y0, x1, y1] of armOut ? [[-35, -42, -40, -29]] : [[-35, -42, -40, -29], [-19, -42, -15, -29]]) {
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 5.4;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+    ctx.strokeStyle = SKIN;
+    ctx.lineWidth = 3.2;
+    ctx.stroke();
+  }
+  ctx.beginPath(); // tête
+  ctx.arc(hx, hy, 8.5, 0, TAU);
+  inked(ctx, SKIN, 1.6);
+  ctx.beginPath(); // cheveux en bataille
+  ctx.moveTo(hx - 9, hy - 1);
+  for (let k = 0; k <= 6; k++) ctx.lineTo(hx - 9 + k * 3, hy - 8 - (k % 2 ? 5 : 1));
+  ctx.lineTo(hx + 9, hy - 1);
+  ctx.quadraticCurveTo(hx, hy - 6, hx - 9, hy - 1);
+  inked(ctx, INK, 1);
+  ctx.fillStyle = INK; // œil et grand sourire
+  ctx.beginPath();
+  ctx.arc(hx + 3.5, hy, 1.3, 0, TAU);
+  ctx.fill();
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.arc(hx + 2, hy + 3, 3.5, 0.1, Math.PI - 0.6);
+  ctx.stroke();
+}
+
+/** Bras élastique : du caoutchouc qui ondule de l'épaule à la main, et un poing au bout. */
+function rubberArm(ctx, from, to, s, now) {
+  const [x0, y0] = from;
+  const [x1, y1] = to;
+  const len = Math.hypot(x1 - x0, y1 - y0) || 1;
+  const px = -(y1 - y0) / len;
+  const py = (x1 - x0) / len;
+  const point = (t) => {
+    const wave = Math.sin(t * Math.PI * 4 - now / 60) * 4 * s * Math.sin(t * Math.PI);
+    return [x0 + (x1 - x0) * t + px * wave, y0 + (y1 - y0) * t + py * wave];
+  };
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const [width, color] of [[6.5 * s, INK], [4 * s, SKIN]]) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    for (let k = 0; k <= 24; k++) {
+      const [x, y] = point(k / 24);
+      if (k) ctx.lineTo(x, y);
+      else ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(x1, y1, 4.6 * s, 0, TAU);
+  inked(ctx, SKIN, 1.6);
+}
+
+/**
+ * Le chapeau du matelot : sur sa tête ; un coup de vent l'emporte, son bras s'étire en caoutchouc
+ * (« ビヨ〜ン! »), l'attrape au vol et le lui remet. `ship` : position et échelle du navire.
+ */
+function hatAndArm(ctx, s, now, ship) {
+  const world = ([lx, ly]) => [ship.x + lx * ship.s, ship.y + ly * ship.s];
+  const head = world(SAILOR.head);
+  const top = [head[0], head[1] - 9 * ship.s];
+  const shoulder = world(SAILOR.shoulder);
+  const size = 0.42 * ship.s;
+  const hat = s.hat;
+  const ease = (t) => 1 - (1 - t) ** 3;
+  // Le vent l'emporte vers l'arrière, à hauteur du pont (plus haut, les fiches de l'arbre le cacheraient),
+  // quand le navire est bien dans la toile
+  if (hat.mode === 'head' && now > s.nextBlow && ship.x > ship.w * 0.3 && ship.x < ship.w * 0.85) {
+    Object.assign(hat, { mode: 'fly', x: top[0], y: top[1], vx: -rand(2.6, 3.4), vy: -0.9, born: now });
+  }
+  if (hat.mode === 'fly' || hat.mode === 'reach') {
+    hat.x += hat.vx;
+    hat.y += hat.vy;
+    hat.vy = Math.min(hat.vy + 0.03, 0.5);
+    if (hat.mode === 'fly' && now - hat.born > 1300) Object.assign(hat, { mode: 'reach', armFrom: now });
+  }
+  let hand = null;
+  if (hat.mode === 'reach') {
+    const p = Math.min(1, (now - hat.armFrom) / 420);
+    hand = [shoulder[0] + (hat.x - shoulder[0]) * ease(p), shoulder[1] + (hat.y - shoulder[1]) * ease(p)];
+    if (p >= 1) Object.assign(hat, { mode: 'back', backFrom: now, caught: [hat.x, hat.y] });
+  }
+  if (hat.mode === 'back') {
+    const q = Math.min(1, (now - hat.backFrom) / 650);
+    hand = [hat.caught[0] + (top[0] - hat.caught[0]) * ease(q), hat.caught[1] + (top[1] - hat.caught[1]) * ease(q)];
+    [hat.x, hat.y] = hand;
+    if (q >= 1) {
+      hat.mode = 'head';
+      s.nextBlow = now + rand(12000, 22000);
+    }
+  }
+  if (hand) rubberArm(ctx, shoulder, hand, ship.s, now);
+  if (hat.mode === 'head') strawHat(ctx, top[0], top[1], size, 0);
+  else strawHat(ctx, hat.x, hat.y, size, hat.mode === 'back' ? 0 : Math.sin(now / 120) * 0.8);
+  if (hand) {
+    const since = now - hat.armFrom;
+    if (since < 1300) sfx(ctx, 'ビヨ〜ン!', (shoulder[0] + hand[0]) / 2 + 20, Math.min(shoulder[1], hand[1]) - 26, 30, -0.12, since / 260);
+  }
+}
+
 /**
  * Navire pirate à tête de mouton, cerné d'encre comme dans un manga (cap à droite si dir = 1) :
  * coque de planches, figure de proue laineuse, mât et nid-de-pie, grande voile gonflée à tête de
  * mort, foc, pavillon qui claque. Il tangue sur la houle.
  */
-function pirateShip(ctx, x, y, s, dir, now) {
+function pirateShip(ctx, x, y, s, dir, now, crew) {
   const roll = Math.sin(now / 900) * 0.05;
   const bob = Math.sin(now / 700) * 3;
   ctx.save();
@@ -794,6 +921,8 @@ function pirateShip(ctx, x, y, s, dir, now) {
     ctx.arc(hx, 6, 3.4, 0, TAU);
     inked(ctx, '#FFE7A3', 1.2);
   }
+  // Le matelot, debout derrière le bastingage (son bras droit, s'il est étiré, est dessiné à part)
+  sailor(ctx, crew && crew.armOut);
   // Figure de proue : un mouton laineux, cerné, à corne en spirale
   ctx.beginPath();
   for (const [dx, dy, r] of [[78, -32, 8], [86, -36, 7], [90, -27, 7], [82, -22, 7], [72, -25, 6]]) {
@@ -909,12 +1038,12 @@ function sfx(ctx, text, x, y, size, rot, pop) {
   ctx.restore();
 }
 
-/** Chapeau de paille emporté par le vent : il traverse le ciel en tournoyant. */
-function strawHat(ctx, hat, now) {
+/** Chapeau de paille du matelot : sur sa tête (`spin` nul) ou emporté par le vent, en tournoyant. */
+function strawHat(ctx, x, y, size, spin) {
   ctx.save();
-  ctx.translate(hat.x, hat.y + Math.sin(now / 500 + hat.phase) * 18);
-  ctx.rotate(Math.sin(now / 400 + hat.phase) * 0.5);
-  ctx.scale(hat.s, hat.s);
+  ctx.translate(x, y);
+  ctx.rotate(spin);
+  ctx.scale(size, size);
   ctx.beginPath();
   ctx.ellipse(0, 6, 34, 9, 0, 0, TAU); // bord
   inked(ctx, '#F2C24E', 2.2);
@@ -924,11 +1053,11 @@ function strawHat(ctx, hat, now) {
   inked(ctx, '#F2C24E', 2.2);
   ctx.beginPath();
   ctx.moveTo(-17, 3);
-  ctx.bezierCurveTo(-17, -4, 17, -4, 17, 3); // ruban rouge
+  ctx.bezierCurveTo(-17, -4, 17, -4, 17, 3); // ruban bleu marine
   ctx.lineTo(17.5, -2);
   ctx.bezierCurveTo(17, -9, -17, -9, -17.5, -2);
   ctx.closePath();
-  inked(ctx, '#D7263D', 1.6);
+  inked(ctx, '#1F3A6E', 1.6);
   ctx.strokeStyle = 'rgba(140, 100, 30, .55)'; // tressage
   ctx.lineWidth = 0.8;
   ctx.beginPath();
@@ -940,10 +1069,144 @@ function strawHat(ctx, hat, now) {
   ctx.restore();
 }
 
+/** Marin : casquette blanche, col bleu ; il s'agite (bras levé par moments). */
+function marine(ctx, x, y, now, k) {
+  ctx.beginPath();
+  ctx.rect(x - 4, y - 14, 8, 12); // vareuse
+  inked(ctx, '#FFFFFF', 1.2);
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y - 14);
+  ctx.lineTo(x, y - 9);
+  ctx.lineTo(x + 4, y - 14);
+  inked(ctx, '#2E5AAC', 1); // col bleu
+  ctx.beginPath();
+  ctx.arc(x, y - 19, 4.5, 0, TAU);
+  inked(ctx, SKIN, 1.2);
+  ctx.beginPath();
+  ctx.rect(x - 5, y - 25, 10, 3.5); // casquette
+  inked(ctx, '#FFFFFF', 1);
+  const wave = Math.sin(now / 180 + k * 1.7) > 0.3;
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x + 4, y - 12);
+  ctx.lineTo(x + 9, wave ? y - 24 : y - 6);
+  ctx.stroke();
+}
+
+/**
+ * Navire de la marine (cap à droite) : coque blanche rayée de bleu, sabords et canons, grande voile
+ * à ancre marquée « MARINE », pavillon bleu à ancre, marins sur le pont. Il tangue lui aussi.
+ */
+function navyShip(ctx, x, y, s, now) {
+  ctx.save();
+  ctx.translate(x, y + Math.sin(now / 760 + 1) * 3);
+  ctx.rotate(Math.sin(now / 980 + 1) * 0.04);
+  ctx.scale(s, s);
+  ctx.lineJoin = 'round';
+  ctx.beginPath(); // mât
+  ctx.rect(-3, -140, 6, 134);
+  inked(ctx, '#7A6A55', 1.6);
+  const puff = 8 + Math.sin(now / 650) * 2;
+  ctx.beginPath(); // grande voile
+  ctx.moveTo(-50, -110);
+  ctx.quadraticCurveTo(0, -110 + puff / 2, 44, -110);
+  ctx.quadraticCurveTo(44 + puff, -76, 44, -42);
+  ctx.quadraticCurveTo(0, -42 + puff, -50, -42);
+  ctx.quadraticCurveTo(-50 + puff, -76, -50, -110);
+  inked(ctx, '#FFFFFF', 2.2);
+  ctx.save(); // ancre bleue
+  ctx.translate(-3, -84);
+  ctx.strokeStyle = '#2E5AAC';
+  ctx.lineWidth = 3.4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, -14);
+  ctx.lineTo(0, 12);
+  ctx.moveTo(-9, -8);
+  ctx.lineTo(9, -8);
+  ctx.moveTo(-13, 4);
+  ctx.quadraticCurveTo(-10, 14, 0, 14);
+  ctx.quadraticCurveTo(10, 14, 13, 4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, -17, 3.5, 0, TAU);
+  ctx.stroke();
+  ctx.restore();
+  ctx.font = '800 11px "Atkinson Hyperlegible", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#2E5AAC';
+  ctx.fillText('MARINE', -3, -54);
+  ctx.beginPath(); // pavillon bleu à ancre, qui claque
+  ctx.moveTo(3, -158);
+  for (let k = 0; k <= 4; k++) ctx.lineTo(3 - k * 9, -158 + Math.sin(now / 130 + k + 2) * 3 * (k / 4));
+  for (let k = 4; k >= 0; k--) ctx.lineTo(3 - k * 9, -140 + Math.sin(now / 130 + k + 2) * 3 * (k / 4));
+  ctx.closePath();
+  inked(ctx, '#2E5AAC', 1);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(-17, -152, 4, 8);
+  ctx.fillRect(-21, -149, 12, 2.5);
+  // Marins sur le pont, derrière le bastingage
+  for (const [mx, k] of [[-40, 0], [-22, 1], [22, 2], [40, 3]]) marine(ctx, mx, -8, now, k);
+  // Coque blanche rayée de bleu, sabords et canons
+  ctx.beginPath();
+  ctx.moveTo(-70, -22);
+  ctx.lineTo(-56, -22);
+  ctx.lineTo(-56, -8);
+  ctx.lineTo(56, -8);
+  ctx.quadraticCurveTo(70, -12, 78, -20);
+  ctx.quadraticCurveTo(74, 14, 42, 26);
+  ctx.lineTo(-46, 26);
+  ctx.quadraticCurveTo(-66, 14, -70, -22);
+  ctx.closePath();
+  inked(ctx, '#E9EDF2', 2.6);
+  ctx.beginPath();
+  ctx.rect(-64, 6, 132, 6);
+  inked(ctx, '#2E5AAC', 1.2);
+  for (const cx of [-34, -10, 14, 38]) {
+    ctx.beginPath();
+    ctx.rect(cx - 5, -4, 10, 8);
+    inked(ctx, '#2B2D42', 1.2);
+    ctx.beginPath();
+    ctx.rect(cx + 3, -2, 8, 4);
+    inked(ctx, '#3A3A3A', 1);
+  }
+  ctx.restore();
+}
+
+/** Tir de canon : éclair et fumée à la bouche, boulet en arc, gerbe d'eau à l'arrivée. `t` : 0 à 1. */
+function cannonShot(ctx, from, to, t) {
+  if (t < 0.2) { // éclair et fumée
+    const k = t / 0.2;
+    ctx.beginPath();
+    ctx.arc(from[0] + 10, from[1], 10 + k * 16, 0, TAU);
+    inked(ctx, k < 0.4 ? '#FFD45A' : '#F2F2F2', 1.4);
+  }
+  if (t < 0.75) { // boulet en arc de cercle
+    const k = t / 0.75;
+    const x = from[0] + (to[0] - from[0]) * k;
+    const y = from[1] + (to[1] - from[1]) * k - Math.sin(k * Math.PI) * 120;
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, TAU);
+    inked(ctx, '#2B2B2B', 1.4);
+  } else { // gerbe d'eau
+    const k = (t - 0.75) / 0.25;
+    const tall = Math.sin(k * Math.PI) * 70;
+    ctx.beginPath();
+    ctx.moveTo(to[0] - 18, to[1]);
+    ctx.quadraticCurveTo(to[0] - 10, to[1] - tall, to[0], to[1] - tall * 1.1);
+    ctx.quadraticCurveTo(to[0] + 10, to[1] - tall, to[0] + 18, to[1]);
+    ctx.closePath();
+    inked(ctx, '#FFFFFF', 1.6);
+  }
+}
+
 /**
  * La planche : ciel tramé, soleil, nuages, îles, mer en couches cernées d'encre, navire, mouettes ;
  * de temps en temps, un monstre marin qui surgit (lignes de vitesse et « ドン!! »), un « ザザーン »
- * de vagues, un chapeau de paille emporté par le vent.
+ * de vagues, le chapeau du matelot que le vent emporte et qu'il rattrape d'un bras élastique, et un
+ * navire de la marine qui le poursuit et tire au canon (« ドーン! », « ドボン! »).
  */
 function grandLine(ctx, s, now, w, h) {
   const horizon = h * 0.6;
@@ -989,8 +1252,29 @@ function grandLine(ctx, s, now, w, h) {
     inked(ctx, '#FFFFFF', 1.2);
   }
   mangaWaves(ctx, horizon + h * 0.17, w, now, 40, 6, '#2B88C8', true);
-  pirateShip(ctx, shipX, shipY, Math.min(1.4, h / 540), 1, now);
+  const shipScale = Math.min(1.4, h / 540);
+  // La marine le poursuit, un peu en arrière (plus loin, donc plus petite) ; elle tire de temps en temps
+  const navyX = shipX - w * 0.42;
+  const navyY = shipY - h * 0.05;
+  navyShip(ctx, navyX, navyY, shipScale * 0.82, now);
+  if (!s.shot && now > s.nextShot && navyX > w * 0.08 && shipX < w * 0.95) s.shot = { born: now };
+  if (s.shot) {
+    const t = (now - s.shot.born) / 2200;
+    const from = [navyX + 82 * shipScale * 0.82, navyY - 2];
+    const to = [shipX - 140 * shipScale, shipY + 20]; // juste derrière la poupe : raté !
+    if (t > 1) {
+      s.shot = null;
+      s.nextShot = now + rand(6000, 11000);
+    } else {
+      cannonShot(ctx, from, to, t);
+      if (t < 0.35) sfx(ctx, 'ドーン!', from[0] + 30, from[1] - 60, 36, -0.1, t * 10);
+      if (t > 0.75) sfx(ctx, 'ドボン!', to[0], to[1] - 70, 30, 0.1, (t - 0.75) * 12);
+    }
+  }
+  const armOut = s.hat.mode === 'reach' || s.hat.mode === 'back';
+  pirateShip(ctx, shipX, shipY, shipScale, 1, now, { armOut });
   mangaWaves(ctx, h * 0.93, w, now, 28, 8, '#1A6AA6', true);
+  hatAndArm(ctx, s, now, { x: shipX, y: shipY + Math.sin(now / 700) * 3, s: shipScale, w });
   // « ザザーン » : le bruit des vagues, de temps en temps, sur l'eau
   if (!s.wash && now > s.nextWash) s.wash = { x: rand(0.1, 0.9) * w, born: now };
   if (s.wash) {
@@ -1003,16 +1287,6 @@ function grandLine(ctx, s, now, w, h) {
       ctx.globalAlpha = Math.sin(age * Math.PI);
       sfx(ctx, 'ザザーン', s.wash.x, h * 0.965, 34, -0.08, age * 4);
       ctx.restore();
-    }
-  }
-  // Chapeau de paille emporté par le vent
-  if (!s.hat && now > s.nextHat) s.hat = { x: -60, y: rand(0.12, 0.4) * h, s: rand(0.9, 1.2), speed: rand(2.2, 3.2), phase: rand(0, TAU) };
-  if (s.hat) {
-    s.hat.x += s.hat.speed;
-    strawHat(ctx, s.hat, now);
-    if (s.hat.x > w + 80) {
-      s.hat = null;
-      s.nextHat = now + rand(20000, 35000);
     }
   }
   // Mouettes
@@ -1352,7 +1626,8 @@ const SCENES = {
     make: () => ({
       clouds: [{ x: 0, y: 0.12, s: 1.1, speed: 70 }, { x: 420, y: 0.24, s: 0.8, speed: 95 }, { x: 900, y: 0.08, s: 0.9, speed: 80 }, { x: 1300, y: 0.3, s: 0.7, speed: 110 }],
       gulls: [], monster: null, nextMonster: Date.now() + 5000,
-      wash: null, nextWash: Date.now() + 2500, hat: null, nextHat: Date.now() + 9000, tone: null,
+      wash: null, nextWash: Date.now() + 2500, hat: { mode: 'head' }, nextBlow: Date.now() + 4000, tone: null,
+      shot: null, nextShot: Date.now() + 3000,
     }),
     draw: (ctx, s, now, w, h) => grandLine(ctx, s, now, w, h),
   },
@@ -1427,6 +1702,9 @@ function frame() {
   ctx.clearRect(0, 0, w, h);
   SCENES[scene.name].draw(ctx, scene.state, Date.now(), w, h);
 }
+
+/** État de la scène en cours (pour les tests : déclencher un moment sans attendre le hasard). */
+export const ambientState = () => (scene ? scene.state : null);
 
 /** Lance l'animation du thème `theme` s'il en a une, sinon l'arrête. */
 export function setAmbient(theme) {
