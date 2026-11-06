@@ -9,6 +9,7 @@ import { norm } from '../utils/helpers.js';
 import { buildPortableBackup } from '../services/storage.js';
 import { pushBackup, attachPhotos } from '../services/github.js';
 import { toast } from './toast.js';
+import { markExported } from '../services/exported.js';
 import { t } from '../i18n.js';
 
 function savedRepos() {
@@ -130,6 +131,7 @@ export async function saveRepo(confirmed) {
     link.mustConfirm = false;
     remember(link);
     S.repoSavedAt = new Date().toLocaleTimeString();
+    markExported();
     toast(t('repo.saved'));
   } catch (e) {
     S.repoError = t('tr.repoErr.' + (e.code || 'failed'));

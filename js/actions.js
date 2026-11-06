@@ -918,9 +918,9 @@ export function ignoreInseeOf(id) {
 
 /* ---------- Example family ---------- */
 
-/** Closes an information banner, permanently in this browser. */
+/** Closes an information banner in this browser: for good, or for a few days for the local mode warning. */
 export function closeBanner(kind) {
-  S.closed[kind] = true;
+  S.closed[kind] = kind === 'local' ? Date.now() : true;
   savePrefs();
   renderHeader();
 }
