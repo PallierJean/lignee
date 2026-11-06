@@ -1,6 +1,6 @@
 /**
- * Champ « Ajouter une union » du formulaire : recherche d'une personne de l'arbre
- * au fil de la saisie, avec navigation au clavier (flèches, Entrée, Échap).
+ * "Add a union" field of the form: searches people in the tree
+ * as you type, with keyboard navigation (arrows, Enter, Escape).
  */
 import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
@@ -10,11 +10,11 @@ import { t } from '../i18n.js';
 
 const MAX = 12;
 
-let results = [];  // ids proposés
-let total = 0;     // nombre total de personnes trouvées
-let active = -1;   // suggestion sélectionnée au clavier
+let results = [];  // suggested ids
+let total = 0;     // total number of people found
+let active = -1;   // suggestion selected with the keyboard
 
-/** La personne elle-même et ses conjoints déjà dans le formulaire ne sont pas proposés. */
+/** The person and the spouses already in the form are not suggested. */
 function excluded() {
   const e = S.edit;
   return new Set([...(e.id ? [e.id] : []), ...e.unions.filter((u) => !u.removed).map((u) => u.other)]);
@@ -67,7 +67,7 @@ export function closeSpouse() {
   renderList();
 }
 
-/** Touches dans le champ. Renvoie vrai si la touche a été traitée. */
+/** Keys in the field. Returns true if the key was handled. */
 export function onSpouseKey(ev, onPick) {
   if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
     if (!results.length) return true;
@@ -78,7 +78,7 @@ export function onSpouseKey(ev, onPick) {
     if (el) el.scrollIntoView({ block: 'nearest' });
     return true;
   }
-  // Entrée ne doit jamais enregistrer le formulaire depuis ce champ
+  // Enter must never save the form from this field
   if (ev.key === 'Enter') {
     if (active >= 0 && results[active]) onPick(results[active]);
     return true;

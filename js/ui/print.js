@@ -1,10 +1,10 @@
 /**
- * Impression de l'arbre complet ou de la roue d'ascendance, sur une feuille ou
- * découpés sur plusieurs feuilles à assembler, et du livret de famille.
+ * Printing the whole tree or the fan chart, on one sheet or
+ * split over several sheets to assemble, and the family booklet.
  *
- * L'arbre est redessiné en SVG (traits et texte vectoriels, couleurs claires fixes),
- * mis à l'échelle de la page, puis imprimé par le navigateur. « Enregistrer au format PDF »
- * dans la fenêtre d'impression donne un PDF au bon format, grâce à la règle @page.
+ * The tree is redrawn as SVG (vector lines and text, fixed light colours),
+ * scaled to the page, then printed by the browser. "Save as PDF"
+ * in the print dialog gives a PDF of the right size, thanks to the @page rule.
  */
 import { CW, CH, RINGS_PATH, pageRule } from '../config.js';
 import { S } from '../state.js';
@@ -19,19 +19,19 @@ import { familyBookName } from '../model/family-book.js';
 import { toast } from './toast.js';
 import { t } from '../i18n.js';
 
-const MM = 96 / 25.4;                          // pixels CSS par millimètre
+const MM = 96 / 25.4;                          // CSS pixels per millimetre
 const PAPER = { A4: [210, 297], A3: [297, 420], A2: [420, 594], A1: [594, 841], A0: [841, 1189] };
-const FORMATS = Object.keys(PAPER);            // du plus petit au plus grand
-const TILE_CHOICES = [1, 2, 3, 4, 5, 6, 8, 10];  // feuilles de large proposées
+const FORMATS = Object.keys(PAPER);            // smallest to largest
+const TILE_CHOICES = [1, 2, 3, 4, 5, 6, 8, 10];  // sheet widths offered
 
-// Découpage automatique : millimètres par unité du dessin visés pour rester lisible
-const READABLE = { tree: 2.5 / 14, fan: 2 / 8 };  // prénoms de 2,5 mm, plus petit texte de la roue de 2 mm
-const MARGIN = 10;                             // marge de la feuille, en mm
-const HEAD = 16;                               // titre et légende, en mm
-const MAX_SCALE = 1.6;                         // agrandissement maximal d'un petit arbre
-const SMALL_SCALE = 0.45;                      // en dessous, le texte est trop petit sur une feuille
+// Automatic tiling: millimetres per drawing unit aimed for to stay readable
+const READABLE = { tree: 2.5 / 14, fan: 2 / 8 };  // first names 2.5 mm, smallest fan chart text 2 mm
+const MARGIN = 10;                             // sheet margin, in mm
+const HEAD = 16;                               // title and legend, in mm
+const MAX_SCALE = 1.6;                         // maximum enlargement of a small tree
+const SMALL_SCALE = 0.45;                      // below this, the text is too small on a sheet
 
-// Couleurs fixes : la feuille est toujours claire, quel que soit le thème de l'écran
+// Fixed colours: the sheet is always light, whatever the screen theme
 const C = {
   ink: '#16211E', muted: '#56645F', line: '#9AA8A2', edge: '#6F7D78',
   card: '#FFFFFF', focus: '#E6F1EE', accent: '#1D5B54', halo: '#2FA35A',
@@ -43,12 +43,12 @@ const FONT = {
 };
 
 let customTitle = '';
-let shownTitle = '';   // titre calculé affiché dans le champ : il suit le contenu choisi
+let shownTitle = '';   // computed title shown in the field: it follows the chosen content
 let layout = null;
 
-/* ---------- Mesures ---------- */
+/* ---------- Measurements ---------- */
 
-/** Feuille retenue : orientation, dimensions (mm) et échelle de l'arbre. */
+/** Chosen sheet: orientation, dimensions (mm) and tree scale. */
 function pageFor(format, orient, L) {
   const [short, long] = PAPER[format];
   const fit = (w, h) => Math.min(
@@ -63,13 +63,13 @@ function pageFor(format, orient, L) {
   return landscape.scale >= portrait.scale ? landscape : portrait;
 }
 
-/** Plus petit format supérieur où le dessin reste lisible sur une feuille, ou undefined. */
+/** Smallest larger size where the drawing stays readable on one sheet, or undefined. */
 const betterFormat = (format, orient, L) =>
   FORMATS.slice(FORMATS.indexOf(format) + 1).find((f) => pageFor(f, orient, L).scale >= SMALL_SCALE);
 
 const ctx = document.createElement('canvas').getContext('2d');
 
-/** Coupe le texte avec « … » s'il dépasse `max` pixels. */
+/** Truncates the text with "…" if it exceeds `max` pixels. */
 function fit(text, font, max, spacing = 0) {
   ctx.font = font;
   const width = (t) => ctx.measureText(t).width + spacing * t.length;
@@ -79,7 +79,7 @@ function fit(text, font, max, spacing = 0) {
   return t.trimEnd() + '…';
 }
 
-/** Nom de famille le plus fréquent, ou vide. */
+/** Most frequent surname, or empty. */
 function topSurname() {
   const count = new Map();
   for (const p of S.people.values()) {
@@ -90,7 +90,7 @@ function topSurname() {
   return top ? top[0] : '';
 }
 
-/** Titre calculé : le père et la mère de la personne centrale, à défaut le nom le plus fréquent. */
+/** Computed title: the focus person's father and mother, failing that the most frequent surname. */
 function defaultTitle() {
   const family = parentsName(S.focus) || topSurname();
   if (!family) return t('pr.defaultTitle');
@@ -102,7 +102,7 @@ const today = () => {
   return longDate(`${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`);
 };
 
-/* ---------- Dessin ---------- */
+/* ---------- Drawing ---------- */
 
 function sexMark(sex) {
   if (sex === 'F') return `<circle cx="15" cy="20" r="4" fill="${C.ink}" fill-opacity=".6"/>`;
@@ -110,7 +110,7 @@ function sexMark(sex) {
   return `<rect x="12" y="17" width="6" height="6" fill="${C.ink}" fill-opacity=".6" transform="rotate(45 15 20)"/>`;
 }
 
-/** Fiche de l'arbre, de largeur `w` (plus étroite en disposition compacte). */
+/** Tree card, `w` wide (narrower in the compact layout). */
 function cardSVG(n, w) {
   const p = P(n.id);
   const sosa = n.sosa ? String(n.sosa) : '';
@@ -119,10 +119,10 @@ function cardSVG(n, w) {
   const name = fit(given(p) || '—', `700 14px ${FONT.body}`, w - 26 - 11 - (sosa ? sosaW + 6 : 0));
   const names = cardNames(p);
   const sur = fit((names.name || t('card.noSurname')).toUpperCase(), `400 11.5px ${FONT.body}`, w - 22, 1.04);
-  // Nom de jeune fille sur sa propre ligne sous le nom ; les dates en bas de la fiche
+  // Maiden name on its own line under the name; the dates at the bottom of the card
   const maidenLine = names.maiden ? fit(names.maiden, `400 11px ${FONT.body}`, w - 22, 0.6) : '';
   const datesY = CH - 12;
-  // Anneaux devant les dates, s'il y a la place : sur une fiche étroite, l'union se lit au « × » entre conjoints
+  // Rings before the dates, if there is room: on a narrow card, the union reads from the "×" between spouses
   const married = w >= CW && ['married', 'remarried'].includes(currentSituation(n.id));
   const dx = married ? 24 : 0;
   const dates = fit(cardDates(p) || t('card.noDates'), `400 11.5px ${FONT.mono}`, w - 22 - dx);
@@ -158,22 +158,22 @@ function treeSVG(L, scale) {
     + '</svg>';
 }
 
-/* ---------- Fenêtre ---------- */
+/* ---------- Dialog ---------- */
 
 const generationCount = (L) => L.gens;
 
-/** Contenu choisi : 'tree', 'fan', 'book' (livret) ou 'fullbook' (livre complet par branche). */
+/** Chosen content: 'tree', 'fan', 'book' (booklet) or 'fullbook' (full book by branch). */
 const printContent = () => $('#prContent').value;
 const isBook = (content) => content === 'book' || content === 'fullbook';
 
-/** Arbre complet, dans la disposition choisie : refait seulement quand elle change. */
+/** Whole tree, in the chosen layout: redone only when it changes. */
 function treeLayout() {
   const compact = $('#prLayout').value === 'compact';
   if (!layout || layout.compact !== compact) layout = { ...buildFullLayout({ compact }), compact };
   return layout;
 }
 
-/** Remplit la liste du découpage dans la langue choisie, sans perdre le choix. */
+/** Fills the tiling list in the chosen language, keeping the choice. */
 function fillTiles() {
   const select = $('#prTiles');
   const value = select.value || 'auto';
@@ -182,7 +182,7 @@ function fillTiles() {
   select.value = value;
 }
 
-/** Grille de feuilles retenue pour le dessin de dimensions W × H, ou null pour une seule feuille. */
+/** Sheet grid chosen for a W × H drawing, or null for a single sheet. */
 function gridFor({ W, H }) {
   const paper = PAPER[$('#prFormat').value];
   const orient = $('#prOrient').value;
@@ -191,20 +191,20 @@ function gridFor({ W, H }) {
   return cols > 1 ? bestGrid(W, H, paper, MARGIN, cols, orient) : null;
 }
 
-/** Texte d'information sur une grille. */
+/** Information text about a grid. */
 const gridInfo = (grid) => t('pr.tileInfo', grid.cols, grid.rows, $('#prFormat').value, grid.orient === 'landscape',
   t('decimal', (14 * grid.mm).toFixed(1)), OVERLAP);
 
 /**
- * Règle @page de la feuille. Firefox mettrait en page sur cette taille sans réduire si son papier
- * est différent, et couperait la droite : là, le dessin suit le papier choisi dans sa fenêtre.
+ * The sheet's @page rule. Firefox would lay out at this size without shrinking if its paper
+ * is different, and would cut the right side: here, the drawing follows the paper chosen in its dialog.
  */
 const sheetRule = (w, h) => (navigator.userAgent.includes('Firefox/') ? `@page { margin: ${MARGIN}mm; }` : pageRule(w, h, MARGIN));
 
-/** Hauteur sur la feuille prévue, sans dépasser le papier réel : le navigateur peut en imposer un autre. */
+/** Height on the planned sheet, without exceeding the real paper: the browser may impose another. */
 const fitHeight = (mm) => `min(${mm}mm, calc(100vh - 1mm))`;
 
-/** Mini-carte de l'assemblage dans le pied de feuille : la feuille en cours est remplie. */
+/** Mini-map of the assembly in the sheet footer: the current sheet is filled. */
 function locator(grid, tile) {
   const cell = Math.min(3.2, (FOOT - 1.5) / grid.rows);
   const rects = grid.tiles.map((x) => `<rect x="${x.col * cell}" y="${x.row * cell}" width="${cell}" height="${cell}"`
@@ -212,19 +212,19 @@ function locator(grid, tile) {
   return `<svg class="tile-map" width="${grid.cols * cell}mm" height="${grid.rows * cell}mm" viewBox="-.1 -.1 ${grid.cols * cell + 0.2} ${grid.rows * cell + 0.2}">${rects}</svg>`;
 }
 
-/** Une feuille de la grille : une fenêtre sur le dessin, avec ses repères d'assemblage. */
+/** One sheet of the grid: a window onto the drawing, with its assembly marks. */
 function tileHTML(grid, tile, drawing, title) {
   const { w, h, mm } = grid;
   const vw = w / mm;
   const vh = h / mm;
   const band = OVERLAP / mm;
   const next = neighbours(grid, tile);
-  const x = tile.x + vw - band;   // bord où se pose la feuille de droite
-  const y = tile.y + vh - band;   // bord où se pose la feuille du dessous
+  const x = tile.x + vw - band;   // edge where the right-hand sheet goes
+  const y = tile.y + vh - band;   // edge where the sheet below goes
   const stroke = `stroke="${C.muted}" stroke-width="${0.2 / mm}" stroke-dasharray="${2 / mm} ${1.5 / mm}"`;
   const label = (lx, ly, text, angle) => `<text x="${lx}" y="${ly}" transform="rotate(${angle} ${lx} ${ly})" text-anchor="middle" dominant-baseline="middle"`
     + ` font-family='${FONT.body}' font-size="${3 / mm}" font-weight="700" fill="${C.muted}" stroke="#fff" stroke-width="${0.8 / mm}" paint-order="stroke">${esc(text)}</text>`;
-  // Zone de recouvrement : grisée, avec le code de la feuille à y poser
+  // Overlap area: greyed, with the code of the sheet to place on it
   const marks = (next.right ? `<rect x="${x}" y="${tile.y}" width="${band}" height="${vh}" fill="${C.muted}" fill-opacity=".1"/>`
       + `<path d="M${x},${tile.y}V${tile.y + vh}" fill="none" ${stroke}/>`
       + label(x + band / 2, tile.y + vh / 2, t('pr.tileGlue', next.right), 90) : '')
@@ -239,10 +239,10 @@ function tileHTML(grid, tile, drawing, title) {
     + `<span class="tile-next">${esc(arrows)}</span><span class="tile-title">${esc(title)}</span></div></section>`;
 }
 
-/** Première page : le dessin entier, quadrillé par feuille, et la marche à suivre. */
+/** First page: the whole drawing, gridded by sheet, and the instructions. */
 function planHTML(grid, drawing, { W, H }, title, legend) {
   const { w, h, mm } = grid;
-  const fit = Math.min(w / W, (h - 45) / H);   // millimètres par unité sur le plan
+  const fit = Math.min(w / W, (h - 45) / H);   // millimetres per unit on the plan
   const size = 8 / fit;
   const cells = grid.tiles.map((tile) => {
     const x = Math.min(tile.x, W);
@@ -323,7 +323,7 @@ export function closePrint() {
   $('#printDlg').hidden = true;
 }
 
-/** Prépare la feuille (page, titre, arbre) puis ouvre la fenêtre d'impression du navigateur. */
+/** Prepares the sheet (page, title, tree) then opens the browser's print dialog. */
 export async function printTree() {
   if (!layout) return;
   treeLayout();
@@ -341,7 +341,7 @@ export async function printTree() {
     document.head.appendChild(style);
   }
   style.textContent = isBook(content)
-    ? pageRule(210, 297, 0) // les marges sont dans les pages du livret
+    ? pageRule(210, 297, 0) // the margins are in the booklet pages
     : grid ? sheetRule(grid.pageW, grid.pageH) : sheetRule(page.w, page.h);
 
   const focus = P(S.focus);
@@ -379,7 +379,7 @@ export async function printTree() {
   launchPrint(title);
 }
 
-/** Ouvre l'impression sur la feuille préparée, et la vide ensuite. `name` donne le nom proposé pour le PDF. */
+/** Opens printing on the prepared sheet, and clears it afterwards. `name` gives the suggested PDF name. */
 function launchPrint(name) {
   const area = $('#printArea');
   const before = document.title;
@@ -397,7 +397,7 @@ function launchPrint(name) {
   }
 }
 
-/** Livret de famille d'une personne : ses unions et ses enfants directs, sur des pages A4. */
+/** A person's family booklet: their unions and direct children, on A4 pages. */
 export async function printFamilyBook(id) {
   if (!P(id)) return;
   let style = $('#printPageStyle');

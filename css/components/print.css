@@ -1,8 +1,8 @@
 /* ==========================================================
-   Impression : fenêtre d'options et feuille imprimée
+   Printing: options dialog and printed sheet
    ========================================================== */
 
-/* Bouton bascule « Tout l'arbre » */
+/* "Whole tree" toggle button */
 .btn.toggle[aria-pressed="true"] {
   background: var(--accent);
   border-color: var(--accent);
@@ -15,7 +15,7 @@
   opacity: .55;
 }
 
-/* Options de la fenêtre Imprimer */
+/* Print dialog options */
 .print-opts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -28,7 +28,7 @@
   }
 }
 
-/* Feuille imprimée : absente à l'écran */
+/* Printed sheet: hidden on screen */
 .print-area {
   display: none;
 }
@@ -91,7 +91,7 @@
     justify-content: center;
   }
 
-  /* Le dessin garde ses proportions et rétrécit si le papier réel est plus petit que prévu */
+  /* The drawing keeps its proportions and shrinks if the real paper is smaller than expected */
   .print-tree svg {
     display: block;
     flex: 0 1 auto;
@@ -100,7 +100,7 @@
     max-height: 100%;
   }
 
-  /* Découpage : une feuille par section, à assembler */
+  /* Tiling: one sheet per section, to assemble */
   .print-area.tiles {
     display: block;
     overflow: visible;
@@ -155,7 +155,7 @@
     text-overflow: ellipsis;
   }
 
-  /* Plan d'assemblage */
+  /* Assembly plan */
   .tile-plan {
     display: flex;
     flex-direction: column;
@@ -192,8 +192,8 @@
   }
 }
 
-/* Livret de famille : pages A4 complètes, marges comprises.
-   Hors de @media print : les blocs sont mesurés à l'écran, hors du cadre, avant la répartition */
+/* Family booklet: full A4 pages, margins included.
+   Outside @media print: blocks are measured on screen, off-frame, before being laid out */
 .print-area .bk-page,
 .print-area .bk-page p {
   white-space: normal;
@@ -243,7 +243,7 @@
   color: #56645F;
 }
 
-/* Couverture */
+/* Cover */
 .bk-cover {
   padding: 12mm;
 }
@@ -317,7 +317,7 @@
   color: #56645F;
 }
 
-/* Sommaire */
+/* Table of contents */
 .bk-toc-title {
   font-family: var(--f-display);
   font-weight: 400;
@@ -357,7 +357,7 @@
   font-weight: 500;
 }
 
-/* Chapitre : une génération. Marges internes seulement, pour que la mesure soit exacte */
+/* Chapter: one generation. Inner margins only, so the measurement is exact */
 .bk-chapter {
   display: flex;
   align-items: center;
@@ -396,7 +396,7 @@
   color: #56645F;
 }
 
-/* Une personne */
+/* One person */
 .bk-entry {
   display: flow-root;
   padding: 2.5mm 0 3mm;
@@ -448,15 +448,15 @@
   width: 17mm;
   height: 21mm;
   object-fit: cover;
-  object-position: 50% 18%; /* portrait : le visage est en haut */
+  object-position: 50% 18%; /* portrait: the face is at the top */
   margin: .5mm 4mm 1mm 0;
   border-radius: 1mm;
   border: .2mm solid #C8D2CD;
 }
 
-/* Livre complet : frise et album de chaque branche */
+/* Full book: timeline and album of each branch */
 .bk-block {
-  display: flow-root; /* les marges du titre comptent dans la hauteur mesurée */
+  display: flow-root; /* the title's margins count in the measured height */
 }
 
 .bk-measure .bk-sub,
@@ -525,7 +525,7 @@
   color: #56645F;
 }
 
-/* Livret d'une personne : des extraits, façon mairie */
+/* A person's booklet: extracts, town-hall style */
 .bk-names h1 + h1 {
   margin-top: 3mm;
 }

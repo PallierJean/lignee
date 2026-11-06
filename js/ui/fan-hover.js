@@ -1,7 +1,7 @@
 /**
- * Roue d'ascendance : au survol d'un secteur, une étiquette (nom, Sosa, naissance, décès) et le chemin
- * qui le relie à la personne centrale ; un double-clic recentre la roue sur lui, un double-clic au
- * centre revient à la personne quittée. Des boutons font de même : revenir, ou descendre vers un enfant.
+ * Fan chart: hovering a sector shows a label (name, Sosa, birth, death) and the path
+ * linking it to the focus person; a double-click recentres the fan on it, a double-click in the
+ * centre returns to the person left. Buttons do the same: go back, or go down to a child.
  */
 import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
@@ -10,12 +10,12 @@ import { t } from '../i18n.js';
 import { P, fullName, lifeYears, descendantRows } from '../model/people.js';
 import { openPersonDlg } from './person-dlg.js';
 
-const back = [];      // personnes centrales quittées par double-clic, la dernière en fin
-let opening = null;   // clic simple en attente : un double-clic l'annule
+const back = [];      // focus people left by double-click, the last at the end
+let opening = null;   // pending single click: a double-click cancels it
 
 const sectorOf = (target) => (target && target.closest ? target.closest('#fan .fan-s') : null);
 
-/** Ligne « ° 10 septembre 1864, Lyon (69) » d'une naissance ou d'un décès, ou ''. */
+/** Row "° 10 septembre 1864, Lyon (69)" for a birth or a death, or ''. */
 function lifeLine(sym, date, place) {
   const text = [date ? longDate(date) : '', String(place || '').trim()].filter(Boolean).join(', ');
   return text ? `<span>${sym} ${esc(text)}</span>` : '';
@@ -31,7 +31,7 @@ function tipHTML(id, sosa) {
     + (hint ? `<em>${esc(hint)}</em>` : '');
 }
 
-/** Place l'étiquette près du point (x, y), sans sortir de la fenêtre. */
+/** Places the label near point (x, y), without leaving the window. */
 function placeTip(x, y) {
   const tip = $('#fanTip');
   const left = x + 16 + tip.offsetWidth > window.innerWidth - 8 ? x - 16 - tip.offsetWidth : x + 16;
@@ -48,13 +48,13 @@ function clear() {
 }
 
 /**
- * Survol (ou focus) d'un secteur : étiquette et chemin vers le centre (numéros Sosa n, n/2… 1).
- * `ev` donne la position de la souris ; au clavier, l'étiquette se place sur le secteur.
+ * Hover (or focus) of a sector: label and path to the centre (Sosa numbers n, n/2… 1).
+ * `ev` gives the mouse position; with the keyboard, the label is placed on the sector.
  */
 export function fanHover(target, on, ev) {
   const sector = sectorOf(target);
   if (!on) {
-    // Passage d'un élément à l'autre du même secteur (forme, texte) : rien ne change
+    // Moving from one element to another of the same sector (shape, text): nothing changes
     if (sector && ev && ev.relatedTarget && sector.contains(ev.relatedTarget)) return;
     if (sector) clear();
     return;
@@ -76,20 +76,20 @@ export function fanHover(target, on, ev) {
   }
 }
 
-/** La souris se déplace sur la roue : l'étiquette la suit. */
+/** The mouse moves over the fan: the label follows it. */
 export function fanMove(ev) {
   if (!$('#fanTip').hidden && sectorOf(ev.target)) placeTip(ev.clientX, ev.clientY);
 }
 
-/** Clic sur un secteur : sa fiche, un instant plus tard, sauf si c'est le début d'un double-clic. */
+/** Click on a sector: its record, a moment later, unless it's the start of a double-click. */
 export function fanClick(id) {
   clearTimeout(opening);
   opening = setTimeout(() => openPersonDlg(id), 250);
 }
 
 /**
- * Double-clic : la personne sur qui centrer la roue (cet ancêtre ; au centre, la personne quittée),
- * ou null.
+ * Double-click: the person to centre the fan on (this ancestor; in the centre, the person left),
+ * or null.
  */
 export function fanRecenter(target) {
   const sector = sectorOf(target);
@@ -103,16 +103,16 @@ export function fanRecenter(target) {
   return fanBack();
 }
 
-/** La personne quittée par le dernier recentrage (et la retire de la pile), ou null. */
+/** The person left by the last recentring (and removes it from the stack), or null. */
 export function fanBack() {
   while (back.length && !S.people.has(back[back.length - 1])) back.pop();
   return back.length ? back.pop() : null;
 }
 
 /**
- * Barre de la roue, toujours visible : revenir à la personne quittée, descendre vers un descendant
- * de la personne centrale, jusqu'au plus lointain connu (même après un rechargement, qui oublie
- * les personnes quittées) : une liste rangée par génération, toujours là, grisée sans descendant.
+ * Fan chart bar, always visible: go back to the person left, go down to a descendant
+ * of the focus person, as far as the farthest known (even after a reload, which forgets
+ * the people left): a list sorted by generation, always there, greyed out with no descendant.
  */
 export function renderFanNav(shown) {
   const nav = $('#fanNav');

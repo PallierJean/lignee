@@ -1,7 +1,7 @@
 /**
- * Mode « db » : base de données en ligne fournie par claude.ai (window.claude).
- * Collection « trees » (nom de chaque arbre), « people » et « unions » : chaque
- * document porte le champ `tree` (absent = arbre de départ). Synchronisées en direct.
+ * "db" mode: online database provided by claude.ai (window.claude).
+ * Collections "trees" (name of each tree), "people" and "unions": each
+ * document carries the `tree` field (missing = starting tree). Synced live.
  */
 import { S, services } from '../../state.js';
 import { DEFAULT_TREE } from '../../config.js';
@@ -12,8 +12,8 @@ import { renderAll, afterData } from '../../ui/render.js';
 import { ensureTree, sortTrees } from './trees.js';
 
 /**
- * Exécute une écriture en base, avec nouvelle tentative sur les erreurs passagères
- * et un message clair sur les autres.
+ * Runs a database write, retrying on transient errors
+ * and with a clear message on the others.
  */
 export async function withRetry(fn) {
   for (let attempt = 0; ; attempt++) {
@@ -49,7 +49,7 @@ export async function withRetry(fn) {
 
 const doc = (collection, id) => services.db.collection(collection).doc(id);
 
-/** Écrit un document de l'arbre ouvert dans la base en ligne. */
+/** Writes a document of the open tree to the online database. */
 export const dbSet = (collection, id, data) => withRetry(
   () => doc(collection, id).set(Object.assign({}, data, { tree: S.tree })),
 );
@@ -58,9 +58,9 @@ export const dbUpdate = (collection, id, patch) => withRetry(() => doc(collectio
 
 export const dbDelete = (collection, id) => withRetry(() => doc(collection, id).delete());
 
-/* ---------- Synchronisation en direct ---------- */
+/* ---------- Live sync ---------- */
 
-// Tous les documents reçus, tous arbres confondus
+// All documents received, across all trees
 const docs = { people: new Map(), unions: new Map(), trees: new Map() };
 const treeOf = (d) => d.tree || DEFAULT_TREE;
 
@@ -70,13 +70,13 @@ function withoutTree(d) {
   return o;
 }
 
-/** Recalcule la liste des arbres et les personnes / unions de l'arbre ouvert. */
+/** Recomputes the tree list and the people / unions of the open tree. */
 export function refreshDb() {
   const counts = new Map();
   for (const d of docs.people.values()) counts.set(treeOf(d), (counts.get(treeOf(d)) || 0) + 1);
   const trees = new Map();
   for (const [id, x] of docs.trees) trees.set(id, { name: x.name || t('ts.default'), createdAt: x.createdAt || 0 });
-  // Arbre de départ : données d'avant la gestion de plusieurs arbres, ou base vide
+  // Starting tree: data from before multiple trees were supported, or an empty database
   if (!trees.has(DEFAULT_TREE) && (counts.has(DEFAULT_TREE) || !trees.size)) {
     trees.set(DEFAULT_TREE, { name: t('ts.default'), createdAt: 0 });
   }
@@ -114,16 +114,16 @@ export function subscribe() {
   listen('trees');
 }
 
-/* ---------- Gestion des arbres ---------- */
+/* ---------- Tree management ---------- */
 
-/** Crée ou renomme un arbre dans la base. */
+/** Creates or renames a tree in the database. */
 export async function setDbTree(id, tree) {
   const d = { name: tree.name, createdAt: tree.createdAt || 0 };
   await withRetry(() => doc('trees', id).set(d));
-  docs.trees.set(id, d); // sans attendre la synchronisation, pour pouvoir l'ouvrir tout de suite
+  docs.trees.set(id, d); // without waiting for the sync, so it can be opened right away
 }
 
-/** Supprime un arbre et toutes ses fiches de la base. */
+/** Deletes a tree and all its records from the database. */
 export async function deleteDbTree(id) {
   for (const collection of ['unions', 'people']) {
     const ids = [...docs[collection]].filter(([, d]) => treeOf(d) === id).map(([k]) => k);

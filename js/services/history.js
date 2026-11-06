@@ -1,34 +1,34 @@
 /**
- * Historique annuler / rétablir de l'arbre ouvert, en mémoire : il disparaît au
- * rechargement de la page et au changement d'arbre.
+ * Undo / redo history of the open tree, in memory: it disappears on
+ * page reload and when switching trees.
  *
- * Une action regroupe les documents qu'elle a modifiés : { label, focus, changes }, avec
- * pour chacun l'état avant et après. Ne garder que ces documents évite, en base partagée,
- * d'écraser ce que d'autres personnes ont modifié ailleurs dans l'arbre.
+ * An action groups the documents it changed: { label, focus, changes }, with
+ * the before and after state of each. Keeping only those documents avoids, in a shared database,
+ * overwriting what other people changed elsewhere in the tree.
  */
 import { S } from '../state.js';
 
 const MAX = 50;
 
-let done = [];     // actions annulables, la plus récente à la fin
-let undone = [];   // actions annulées, rétablissables
+let done = [];     // undoable actions, the most recent at the end
+let undone = [];   // undone actions, redoable
 let current = null;
 
 export const mapOfCollection = (collection) => (collection === 'people' ? S.people : S.unions);
 
-/** Ouvre une action : les écritures suivantes en font partie jusqu'à commitAction(). */
+/** Opens an action: the following writes belong to it until commitAction(). */
 export function beginAction(label) {
   current = { label, focus: S.focus, changes: new Map() };
 }
 
-/** À appeler avant d'écrire : retient l'état du document avant l'action. */
+/** Call before writing: remembers the document's state before the action. */
 export function track(collection, id) {
   if (!current) return;
   const key = collection + '/' + id;
   if (!current.changes.has(key)) current.changes.set(key, { collection, id, before: mapOfCollection(collection).get(id) });
 }
 
-/** Ferme l'action et l'ajoute à l'historique, si elle a changé quelque chose. */
+/** Closes the action and adds it to the history, if it changed something. */
 export function commitAction() {
   const action = current;
   current = null;
@@ -45,11 +45,11 @@ export function commitAction() {
 export const canUndo = () => done.length > 0;
 export const canRedo = () => undone.length > 0;
 
-/** Retire de l'historique la dernière action à annuler ou à rétablir. */
+/** Removes the last action to undo or redo from the history. */
 export const takeUndo = () => done.pop() || null;
 export const takeRedo = () => undone.pop() || null;
 
-/** Range une action une fois annulée ou rétablie, ou la remet en place après un échec. */
+/** Stores an action once undone or redone, or puts it back after a failure. */
 export const pushDone = (action) => done.push(action);
 export const pushUndone = (action) => undone.push(action);
 

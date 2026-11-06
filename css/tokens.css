@@ -1,38 +1,38 @@
 /* ==========================================================
-   Jetons de design : couleurs, polices, rayon
-   Mise en page : un registre d'état civil. L'arbre sur papier
-   pointé à gauche, la fiche et le registre à droite.
-   Thème clair par défaut, thème sombre suivant le système (sans data-theme),
-   ou thème choisi : data-theme="light", "dark", "noel"… sur <html>.
+   Design tokens: colours, fonts, radius
+   Layout: a civil register. The tree on dotted
+   paper on the left, the record and the register on the right.
+   Light theme by default, dark theme following the system (without data-theme),
+   or a chosen theme: data-theme="light", "dark", "noel"… on <html>.
    ========================================================== */
 
 :root {
-  /* Couleurs */
-  --paper: #EDF1EE;        /* fond de page et de la toile */
-  --surface: #FAFBFA;      /* panneaux, fiches */
-  --ink: #16211E;          /* texte principal */
-  --muted: #56645F;        /* texte secondaire */
-  --line: #C8D2CD;         /* bordures */
-  --edge: #86948F;         /* traits de l'arbre */
-  --dot: #C6D0CB;          /* trame pointée de la toile */
+  /* Colours */
+  --paper: #EDF1EE;        /* page and canvas background */
+  --surface: #FAFBFA;      /* panels, cards */
+  --ink: #16211E;          /* main text */
+  --muted: #56645F;        /* secondary text */
+  --line: #C8D2CD;         /* borders */
+  --edge: #86948F;         /* tree lines */
+  --dot: #C6D0CB;          /* canvas dot grid */
   --accent: #1D5B54;
-  --accent-ink: #F4FAF8;   /* texte sur l'accent */
+  --accent-ink: #F4FAF8;   /* text on the accent */
   --accent-soft: #D5E7E2;
   --warn: #9A6A12;
   --danger: #A33A28;
   --danger-soft: #F6E1DC;
   --ok: #2F7A4B;
-  --halo: #2FA35A;         /* lignée directe de la personne centrale */
-  --male: #4F86C6;         /* contour des fiches d'hommes */
-  --female: #E9A8BD;       /* contour des fiches de femmes */
+  --halo: #2FA35A;         /* direct line of the focus person */
+  --male: #4F86C6;         /* outline of men's cards */
+  --female: #E9A8BD;       /* outline of women's cards */
   --scrim: rgba(14, 24, 21, .42);
 
-  /* Polices */
+  /* Fonts */
   --f-display: "Gloock", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Formes */
+  /* Shapes */
   --r: 8px;
 
   color-scheme: light;
@@ -62,7 +62,7 @@
   }
 }
 
-/* Thème sombre forcé (attribut data-theme="dark" sur <html>) */
+/* Forced dark theme (data-theme="dark" attribute on <html>) */
 :root[data-theme="dark"] {
   --paper: #0E1412;
   --surface: #161E1B;
@@ -86,11 +86,11 @@
 }
 
 /* ----------------------------------------------------------
-   Thèmes à choisir dans l'en-tête (ui/theme.js) : couleurs, et un motif
-   discret sur la toile de l'arbre (--deco). L'impression garde ses couleurs.
+   Themes chosen in the header (ui/theme.js): colours, and a subtle
+   pattern on the tree canvas (--deco). Printing keeps its colours.
    ---------------------------------------------------------- */
 
-/* Noël : sapin la nuit, rouge et or, flocons */
+/* Christmas: fir tree at night, red and gold, snowflakes */
 :root[data-theme="noel"] {
   --paper: #0F2A1F;
   --surface: #163728;
@@ -115,7 +115,7 @@
   color-scheme: dark;
 }
 
-/* Halloween : nuit violette, citrouilles et chauves-souris */
+/* Halloween: purple night, pumpkins and bats */
 :root[data-theme="halloween"] {
   --paper: #17111F;
   --surface: #221830;
@@ -140,7 +140,7 @@
   color-scheme: dark;
 }
 
-/* Printemps : vert tendre, fleurs */
+/* Spring: tender green, flowers */
 :root[data-theme="printemps"] {
   --paper: #EEF8E6;
   --surface: #FFFFFF;
@@ -165,7 +165,7 @@
   color-scheme: light;
 }
 
-/* Été : sable et mer, soleils et vagues */
+/* Summer: sand and sea, suns and waves */
 :root[data-theme="ete"] {
   --paper: #FBF3E2;
   --surface: #FFFDF7;
@@ -190,7 +190,7 @@
   color-scheme: light;
 }
 
-/* Automne : tons chauds, feuilles */
+/* Autumn: warm tones, leaves */
 :root[data-theme="automne"] {
   --paper: #F4EDE3;
   --surface: #FFFBF5;
@@ -216,9 +216,9 @@
 }
 
 /* ----------------------------------------------------------
-   Thème « Carte du Maraudeur » : parchemin vieilli, encre sépia, titres
-   à l'ancienne (IM Fell English, css/fonts.css), empreintes de pas rouges
-   qui cheminent sur la toile le long de tracés pointillés.
+   "Marauder's Map" theme: aged parchment, sepia ink, old-style
+   headings (IM Fell English, css/fonts.css), red footprints
+   wandering across the canvas along dotted trails.
    ---------------------------------------------------------- */
 :root[data-theme="maraudeur"] {
   --paper: #E6D3A3;
@@ -245,26 +245,26 @@
   color-scheme: light;
 }
 
-/* Empreintes rouges : dessinées au hasard par ui/footprints.js ; fixes, dans le fond, pour qui a
-   demandé moins d'animations */
+/* Red footprints: drawn at random by ui/footprints.js; still, in the background, for those who
+   asked for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   :root[data-theme="maraudeur"] {
     --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Cg fill='none' stroke='%233A2414' stroke-width='1.2' stroke-dasharray='2 5' stroke-linecap='round' opacity='.18'%3E%3Cpath d='M-10 430C110 410 150 300 260 290S420 230 530 80'/%3E%3Cpath d='M60 -10C80 70 30 140 100 190'/%3E%3Cpath d='M300 530C330 470 420 470 450 390'/%3E%3C/g%3E%3Cg fill='none' stroke='%233A2414' opacity='.12'%3E%3Ccircle cx='440' cy='440' r='16'/%3E%3Cpath d='M440 420v40M420 440h40'/%3E%3Ccircle cx='120' cy='300' r='10'/%3E%3Cpath d='M120 287v26M107 300h26'/%3E%3C/g%3E%3Cg fill='%23B0201A' opacity='.35'%3E%3Cg transform='translate(49.5 448.7) rotate(38) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(85.0 422.3) rotate(43) scale(1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(107.3 387.2) rotate(50) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(143.6 372.2) rotate(57) scale(1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(170.4 345.5) rotate(65) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(206.8 341.7) rotate(73) scale(1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(238.6 323.8) rotate(81) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(274.8 330.6) rotate(89) scale(1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(311.9 322.3) rotate(97) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(394.1 141.9) rotate(49) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(432.3 118.7) rotate(42) scale(1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(450.9 79.6) rotate(35) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(481.0 49.6) rotate(28) scale(1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(488.7 8.0) rotate(20) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(8.6 124.2) rotate(114) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(38.0 143.7) rotate(98) scale(1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(69.0 133.8) rotate(80) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(102.2 133.2) rotate(63) scale(1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(125.4 105.0) rotate(48) scale(-1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3Cg transform='translate(160.5 81.8) rotate(38) scale(1 1)'%3E%3Cpath d='M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z'/%3E%3Cellipse cx='.3' cy='6.6' rx='2.7' ry='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
 }
 
-/* Bords du parchemin assombris par le temps */
+/* Parchment edges darkened by time */
 :root[data-theme="maraudeur"] .canvas {
   box-shadow: inset 0 0 70px rgba(90, 55, 20, .35);
 }
 
 /* ----------------------------------------------------------
-   Thèmes d'accessibilité : sans motif, contours de fiche plus épais.
-   Halo de la lignée directe presque noir : distinct du bleu et de
-   l'orange dans les trois formes de daltonisme (par sa luminosité).
+   Accessibility themes: no pattern, thicker card outlines.
+   Direct-line halo almost black: distinct from blue and
+   orange in all three forms of colour blindness (by its luminance).
    ---------------------------------------------------------- */
 
-/* Daltonisme : palette d'Okabe et Ito, sans opposition rouge-vert (alertes en bleu et vermillon) */
+/* Colour blindness: Okabe and Ito palette, with no red-green contrast (alerts in blue and vermilion) */
 :root[data-theme="daltonisme"] {
   --paper: #EEF1F4;
   --surface: #FFFFFF;
@@ -287,7 +287,7 @@
   color-scheme: light;
 }
 
-/* Contraste élevé : noir sur blanc, contrastes de 7:1 au moins pour le texte */
+/* High contrast: black on white, contrast of at least 7:1 for text */
 :root[data-theme="contraste"] {
   --paper: #FFFFFF;
   --surface: #FFFFFF;
@@ -310,8 +310,8 @@
   color-scheme: light;
 }
 
-/* Contraste élevé sombre : clair sur noir, pour qui la lumière gêne (cataracte, glaucome, migraine).
-   Halo blanc : le pendant du halo noir des thèmes clairs */
+/* Dark high contrast: light on black, for those bothered by light (cataract, glaucoma, migraine).
+   White halo: the counterpart of the black halo of the light themes */
 :root[data-theme="contraste-sombre"] {
   --paper: #000000;
   --surface: #0D0D0D;
@@ -340,7 +340,7 @@
   border-width: 2px;
 }
 
-/* Thèmes d'accessibilité : l'élément actif au clavier, cerclé de noir et de jaune, se voit sur tout fond */
+/* Accessibility themes: the keyboard-active element, ringed in black and yellow, shows on any background */
 :root[data-theme="daltonisme"] :focus-visible,
 :root[data-theme="contraste"] :focus-visible,
 :root[data-theme="contraste-sombre"] :focus-visible {
@@ -349,8 +349,8 @@
   box-shadow: 0 0 0 5px #FFD400;
 }
 
-/* Empreintes du thème Maraudeur (ui/footprints.js) : calque collé à la zone visible de la toile,
-   sans hauteur, sous l'arbre et la roue */
+/* Marauder theme footprints (ui/footprints.js): layer stuck to the visible area of the canvas,
+   with no height, under the tree and the fan chart */
 .steps {
   position: sticky;
   top: 0;
@@ -372,7 +372,7 @@
   animation: step-print 6.5s linear forwards;
 }
 
-/* Le parchemin au nom de la personne qui marche : il apparaît, la suit, puis s'efface */
+/* The scroll bearing the walker's name: it appears, follows them, then fades */
 .steps .step-name {
   opacity: 0;
   transition: opacity .8s, transform .35s ease-out;
@@ -393,7 +393,7 @@
   fill: #3A2414;
 }
 
-/* Le pas s'imprime d'un coup, pâlit, puis s'efface */
+/* The step prints at once, fades, then disappears */
 @keyframes step-print {
   0% {
     opacity: 0;
@@ -412,7 +412,7 @@
   }
 }
 
-/* Animations des thèmes fêtes et saisons (ui/ambient.js) : calque collé à la zone visible, sous l'arbre */
+/* Holiday and season theme animations (ui/ambient.js): layer stuck to the visible area, under the tree */
 .ambient {
   position: sticky;
   top: 0;
@@ -427,7 +427,7 @@
   left: 0;
 }
 
-/* Été et printemps animés : la plage, ou le cerisier et la prairie, remplacent le motif fixe */
+/* Animated summer and spring: the beach, or the cherry tree and meadow, replace the still pattern */
 :root[data-theme="ete"][data-ambient="ete"] .canvas,
 :root[data-theme="printemps"][data-ambient="printemps"] .canvas {
   background-image: radial-gradient(circle, var(--dot) 1px, transparent 1.4px);

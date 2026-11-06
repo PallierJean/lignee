@@ -5,7 +5,7 @@ import * as A from '../js/actions.js';
 import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace, estimatedBirth } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalyse, startInsee, inseeSendCode, inseeSendAuth } from '../js/ui/analyse.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth } from '../js/ui/analysis.js';
 import { loadTree, person, resetApp, html } from './helpers.js';
 
 /** Acte de décès fictif, au format renvoyé par server.js. */
@@ -203,9 +203,9 @@ describe('INSEE : vérification et vue', () => {
     loadTree([lucien({ deathDate: '02/07/1995' })]);
     globalThis.fetch = answer([act()]);
     await checkInsee(inseePending(), () => {});
-    A.setTab('analyse');
-    A.setAnalyseView('insee');
-    let out = html('paneAnalyse');
+    A.setTab('analysis');
+    A.setAnalysisView('insee');
+    let out = html('paneAnalysis');
     assert.match(out, /Écarts avec l’INSEE/);
     assert.match(out, /acte certain/);
     assert.match(out, /acte n° 412/);
@@ -225,25 +225,25 @@ describe('INSEE : vérification et vue', () => {
     assert.equal(S.people.get('l').deathPlace, undefined);
 
     S.mode = 'file';
-    renderAnalyse();
-    out = html('paneAnalyse');
+    renderAnalysis();
+    out = html('paneAnalysis');
     assert.match(out, /À compléter d’après l’INSEE/);
     assert.match(out, /Prénoms à l’état civil : <b>Lucien Marcel<\/b>/);
 
     S.mode = 'local';
     await A.applyInsee('l');
     S.mode = 'file';
-    renderAnalyse();
-    out = html('paneAnalyse');
+    renderAnalysis();
+    out = html('paneAnalysis');
     assert.doesNotMatch(out, /À compléter/, 'il ne reste que les prénoms, qui ne se reportent pas');
     assert.match(out, /1 fiche conforme à l’INSEE/);
     assert.match(out, /acte n° 412/);
     S.mode = 'local';
     await A.undo();
     S.mode = 'file';
-    renderAnalyse();
+    renderAnalysis();
     A.ignoreInseeOf('l');
-    assert.doesNotMatch(html('paneAnalyse'), /À compléter/);
+    assert.doesNotMatch(html('paneAnalysis'), /À compléter/);
     assert.ok(inseeResults().l.ignored);
   });
 
@@ -262,22 +262,22 @@ describe('INSEE : vérification et vue', () => {
       }
       return url.includes('Roche') && !connected ? json(401, { error: 'login' }) : json(200, [act()]);
     };
-    A.setTab('analyse');
-    A.setAnalyseView('insee');
+    A.setTab('analysis');
+    A.setAnalysisView('insee');
     await startInsee();
     assert.ok(inseeResults().l, 'la fiche vérifiée avant l’arrêt est gardée');
     assert.deepEqual(inseePending(), ['m']);
-    let out = html('paneAnalyse');
+    let out = html('paneAnalysis');
     assert.match(out, /Connexion à matchID/);
     assert.match(out, /data-act="insee-register"/);
 
     document.getElementById('insEmail').value = 'lucien@exemple.fr';
     await inseeSendCode();
-    assert.match(html('paneAnalyse'), /Code reçu à lucien@exemple\.fr/);
+    assert.match(html('paneAnalysis'), /Code reçu à lucien@exemple\.fr/);
     document.getElementById('insCode').value = 'ab12CD';
     await inseeSendAuth();
     assert.deepEqual(posted, [['api/insee/register', { email: 'lucien@exemple.fr' }], ['api/insee/auth', { email: 'lucien@exemple.fr', code: 'ab12CD' }]]);
-    out = html('paneAnalyse');
+    out = html('paneAnalysis');
     assert.match(out, /Connecté à matchID \(lucien@exemple\.fr\)/);
     await startInsee();
     assert.deepEqual(inseePending(), []);
@@ -288,15 +288,15 @@ describe('INSEE : vérification et vue', () => {
     loadTree([person('z', { given: 'Lucien', surname: 'Bertrand', sex: 'M', deceased: true })]);
     globalThis.fetch = async () => ({ ok: true, json: async () => [act()] });
     await checkInsee(inseePending(), () => {});
-    A.setTab('analyse');
-    A.setAnalyseView('insee');
-    let out = html('paneAnalyse');
+    A.setTab('analysis');
+    A.setAnalysisView('insee');
+    let out = html('paneAnalysis');
     assert.match(out, /Pistes à confirmer/);
     assert.match(out, /data-act="insee-confirm"[^>]*>C’est bien lui</);
     assert.deepEqual(A.inseeDifferences('z'), [], 'une piste ne se reporte pas');
 
     A.confirmInseeOf('z');
-    out = html('paneAnalyse');
+    out = html('paneAnalysis');
     assert.doesNotMatch(out, /Pistes à confirmer/);
     assert.match(out, /confirmé par vous/);
     assert.match(out, /data-act="insee-apply"/);
@@ -315,9 +315,9 @@ describe('INSEE : vérification et vue', () => {
 
   test('hors du mode fichier : la vue explique qu’il faut le serveur local', () => {
     loadTree([lucien()]);
-    A.setTab('analyse');
-    A.setAnalyseView('insee');
-    assert.match(html('paneAnalyse'), /npm start/);
+    A.setTab('analysis');
+    A.setAnalysisView('insee');
+    assert.match(html('paneAnalysis'), /npm start/);
     ignoreInsee('absent'); // sans résultat : rien à faire
   });
 });

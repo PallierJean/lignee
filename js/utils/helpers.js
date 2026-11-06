@@ -1,16 +1,16 @@
-/** Utilitaires génériques. */
+/** Generic utilities. */
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Identifiant unique préfixé, par exemple « p_lx3k9a2b4c ». */
+/** Prefixed unique identifier, for example "p_lx3k9a2b4c". */
 export const rid = (prefix) =>
   prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
-/** Texte en minuscules sans accents, pour la recherche. */
+/** Lowercase text without accents, for searching. */
 export const norm = (s) =>
   String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-/** Exécute `worker` sur chaque élément, `limit` à la fois au maximum. */
+/** Runs `worker` on each item, at most `limit` at a time. */
 export async function pool(items, limit, worker) {
   let i = 0;
   const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {

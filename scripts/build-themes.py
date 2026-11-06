@@ -1,25 +1,25 @@
-"""Génère css/themes.css : thèmes illustrés (palettes, motifs de fond, touches propres)."""
+"""Generates css/themes.css: illustrated themes (palettes, background patterns, specific touches)."""
 import math, random
 from urllib.parse import quote
-random.seed(7)  # motifs reproductibles
+random.seed(7)  # reproducible patterns
 def uri(svg): return 'url("data:image/svg+xml,' + quote(svg, safe=" =:/,.'-()") + '")'
 def svg(w, h, body): return f"<svg xmlns='http://www.w3.org/2000/svg' width='{w}' height='{h}'>{body}</svg>"
 
-# ---------- Motifs ----------
+# ---------- Patterns ----------
 def stars():
-    """Fond d'étoiles faibles, semées au hasard ; les constellations, réelles, sont dessinées par ui/sky.js."""
+    """Background of faint stars, scattered at random; the real constellations are drawn by ui/sky.js."""
     b = ''
     for _ in range(70):
         x, y, r = random.uniform(0, 400), random.uniform(0, 400), random.choice([.5, .6, .8, 1, 1.3])
         b += f"<circle cx='{x:.0f}' cy='{y:.0f}' r='{r}' fill='#fff' opacity='{random.uniform(.25, .8):.2f}'/>"
-    for x, y in [(60, 80), (300, 240), (180, 350)]:  # étoiles à branches
+    for x, y in [(60, 80), (300, 240), (180, 350)]:  # pointed stars
         b += (f"<g stroke='#fff' stroke-linecap='round' opacity='.7'><path d='M{x} {y-5}v10M{x-5} {y}h10' stroke-width='1'/>"
               f"<path d='M{x-2} {y-2}l4 4M{x+2} {y-2}l-4 4' stroke-width='.6'/></g>")
     return svg(400, 400, b)
 
 def porcelaine():
-    """Décor de faïence en bleu de four : médaillons à rosace, rinceaux feuillus, fleurettes et
-    perles d'or ; tout se raccorde d'une tuile à l'autre (médaillons aux coins, fleurettes aux bords)."""
+    """Faience decoration in kiln blue: rosette medallions, leafy scrolls, florets and
+    gold beads; everything joins up from one tile to the next (medallions at the corners, florets at the edges)."""
     C, G = '#1A3F8F', '#C9A227'
     def medallion(cx, cy):
         petals = ''.join(f"<ellipse cx='{cx}' cy='{cy - 15}' rx='6.5' ry='15' transform='rotate({a} {cx} {cy})'/>" for a in range(0, 360, 45))
@@ -41,7 +41,7 @@ def porcelaine():
                 f"<g fill='{C}'>{lf}</g></g>")
     b = medallion(180, 180) + ''.join(medallion(x, y) for x in (0, 360) for y in (0, 360))
     b += ''.join(floweret(x, y) for x, y in ((180, 0), (180, 360), (0, 180), (360, 180)))
-    # Rinceaux : de chaque fleurette vers le médaillon central, en S, avec leurs feuilles et une vrille
+    # Scrolls: from each floret to the central medallion, in an S, with their leaves and a tendril
     for (fx, fy), (dx, dy) in (((180, 14), (0, 1)), ((180, 346), (0, -1)), ((14, 180), (1, 0)), ((346, 180), (-1, 0))):
         px, py = -dy, dx
         def at(t, w):
@@ -54,18 +54,18 @@ def porcelaine():
         t0 = at(48, 18)
         b += f"<path d='M{t0[0]:.0f} {t0[1]:.0f}c{px*8+dx*4:.0f} {py*8+dy*4:.0f} {px*14-dx*2:.0f} {py*14-dy*2:.0f} {px*8-dx*6:.0f} {py*8-dy*6:.0f}' fill='none' stroke='{C}' stroke-width='.9' opacity='.42'/>"
         b += f"<circle cx='{t0[0] + px*8 - dx*6:.0f}' cy='{t0[1] + py*8 - dy*6:.0f}' r='1.5' fill='{G}' opacity='.75'/>"
-    # Perles d'or semées
+    # Scattered gold beads
     b += f"<g fill='{G}' opacity='.7'>" + ''.join(f"<circle cx='{x}' cy='{y}' r='1.6'/>" for x, y in ((90, 90), (270, 90), (90, 270), (270, 270), (135, 45), (225, 315), (45, 225), (315, 135))) + "</g>"
     return svg(360, 360, b)
 
 def porcelain_frieze():
-    """Frise festonnée de bordure d'assiette : bandeau bleu de four, festons blancs, perles d'or."""
+    """Scalloped frieze like a plate rim: kiln-blue band, white scallops, gold beads."""
     return svg(36, 18, "<rect width='36' height='12' fill='#1F4690'/><path d='M0 12a9 6 0 0 0 18 0a9 6 0 0 0 18 0' fill='#1F4690'/>"
                "<path d='M0 1.2h36M0 4.2h36' stroke='#D9B440' stroke-width='1.2'/><path d='M3 12a6 4 0 0 0 12 0M21 12a6 4 0 0 0 12 0' fill='none' stroke='#FFFFFF' stroke-width='1' opacity='.8'/>"
                "<circle cx='9' cy='8' r='1.4' fill='#C9A227'/><circle cx='27' cy='8' r='1.4' fill='#C9A227'/>")
 
 def sea_still():
-    """Vagues de manga figées (si le système demande moins d'animations) : crêtes d'écume en volutes."""
+    """Still manga waves (if the system asks for reduced motion): foam crests in curls."""
     b = ''
     for row, y in enumerate(range(20, 200, 36)):
         off = (row % 2) * 30
@@ -74,7 +74,7 @@ def sea_still():
     return svg(240, 200, f"<rect width='240' height='200' fill='#BFE3F5'/>{b}")
 
 def matrix_still():
-    """Pluie figée (si le système demande moins d'animations) : quelques colonnes de signes verts."""
+    """Still rain (if the system asks for reduced motion): a few columns of green glyphs."""
     random.seed(11)
     glyphs = 'ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789Z:=+<>'
     b = ''
@@ -88,26 +88,26 @@ def matrix_still():
             b += f"<text x='{col + 2}' y='{(top + k) * 16}' fill='#00FF41' opacity='{op:.2f}'>{random.choice(glyphs)}</text>"
     return svg(240, 320, f"<g font-family='monospace' font-size='14'>{b}</g>")
 
-# ---------- Thèmes ----------
+# ---------- Themes ----------
 KEYS = ['paper', 'surface', 'ink', 'muted', 'line', 'edge', 'dot', 'accent', 'accent-ink', 'accent-soft', 'warn',
         'danger', 'danger-soft', 'ok', 'halo', 'male', 'female', 'scrim']
 THEMES = [
-  ('constellations', 'Constellations : nuit bleu profond, le vrai ciel de Bordeaux ce soir avec ses constellations, qui tourne lentement (ui/sky.js)', 'dark',
+  ('constellations', 'Constellations: deep blue night, tonight\'s real sky over Bordeaux with its constellations, turning slowly (ui/sky.js)', 'dark',
    dict(paper='#0B1026', surface='#1C2756', ink='#EEF1FF', muted='#B4BEE4', line='#33407A', edge='#8FA4F0', dot='#1A2350',
         accent='#FFD36E', **{'accent-ink': '#0B1026', 'accent-soft': '#3A3872'}, warn='#FFD27A', danger='#FF9A8B', **{'danger-soft': '#3A1C2A'},
         ok='#8FE3C0', halo='#FFE7A3', male='#7FB2FF', female='#F5A3D0', scrim='rgba(2, 4, 16, .7)'),
    stars(), '400px', {}),
-  ('porcelaine', 'Porcelaine de Limoges : émail blanc, décor de faïence en bleu de four (médaillons, rinceaux, fleurettes), filets et perles d’or ; frises festonnées, fiches en plaques émaillées, la personne au centre en bleu de four', 'light',
+  ('porcelaine', 'Limoges porcelain: white enamel, kiln-blue faience decoration (medallions, scrolls, florets), gold bands and beads; scalloped friezes, cards as enamelled plaques, the focus person in kiln blue', 'light',
    dict(paper='#ECE7DA', surface='#F8F5EC', ink='#10224A', muted='#42537A', line='#C3C9D8', edge='#1A3F8F', dot='#DFD8C6',
         accent='#1A3F8F', **{'accent-ink': '#FFFFFF', 'accent-soft': '#DCE5F5'}, warn='#7A5200', danger='#A3263A', **{'danger-soft': '#F6DDE2'},
         ok='#2A6A4A', halo='#B8901A', male='#2E5A9E', female='#B04A7A', scrim='rgba(10, 20, 40, .45)'),
    porcelaine(), '360px', {'--frieze': uri(porcelain_frieze())}),
-  ('matrix', 'Matrix : pluie de signes verts qui défile sur la toile (ui/rain.js), fiches de console', 'dark',
+  ('matrix', 'Matrix: rain of green glyphs scrolling over the canvas (ui/rain.js), console cards', 'dark',
    dict(paper='#000300', surface='#020D04', ink='#C8FFD4', muted='#5FE07A', line='#0E4A1C', edge='#00D43A', dot='#021A08',
         accent='#00FF41', **{'accent-ink': '#001A07', 'accent-soft': '#063A16'}, warn='#E6FF6A', danger='#FF6B6B', **{'danger-soft': '#3A0E0E'},
         ok='#7DFFA0', halo='#B6FF00', male='#5CE1FF', female='#FF7AD9', scrim='rgba(0, 0, 0, .75)'),
    svg(4, 4, ''), '4px', {'--f-display': '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace'}),
-  ('grandline', 'Grand Line : ciel d’aventure et mer de manga, un navire pirate à tête de mouton qui vogue, îles, mouettes et monstre marin (ui/ambient.js) ; la personne au centre est recherchée (WANTED)', 'light',
+  ('grandline', 'Grand Line: adventure sky and manga sea, a sheep-headed pirate ship sailing, islands, gulls and a sea monster (ui/ambient.js); the focus person is WANTED', 'light',
    dict(paper='#CFEAF8', surface='#FFF8E6', ink='#14213D', muted='#3F4A66', line='#E2CFA0', edge='#7A4E24', dot='#B8DDF0',
         accent='#C41E3A', **{'accent-ink': '#FFFFFF', 'accent-soft': '#FBE3C2'}, warn='#7A4E00', danger='#A3172E', **{'danger-soft': '#F8D7D2'},
         ok='#22693A', halo='#E8A317', male='#1F5FA8', female='#C83E78', scrim='rgba(10, 30, 60, .45)'),
@@ -115,9 +115,9 @@ THEMES = [
 ]
 
 out = ["""/* ==========================================================
-   Thèmes illustrés supplémentaires (menu « Aa », ui/theme.js) : palette, motif
-   de la toile (--deco) et quelques touches propres à chaque thème.
-   Généré par scripts/build-themes.py : les couleurs se règlent là.
+   Additional illustrated themes ("Aa" menu, ui/theme.js): palette, canvas
+   pattern (--deco) and a few touches specific to each theme.
+   Generated by scripts/build-themes.py: colours are set there.
    ========================================================== */
 """]
 for name, comment, scheme, v, deco, size, extra in THEMES:
@@ -133,7 +133,7 @@ for name, comment, scheme, v, deco, size, extra in THEMES:
 """)
 
 out.append(f"""
-/* Matrix : pluie figée dans le fond pour qui a demandé moins d'animations */
+/* Matrix: still rain in the background for those who asked for reduced motion */
 @media (prefers-reduced-motion: reduce) {{
   :root[data-theme="matrix"] {{
     --deco: {uri(matrix_still())};
@@ -142,13 +142,13 @@ out.append(f"""
 }}
 """)
 
-# ---------- Carte du Maraudeur : plan de demeure à l'encre, bordures à devise, cartouche du château,
-# plis du parchemin (inspiré de la carte du roman, sans en copier ni les textes ni l'emblème) ----------
+# ---------- Marauder's Map: ink plan of a manor, motto borders, castle cartouche,
+# parchment folds (inspired by the map in the novel, without copying its texts or emblem) ----------
 INK = '#4A2A18'
 SERIF = "font-family='IM Fell English, Georgia, serif'"
 
 def castle():
-    """Château à tourelles, à l'encre, barré d'un losange rouge : « La carte de Lignée »."""
+    """Turreted castle, in ink, crossed by a red diamond: "La carte de Lignée"."""
     towers = ''
     for x, w, top in ((30, 26, 70), (78, 22, 50), (122, 30, 30), (172, 22, 52), (212, 26, 74)):
         towers += (f"<path d='M{x} 180V{top}h{w}V180'/><path d='M{x - 3} {top}L{x + w / 2} {top - 26}L{x + w + 3} {top}Z'/>"
@@ -164,18 +164,18 @@ def castle():
         "<path d='M20 200c40 10 80-6 120 4s80 8 110-2' stroke-dasharray='2 4'/></g>" + seal)
 
 def floor_plan():
-    """Grand plan de demeure, sans répétition : ailes découpées en pièces, tours rondes, galeries en
-    arc, escaliers, couloirs entre les ailes, et des lieux nommés, tous différents. Tiré au hasard une
-    fois pour toutes (graine fixe), étiré sur toute la toile."""
+    """Large manor plan, with no repetition: wings cut into rooms, round towers, arched
+    galleries, stairs, corridors between the wings, and named places, all different. Drawn at random
+    once and for all (fixed seed), stretched over the whole canvas."""
     rnd = random.Random(1611)
     W, H = 1600, 1000
     b = ''
-    # Ailes : un rectangle découpé en pièces par des coupes successives
+    # Wings: a rectangle cut into rooms by successive cuts
     def split(x, y, w, h, depth):
         nonlocal b
         if depth == 0 or (w < 70 and h < 70):
             b += f"<rect x='{x:.0f}' y='{y:.0f}' width='{w:.0f}' height='{h:.0f}'/>"
-            # une porte en quart de cercle sur un mur
+            # a quarter-circle door on a wall
             b += f"<path d='M{x + w * .3:.0f} {y + h:.0f}a9 9 0 0 1 9-9' stroke-dasharray='1.5 2'/>"
             return
         if w > h:
@@ -190,22 +190,22 @@ def floor_plan():
     for x, y, w, h in wings:
         b += f"<rect x='{x - 4}' y='{y - 4}' width='{w + 8}' height='{h + 8}' stroke-width='1.6'/>"
         split(x, y, w, h, 4)
-    # Couloirs entre les ailes
+    # Corridors between the wings
     b += ("<path d='M400 200H470M730 140C850 140 930 180 1050 180M235 310V600M780 210V700M1240 280V560M390 730H600M960 800H1120' "
           "stroke-dasharray='4 4'/>")
-    # Tours rondes : cercles concentriques et rayons
+    # Round towers: concentric circles and spokes
     for cx, cy, r in ((560, 420, 70), (1480, 430, 46), (40, 470, 34)):
         b += f"<circle cx='{cx}' cy='{cy}' r='{r}'/><circle cx='{cx}' cy='{cy}' r='{r * .72:.0f}'/><circle cx='{cx}' cy='{cy}' r='{r * .3:.0f}'/>"
         b += ''.join(f"<path d='M{cx + r * .3 * math.cos(a):.1f} {cy + r * .3 * math.sin(a):.1f}L{cx + r * .72 * math.cos(a):.1f} {cy + r * .72 * math.sin(a):.1f}'/>" for a in [k * math.pi / 6 for k in range(12)])
-    # Galeries en arc de cercle, avec leurs gradins
+    # Arched galleries, with their tiers
     for cx, cy, r0, a0, a1 in ((900, 520, 120, -2.6, -0.5), (1500, 980, 180, -3.0, -1.7)):
         for r in (r0, r0 + 18, r0 + 36, r0 + 54):
             b += f"<path d='M{cx + r * math.cos(a0):.0f} {cy + r * math.sin(a0):.0f}A{r} {r} 0 0 1 {cx + r * math.cos(a1):.0f} {cy + r * math.sin(a1):.0f}'/>"
         b += ''.join(f"<path d='M{cx + r0 * math.cos(a):.1f} {cy + r0 * math.sin(a):.1f}L{cx + (r0 + 54) * math.cos(a):.1f} {cy + (r0 + 54) * math.sin(a):.1f}'/>" for a in [a0 + k * (a1 - a0) / 12 for k in range(13)])
-    # Escaliers
+    # Stairs
     for x, y in ((420, 120), (990, 600), (300, 470)):
         b += f"<rect x='{x}' y='{y}' width='48' height='44'/>" + ''.join(f"<path d='M{x + 4 + k * 6} {y}v44'/>" for k in range(7))
-    # Jardin : allées et parterres
+    # Garden: paths and flower beds
     b += "<path d='M60 960C200 900 330 990 460 930S700 960 820 930' /><circle cx='1000' cy='380' r='22'/><circle cx='1000' cy='380' r='8'/>"
     labels = ((180, 140, 'Grenier'), (320, 260, 'Lingerie'), (560, 110, 'Bibliothèque'), (150, 280, 'Cellier'),
               (1150, 130, 'Chapelle'), (1350, 240, 'Cuisine'), (560, 425, 'Tour du guet'), (1480, 434, 'Pigeonnier'),
@@ -218,7 +218,7 @@ def floor_plan():
                f"<g {SERIF} font-style='italic' font-size='12' fill='{INK}' opacity='.45'>{t}</g>")
 
 def border_band():
-    """Bordure de carte : double filet, graduations, devise latine qui court tout du long."""
+    """Map border: double rule, graduations, a Latin motto running all along."""
     ticks = ''.join(f"<path d='M{x} 2v{6 if x % 40 == 0 else 3}'/>" for x in range(0, 400, 10))
     return svg(400, 30, f"<g stroke='{INK}' opacity='.55'><path d='M0 1.5H400M0 28.5H400' stroke-width='1.2'/>"
                f"<path d='M0 10.5H400M0 24H400' stroke-width='.5'/>{ticks}</g>"
@@ -230,9 +230,9 @@ FOLDS = ("linear-gradient(90deg, transparent calc(33.3% - 2px), rgba(90, 60, 30,
          "linear-gradient(0deg, transparent calc(50% - 2px), rgba(90, 60, 30, .14) 50%, rgba(255, 250, 235, .3) calc(50% + 1px), transparent calc(50% + 4px))")
 
 out.append(f"""
-/* Carte du Maraudeur : bordures à devise en haut et en bas, cartouche du château et de son losange
-   rouge au milieu du haut, plis du parchemin, plan de demeure à l'encre ; les empreintes et le nom
-   de qui marche sont dessinés par ui/footprints.js. Fixes, même sans animation. */
+/* Marauder's Map: motto borders at the top and bottom, cartouche of the castle and its red
+   diamond in the top middle, parchment folds, ink plan of a manor; the footprints and the name
+   of who is walking are drawn by ui/footprints.js. Still, even without animation. */
 :root[data-theme="maraudeur"] .canvas {{
   background-image: {uri(border_band())}, {uri(border_band())}, {uri(castle())}, {FOLDS}, {uri(floor_plan())}, radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
   background-position: top 4px left 0, bottom 4px left 0, top 40px center, 0 0, 0 0, 0 0, center, 0 0;
@@ -240,7 +240,7 @@ out.append(f"""
   background-size: 400px 30px, 400px 30px, 216px 184px, 100% 100%, 100% 100%, 100% 100%, cover, 20px 20px;
 }}
 
-/* Moins d'animations : pas d'empreintes qui marchent, mais celles du motif (fixes) par-dessus le plan */
+/* Reduced motion: no walking footprints, but the pattern's (still) ones over the plan */
 @media (prefers-reduced-motion: reduce) {{
   :root[data-theme="maraudeur"] .canvas {{
     background-image: {uri(border_band())}, {uri(border_band())}, {uri(castle())}, var(--deco), {FOLDS}, {uri(floor_plan())}, radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
@@ -252,10 +252,10 @@ out.append(f"""
 """)
 
 out.append("""
-/* ---------- Touches propres ---------- */
+/* ---------- Theme-specific touches ---------- */
 
-/* Constellations : fiches plus claires que le ciel, détachées des étoiles par un liseré de nuit,
-   et un halo (doré pour la lignée directe) ; le contour garde la couleur homme ou femme */
+/* Constellations: cards lighter than the sky, set off from the stars by a night-blue edge,
+   and a halo (golden for the direct line); the outline keeps the male or female colour */
 :root[data-theme="constellations"] .card:not(.is-line) {
   box-shadow: 0 0 0 5px rgba(8, 12, 30, .88), 0 0 22px 4px rgba(127, 160, 255, .28);
 }
@@ -268,7 +268,7 @@ out.append("""
   filter: drop-shadow(0 0 2px rgba(143, 164, 240, .7));
 }
 
-/* Porcelaine : frises festonnées en haut et en bas de la toile, sur le décor de faïence */
+/* Porcelain: scalloped friezes at the top and bottom of the canvas, over the faience decoration */
 :root[data-theme="porcelaine"] .canvas {
   background-image: var(--frieze), var(--frieze), var(--deco), radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
   background-position: top left, bottom left, center, 0 0;
@@ -276,7 +276,7 @@ out.append("""
   background-size: 36px 18px, 36px 18px, var(--deco-size), 20px 20px;
 }
 
-/* Cadres de la toile et du panneau : filet d'or et filet bleu, comme le marli d'une assiette */
+/* Canvas and panel frames: gold band and blue band, like the rim of a plate */
 :root[data-theme="porcelaine"] .stage,
 :root[data-theme="porcelaine"] .side {
   border-color: #C9A227;
@@ -288,20 +288,20 @@ out.append("""
   box-shadow: 0 2px 0 #C9A227;
 }
 
-/* Fiches : plaques émaillées, reflet du vernis, liseré d'or à l'intérieur du bord */
+/* Cards: enamelled plaques, glaze sheen, gold edge inside the border */
 :root[data-theme="porcelaine"] .card {
   border-radius: 10px;
   background: radial-gradient(120% 90% at 28% 18%, #FBF9F3 0%, #F2F0E8 55%, #E3E6EC 100%);
   box-shadow: inset 0 0 0 2px #FBF9F3, inset 0 0 0 3.5px #C9A227, inset 0 0 0 5px #FBF9F3, inset 0 0 0 5.6px rgba(201, 162, 39, .6), 0 2px 6px rgba(16, 34, 74, .14);
 }
 
-/* Fiches « Ajouter » : un simple cadre pointillé, sans filets */
+/* "Add" cards: a simple dotted frame, no bands */
 :root[data-theme="porcelaine"] .card.ph {
   background: rgba(248, 245, 236, .7);
   box-shadow: none;
 }
 
-/* Boutons principaux et onglet choisi : un filet d'or */
+/* Primary buttons and selected tab: a gold band */
 :root[data-theme="porcelaine"] .btn.primary,
 :root[data-theme="porcelaine"] .seg button[aria-pressed="true"] {
   box-shadow: inset 0 0 0 1px #E2C15A;
@@ -311,7 +311,7 @@ out.append("""
   box-shadow: inset 0 -3px 0 #C9A227;
 }
 
-/* La personne au centre : plaque blanche cerclée de filets d'or et de bleu de four, nom en bleu */
+/* The focus person: white plaque ringed with gold and kiln-blue bands, name in blue */
 :root[data-theme="porcelaine"] .card.is-focus {
   border-color: #1A3F8F;
   background: radial-gradient(120% 90% at 28% 18%, #FBF9F3 0%, #E9EDF5 55%, #D6DFEF 100%);
@@ -322,24 +322,24 @@ out.append("""
   color: #1A3F8F;
 }
 
-/* Son numéro Sosa : une pastille d'or */
+/* Their Sosa number: a gold dot */
 :root[data-theme="porcelaine"] .card.is-focus .sosa {
   border-color: #E2C15A;
   background: #E2C15A;
   color: #10224A;
 }
 
-/* Lignée directe : filets d'or */
+/* Direct line: gold bands */
 :root[data-theme="porcelaine"] .edges path.line {
   stroke: #C9A227;
 }
 
-/* Matrix : fiches en caractères de console (l'interface garde sa police, plus étroite) */
+/* Matrix: cards in console type (the interface keeps its font, narrower) */
 :root[data-theme="matrix"] .card {
   font-family: var(--f-mono);
 }
 
-/* Matrix : fiches de console qui luisent sur la pluie ; pluie figée dans le fond si moins d'animations */
+/* Matrix: console cards glowing over the rain; still rain in the background with reduced motion */
 :root[data-theme="matrix"] {
   --r: 2px;
 }
@@ -353,7 +353,7 @@ out.append("""
   text-shadow: 0 0 6px rgba(0, 255, 65, .6);
 }
 
-/* Matrix : la pluie de signes, dessinée par ui/rain.js sous l'arbre */
+/* Matrix: the glyph rain, drawn by ui/rain.js under the tree */
 .rain {
   position: sticky;
   top: 0;
@@ -368,17 +368,17 @@ out.append("""
   left: 0;
 }
 
-/* Grand Line : la toile est une case de manga, bordée d'un épais trait d'encre */
+/* Grand Line: the canvas is a manga panel, bordered with a thick ink line */
 :root[data-theme="grandline"] .canvas {
   box-shadow: inset 0 0 0 4px #141414, inset 0 0 0 7px #FFFFFF;
 }
 
-/* Grand Line : fiches en avis de recherche, la personne au centre « WANTED » */
+/* Grand Line: cards as wanted posters, the focus person "WANTED" */
 :root[data-theme="grandline"] .card {
   background: linear-gradient(180deg, #FFF8E6, #F3E2B6);
 }
 
-/* Ombre d'encre franche, sauf sur la lignée directe qui garde son halo */
+/* Crisp ink shadow, except on the direct line which keeps its halo */
 :root[data-theme="grandline"] .card:not(.is-line) {
   box-shadow: 3px 3px 0 #141414;
 }
@@ -402,7 +402,7 @@ out.append("""
   opacity: .9;
 }
 
-/* Constellations : le vrai ciel de Bordeaux, dessiné par ui/sky.js sous l'arbre */
+/* Constellations: the real sky over Bordeaux, drawn by ui/sky.js under the tree */
 .sky {
   position: sticky;
   top: 0;

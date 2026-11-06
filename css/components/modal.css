@@ -1,5 +1,5 @@
 /* ==========================================================
-   Fenêtre Importer ou Exporter
+   Import or Export dialog
    ========================================================== */
 
 .overlay {
@@ -102,7 +102,7 @@ input[type="file"] {
 }
 
 /* ==========================================================
-   Agrandissement de la photo d'une fiche
+   Enlarged photo of a record
    ========================================================== */
 
 .photo.zoomable {
@@ -114,14 +114,14 @@ input[type="file"] {
   cursor: zoom-out;
 }
 
-/* La photo occupe tout l'écran disponible, sans déformation */
+/* The photo fills all the available screen, without distortion */
 .photo-zoom img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-/* Recadrage d'une photo (ui/crop.js) : la photo glisse derrière un cadre portrait 4:5 */
+/* Photo crop (ui/crop.js): the photo slides behind a 4:5 portrait frame */
 .crop-sheet {
   max-width: 360px;
   align-items: center;
@@ -129,7 +129,7 @@ input[type="file"] {
 
 .crop-stage {
   position: relative;
-  width: 288px;   /* = FRAME dans ui/crop.js */
+  width: 288px;   /* = FRAME in ui/crop.js */
   height: 360px;
   overflow: hidden;
   border-radius: 6px;

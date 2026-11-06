@@ -1,7 +1,7 @@
 /**
- * Roue d'ascendance : un demi-disque, la personne centrale au milieu, chaque anneau
- * une génération. Père à gauche et mère à droite de chaque secteur, dans l'ordre Sosa.
- * Le même dessin sert à l'écran et à l'impression : seules les couleurs changent.
+ * Fan chart: a half-disc, the focus person in the middle, each ring
+ * a generation. Father on the left and mother on the right of each sector, in Sosa order.
+ * The same drawing is used on screen and in print: only the colours change.
  */
 import { S } from '../state.js';
 import { esc } from '../utils/dom.js';
@@ -9,14 +9,14 @@ import { P, given, surname, maiden, lifeYears } from '../model/people.js';
 
 export const MAX_FAN_GENS = 10;
 
-const CENTER = 74;                 // rayon du disque central
-const RING = [0, 96, 92, 92, 112, 120, 130, 140, 150, 170, 190]; // épaisseur de chaque anneau
-const FONT = [0, 13, 12, 11, 10.5, 9.5, 8.5, 8, 7, 6, 5];           // taille du texte, au plus
+const CENTER = 74;                 // radius of the central disc
+const RING = [0, 96, 92, 92, 112, 120, 130, 140, 150, 170, 190]; // thickness of each ring
+const FONT = [0, 13, 12, 11, 10.5, 9.5, 8.5, 8, 7, 6, 5];           // text size, at most
 
 /**
- * Couleurs d'un élément de la roue : `kind` text | muted | empty | sector | center.
- * À l'écran (`c` absent), des classes (analyse.css) : la politique de sécurité interdit l'attribut style.
- * À l'impression, les couleurs `c` en attributs SVG.
+ * Colours of a fan chart element: `kind` text | muted | empty | sector | center.
+ * On screen (no `c`), classes (analysis.css): the security policy forbids the style attribute.
+ * In print, the `c` colours as SVG attributes.
  */
 function paint(c, kind, sex) {
   if (!c) return `class="fan-${kind}${sex ? ' sx-' + sex : ''}"`;
@@ -25,7 +25,7 @@ function paint(c, kind, sex) {
   return `fill="${c[sex]}" stroke="${c.stroke[sex]}" stroke-width="${kind === 'center' ? 2 : 1.3}"`;
 }
 
-/** Ancêtres aux places Sosa, génération par génération : [[id|null, ...], ...]. */
+/** Ancestors at their Sosa slots, generation by generation: [[id|null, ...], ...]. */
 function fanLevels(focus, maxGens) {
   const levels = [[focus]];
   for (let g = 1; g <= maxGens; g++) {
@@ -52,13 +52,13 @@ function sector(cx, cy, r0, r1, a0, a1) {
 
 const cut = (text, max) => (text.length > max ? text.slice(0, max - 1).trimEnd() + '…' : text);
 
-/** Texte d'un secteur : tangent aux premiers anneaux, le long du rayon ensuite. */
+/** A sector's text: tangential on the first rings, along the radius after that. */
 function sectorText(id, cx, cy, r0, r1, mid, g, c) {
   const p = P(id);
   const thick = r1 - r0;
   const radial = g >= 3;
-  const arc = (r0 + thick / 2) * (Math.PI / 2 ** g); // largeur du secteur en son milieu
-  // Anneaux les plus serrés : le texte prend la largeur du secteur, sur une seule ligne
+  const arc = (r0 + thick / 2) * (Math.PI / 2 ** g); // width of the sector at its middle
+  // Narrowest rings: the text takes the sector's width, on a single line
   const size = Math.min(FONT[g], arc / 1.25);
   const room = radial ? thick - 10 : arc - 8;
   const chars = Math.max(3, Math.floor(room / (size * 0.56)));
@@ -66,7 +66,7 @@ function sectorText(id, cx, cy, r0, r1, mid, g, c) {
   const lines = arc < size * 2.4
     ? [[cut([given(p) || '—', name].filter(Boolean).join(' '), chars), 700, size]]
     : [[cut(given(p) || '—', chars), 700, size], [cut(name, chars), 400, size]];
-  // Assez de place pour les années : tous les anneaux sauf les plus serrés
+  // Enough room for the years: every ring except the narrowest
   if (g <= 5) lines.push([cut(lifeYears(p), chars), 400, size - 1.5]);
   const [x, y] = point(cx, cy, r0 + thick / 2, mid);
   const deg = (mid * 180) / Math.PI;
@@ -77,12 +77,12 @@ function sectorText(id, cx, cy, r0, r1, mid, g, c) {
   return `<text transform="translate(${x},${y}) rotate(${angle.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" ${paint(c, 'text')}>${spans}</text>`;
 }
 
-/** Secteur tracé : un ancêtre, ou la case vide juste au-dessus d'un ancêtre connu (là où chercher ensuite). */
+/** Drawn sector: an ancestor, or the empty slot just above a known ancestor (where to search next). */
 const drawn = (levels, g, i) => !!(levels[g][i] || levels[g - 1][i >> 1]);
 
 /**
- * Dimensions du dessin pour `gens` générations, recadré sur les secteurs tracés (une seule lignée
- * qui remonte loin ne réserve pas tout le demi-disque) ; (cx, cy) : centre de la roue.
+ * Drawing dimensions for `gens` generations, cropped to the drawn sectors (a single line
+ * going far back doesn't reserve the whole half-disc); (cx, cy): centre of the fan.
  */
 export function fanSize(focus = S.focus, maxGens = MAX_FAN_GENS) {
   const levels = fanLevels(focus, maxGens);
@@ -95,7 +95,7 @@ export function fanSize(focus = S.focus, maxGens = MAX_FAN_GENS) {
       if (!drawn(levels, g, i)) return;
       const a0 = Math.PI - (i * Math.PI) / n;
       const a1 = a0 - Math.PI / n;
-      // Bords de l'arc extérieur, et son sommet s'il passe à la verticale du centre
+      // Edges of the outer arc, and its top if it passes vertically above the centre
       for (const a of a1 <= Math.PI / 2 && Math.PI / 2 <= a0 ? [a0, a1, Math.PI / 2] : [a0, a1]) {
         left = Math.min(left, r1 * Math.cos(a));
         right = Math.max(right, r1 * Math.cos(a));
@@ -107,7 +107,7 @@ export function fanSize(focus = S.focus, maxGens = MAX_FAN_GENS) {
   return { gens: levels.length - 1, W: right - left + 20, H: CENTER - top + 30, cx: 10 - left, cy: 10 - top };
 }
 
-/** La roue en SVG ; `c` : couleurs (sans elles, celles du thème, voir paint), `scale` : échelle d'affichage. */
+/** The fan chart as SVG; `c`: colours (without them, the theme's, see paint), `scale`: display scale. */
 export function fanSVG(c = null, scale = 1, focus = S.focus, maxGens = MAX_FAN_GENS) {
   const levels = fanLevels(focus, maxGens);
   const { W, H, cx, cy } = fanSize(focus, maxGens);

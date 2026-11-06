@@ -1,7 +1,7 @@
 /**
- * Le ciel vu d'un lieu à un instant : position des étoiles des constellations au-dessus de
- * l'horizon (hauteur et azimut), d'après leurs coordonnées (data/constellations.js) et le temps
- * sidéral. Précision de l'ordre du degré, bien assez pour dessiner le ciel.
+ * The sky seen from a place at a given moment: position of the constellation stars above the
+ * horizon (altitude and azimuth), from their coordinates (data/constellations.js) and sidereal
+ * time. Accurate to about a degree, plenty to draw the sky.
  */
 import { CONSTELLATIONS } from '../data/constellations.js';
 
@@ -9,13 +9,13 @@ export const BORDEAUX = { lat: 44.84, lon: -0.58 };
 
 const RAD = Math.PI / 180;
 
-/** Temps sidéral local (degrés) à l'instant `date`, à la longitude `lon` (est positive). */
+/** Local sidereal time (degrees) at instant `date`, at longitude `lon` (east positive). */
 export function siderealDeg(date, lon) {
-  const days = date.getTime() / 86400000 + 2440587.5 - 2451545; // depuis le 1er janvier 2000, 12 h TU
+  const days = date.getTime() / 86400000 + 2440587.5 - 2451545; // since 1 January 2000, 12:00 UT
   return (((280.46061837 + 360.98564736629 * days + lon) % 360) + 360) % 360;
 }
 
-/** Hauteur et azimut (degrés ; azimut compté du nord vers l'est) d'un astre (ascension droite en heures). */
+/** Altitude and azimuth (degrees; azimuth measured from north towards east) of a star (right ascension in hours). */
 export function horizontal(raHours, decDeg, date, place = BORDEAUX) {
   const h = (siderealDeg(date, place.lon) - raHours * 15) * RAD;
   const dec = decDeg * RAD;
@@ -26,8 +26,8 @@ export function horizontal(raHours, decDeg, date, place = BORDEAUX) {
 }
 
 /**
- * Constellations à l'instant `date` : [{ fr, en, stars: { clé: { alt, az, name, bright } }, lines }].
- * Toutes y sont, au-dessus ou au-dessous de l'horizon (hauteur négative) : à l'affichage d'en décider.
+ * Constellations at instant `date`: [{ fr, en, stars: { key: { alt, az, name, bright } }, lines }].
+ * All are included, above or below the horizon (negative altitude): the display decides.
  */
 export function skyAt(date, place = BORDEAUX) {
   return CONSTELLATIONS.map((c) => ({

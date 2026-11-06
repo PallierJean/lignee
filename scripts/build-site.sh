@@ -1,6 +1,6 @@
 #!/bin/sh
-# Prépare _site/ pour GitHub Pages : uniquement les fichiers de l'application et la famille
-# d'exemple. La politique de sécurité, envoyée en en-tête par server.js, passe ici dans la page.
+# Builds _site/ for GitHub Pages: only the application files and the example
+# family. The security policy, sent as a header by server.js, goes into the page here.
 set -eu
 
 rm -rf _site

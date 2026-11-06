@@ -1,10 +1,10 @@
 /**
- * Génère js/data/communes.js depuis le Code officiel géographique de l'INSEE
- * (v_commune_<année>.csv : communes actuelles, déléguées et associées).
+ * Generates js/data/communes.js from INSEE's official geographic code
+ * (v_commune_<year>.csv: current, delegated and associated communes).
  *
  *   node scripts/build-communes.mjs v_commune_2025.csv
  *
- * Source : https://www.insee.fr/fr/information/2560452 (licence ouverte Etalab).
+ * Source: https://www.insee.fr/fr/information/2560452 (Etalab open licence).
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -19,7 +19,7 @@ const head = rows.shift();
 const col = (name) => head.indexOf(name);
 const [TYPE, CODE, NAME] = [col('TYPECOM'), col('COM'), col('LIBELLE')];
 
-// Département d'une commune : ses deux premiers caractères, trois outre-mer (971…)
+// A commune's department: its first two characters, three for overseas (971…)
 const deptOf = (code) => (code.startsWith('97') ? code.slice(0, 3) : code.slice(0, 2));
 
 const byDept = new Map();

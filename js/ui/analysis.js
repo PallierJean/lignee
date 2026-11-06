@@ -1,4 +1,4 @@
-/** Onglet « Analyse » : lien de parenté, cohérence, statistiques, éphémérides. */
+/** "Analysis" tab: kinship, consistency, statistics, anniversaries. */
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
@@ -14,7 +14,7 @@ import { personOptions, placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
 import { placesByDepartment, parsePlace } from '../model/places.js';
 import { loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText } from '../model/communes.js';
-import { mediaGrid } from './fiche.js';
+import { mediaGrid } from './record.js';
 import { toast } from './toast.js';
 import { longDate } from '../utils/dates.js';
 import { inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace } from '../model/insee.js';
@@ -28,10 +28,10 @@ const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], 
 const name = (id) => esc(fullName(P(id)));
 const decimal = (x) => t('decimal', x.toFixed(1));
 
-/** Bouton vers une personne : sa fiche s'ouvre en fenêtre, la liste reste en place. */
+/** Button to a person: their record opens in a dialog, the list stays in place. */
 const personLink = (id) => `<button class="link" type="button" data-act="person-open" data-id="${esc(id)}">${name(id)}</button>`;
 
-/* ---------- Lien de parenté ---------- */
+/* ---------- Kinship ---------- */
 
 function kinResult() {
   const { kinA: a, kinB: b } = S;
@@ -69,7 +69,7 @@ function kinView() {
   return `<div class="an-form">${select('kinA', 'kin.first', S.kinA)}${select('kinB', 'kin.second', S.kinB)}</div>${kinResult()}`;
 }
 
-/* ---------- Cohérence ---------- */
+/* ---------- Consistency ---------- */
 
 function issueHTML(x) {
   const names = x.code === 'cycle' ? x.ids.map(name).join(' → ') : name(x.ids[0]);
@@ -92,15 +92,15 @@ function checksView() {
   return part('error', '✕') + part('warn', '!') + `<p class="hint an-hint">${t('chk.scope')}</p>`;
 }
 
-/* ---------- Lieux ---------- */
+/* ---------- Places ---------- */
 
-/** Lieux cités, par département, ville et lieu-dit, avec leur nombre d'usages ; chacun se corrige partout en une fois. */
+/** Places cited, by department, city and locality, with their usage count; each is fixed everywhere at once. */
 function placesView() {
   const uses = placesByDepartment();
   if (!uses.length) return `<p class="nofocus">${t('map.empty')}</p>`;
-  if (!communesLoaded()) loadCommunes().then(renderAnalyse); // départements des villes, puis on redessine
+  if (!communesLoaded()) loadCommunes().then(renderAnalysis); // cities' departments, then redraw
   const rows = uses.map((u, i) => {
-    // Département contraire à la ville : signalé, et déjà corrigé dans les champs quand la ville est unique
+    // Department contradicting the city: flagged, and already fixed in the fields when the city is unique
     const issue = placeDepartmentIssue(u.name);
     const city = parsePlace(u.name).city;
     const warn = issue ? `<p class="hint">${esc(issue.fixed ? t('pl.deptFix', city, departmentsText(issue.expected)) : t('pl.deptConflict', city, departmentsText(issue.expected)))}</p>` : '';
@@ -112,16 +112,16 @@ function placesView() {
   return `<p class="hint an-hint">${t('pl.hint')}</p><ul class="chks">${rows}</ul>`;
 }
 
-/** Nouveau texte saisi pour le lieu de la ligne `i`. */
+/** New text entered for the place on row `i`. */
 export const placeRowValue = (i) => placeValue('pl-' + i);
 
-/* ---------- Décès de l'INSEE ---------- */
+/* ---------- INSEE deaths ---------- */
 
-let inseeBusy = null; // { done, total } pendant une vérification
+let inseeBusy = null; // { done, total } during a check
 
 const actDay = (s) => esc(longDate(actDateText(s)));
 
-/** Acte en une ligne : prénoms, nom, naissance, décès, numéro. */
+/** A record on one line: first names, surname, birth, death, number. */
 function actLine(a) {
   const where = (l) => esc(actPlace(l));
   return t('ins.act', esc(a.first.join(' ')), esc(a.last), actDay(a.birthDate), where(a.birth), actDay(a.deathDate), where(a.death), esc(a.certificate));
@@ -129,7 +129,7 @@ function actLine(a) {
 
 function diffLine(id, x, k) {
   const shown = (v) => (x.field.endsWith('Date') ? esc(longDate(v)) : esc(v));
-  // Les prénoms complets s'ajoutent à ceux de la fiche : rien à barrer
+  // Full first names are added to the record's: nothing to strike out
   const values = x.field === 'deceased' ? ''
     : `${x.tree && x.field !== 'given' ? `<s>${shown(x.tree)}</s> → ` : ''}<b>${shown(x.insee)}</b>`;
   const apply = x.patch && S.canWrite
@@ -142,7 +142,7 @@ function inseeRow(id, m, diffs) {
   const level = `<span class="n">${t('ins.' + m.level)}${m.others ? ' · ' + t('ins.others', m.others) : ''}</span>`;
   const all = S.canWrite && diffs.filter((x) => x.patch).length > 1
     ? `<button class="btn small" type="button" data-act="insee-apply" data-id="${esc(id)}">${t('ins.applyAll')}</button>` : '';
-  // Piste : l'utilisateur peut la confirmer, ses écarts deviennent alors reportables
+  // Lead: the user can confirm it, its differences then become reportable
   const confirm = m.level === 'lead'
     ? `<button class="btn small" type="button" data-act="insee-confirm" data-id="${esc(id)}">${t('ins.confirm', p.sex === 'F')}</button>` : '';
   return `<li class="chk${diffs.some((x) => x.kind === 'fix') ? '' : ' info'}"><p>${personLink(id)} <small>${esc(lifeYears(p))}</small> ${level}</p>`
@@ -152,7 +152,7 @@ function inseeRow(id, m, diffs) {
 }
 
 function inseeView() {
-  // Fonctionnalité de la version locale : matchID refuse les appels venant d'une page web
+  // Feature of the local version: matchID refuses calls coming from a web page
   if (!inseeAvailable()) {
     return `<section class="rel ins-local"><h3>${t('ins.localTitle')}</h3><p>${t('ins.localWhat')}</p>`
       + `<ol class="ins-steps">${t('ins.localSteps').map((x) => `<li>${x}</li>`).join('')}</ol>`
@@ -161,7 +161,7 @@ function inseeView() {
   const pending = inseePending();
   const results = inseeResults();
   const groups = { fix: [], add: [], leads: [] };
-  const same = []; // fiches conformes : prénoms complets de l'état civil et numéro d'acte, pour mémoire
+  const same = []; // matching records: full civil-registry first names and record number, for reference
   for (const id of S.people.keys()) {
     const entry = results[id];
     if (!entry || entry.ignored || entry.sig !== inseeSignature(inseeQuery(id))) continue;
@@ -187,37 +187,37 @@ function inseeView() {
   return html;
 }
 
-/** Vérifie les fiches nouvelles ou modifiées, puis redessine la vue. */
+/** Checks new or modified records, then redraws the view. */
 export async function startInsee() {
   if (inseeBusy) return;
   const people = inseePending();
   if (!people.length) return;
   inseeBusy = { done: 0, total: people.length };
-  renderAnalyse();
+  renderAnalysis();
   try {
     await checkInsee(people, (done, total) => {
       inseeBusy = { done, total };
-      if (S.tab === 'analyse' && S.analyse === 'insee') renderAnalyse();
+      if (S.tab === 'analysis' && S.analysis === 'insee') renderAnalysis();
     });
   } catch (e) {
     if (e.login) login = { ...login, needed: true };
     toast(e.login ? t('ins.loginNeeded') : t('ins.failed', e.message), true);
   }
   inseeBusy = null;
-  renderAnalyse();
+  renderAnalysis();
 }
 
-/* Connexion à matchID : sans compte, il n'accepte que quelques recherches */
+/* Signing in to matchID: without an account, it only accepts a few searches */
 
 let login = { status: null, asked: false, needed: false, email: '', sent: false, busy: false };
 
-/** Bloc de connexion : état de la connexion, ou adresse puis code reçu par e-mail. */
+/** Sign-in block: connection status, or address then code received by e-mail. */
 function loginBlock() {
   if (!login.asked) {
     login.asked = true;
     inseeStatus().then((s) => {
       login.status = s;
-      if (S.tab === 'analyse' && S.analyse === 'insee') renderAnalyse();
+      if (S.tab === 'analysis' && S.analysis === 'insee') renderAnalysis();
     }, () => {});
   }
   const s = login.status;
@@ -237,17 +237,17 @@ function loginBlock() {
 
 async function loginStep(run) {
   login.busy = true;
-  renderAnalyse();
+  renderAnalysis();
   try {
     await run();
   } catch (e) {
     toast(t('ins.loginFailed', e.message), true);
   }
   login.busy = false;
-  renderAnalyse();
+  renderAnalysis();
 }
 
-/** Demande à matchID d'envoyer un code à l'adresse saisie. */
+/** Asks matchID to send a code to the address entered. */
 export function inseeSendCode() {
   const email = String(($('#insEmail') || {}).value || '').trim();
   if (!email) return;
@@ -258,7 +258,7 @@ export function inseeSendCode() {
   });
 }
 
-/** Valide le code reçu : la vérification peut reprendre. */
+/** Validates the code received: the check can resume. */
 export function inseeSendAuth() {
   const code = String(($('#insCode') || {}).value || '').trim();
   if (!code) return;
@@ -269,19 +269,19 @@ export function inseeSendAuth() {
   });
 }
 
-/** Revient à la saisie de l'adresse. */
+/** Goes back to entering the address. */
 export function inseeOtherEmail() {
   login = { ...login, sent: false };
-  renderAnalyse();
+  renderAnalysis();
 }
 
-/** Oublie les vérifications : toutes les fiches seront revérifiées. */
+/** Forgets the checks: every record will be checked again. */
 export function restartInsee() {
   forgetInsee();
-  renderAnalyse();
+  renderAnalysis();
 }
 
-/* ---------- Statistiques ---------- */
+/* ---------- Statistics ---------- */
 
 function bars(rows) {
   const max = Math.max(...rows.map((r) => r.n), 1);
@@ -321,7 +321,7 @@ function statsView() {
   return html;
 }
 
-/* ---------- Éphémérides ---------- */
+/* ---------- Anniversaries ---------- */
 
 const SYMBOLS = { birth: '°', union: '×', death: '†' };
 
@@ -351,7 +351,7 @@ function calView() {
     + (list.length ? list.map((x) => dateRow(x, true)).join('') : `<p class="unknown">${t('cal.nothingMonth')}</p>`) + '</section>';
 }
 
-/* ---------- Doublons ---------- */
+/* ---------- Duplicates ---------- */
 
 function dupsView() {
   const pairs = findDuplicates(ignoredPairs());
@@ -366,12 +366,12 @@ function dupsView() {
     + `<button class="btn small quiet" type="button" data-act="dup-ignore" data-key="${esc(x.key)}">${t('dup.ignore')}</button></div></li>`).join('') + '</ul>';
 }
 
-/* ---------- Frise ---------- */
+/* ---------- Timeline ---------- */
 
 const TIME_SYMBOLS = { birth: '°', union: '×', death: '†', event: '•', history: '' };
 
 function timeView() {
-  if (!P(S.focus)) return `<p class="nofocus">${t('fiche.pick')}</p>`;
+  if (!P(S.focus)) return `<p class="nofocus">${t('record.pick')}</p>`;
   const rows = timelineOf(S.focus, S.timeFamily);
   const seg = [[false, 'time.person'], [true, 'time.family']].map(([family, label]) => `<button type="button" data-act="time-scope" data-family="${family}" aria-pressed="${S.timeFamily === family}">${t(label)}</button>`).join('');
   const head = `<div class="seg an-scope" role="group">${seg}</div><p class="hint an-hint">${name(S.focus)}</p>`;
@@ -382,29 +382,29 @@ function timeView() {
   return head + `<ol class="tls">${rows.map(row).join('')}</ol>`;
 }
 
-/* ---------- Galerie ---------- */
+/* ---------- Gallery ---------- */
 
 function galleryView() {
   const items = allMedia();
   return items.length ? mediaGrid(items) : `<p class="nofocus">${t('med.empty')}</p>`;
 }
 
-/* ---------- Rendu ---------- */
+/* ---------- Rendering ---------- */
 
-export const startLocate = () => locateMissing(renderAnalyse);
+export const startLocate = () => locateMissing(renderAnalysis);
 
-export function renderAnalyse() {
+export function renderAnalysis() {
   const count = S.people.size ? findIssues().length : 0;
   $('#anCount').textContent = count ? String(count) : '';
-  if (S.tab !== 'analyse') return;
+  if (S.tab !== 'analysis') return;
   if (!S.people.size) {
-    $('#paneAnalyse').innerHTML = `<p class="nofocus">${t('an.empty')}</p>`;
+    $('#paneAnalysis').innerHTML = `<p class="nofocus">${t('an.empty')}</p>`;
     return;
   }
   if (!S.kinA && P(S.focus)) S.kinA = S.focus;
-  const seg = VIEWS.map(([view, label]) => `<button type="button" data-act="analyse-view" data-view="${view}" aria-pressed="${S.analyse === view}">${t(label)}</button>`).join('');
+  const seg = VIEWS.map(([view, label]) => `<button type="button" data-act="analysis-view" data-view="${view}" aria-pressed="${S.analysis === view}">${t(label)}</button>`).join('');
   const body = {
     kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
-  }[S.analyse]();
-  setHTML($('#paneAnalyse'), `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`);
+  }[S.analysis]();
+  setHTML($('#paneAnalysis'), `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`);
 }

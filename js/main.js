@@ -1,10 +1,10 @@
 /**
- * Point d'entrée de Lignée.
+ * Lignée entry point.
  *
- * Dans claude.ai, l'application utilise la base de données en ligne de l'artefact
- * (window.claude). Avec le serveur local (node server.js), elle enregistre chaque arbre
- * dans data/arbres/ (et ses photos dans data/arbres/<nom de l'arbre>/photos/).
- * Sinon, elle le garde dans le navigateur.
+ * In claude.ai, the application uses the artifact's online database
+ * (window.claude). With the local server (node server.js), it saves each tree
+ * in data/arbres/ (and its photos in data/arbres/<tree name>/photos/).
+ * Otherwise, it keeps it in the browser.
  */
 import { S, services, loadPrefs } from './state.js';
 import { bindEvents } from './events.js';
@@ -14,7 +14,7 @@ import { loadCommunes } from './model/communes.js';
 import { loadLocal, seedExample, loadFile, subscribe } from './services/storage.js';
 import { applyTheme } from './ui/theme.js';
 
-/** Service fourni par claude.ai, ou null hors de claude.ai. */
+/** Service provided by claude.ai, or null outside claude.ai. */
 async function useService(name) {
   try {
     return window.claude && window.claude.use ? await window.claude.use(name) : null;
@@ -23,13 +23,13 @@ async function useService(name) {
   }
 }
 
-/** Affiche le numéro de version, tiré de package.json. Sans lui, rien n'est affiché. */
+/** Shows the version number, taken from package.json. Without it, nothing is shown. */
 async function showVersion() {
   try {
     const { version } = await (await fetch('package.json', { cache: 'no-store' })).json();
     document.getElementById('appVersion').textContent = 'v' + version;
   } catch (e) {
-    /* hébergement sans package.json */
+    /* hosting without package.json */
   }
 }
 
@@ -39,9 +39,9 @@ async function init() {
   applyStatic();
   applyTheme();
   bindEvents();
-  renderAll(); // état « Ouverture de l'arbre… »
+  renderAll(); // "Opening the tree…" state
 
-  // 1. Données : base en ligne, fichier du projet ou navigateur
+  // 1. Data: online database, project file or browser
   const db = await useService('db');
   if (db) {
     services.db = db;
@@ -58,7 +58,7 @@ async function init() {
   }
   afterData();
 
-  // 2. Droit de modification (base en ligne seulement)
+  // 2. Edit permission (online database only)
   if (S.mode === 'db') {
     const user = await useService('user');
     if (user) {
@@ -68,22 +68,22 @@ async function init() {
         S.writeKnown = canWrite !== null && canWrite !== undefined;
         renderAll(true);
       } catch (e) {
-        /* information indisponible : on laisse l'enregistrement décider */
+        /* information unavailable: let the save decide */
       }
     }
   }
 
-  // 3. Communes de France, chargées après l'ouverture : la cohérence vérifie alors le département des lieux
+  // 3. French communes, loaded after opening: the consistency check then verifies places' departments
   loadCommunes().then(() => renderAll()).catch(() => {});
 
-  // 3. Téléchargement de fichiers dans claude.ai
+  // 3. File downloads in claude.ai
   services.downloads = await useService('downloads');
 }
 
 /**
- * Vrai si la page est affichée dans le cadre d'un autre site : celui-ci pourrait faire cliquer
- * à l'aveugle sur ses boutons (« Supprimer »…). GitHub Pages ne permet pas l'en-tête qui l'interdit
- * (frame-ancestors). claude.ai, qui fournit window.claude, affiche l'application dans un cadre.
+ * True if the page is shown inside another site's frame: that site could trick users into
+ * clicking its buttons blindly ("Delete"…). GitHub Pages doesn't allow the header that forbids it
+ * (frame-ancestors). claude.ai, which provides window.claude, shows the application in a frame.
  */
 const framedByOtherSite = () => window.top !== window.self && !window.claude;
 

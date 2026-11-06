@@ -3,7 +3,7 @@ import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { renderHeader } from '../js/ui/header.js';
-import { renderAll, afterData, renderFiche } from '../js/ui/render.js';
+import { renderAll, afterData, renderRecord } from '../js/ui/render.js';
 import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
 import {
   openMedia, closeMedia, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption,
@@ -27,10 +27,10 @@ function openExample() {
 }
 
 const view = (name) => {
-  S.tab = 'analyse';
-  S.analyse = name;
+  S.tab = 'analysis';
+  S.analysis = name;
   renderAll();
-  return html('paneAnalyse');
+  return html('paneAnalysis');
 };
 
 describe('rendu général', () => {
@@ -39,7 +39,7 @@ describe('rendu général', () => {
   test('en-tête, arbre et registre reflètent les données', () => {
     assert.match(el('summary').textContent, /16 personnes/);
     assert.ok(html('reglist').includes('Camille'));
-    assert.equal(el('tab-fiche').getAttribute('aria-selected'), 'true');
+    assert.equal(el('tab-record').getAttribute('aria-selected'), 'true');
     assert.ok(el('banner').innerHTML.includes('Famille d’exemple'));
   });
 
@@ -56,7 +56,7 @@ describe('rendu général', () => {
   });
 
   test('fiche : faits, proches et actions', () => {
-    const fiche = html('paneFiche');
+    const fiche = html('paneRecord');
     assert.ok(fiche.includes('Camille'));
     assert.ok(fiche.includes('Parents'));
     assert.ok(fiche.includes('data-act="edit"'));
@@ -68,25 +68,25 @@ describe('rendu général', () => {
     const camille = S.focus;
     const before = S.people.get(camille).birthDate;
     S.people.get(camille).birthDate = String(year - 5);
-    renderFiche();
-    assert.doesNotMatch(html('paneFiche'), /data-rel="child"/);
-    assert.doesNotMatch(html('paneFiche'), /data-rel="spouse"/, 'moins de 15 ans : pas de conjoint non plus');
+    renderRecord();
+    assert.doesNotMatch(html('paneRecord'), /data-rel="child"/);
+    assert.doesNotMatch(html('paneRecord'), /data-rel="spouse"/, 'moins de 15 ans : pas de conjoint non plus');
     A.startEdit(camille);
-    assert.doesNotMatch(html('paneFiche'), /id="f-spouse"/, 'ni dans le formulaire');
+    assert.doesNotMatch(html('paneRecord'), /id="f-spouse"/, 'ni dans le formulaire');
     A.cancelEdit();
     S.people.get(camille).birthDate = before;
-    renderFiche();
-    assert.match(html('paneFiche'), /data-rel="child"/);
-    assert.match(html('paneFiche'), /data-rel="spouse"/);
+    renderRecord();
+    assert.match(html('paneRecord'), /data-rel="child"/);
+    assert.match(html('paneRecord'), /data-rel="spouse"/);
     A.startEdit(camille);
-    assert.match(html('paneFiche'), /id="f-spouse"/);
+    assert.match(html('paneRecord'), /id="f-spouse"/);
     A.cancelEdit();
   });
 
   test('lecture seule : pas de boutons de modification', () => {
     S.canWrite = false;
     renderAll(true);
-    assert.ok(!html('paneFiche').includes('data-act="edit"'));
+    assert.ok(!html('paneRecord').includes('data-act="edit"'));
     assert.equal(el('btnNew').hidden, true);
   });
 
@@ -94,7 +94,7 @@ describe('rendu général', () => {
     loadTree([]);
     S.focus = null;
     renderAll(true);
-    assert.ok(html('paneFiche').includes('fiche de chaque personne'));
+    assert.ok(html('paneRecord').includes('fiche de chaque personne'));
     assert.ok(el('reglist').innerHTML.includes('registre est vide'));
     assert.match(el('summary').textContent, /Aucune personne/);
     assert.ok(view('stats').includes('rien à analyser'));
@@ -120,7 +120,7 @@ describe('rendu général', () => {
   test('en anglais', () => {
     setLang('en');
     renderAll(true);
-    assert.ok(html('paneFiche').includes('Parents'));
+    assert.ok(html('paneRecord').includes('Parents'));
     assert.match(el('summary').textContent, /16 people/);
     setLang('fr');
   });
@@ -279,7 +279,7 @@ describe('fiche : événements, sources, galerie', () => {
   });
 
   test('sources, événements, fin d’union, ajout d’enfant par conjoint', () => {
-    const fiche = html('paneFiche');
+    const fiche = html('paneRecord');
     assert.ok(fiche.includes('Baptême'));
     assert.ok(fiche.includes('Acte'));
     assert.ok(fiche.includes('fin : Divorce, 1960'));

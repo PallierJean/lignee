@@ -80,9 +80,9 @@ describe('ville et département', () => {
     resetApp();
     loadTree([person('a', { birthPlace: 'Confolens (87)', deceased: true }), person('b', { birthPlace: 'Paris', deceased: true })]);
     S.focus = 'a';
-    A.setTab('analyse');
-    A.setAnalyseView('places');
-    const out = html('paneAnalyse');
+    A.setTab('analysis');
+    A.setAnalysisView('places');
+    const out = html('paneAnalysis');
     assert.match(out, /Confolens est en Charente \(16\) : le département est corrigé ci-dessous/);
     const i = placesByDepartment().findIndex((u) => u.name === 'Confolens (87)');
     assert.match(out, new RegExp(`id="pl-${i}-dept" value="16"`));

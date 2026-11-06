@@ -1,6 +1,6 @@
 /**
- * Format GEDCOM 5.5.1 : export et import.
- * C'est le format d'échange accepté par Geneanet, Ancestris, Gramps, Heredis, MyHeritage…
+ * GEDCOM 5.5.1 format: export and import.
+ * The exchange format accepted by Geneanet, Ancestris, Gramps, Heredis, MyHeritage…
  */
 import { S } from '../state.js';
 import { GM } from '../config.js';
@@ -9,7 +9,7 @@ import { dateParts } from '../utils/dates.js';
 import { P, byBirth, maiden, SITUATIONS, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, unionType, unionTypeLabel, eventsOf, sourcesOf, factLabel } from '../model/people.js';
 import { t } from '../i18n.js';
 
-/** Balise GEDCOM de chaque type d'événement (le type 'other' s'écrit EVEN + TYPE). */
+/** GEDCOM tag of each event type (the 'other' type is written EVEN + TYPE). */
 const EVENT_TAGS = {
   baptism: 'BAPM', burial: 'BURI', cremation: 'CREM', census: 'CENS', residence: 'RESI', occupation: 'OCCU',
   emigration: 'EMIG', immigration: 'IMMI', naturalization: 'NATU', graduation: 'GRAD', retirement: 'RETI', will: 'WILL',
@@ -19,24 +19,24 @@ const TAG_EVENTS = { ...Object.fromEntries(Object.entries(EVENT_TAGS).map(([k, v
 /* ---------- Dates ---------- */
 
 /**
- * « 12/03/1932 » -> « 12 MAR 1932 », « vers 1850 » -> « ABT 1850 ».
- * Texte libre ou date impossible : date-phrase GEDCOM, « (31/02/1900) », gardée telle quelle.
+ * "12/03/1932" -> "12 MAR 1932", "vers 1850" -> "ABT 1850".
+ * Free text or impossible date: GEDCOM date phrase, "(31/02/1900)", kept as is.
  */
 export function toGedDate(s) {
   const raw = String(s || '').trim();
   if (!raw) return '';
   const p = dateParts(raw);
   if (!p) return '(' + raw.replace(/\(/g, '[').replace(/\)/g, ']') + ')';
-  return (p.q ? p.q.toUpperCase() + ' ' : '') // abt, bef, aft : mêmes mots qu'en GEDCOM
+  return (p.q ? p.q.toUpperCase() + ' ' : '') // abt, bef, aft: same words as in GEDCOM
     + (p.d ? p.d + ' ' : '') + (p.m ? GM[p.m - 1] + ' ' : '') + p.y;
 }
 
-/** « 12 MAR 1932 » -> « 12/03/1932 », « ABT 1850 » -> « vers 1850 », « (texte) » -> « texte ». */
+/** "12 MAR 1932" -> "12/03/1932", "ABT 1850" -> "vers 1850", "(text)" -> "text". */
 export function fromGedDate(s) {
   const raw = String(s || '').trim();
   let m = /^\((.*)\)$/.exec(raw);
   if (m) return m[1].trim();
-  // Date interprétée : « INT 1850 (vers le milieu du siècle) » -> la date
+  // Interpreted date: "INT 1850 (around mid-century)" -> the date
   if ((m = /^INT\s+(.+?)\s*\(.*\)$/i.exec(raw))) return fromGedDate(m[1]);
   let u = raw.toUpperCase();
   let prefix = '';
@@ -63,16 +63,16 @@ export function fromGedDate(s) {
   return raw;
 }
 
-/** Valeur sur une ligne, avec les @ doublés comme l'exige GEDCOM. */
+/** Single-line value, with @ doubled as GEDCOM requires. */
 const gv = (s) => String(s || '').replace(/[\r\n]+/g, ' ').replace(/@/g, '@@').trim();
 
-// Longueur maximale d'une ligne GEDCOM 5.5.1, comptée en octets UTF-8 (la lecture la plus prudente)
+// Maximum length of a GEDCOM 5.5.1 line, counted in UTF-8 bytes (the most cautious reading)
 const MAX_LINE = 255;
 const bytes = (ch) => { const c = ch.codePointAt(0); return c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4; };
 
 /**
- * Nombre de caractères de `chars` à mettre sur une ligne de `room` octets. On ne coupe
- * ni à côté d'une espace (certains logiciels les suppriment en bout de ligne) ni dans un @@.
+ * Number of characters of `chars` to put on a line of `room` bytes. Never cut
+ * next to a space (some software strips them at line ends) nor inside a @@.
  */
 function cutPoint(chars, room) {
   let n = 0;
@@ -84,7 +84,7 @@ function cutPoint(chars, room) {
   return n;
 }
 
-/** Lignes d'un texte : CONT à chaque retour à la ligne, CONC quand une ligne serait trop longue. */
+/** Lines of a text: CONT at each line break, CONC when a line would be too long. */
 function textLines(level, tag, text) {
   const out = [];
   String(text).split(/\r?\n/).forEach((line, i) => {
@@ -109,7 +109,7 @@ export function buildGedcom() {
   const ids = [...S.people.keys()].sort(byBirth);
   for (const id of ids) xref.set(id, '@I' + ++i + '@');
 
-  // Sources : une fiche SOUR par document ; chaque fait la cite avec sa cote (PAGE) et sa note
+  // Sources: one SOUR record per document; each fact cites it with its reference (PAGE) and note
   const sourceRecords = new Map();
   const cite = (level, s) => {
     const key = [s.kind, s.title, s.place].join('|');
@@ -123,7 +123,7 @@ export function buildGedcom() {
   const citations = (id, fact, level) => sourcesOf(P(id)).filter((s) => s.fact === fact).flatMap((s) => cite(level, s));
   const generalCitations = (id) => sourcesOf(P(id)).filter((s) => !factLabel(id, s.fact)).flatMap((s) => cite(1, s));
 
-  // Familles : un couple (ou un parent seul) et ses enfants
+  // Families: a couple (or a single parent) and their children
   const fams = new Map();
   let fi = 0;
   const fam = (husband, wife) => {
@@ -168,8 +168,8 @@ export function buildGedcom() {
     '1 CHAR UTF-8', '1 DATE ' + now.getDate() + ' ' + GM[now.getMonth()] + ' ' + now.getFullYear(),
   );
 
-  // Individus
-  // Nom de naissance en premier ; le nom d'usage d'une femme mariée en second, TYPE married
+  // Individuals
+  // Birth surname first; a married woman's married name second, TYPE married
   const nameLines = (g, s, type) => {
     const lines = ['1 NAME ' + (g ? g + ' ' : '') + '/' + s + '/'];
     if (type) lines.push('2 TYPE ' + type);
@@ -204,7 +204,7 @@ export function buildGedcom() {
     }
     if (p.occupation) out.push('1 OCCU ' + gv(p.occupation));
     for (const e of eventsOf(p)) {
-      const inline = e.type === 'occupation' ? gv(e.note) : ''; // la profession s'écrit sur la ligne OCCU
+      const inline = e.type === 'occupation' ? gv(e.note) : ''; // the occupation is written on the OCCU line
       const sub = [];
       const tag = Object.hasOwn(EVENT_TAGS, e.type) ? EVENT_TAGS[e.type] : '';
       if (!tag) sub.push('2 TYPE ' + gv(e.label || t('ev.other')));
@@ -214,7 +214,7 @@ export function buildGedcom() {
       sub.push(...citations(id, e.id, 2));
       out.push('1 ' + (tag || 'EVEN') + (inline ? ' ' + inline : sub.length ? '' : ' Y'), ...sub);
     }
-    // Situation familiale : balise propre à Lignée (ignorée par les autres logiciels)
+    // Family situation: Lignée's own tag (ignored by other software)
     if (SITUATIONS.some(([c]) => c === p.situation)) {
       out.push('1 _SITU ' + p.situation);
       if (p.situationDate) out.push('2 DATE ' + gv(toGedDate(p.situationDate)));
@@ -225,7 +225,7 @@ export function buildGedcom() {
     for (const x of famsOf.get(id) || []) out.push('1 FAMS ' + x);
   }
 
-  // Familles
+  // Families
   for (const f of fams.values()) {
     out.push('0 ' + f.x + ' FAM');
     if (f.h) out.push('1 HUSB ' + xref.get(f.h));
@@ -234,7 +234,7 @@ export function buildGedcom() {
     const typeLabel = unionTypeLabel(f.u);
     if (f.u && (f.u.date || f.u.place || marrCites.length || typeLabel)) {
       out.push('1 MARR');
-      // TYPE pour les autres logiciels ; _UTYPE, propre à Lignée, garde le code exact
+      // TYPE for other software; _UTYPE, Lignée's own, keeps the exact code
       if (typeLabel) out.push('2 TYPE ' + gv(typeLabel), '2 _UTYPE ' + unionType(f.u));
       if (f.u.cause) out.push('2 _UCAUSE ' + f.u.cause);
       if (xref.has(f.u.formerId)) out.push('2 _UFORMER ' + xref.get(f.u.formerId));
@@ -244,7 +244,7 @@ export function buildGedcom() {
     } else if (f.u) {
       out.push('1 MARR Y');
     }
-    // Divorce : balise standard ; séparation et veuvage : balise propre à Lignée
+    // Divorce: standard tag; separation and widowhood: Lignée's own tag
     if (f.u && UNION_ENDS.includes(f.u.end)) {
       out.push(f.u.end === 'divorce' ? '1 DIV' : '1 _UEND ' + f.u.end);
       if (f.u.endDate) out.push('2 DATE ' + gv(toGedDate(f.u.endDate)));
@@ -255,7 +255,7 @@ export function buildGedcom() {
   for (const { x, s } of sourceRecords.values()) {
     const kind = SOURCE_KINDS.includes(s.kind) ? s.kind : 'other';
     out.push('0 ' + x + ' SOUR', ...textLines(1, 'TITL', s.title || t('src.' + kind)));
-    out.push('1 _KIND ' + kind); // balises propres à Lignée, ignorées ailleurs
+    out.push('1 _KIND ' + kind); // Lignée's own tags, ignored elsewhere
     if (s.place) out.push('1 _PLAC ' + gv(s.place));
   }
 
@@ -265,9 +265,9 @@ export function buildGedcom() {
 
 /* ---------- Import ---------- */
 
-/** Lit un fichier GEDCOM et renvoie { people: [{id, data}], unions: [{id, data}] }. */
+/** Reads a GEDCOM file and returns { people: [{id, data}], unions: [{id, data}] }. */
 export function parseGedcom(text) {
-  // 1. Lignes -> arbre de nœuds { tag, val, xref, kids }
+  // 1. Lines -> tree of nodes { tag, val, xref, kids }
   const lines = text.replace(/^﻿/, '').split(/\r\n|\r|\n/);
   const records = [];
   const stack = [];
@@ -300,7 +300,7 @@ export function parseGedcom(text) {
     return (node.val + continued).replace(/@@/g, '@').trim();
   };
 
-  /** Fin d'une union : DIV, ou la balise de Lignée. */
+  /** End of a union: DIV, or Lignée's tag. */
   const unionEndOf = (f) => {
     const div = first(f, 'DIV');
     const own = first(f, '_UEND');
@@ -308,7 +308,7 @@ export function parseGedcom(text) {
     return code ? { end: code, endDate: fromGedDate(val(first(div || own, 'DATE'))) } : {};
   };
 
-  /** Type d'une union : le code de Lignée, sinon déduit de TYPE (Heredis, Gramps…). */
+  /** Type of a union: Lignée's code, otherwise derived from TYPE (Heredis, Gramps…). */
   const unionTypeOf = (marr) => {
     if (!marr) return '';
     const code = val(first(marr, '_UTYPE'));
@@ -321,13 +321,13 @@ export function parseGedcom(text) {
     return label ? 'other' : '';
   };
 
-  // Sources : fiches SOUR, puis citations sous un fait
+  // Sources: SOUR records, then citations under a fact
   const sourceRecords = new Map();
   for (const r of records) {
     if (r.tag !== 'SOUR' || !r.xref) continue;
     const kind = SOURCE_KINDS.includes(val(first(r, '_KIND'))) ? val(first(r, '_KIND')) : 'other';
     const title = textOf(first(r, 'TITL')) || textOf(first(r, 'ABBR'));
-    // Titre généré à l'export depuis le type : inutile de le garder
+    // Title generated on export from the type: no need to keep it
     sourceRecords.set(r.xref, { kind, title: title === t('src.' + kind) ? '' : title, place: val(first(r, '_PLAC')) });
   }
   const citationsOf = (node, fact) => node.kids.filter((k) => k.tag === 'SOUR').map((k) => {
@@ -340,13 +340,13 @@ export function parseGedcom(text) {
     };
   });
 
-  // 2. Individus
+  // 2. Individuals
   const idMap = new Map();
   const people = [];
   const now = Date.now();
   for (const r of records) {
     if (r.tag !== 'INDI' || !r.xref) continue;
-    // Nom de naissance : le premier NAME qui n'est pas de TYPE married
+    // Birth surname: the first NAME that is not of TYPE married
     const names = r.kids.filter((k) => k.tag === 'NAME');
     const isMarried = (n) => /^married$/i.test(val(first(n, 'TYPE')));
     const nameNode = names.find((n) => !isMarried(n)) || names[0];
@@ -371,7 +371,7 @@ export function parseGedcom(text) {
     let maidenName = '';
     if (nameNode) {
       ({ g: givenName, s: familyName } = readName(nameNode));
-      // Nom d'épouse : NAME de TYPE married, ou balise _MARNM (Geneanet, Heredis…)
+      // Married name: NAME of TYPE married, or the _MARNM tag (Geneanet, Heredis…)
       const marriedNode = names.find((n) => n !== nameNode && isMarried(n));
       const married = marriedNode ? readName(marriedNode).s : val(first(nameNode, '_MARNM') || first(r, '_MARNM'));
       if (married && married !== familyName && /^F/i.test(val(first(r, 'SEX')))) {
@@ -383,7 +383,7 @@ export function parseGedcom(text) {
       const e = first(r, tag);
       return e ? { date: fromGedDate(val(first(e, 'DATE'))), place: val(first(e, 'PLAC')) } : null;
     };
-    // Un baptême n'est pas une naissance, ni une inhumation un décès : ce sont des événements
+    // A baptism is not a birth, nor a burial a death: they are events
     const birth = event('BIRT');
     const death = event('DEAT');
     const events = [];
@@ -392,8 +392,8 @@ export function parseGedcom(text) {
       const node = first(r, tag);
       if (node) sources.push(...citationsOf(node, tag === 'BIRT' ? 'birth' : 'death'));
     }
-    // Le champ Profession prend une profession sans date, sinon la dernière datée ;
-    // les professions datées restent des événements
+    // The Occupation field takes an undated occupation, otherwise the latest dated one;
+    // dated occupations stay events
     const jobs = r.kids.filter((k) => k.tag === 'OCCU');
     const plainJob = jobs.find((k) => !first(k, 'DATE'));
     for (const k of r.kids) {
@@ -441,7 +441,7 @@ export function parseGedcom(text) {
     });
   }
 
-  // 3. Familles : unions et filiations
+  // 3. Families: unions and parentage
   const byId = new Map(people.map((p) => [p.id, p]));
   const unions = [];
   for (const f of records) {
@@ -451,7 +451,7 @@ export function parseGedcom(text) {
     const marr = first(f, 'MARR');
     if (husband && wife) {
       const uid = rid('u');
-      // Sources du mariage : portées par la fiche de l'un des deux conjoints
+      // Marriage sources: carried by the record of one of the two spouses
       const cited = [...citationsOf(f, 'union:' + uid), ...(marr ? citationsOf(marr, 'union:' + uid) : [])];
       if (cited.length) {
         const owner = byId.get(husband).data;

@@ -1,18 +1,18 @@
-/** Frise chronologique d'une personne ou de sa famille proche, avec les repères historiques. */
+/** Timeline of a person or their close family, with historical landmarks. */
 import { S } from '../state.js';
 import { yearOf, longDate } from '../utils/dates.js';
 import { t, getLang } from '../i18n.js';
 import { P, fullName, partnersOf, childrenOf, eventsOf, eventLabel, isDead, unionTypeLabel, UNION_ENDS } from './people.js';
 import { HISTORY } from './history-data.js';
 
-/** Personnes de la frise : la personne seule, ou avec parents, conjoints et enfants. */
+/** People on the timeline: the person alone, or with parents, spouses and children. */
 function peopleOf(id, family) {
   if (!family) return [id];
   const p = P(id);
   return [...new Set([id, p.fatherId, p.motherId, ...partnersOf(id).map((x) => x.id), ...childrenOf(id)])].filter((x) => x && S.people.has(x));
 }
 
-/** Lignes { year, kind: 'birth'|'union'|'event'|'death'|'history', label, date, id? }, par année. */
+/** Rows { year, kind: 'birth'|'union'|'event'|'death'|'history', label, date, id? }, by year. */
 export function timelineOf(id, family, now = new Date()) {
   const ids = peopleOf(id, family);
   const rows = [];

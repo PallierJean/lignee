@@ -1,25 +1,25 @@
 /**
- * Langue de l'interface : français ou anglais.
+ * Interface language: French or English.
  *
- * t('clé', ...args) renvoie le texte dans la langue choisie. Une entrée est une chaîne,
- * ou une fonction qui reçoit les arguments (nombres, noms) et accorde le texte.
- * Dans index.html, les attributs data-i18n (texte), data-i18n-html (texte avec balises)
- * et data-i18n-attr (« placeholder:clé; title:clé ») sont remplis par applyStatic().
+ * t(key, ...args) returns the text in the chosen language. An entry is a string,
+ * or a function that receives the arguments (numbers, names) and inflects the text.
+ * In index.html, the data-i18n (text), data-i18n-html (text with tags)
+ * and data-i18n-attr ("placeholder:key; title:key") attributes are filled by applyStatic().
  */
 import { LANG_KEY } from './config.js';
 
 const s = (n) => (n > 1 ? 's' : '');
 const sEn = (n) => (n === 1 ? '' : 's');
 
-/** Accord selon le sexe : masculin, féminin, ou forme neutre si le sexe n'est pas précisé. */
+/** Agreement by sex: masculine, feminine, or a neutral form if the sex isn't specified. */
 const g = (sex, m, f, n) => (sex === 'F' ? f : sex === 'M' ? m : n);
 const startsVowel = (x) => /^[aeiouyàâäéèêëîïôöùûü]/i.test(x);
 const de = (name) => (startsVowel(name) ? 'd’' + name : 'de ' + name);
 const art = (term, sex) => (startsVowel(term) ? 'l’' : g(sex, 'le ', 'la ', '')) + term;
 
 /**
- * Nom du lien : ce que la première personne est pour la seconde. da et db : générations
- * de chacune jusqu'à l'ancêtre commun.
+ * Name of the relationship: what the first person is to the second. da and db: generations
+ * from each to the common ancestor.
  */
 function kinFr(da, db, sex, half) {
   const again = (n) => 'arrière-'.repeat(Math.max(0, n));
@@ -61,7 +61,7 @@ function kinEn(da, db, sex, half) {
 }
 
 const FR = {
-  // Langue
+  // Language
   'lang.switch': 'EN',
   'lang.switchTitle': 'Switch to English',
   'locale': 'fr-FR',
@@ -82,7 +82,7 @@ const FR = {
   'fan.down': 'Descendre vers…',
   'fan.noDown': 'Aucun descendant connu',
   'fan.genDown': (n, count) => `${['Enfants', 'Petits-enfants', 'Arrière-petits-enfants'][n - 1] || n + 'e génération'} (${count})`,
-  // Thèmes de couleur
+  // Colour themes
   'theme.label': 'Thème de couleur',
   'theme.auto': 'Automatique',
   'theme.season': 'Selon la saison',
@@ -141,8 +141,8 @@ const FR = {
   'legend.sosa': '<b class="sosa">6</b> numéro Sosa : personne centrale = 1, père = 2n, mère = 2n + 1',
   'legend.partner': 'Fiche sans numéro à côté d’un ancêtre : autre conjoint (remariage, veuvage…)',
   'side.label': 'Fiche et registre',
-  'tab.fiche': 'Fiche',
-  'tab.registre': 'Registre',
+  'tab.record': 'Fiche',
+  'tab.register': 'Registre',
   'reg.searchLabel': 'Rechercher dans le registre',
   'reg.searchPlaceholder': 'Nom, prénom, lieu ou profession',
   'close': 'Fermer',
@@ -150,7 +150,7 @@ const FR = {
   'save': 'Enregistrer',
   'delete': 'Supprimer',
 
-  // Fenêtres Importer et Exporter
+  // Import and Export dialogs
   'tr.exportText': 'Le format GEDCOM est accepté par Geneanet, Ancestris, Gramps, Heredis et MyHeritage. La sauvegarde Lignée permet de tout restaurer ici.',
   'tr.exportGed': 'Exporter en GEDCOM',
   'tr.exportJson': 'Sauvegarde Lignée (.json)',
@@ -216,7 +216,7 @@ const FR = {
   'tr.repoErr.failed': 'Le dépôt n’a pas pu être lu. Vérifiez votre connexion et réessayez.',
   'backup.invalid': 'Ce fichier n’est pas une sauvegarde Lignée.',
 
-  // Fenêtre Mes arbres
+  // My trees dialog
   'ts.title': 'Mes arbres',
   'ts.text': 'Chaque arbre a ses propres personnes et unions. Choisissez celui à afficher.',
   'ts.new': 'Nouvel arbre',
@@ -236,7 +236,7 @@ const FR = {
   'finishFirst': 'Enregistrez ou annulez la fiche en cours d’abord.',
   'finishFocus': 'Enregistrez ou annulez la fiche en cours avant de changer de personne.',
 
-  // Fenêtre Imprimer
+  // Print dialog
   'pr.title': 'Imprimer l’arbre',
   'pr.text': 'Toutes les personnes sont mises à l’échelle sur une seule feuille. Dans la fenêtre d’impression, choisissez « Enregistrer au format PDF » pour obtenir le fichier, ou une imprimante grand format.',
   'pr.format': 'Format',
@@ -264,7 +264,7 @@ const FR = {
   'pr.printed': (date) => 'édité le ' + date,
   'pr.unavailable': 'L’impression n’est pas disponible ici. Ouvrez Lignée dans un onglet du navigateur.',
 
-  // En-tête
+  // Header
   'gen.up': (n) => `${n} génération${s(n)} d’ascendants`,
   'gen.down': (n) => `${n} génération${s(n)} de descendants`,
   'sum.empty': 'Aucune personne pour l’instant',
@@ -286,13 +286,13 @@ const FR = {
   'ex.removed': 'Les exemples ont été retirés',
   'local.banner': '<b>Mode local.</b> L’arbre est gardé dans ce navigateur uniquement. Pensez à l’exporter régulièrement.',
 
-  // Panneau Fiche
-  'fiche.pick': 'Choisissez une personne dans l’arbre ou dans le registre pour voir sa fiche.',
-  'fiche.intro': 'La fiche de chaque personne s’affiche ici : naissance, décès, parents, unions et enfants.',
-  'fiche.commonKids': 'enfants en commun',
-  'fiche.union': 'union',
-  'fiche.notSet': 'Non renseigné',
-  'fiche.unknownDate': 'Date inconnue',
+  // Record panel
+  'record.pick': 'Choisissez une personne dans l’arbre ou dans le registre pour voir sa fiche.',
+  'record.intro': 'La fiche de chaque personne s’affiche ici : naissance, décès, parents, unions et enfants.',
+  'record.commonKids': 'enfants en commun',
+  'record.union': 'union',
+  'record.notSet': 'Non renseigné',
+  'record.unknownDate': 'Date inconnue',
   'sex.F': 'Femme',
   'sex.M': 'Homme',
   'sex.U': 'Sexe non précisé',
@@ -325,10 +325,10 @@ const FR = {
   'noUnion': 'Aucune union enregistrée',
   'noChild': 'Aucun enfant enregistré',
   'deleteAsk': (name) => `Supprimer la fiche de ${name} ? Ses liens avec les autres fiches seront retirés. Vous pourrez l’annuler tant que la page reste ouverte.`,
-  'editFiche': 'Modifier la fiche',
+  'editRecord': 'Modifier la fiche',
   'deleted': 'Fiche supprimée',
 
-  // Fiche en fenêtre
+  // Record dialog
   'pd.life': 'Vie',
   'pd.unionWith': (name, type) => `<b>${type || 'Union'}</b> avec ${name}`,
   'pd.deathAt': (age) => ' à ' + age,
@@ -341,7 +341,7 @@ const FR = {
   'pd.edit': 'Modifier',
   'sosaTitle': 'Numéro Sosa',
 
-  // Âges et parenté
+  // Ages and kinship
   'age': 'Âge',
   'ageDeath': 'Âge au décès',
   'years': (n) => n + ' an' + s(n),
@@ -352,7 +352,7 @@ const FR = {
   'noName': 'Sans nom',
   'noSurname': 'Sans nom de famille',
 
-  // Situation familiale : [masculin, féminin]
+  // Family situation: [masculine, feminine]
   'situ.none': ['Non précisé', 'Non précisée', 'Non précisé(e)'],
   'situ.single': ['Célibataire', 'Célibataire'],
   'situ.cohabiting': ['En concubinage', 'En concubinage'],
@@ -363,7 +363,7 @@ const FR = {
   'situ.divorced': ['Divorcé', 'Divorcée'],
   'situ.widowed': ['Veuf', 'Veuve'],
 
-  // Dates : préfixes courts et longs
+  // Dates: short and long prefixes
   'date.abtShort': 'v. ',
   'date.befShort': 'av. ',
   'date.aftShort': 'ap. ',
@@ -371,7 +371,7 @@ const FR = {
   'date.bef': 'avant ',
   'date.aft': 'après ',
 
-  // Formulaire
+  // Form
   'f.fatherOf': 'Père de ',
   'f.motherOf': 'Mère de ',
   'f.childOf': 'Enfant de ',
@@ -444,13 +444,13 @@ const FR = {
   'f.saved': 'Fiche enregistrée',
   'f.added': 'Personne ajoutée à l’arbre',
 
-  // Registre et recherche
+  // Register and search
   'reg.empty': 'Le registre est vide. Les personnes ajoutées apparaissent ici, classées par nom de famille.',
   'noMatch': (q) => `Aucune personne ne correspond à « ${q} ».`,
   'find.more': (n) => `Voir les ${n} résultats dans le registre`,
   'spouse.more': (n) => `${n} autre${s(n)} : précisez la recherche (prénom, année, lieu…)`,
 
-  // Arbre
+  // Tree
   'card.born': 'né(e)',
   'card.died': 'décès',
   'card.partnerOf': (fem, name) => (fem ? 'conjointe' : 'conjoint') + ' de ' + name,
@@ -467,7 +467,7 @@ const FR = {
   'img.notImage': 'Ce fichier n’est pas une image.',
   'img.unreadable': 'Cette image n’a pas pu être lue.',
 
-  // Enregistrement
+  // Saving
   'st.browserRefused': 'Ce navigateur refuse d’enregistrer les données. Exportez votre arbre pour le garder.',
   'st.readFailed': 'Impossible de lire cet arbre. Le serveur local est-il toujours lancé ?',
   'st.photoFailed': 'L’enregistrement de la photo a échoué. Le serveur local est-il toujours lancé ?',
@@ -480,7 +480,7 @@ const FR = {
   'st.deleteFailed': 'La suppression a échoué. Le serveur local est-il toujours lancé ?',
   'st.conflict': 'Non enregistré : l’arbre a été modifié ailleurs (autre onglet ?). Rechargez la page. Votre dernière saisie sera à refaire.',
 
-  // Annuler / rétablir
+  // Undo / redo
   'ctl.undo': 'Annuler',
   'ctl.undoTitle': 'Annuler la dernière modification (Ctrl+Z)',
   'ctl.redo': 'Rétablir',
@@ -493,7 +493,7 @@ const FR = {
   'hist.undone': (what) => 'Annulé : ' + what,
   'hist.redone': (what) => 'Rétabli : ' + what,
 
-  // Registre en CSV
+  // Register as CSV
   'reg.csv': 'Exporter le registre (.csv)',
   'tr.exportCsv': 'Registre (.csv)',
   'tr.csvSuffix': 'registre',
@@ -502,7 +502,7 @@ const FR = {
   'csv.birthPlace': 'Lieu de naissance',
   'csv.deathPlace': 'Lieu de décès',
 
-  // Événements
+  // Events
   'events': 'Événements',
   'ev.baptism': 'Baptême',
   'ev.burial': 'Inhumation',
@@ -552,8 +552,8 @@ const FR = {
   'f.srcPhotoChange': 'Changer le document',
   'f.srcRemove': 'Retirer cette source',
 
-  // Onglet Analyse
-  'tab.analyse': 'Analyse',
+  // Analysis tab
+  'tab.analysis': 'Analyse',
   'an.views': 'Vue de l’analyse',
   'an.kin': 'Parenté',
   'an.checks': 'Cohérence',
@@ -561,7 +561,7 @@ const FR = {
   'an.cal': 'Éphémérides',
   'an.empty': 'L’arbre est vide : il n’y a rien à analyser pour l’instant.',
 
-  // Lien de parenté
+  // Kinship
   'kin.ask': 'Lien de parenté avec…',
   'kin.first': 'Première personne',
   'kin.second': 'Deuxième personne',
@@ -580,7 +580,7 @@ const FR = {
   'kin.show': 'Voir dans l’arbre',
   'kin.hide': 'Retirer le surlignage',
 
-  // Vérification de cohérence
+  // Consistency check
   'chk.error': 'Erreurs',
   'chk.warn': 'À vérifier',
   'chk.none': 'Aucune incohérence détectée.',
@@ -615,7 +615,7 @@ const FR = {
   'chk.livingTooOld': (a, b, n) => `${a} aurait au moins ${n} ans : décès manquant ?`,
   'chk.nameNotFather': (a, b, n) => `${a} : nom de naissance « ${n} », ni celui de son père ${b}, ni le double nom de son père et de sa mère.`,
 
-  // Statistiques
+  // Statistics
   'stat.overview': 'Vue d’ensemble',
   'stat.people': 'Personnes',
   'stat.unions': 'Unions',
@@ -638,7 +638,7 @@ const FR = {
   'stat.completeHint': (name) => 'Depuis ' + name + ', la personne centrale.',
   'stat.completeRow': (found, expected) => `${found} / ${expected}`,
 
-  // Éphémérides
+  // Anniversaries
   'cal.today': 'Aujourd’hui',
   'cal.nothing': 'Aucun anniversaire ce jour-là.',
   'cal.nothingMonth': 'Aucune date connue ce mois-ci.',
@@ -650,7 +650,7 @@ const FR = {
   'cal.death': 'Décès',
   'cal.noDay': 'Jour inconnu',
 
-  // Vues ajoutées à l'analyse
+  // Views added to the analysis
   'an.dups': 'Doublons',
   'an.places': 'Lieux',
   'pl.uses': (n) => `${n} mention${s(n)}`,
@@ -722,7 +722,7 @@ const FR = {
   'med.editCaption': 'modifier',
   'med.addCaption': 'Ajouter une légende',
 
-  // Doublons
+  // Duplicates
   'dup.none': 'Aucun doublon probable.',
   'dup.scope': 'Fiches au même prénom usuel et au même nom, sans date contradictoire. La fusion s’annule avec Ctrl+Z.',
   'dup.keep': (n) => `Garder la fiche ${n}`,
@@ -735,12 +735,12 @@ const FR = {
   'dup.parents': 'mêmes parents',
   'dup.partner': 'même conjoint',
 
-  // Frise
+  // Timeline
   'time.person': 'Personne',
   'time.family': 'Famille proche',
   'time.empty': 'Aucune date connue pour cette personne.',
 
-  // Carte
+  // Map
   'map.label': 'Carte des lieux et des migrations',
   'map.empty': 'Aucun lieu renseigné dans cet arbre.',
   'map.none': 'Aucun lieu n’est encore localisé.',
@@ -755,7 +755,7 @@ const FR = {
   'map.mentions': (n) => `${n} mention${n > 1 ? 's' : ''}`,
   'map.failed': 'La localisation a échoué. Vérifiez votre connexion.',
 
-  // Galerie
+  // Gallery
   'media': 'Galerie',
   'f.addMedia': 'Ajouter des photos ou des documents',
   'f.medRemove': 'Retirer cette image',
@@ -769,7 +769,7 @@ const FR = {
   'med.who': 'Qui est-ce ?',
   'med.untag': 'retirer',
 
-  // Impression : contenus
+  // Printing: contents
   'pr.content': 'Contenu',
   'fb.open': 'Livret de famille',
   'fb.holder': 'Titulaire du livret',
@@ -821,7 +821,7 @@ const FR = {
   'pr.fanInfo': (gens, landscape) => `${gens} génération${s(gens)} d’ascendants, en ${landscape ? 'paysage' : 'portrait'}.`,
   'pr.bookInfo': (n) => `Un récit pour ${n > 1 ? `chacune des ${n} personnes` : 'cette personne'}, génération par génération, sur des pages A4.`,
 
-  // Récit du livret
+  // Booklet narrative
   'nar.on': 'le',
   'nar.in': 'en',
   'nar.at': (place) => 'à ' + place,
@@ -913,8 +913,8 @@ const EN = {
   'legend.sosa': '<b class="sosa">6</b> Sosa number: central person = 1, father = 2n, mother = 2n + 1',
   'legend.partner': 'Card without a number next to an ancestor: another partner (remarriage, widowhood…)',
   'side.label': 'Record and register',
-  'tab.fiche': 'Record',
-  'tab.registre': 'Register',
+  'tab.record': 'Record',
+  'tab.register': 'Register',
   'reg.searchLabel': 'Search the register',
   'reg.searchPlaceholder': 'Surname, given name, place or occupation',
   'close': 'Close',
@@ -1054,12 +1054,12 @@ const EN = {
   'ex.removed': 'The examples have been removed',
   'local.banner': '<b>Local mode.</b> The tree is kept in this browser only. Remember to export it regularly.',
 
-  'fiche.pick': 'Choose a person in the tree or in the register to see their record.',
-  'fiche.intro': 'Each person’s record appears here: birth, death, parents, unions and children.',
-  'fiche.commonKids': 'children together',
-  'fiche.union': 'union',
-  'fiche.notSet': 'Not recorded',
-  'fiche.unknownDate': 'Date unknown',
+  'record.pick': 'Choose a person in the tree or in the register to see their record.',
+  'record.intro': 'Each person’s record appears here: birth, death, parents, unions and children.',
+  'record.commonKids': 'children together',
+  'record.union': 'union',
+  'record.notSet': 'Not recorded',
+  'record.unknownDate': 'Date unknown',
   'sex.F': 'Female',
   'sex.M': 'Male',
   'sex.U': 'Sex unspecified',
@@ -1092,7 +1092,7 @@ const EN = {
   'noUnion': 'No union recorded',
   'noChild': 'No child recorded',
   'deleteAsk': (name) => `Delete ${name}’s record? Their links to other records will be removed. You can undo this while the page stays open.`,
-  'editFiche': 'Edit record',
+  'editRecord': 'Edit record',
   'deleted': 'Record deleted',
 
   'pd.life': 'Life',
@@ -1306,7 +1306,7 @@ const EN = {
   'f.srcPhotoChange': 'Change the document',
   'f.srcRemove': 'Remove this source',
 
-  'tab.analyse': 'Analysis',
+  'tab.analysis': 'Analysis',
   'an.views': 'Analysis view',
   'an.kin': 'Kinship',
   'an.checks': 'Checks',
@@ -1591,13 +1591,13 @@ let lang = savedLang();
 
 export const getLang = () => lang;
 
-/** Texte de la clé dans la langue choisie (à défaut, en français). */
+/** Text of the key in the chosen language (falling back to French). */
 export function t(key, ...args) {
   const v = key in DICT[lang] ? DICT[lang][key] : FR[key];
   return typeof v === 'function' ? v(...args) : v;
 }
 
-/** Remplit les textes fixes de index.html. */
+/** Fills the static texts of index.html. */
 export function applyStatic() {
   document.documentElement.lang = lang;
   document.querySelector('meta[name="description"]').content = t('meta.description');
@@ -1615,14 +1615,14 @@ export function applyStatic() {
   btn.setAttribute('aria-label', t('lang.switchTitle'));
 }
 
-/** Change de langue et mémorise le choix. */
+/** Switches language and remembers the choice. */
 export function setLang(next) {
   if (!DICT[next]) return;
   lang = next;
   try {
     localStorage.setItem(LANG_KEY, lang);
   } catch (e) {
-    /* stockage indisponible : choix non mémorisé */
+    /* storage unavailable: choice not remembered */
   }
   applyStatic();
 }

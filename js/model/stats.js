@@ -1,15 +1,15 @@
-/** Statistiques de l'arbre ouvert. */
+/** Statistics of the open tree. */
 import { S } from '../state.js';
 import { dateParts, fullDate } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
 import { P, surname, maiden, isDead, childrenOf, eventsOf } from './people.js';
 import { generationMap } from '../tree/full-layout.js';
 
-const TOP = 10;           // lignes des classements
-const MAX_GENS = 30;      // générations d'ascendants parcourues (borne les arbres à boucle)
-const MAX_LIFE = 130;     // au-delà, une date est fausse : hors de la moyenne
+const TOP = 10;           // rows in the rankings
+const MAX_GENS = 30;      // generations of ancestors walked (bounds looping trees)
+const MAX_LIFE = 130;     // beyond this, a date is wrong: left out of the average
 
-/** Classement [{ name, n }] ; les variantes d'un même nom (casse, accents) sont réunies. */
+/** Ranking [{ name, n }]; variants of the same name (case, accents) are merged. */
 function ranking(names) {
   const groups = new Map();
   for (const name of names) {
@@ -20,7 +20,7 @@ function ranking(names) {
   return [...groups.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, TOP);
 }
 
-/** Âge au décès en années, ou null si les dates ne permettent pas de le calculer. */
+/** Age at death in years, or null if the dates don't allow computing it. */
 function ageAtDeath(p) {
   const b = dateParts(p.birthDate);
   const d = dateParts(p.deathDate);
@@ -47,7 +47,7 @@ function longevity() {
   return { n: groups.all.length, all: mean(groups.all), M: mean(groups.M), F: mean(groups.F), oldest };
 }
 
-/** Par génération (celles de « Tout l'arbre ») : personnes, parents, enfants par parent. */
+/** Per generation (those of "Whole tree"): people, parents, children per parent. */
 function generations() {
   const rows = [];
   for (const [id, g] of generationMap()) {
@@ -60,11 +60,11 @@ function generations() {
   return rows.filter(Boolean);
 }
 
-/** Ascendants trouvés à chaque génération au-dessus de la personne centrale. */
+/** Ancestors found at each generation above the focus person. */
 function completeness() {
   if (!P(S.focus)) return [];
   const rows = [];
-  // Id -> nombre de places dans la génération : un ancêtre commun (implexe) compte à chaque place
+  // Id -> number of slots in the generation: a shared ancestor (pedigree collapse) counts at each slot
   let level = new Map([[S.focus, 1]]);
   for (let gen = 1; gen <= MAX_GENS; gen++) {
     const next = new Map();

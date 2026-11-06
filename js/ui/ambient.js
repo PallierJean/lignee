@@ -1,15 +1,15 @@
 /**
- * Animations des thèmes « fêtes et saisons », et de Grand Line, dessinées sur un calque sous
- * l'arbre : neige et guirlande tout autour de la toile à Noël ; à Halloween, lune et nuages,
- * citrouilles qui vacillent, brume, araignée, chauves-souris et fantômes ; au printemps, branches
- * de cerisier en fleur, prairie fleurie, pétales, papillons et hirondelles ; l'été, la plage
- * (vagues, écume, baigneurs flous, petit requin, mouettes) ; en automne, des arbres qui perdent
- * leurs feuilles de couleur au gré des coups de vent ; sur Grand Line, une planche de manga (trait
- * d'encre, trame, onomatopées) où vogue un navire pirate, poursuivi par la marine qui tire au
- * canon, dont le matelot aux bras élastiques rattrape son chapeau de paille ; îles, mouettes et
- * monstre marin. Chaque objet a sa taille, sa vitesse et son balancement,
- * tirés au hasard. Arrêtées hors de ces thèmes ou si le système demande moins d'animations (le
- * motif du fond reste), en pause quand l'onglet est caché.
+ * Animations of the "holidays and seasons" themes, and of Grand Line, drawn on a layer under
+ * the tree: snow and a garland all around the canvas at Christmas; at Halloween, moon and clouds,
+ * flickering pumpkins, mist, spider, bats and ghosts; in spring, flowering cherry
+ * branches, a flowery meadow, petals, butterflies and swallows; in summer, the beach
+ * (waves, foam, blurred swimmers, a small shark, gulls); in autumn, trees losing
+ * their coloured leaves in gusts of wind; on Grand Line, a manga page (ink
+ * lines, screentone, sound effects) where a pirate ship sails, chased by the navy firing its
+ * cannons, whose rubber-armed sailor catches his straw hat; islands, gulls and a
+ * sea monster. Each object has its own size, speed and sway,
+ * drawn at random. Stopped outside these themes or if the system asks for reduced motion (the
+ * background pattern stays), paused when the tab is hidden.
  */
 import { reduced } from '../config.js';
 
@@ -23,9 +23,9 @@ let scene = null;   // { name, things, w, h }
 const rand = (a, b) => a + Math.random() * (b - a);
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
-/* ---------- Ce qui tombe : flocons, pétales, feuilles ---------- */
+/* ---------- What falls: snowflakes, petals, leaves ---------- */
 
-/** Un objet qui tombe, en haut (`top`) ou n'importe où dans la hauteur `h`. */
+/** A falling object, at the top (`top`) or anywhere in height `h`. */
 function faller(w, h, top, size, colors) {
   const r = rand(...size);
   return {
@@ -35,7 +35,7 @@ function faller(w, h, top, size, colors) {
   };
 }
 
-/** Fait tomber les objets ; ceux sortis par le bas repartent d'en haut. `wind` les pousse de côté. */
+/** Makes the objects fall; those leaving at the bottom restart from the top. `wind` pushes them sideways. */
 function fall(list, w, h, now, wind, make) {
   list.forEach((f, i) => {
     f.y += f.speed;
@@ -45,7 +45,7 @@ function fall(list, w, h, now, wind, make) {
   });
 }
 
-/** Cristal de neige à six branches, chacune avec deux petites barbes. */
+/** Six-branched snow crystal, each branch with two small barbs. */
 function crystal(ctx, f) {
   ctx.save();
   ctx.translate(f.x, f.y);
@@ -65,7 +65,7 @@ function crystal(ctx, f) {
   ctx.restore();
 }
 
-/** Pétale de cerisier : deux lobes arrondis et une encoche ; il se retourne en tombant. */
+/** Cherry petal: two rounded lobes and a notch; it flips as it falls. */
 function petal(ctx, f, now) {
   ctx.save();
   ctx.translate(f.x, f.y);
@@ -83,7 +83,7 @@ function petal(ctx, f, now) {
   ctx.restore();
 }
 
-/** Feuille d'automne : limbe pointu et nervure ; elle tourne et se retourne. */
+/** Autumn leaf: pointed blade and vein; it spins and flips. */
 function leaf(ctx, f, now) {
   ctx.save();
   ctx.translate(f.x, f.y);
@@ -105,9 +105,9 @@ function leaf(ctx, f, now) {
   ctx.restore();
 }
 
-/* ---------- Ce qui vole : papillons, chauves-souris, fantômes ---------- */
+/* ---------- What flies: butterflies, bats, ghosts ---------- */
 
-/** Un objet qui traverse la toile d'un bord à l'autre, en ondulant. */
+/** An object crossing the canvas from one edge to the other, undulating. */
 function flyer(w, h, speed, size) {
   const right = Math.random() < 0.5;
   return {
@@ -117,14 +117,14 @@ function flyer(w, h, speed, size) {
   };
 }
 
-/** Avance un objet volant ; renvoie sa position du moment, ou null s'il est sorti. */
+/** Moves a flying object; returns its current position, or null if it has left. */
 function fly(b, now, w) {
   b.x += b.dir * b.speed;
   if (b.x < -60 || b.x > w + 60) return null;
   return [b.x, b.y + Math.sin(now / b.period * TAU + b.phase) * b.wave];
 }
 
-/** Papillon : quatre ailes qui battent (vues de dessus, elles se replient). */
+/** Butterfly: four flapping wings (seen from above, they fold). */
 function butterfly(ctx, x, y, b, now) {
   const flap = Math.abs(Math.sin(now / 90 + b.phase));
   ctx.save();
@@ -145,7 +145,7 @@ function butterfly(ctx, x, y, b, now) {
   ctx.restore();
 }
 
-/** Chauve-souris : ailes festonnées qui battent, petites oreilles. */
+/** Bat: scalloped flapping wings, small ears. */
 function bat(ctx, x, y, b, now) {
   const f = Math.sin(now / 80 + b.phase);
   const s = b.r / 14;
@@ -178,7 +178,7 @@ function bat(ctx, x, y, b, now) {
   ctx.restore();
 }
 
-/** Fantôme : il monte en ondulant, translucide, puis s'évanouit. */
+/** Ghost: it rises undulating, translucent, then vanishes. */
 function ghost(ctx, g, now, h) {
   const age = (now - g.born) / g.life;
   if (age > 1) return false;
@@ -211,7 +211,7 @@ function ghost(ctx, g, now, h) {
   return true;
 }
 
-/** Éclat de soleil : une petite étoile dorée qui scintille un instant. */
+/** Sun glint: a small golden star that twinkles for a moment. */
 function glint(ctx, g, now) {
   const age = (now - g.born) / 1400;
   if (age > 1) return false;
@@ -232,13 +232,13 @@ function glint(ctx, g, now) {
   return true;
 }
 
-/* ---------- Printemps : cerisier en fleur, prairie, hirondelles ---------- */
+/* ---------- Spring: flowering cherry, meadow, swallows ---------- */
 
 const BLOSSOMS = ['#F7A8C4', '#FBC6D8', '#F48FB8', '#FFFFFF'];
 
 /**
- * Branche de cerisier qui part d'un coin : rameaux qui se ramifient (traits), et des fleurs à
- * cinq pétales en grappes au bout et le long des rameaux.
+ * Cherry branch growing from a corner: twigs that branch out (lines), and five-petal
+ * flowers in clusters at the tips and along the twigs.
  */
 function cherry(x, y, angle, len) {
   const twigs = [];
@@ -259,7 +259,7 @@ function cherry(x, y, angle, len) {
   return { x, y, twigs, flowers };
 }
 
-/** Dessine une branche qui se balance doucement autour de son attache. */
+/** Draws a branch that sways gently around its attachment. */
 function drawCherry(ctx, b, now, phase) {
   ctx.save();
   ctx.translate(b.x, b.y);
@@ -291,7 +291,7 @@ function drawCherry(ctx, b, now, phase) {
   ctx.restore();
 }
 
-/** La prairie : herbes hautes qui ondulent au vent, tulipes et pâquerettes. */
+/** The meadow: tall grass waving in the wind, tulips and daisies. */
 function meadow(ctx, m, w, h, now) {
   const wind = (x, k) => Math.sin(now / 900 + x / 60) * k;
   const blades = (list) => {
@@ -343,7 +343,7 @@ function meadow(ctx, m, w, h, now) {
   blades(m.front);
 }
 
-/** Herbes et fleurs de la prairie, sur toute la largeur. */
+/** Grass and flowers of the meadow, across the full width. */
 function makeMeadow(w) {
   const grass = (n, tall, colors) => Array.from({ length: n }, () => ({
     x: rand(0, w), height: rand(...tall), lean: rand(-10, 10), width: rand(1.2, 2.4), color: pick(colors),
@@ -358,7 +358,7 @@ function makeMeadow(w) {
   };
 }
 
-/** Hirondelle : ailes en croissant et queue fourchue, elle file vite. */
+/** Swallow: crescent wings and a forked tail, it darts fast. */
 function swallow(ctx, x, y, b, now) {
   const f = Math.sin(now / 110 + b.phase) * 0.35;
   ctx.save();
@@ -379,9 +379,9 @@ function swallow(ctx, x, y, b, now) {
   ctx.restore();
 }
 
-/* ---------- Halloween : lune, citrouilles, brume, araignée ---------- */
+/* ---------- Halloween: moon, pumpkins, mist, spider ---------- */
 
-/** Pleine lune voilée de lumière, devant laquelle passent des nuages sombres. */
+/** Full moon veiled in light, with dark clouds passing in front. */
 function moon(ctx, w, h, now) {
   const x = w * 0.86;
   const y = h * 0.17;
@@ -395,13 +395,13 @@ function moon(ctx, w, h, now) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, TAU);
   ctx.fill();
-  ctx.fillStyle = 'rgba(190, 170, 130, .35)'; // mers lunaires
+  ctx.fillStyle = 'rgba(190, 170, 130, .35)'; // lunar seas
   for (const [dx, dy, cr] of [[-10, -8, 8], [9, 6, 6], [-4, 14, 5], [13, -12, 4]]) {
     ctx.beginPath();
     ctx.arc(x + dx, y + dy, cr, 0, TAU);
     ctx.fill();
   }
-  // Nuages : ils traversent lentement, de gauche à droite, et masquent la lune en passant
+  // Clouds: they cross slowly, left to right, and hide the moon as they pass
   ctx.fillStyle = 'rgba(28, 18, 42, .75)';
   for (const [speed, dy, size] of [[22, -6, 1], [34, 18, 0.7]]) {
     const cx = ((now / speed) % (w * 0.5 + 300)) + w * 0.6 - 150;
@@ -413,7 +413,7 @@ function moon(ctx, w, h, now) {
   }
 }
 
-/** Citrouille sculptée : côtes, tige, visage éclairé par une bougie qui vacille. */
+/** Carved pumpkin: ribs, stem, face lit by a flickering candle. */
 function pumpkin(ctx, x, y, s, now, seed) {
   const flicker = 0.75 + 0.25 * Math.sin(now / 90 + seed) * Math.sin(now / 37 + seed * 2);
   const glow = ctx.createRadialGradient(x, y, 0, x, y, 70 * s);
@@ -436,7 +436,7 @@ function pumpkin(ctx, x, y, s, now, seed) {
   ctx.fill();
   ctx.fillStyle = '#4E6B2A';
   ctx.fillRect(-2, -20, 4, 7);
-  // Visage : yeux en triangle, bouche en dents de scie, lumière de la bougie
+  // Face: triangle eyes, jagged mouth, candlelight
   ctx.fillStyle = `rgba(255, ${Math.round(200 + 40 * flicker)}, 90, ${(0.75 + 0.25 * flicker).toFixed(2)})`;
   ctx.shadowColor = '#FFB347';
   ctx.shadowBlur = 10 * flicker;
@@ -450,7 +450,7 @@ function pumpkin(ctx, x, y, s, now, seed) {
   ctx.restore();
 }
 
-/** Brume au ras du sol : des nappes violacées qui dérivent lentement. */
+/** Mist at ground level: purplish banks drifting slowly. */
 function fog(ctx, w, h, now) {
   for (let i = 0; i < 5; i++) {
     const x = ((now / (60 + i * 17) + i * 300) % (w + 600)) - 300;
@@ -469,7 +469,7 @@ function fog(ctx, w, h, now) {
   }
 }
 
-/** Araignée : elle monte et descend au bout de son fil, en agitant les pattes. */
+/** Spider: it goes up and down on its thread, waving its legs. */
 function spider(ctx, x, h, now) {
   const y = 40 + (0.5 + 0.5 * Math.sin(now / 2600)) * h * 0.32;
   ctx.strokeStyle = 'rgba(220, 210, 240, .45)';
@@ -497,25 +497,25 @@ function spider(ctx, x, h, now) {
   ctx.arc(x, y, 3, 0, TAU);
   ctx.fill();
   ctx.shadowBlur = 0;
-  ctx.fillStyle = '#E0483E'; // deux yeux rouges
+  ctx.fillStyle = '#E0483E'; // two red eyes
   ctx.fillRect(x - 1.8, y - 0.8, 1.2, 1.2);
   ctx.fillRect(x + 0.6, y - 0.8, 1.2, 1.2);
 }
 
-/* ---------- Noël : la guirlande ---------- */
+/* ---------- Christmas: the garland ---------- */
 
 const BULBS = ['#FF4D4D', '#FFD45C', '#4DDB7A', '#5CB8FF'];
 
 /**
- * La guirlande, tout autour de la toile : sur chaque côté, un fil qui pend vers l'intérieur entre
- * des attaches, et des ampoules tournées vers le centre. Une vague de lumière fait le tour du cadre.
+ * The garland, all around the canvas: on each side, a wire sagging inwards between
+ * fastenings, and bulbs facing the centre. A wave of light travels around the frame.
  */
 function garland(ctx, w, h, now) {
   const span = 230;  // px entre deux attaches
-  const sag = 26;    // le fil pend de … px vers l'intérieur
+  const sag = 26;    // the wire sags … px inwards
   const gap = 44;    // px entre deux ampoules
-  const m = 4;       // marge au bord
-  // Côtés dans le sens des aiguilles d'une montre : départ, arrivée, direction de l'intérieur
+  const m = 4;       // margin at the edge
+  // Sides clockwise: start, end, inward direction
   const sides = [[m, m, w - m, m, 0, 1], [w - m, m, w - m, h - m, -1, 0], [w - m, h - m, m, h - m, 0, -1], [m, h - m, m, m, 1, 0]];
   let bulb = 0;
   for (const [x0, y0, x1, y1, nx, ny] of sides) {
@@ -524,7 +524,7 @@ function garland(ctx, w, h, now) {
     const uy = (y1 - y0) / len;
     const count = Math.max(1, Math.round(len / span));
     const seg = len / count;
-    // Point du fil à la distance d du départ : courbe de Bézier entre deux attaches, creusée vers l'intérieur
+    // Wire point at distance d from the start: Bézier curve between two fastenings, sagging inwards
     const at = (d) => {
       const t = (d % seg) / seg;
       const dip = 2 * t * (1 - t) * sag;
@@ -539,7 +539,7 @@ function garland(ctx, w, h, now) {
       ctx.quadraticCurveTo(x0 + ux * (a + seg / 2) + nx * sag, y0 + uy * (a + seg / 2) + ny * sag, x0 + ux * (a + seg), y0 + uy * (a + seg));
     }
     ctx.stroke();
-    const angle = Math.atan2(ny, nx) - Math.PI / 2; // ampoule tournée vers l'intérieur
+    const angle = Math.atan2(ny, nx) - Math.PI / 2; // bulb facing inwards
     for (let d = gap / 2; d < len; d += gap, bulb++) {
       const [x, y] = at(d);
       const color = BULBS[bulb % BULBS.length];
@@ -561,12 +561,12 @@ function garland(ctx, w, h, now) {
   }
 }
 
-/* ---------- Grand Line : une planche de manga d'aventure en mer ---------- */
+/* ---------- Grand Line: a manga page of adventure at sea ---------- */
 
-const INK = '#141414';           // encre du trait
+const INK = '#141414';           // line ink
 const SFX_FONT = '"Noto Sans CJK JP", "Hiragino Kaku Gothic Pro", "Yu Gothic", "Meiryo", sans-serif';
 
-/** Trame de points, comme sur une planche imprimée (motif répété, préparé une fois). */
+/** Dot screentone, as on a printed page (repeated pattern, prepared once). */
 function screentone(ctx, s) {
   if (!s.tone) {
     const tile = document.createElement('canvas');
@@ -582,7 +582,7 @@ function screentone(ctx, s) {
   return s.tone;
 }
 
-/** Remplit puis cerne d'encre le tracé courant. */
+/** Fills then inks the outline of the current path. */
 function inked(ctx, fill, width = 2) {
   ctx.fillStyle = fill;
   ctx.fill();
@@ -591,7 +591,7 @@ function inked(ctx, fill, width = 2) {
   ctx.stroke();
 }
 
-/** Nuage de manga : des bulles blanches cernées d'encre (le trait ne reste qu'au contour). */
+/** Manga cloud: white puffs outlined in ink (the line stays only on the outline). */
 function mangaCloud(ctx, x, y, s) {
   const puffs = [[-36, 6, 18], [-15, -6, 24], [10, -11, 27], [34, 2, 20], [0, 9, 22]];
   const path = () => {
@@ -608,13 +608,13 @@ function mangaCloud(ctx, x, y, s) {
   path();
   ctx.fillStyle = '#FFFFFF';
   ctx.fill();
-  ctx.fillStyle = 'rgba(120, 170, 215, .35)'; // ombre sous le nuage
+  ctx.fillStyle = 'rgba(120, 170, 215, .35)'; // shadow under the cloud
   ctx.beginPath();
   ctx.ellipse(x, y + 16 * s, 40 * s, 8 * s, 0, 0, Math.PI);
   ctx.fill();
 }
 
-/** Soleil de manga : disque cerné et rayons pointus qui tournent lentement. */
+/** Manga sun: outlined disc and pointed rays turning slowly. */
 function mangaSun(ctx, x, y, now) {
   ctx.save();
   ctx.translate(x, y);
@@ -633,7 +633,7 @@ function mangaSun(ctx, x, y, now) {
   inked(ctx, '#FFE066', 2.5);
 }
 
-/** Île : butte de sable, rochers et palmier, cernés d'encre. */
+/** Island: sand mound, rocks and palm tree, outlined in ink. */
 function island(ctx, x, y, s) {
   ctx.beginPath();
   ctx.ellipse(x, y, 52 * s, 14 * s, 0, Math.PI, 0);
@@ -654,7 +654,7 @@ function island(ctx, x, y, s) {
   }
 }
 
-/** Rangée de vagues de manga : la mer cernée d'encre au sommet, crêtes d'écume en volutes. */
+/** Row of manga waves: the sea inked along its top, foam crests in curls. */
 function mangaWaves(ctx, y, w, now, speed, amp, color, foam) {
   const shift = (now / speed) % 120;
   const at = (x) => y + Math.sin((x - shift) / 19) * amp;
@@ -685,7 +685,7 @@ function mangaWaves(ctx, y, w, now, speed, amp, color, foam) {
   }
 }
 
-/** Tête de mort et tibias croisés, cernés : pour la voile et le pavillon. */
+/** Skull and crossbones, outlined: for the sail and the flag. */
 function skull(ctx, x, y, s, ink, bone) {
   ctx.save();
   ctx.translate(x, y);
@@ -713,18 +713,18 @@ function skull(ctx, x, y, s, ink, bone) {
   ctx.restore();
 }
 
-// Le matelot, dans le repère du navire : tête, épaule droite (d'où part le bras élastique)
+// The sailor, in the ship's frame: head, right shoulder (where the rubber arm starts)
 const SAILOR = { head: [-27, -52], shoulder: [-19, -41] };
 const SKIN = '#F2C29B';
 
-/** Le capitaine : cheveux noirs en bataille, gilet rouge sans manches ; bras droit le long du corps s'il n'est pas étiré. */
+/** The captain: messy black hair, red sleeveless vest; right arm along the body when not stretched. */
 function sailor(ctx, armOut) {
   const [hx, hy] = SAILOR.head;
-  ctx.beginPath(); // jambes (le bas est caché par la coque)
+  ctx.beginPath(); // legs (the lower part is hidden by the hull)
   ctx.rect(-33, -26, 5, 18);
   ctx.rect(-26, -26, 5, 18);
   inked(ctx, '#2B2D42', 1.2);
-  ctx.beginPath(); // gilet rouge sans manches, ouvert, à boutons
+  ctx.beginPath(); // red sleeveless vest, open, with buttons
   ctx.roundRect(-36, -46, 18, 22, 4);
   inked(ctx, '#C8202E', 1.6);
   ctx.beginPath();
@@ -747,16 +747,16 @@ function sailor(ctx, armOut) {
     ctx.lineWidth = 3.2;
     ctx.stroke();
   }
-  ctx.beginPath(); // tête
+  ctx.beginPath(); // head
   ctx.arc(hx, hy, 8.5, 0, TAU);
   inked(ctx, SKIN, 1.6);
-  ctx.beginPath(); // cheveux en bataille
+  ctx.beginPath(); // messy hair
   ctx.moveTo(hx - 9, hy - 1);
   for (let k = 0; k <= 6; k++) ctx.lineTo(hx - 9 + k * 3, hy - 8 - (k % 2 ? 5 : 1));
   ctx.lineTo(hx + 9, hy - 1);
   ctx.quadraticCurveTo(hx, hy - 6, hx - 9, hy - 1);
   inked(ctx, INK, 1);
-  ctx.fillStyle = INK; // œil et grand sourire
+  ctx.fillStyle = INK; // eye and big grin
   ctx.beginPath();
   ctx.arc(hx + 3.5, hy, 1.3, 0, TAU);
   ctx.fill();
@@ -766,7 +766,7 @@ function sailor(ctx, armOut) {
   ctx.stroke();
 }
 
-/** Un bras cerné d'encre, de (x0, y0) à (x1, y1), couleur `color` (peau ou manche). */
+/** An ink-outlined arm, from (x0, y0) to (x1, y1), colour `color` (skin or sleeve). */
 function limb(ctx, x0, y0, x1, y1, color) {
   ctx.lineCap = 'round';
   ctx.strokeStyle = INK;
@@ -781,9 +781,9 @@ function limb(ctx, x0, y0, x1, y1, color) {
 }
 
 /**
- * Un membre d'équipage debout sur le pont, à l'abscisse `x` (même gabarit que le capitaine) :
- * `top` haut, `legs` pantalon, `hair` cheveux ; `extra(ctx, x, hx, hy, now)` pour ce qui le
- * distingue (sabres, cigarette, long nez…), `arm(now)` pour son bras droit qui bouge.
+ * A crew member standing on deck at abscissa `x` (same build as the captain):
+ * `top` shirt, `legs` trousers, `hair` hair; `extra(ctx, x, hx, hy, now)` for what sets them
+ * apart (sabres, cigarette, long nose…), `arm(now)` for their moving right arm.
  */
 function mate(ctx, x, now, { top, legs, hair, hairStyle, arm, extra }) {
   const hx = x;
@@ -798,7 +798,7 @@ function mate(ctx, x, now, { top, legs, hair, hairStyle, arm, extra }) {
   limb(ctx, x - 8, -42, x - 12, -29, SKIN);
   const [ax, ay] = arm ? arm(now) : [x + 12, -29];
   limb(ctx, x + 8, -42, ax, ay, SKIN);
-  if (hairStyle === 'long') { // longs cheveux, derrière la tête
+  if (hairStyle === 'long') { // long hair, behind the head
     ctx.beginPath();
     ctx.roundRect(hx - 10, hy - 9, 20, 22, 7);
     inked(ctx, hair, 1.2);
@@ -807,7 +807,7 @@ function mate(ctx, x, now, { top, legs, hair, hairStyle, arm, extra }) {
   ctx.arc(hx, hy, 8.5, 0, TAU);
   inked(ctx, SKIN, 1.6);
   if (hairStyle !== 'none') {
-    ctx.beginPath(); // frange
+    ctx.beginPath(); // fringe
     ctx.moveTo(hx - 9, hy + 1);
     ctx.quadraticCurveTo(hx - 8, hy - 11, hx + 2, hy - 10);
     ctx.quadraticCurveTo(hx + 10, hy - 9, hx + 9, hy - 1);
@@ -815,7 +815,7 @@ function mate(ctx, x, now, { top, legs, hair, hairStyle, arm, extra }) {
     ctx.closePath();
     inked(ctx, hair, 1);
   }
-  ctx.fillStyle = INK; // œil et sourire
+  ctx.fillStyle = INK; // eye and smile
   ctx.beginPath();
   ctx.arc(hx + 3.5, hy, 1.3, 0, TAU);
   ctx.fill();
@@ -827,16 +827,16 @@ function mate(ctx, x, now, { top, legs, hair, hairStyle, arm, extra }) {
   if (extra) extra(ctx, x, hx, hy, now);
 }
 
-/** L'équipage, du grand mât à la proue : navigatrice, sabreur, cuisinier, tireur. */
+/** The crew, from the mainmast to the bow: navigator, swordsman, cook, sniper. */
 const CREW = [
-  { // navigatrice : longs cheveux orange, haut blanc à col bleu ; elle brandit sa carte
+  { // navigator: long orange hair, white top with a blue collar; she waves her map
     x: -7, top: '#FFFFFF', legs: '#3B6FB6', hair: '#F07F2A', hairStyle: 'long',
     arm: (now) => [-1, -64 + Math.sin(now / 400) * 2],
     extra(ctx, x, hx, hy, now) {
-      ctx.beginPath(); // jupe bleue
+      ctx.beginPath(); // blue skirt
       ctx.rect(x - 9, -30, 18, 7);
       inked(ctx, '#3B6FB6', 1);
-      ctx.save(); // la carte
+      ctx.save(); // the map
       ctx.translate(x + 5, -70 + Math.sin(now / 400) * 2);
       ctx.rotate(0.15);
       ctx.beginPath();
@@ -853,7 +853,7 @@ const CREW = [
       ctx.restore();
     },
   },
-  { // sabreur : bandana vert, chemise blanche, ceinture verte, trois sabres à la hanche ; bras croisés
+  { // swordsman: green bandana, white shirt, green sash, three sabres at the hip; arms crossed
     x: 12, top: '#F4F1E6', legs: '#2B2D42', hair: '#6FBF5A', hairStyle: 'short',
     arm: () => [7, -36],
     extra(ctx, x, hx, hy) {
@@ -863,9 +863,9 @@ const CREW = [
       ctx.lineTo(hx - 9.5, hy - 1);
       inked(ctx, '#2F7D3A', 1.2);
       ctx.beginPath();
-      ctx.rect(x - 9, -29, 18, 4); // ceinture
+      ctx.rect(x - 9, -29, 18, 4); // sash
       inked(ctx, '#2F7D3A', 1);
-      for (const [k, col] of [[0, '#FFFFFF'], [1, '#141414'], [2, '#C41E3A']]) { // trois sabres à la hanche
+      for (const [k, col] of [[0, '#FFFFFF'], [1, '#141414'], [2, '#C41E3A']]) { // three sabres at the hip
         ctx.strokeStyle = INK;
         ctx.lineWidth = 3.4;
         ctx.beginPath();
@@ -878,21 +878,21 @@ const CREW = [
       }
     },
   },
-  { // cuisinier : cheveux blonds sur un œil, costume noir, cravate ; une volute de fumée
+  { // cook: blond hair over one eye, black suit, tie; a curl of smoke
     x: 31, top: '#1E1E24', legs: '#1E1E24', hair: '#F2D04B', hairStyle: 'short',
     extra(ctx, x, hx, hy, now) {
-      ctx.beginPath(); // la mèche qui cache un œil
+      ctx.beginPath(); // the lock hiding one eye
       ctx.moveTo(hx + 1, hy - 9);
       ctx.quadraticCurveTo(hx + 9, hy - 3, hx + 7, hy + 3);
       ctx.lineTo(hx + 1, hy - 2);
       ctx.closePath();
       inked(ctx, '#F2D04B', 1);
-      ctx.beginPath(); // chemise et cravate
+      ctx.beginPath(); // shirt and tie
       ctx.moveTo(x - 3, -43);
       ctx.lineTo(x, -32);
       ctx.lineTo(x + 3, -43);
       inked(ctx, '#3B6FB6', 1);
-      ctx.strokeStyle = INK; // cigarette et fumée
+      ctx.strokeStyle = INK; // cigarette and smoke
       ctx.lineWidth = 1.6;
       ctx.beginPath();
       ctx.moveTo(hx + 4, hy + 4);
@@ -906,22 +906,22 @@ const CREW = [
       ctx.stroke();
     },
   },
-  { // tireur : long nez, bandana à carreaux, cheveux noirs frisés, salopette ; il salue de la main
+  { // sniper: long nose, checked bandana, curly black hair, overalls; he waves
     x: 50, top: '#C8A46A', legs: '#6B4E2E', hair: '#141414', hairStyle: 'none',
     arm: (now) => [60, -60 + Math.sin(now / 150) * 4],
     extra(ctx, x, hx, hy) {
-      ctx.beginPath(); // boucles noires
+      ctx.beginPath(); // black curls
       for (const [dx, dy] of [[-8, 3], [-9, -3], [-6, 7]]) {
         ctx.moveTo(hx + dx + 3.5, hy + dy);
         ctx.arc(hx + dx, hy + dy, 3.5, 0, TAU);
       }
       inked(ctx, '#141414', 1);
-      ctx.beginPath(); // bandana à carreaux
+      ctx.beginPath(); // checked bandana
       ctx.moveTo(hx - 9.5, hy - 1);
       ctx.quadraticCurveTo(hx, hy - 15, hx + 9.5, hy - 1);
       ctx.lineTo(hx - 9.5, hy - 1);
       inked(ctx, '#C9B35A', 1.2);
-      ctx.beginPath(); // long nez
+      ctx.beginPath(); // long nose
       ctx.moveTo(hx + 7, hy - 1);
       ctx.lineTo(hx + 19, hy + 1);
       ctx.lineTo(hx + 7, hy + 3);
@@ -930,7 +930,7 @@ const CREW = [
   },
 ];
 
-/** Bras élastique : du caoutchouc qui ondule de l'épaule à la main, et un poing au bout. */
+/** Rubber arm: rubber wobbling from the shoulder to the hand, with a fist at the end. */
 function rubberArm(ctx, from, to, s, now) {
   const [x0, y0] = from;
   const [x1, y1] = to;
@@ -960,8 +960,8 @@ function rubberArm(ctx, from, to, s, now) {
 }
 
 /**
- * Le chapeau du matelot : sur sa tête ; un coup de vent l'emporte, son bras s'étire en caoutchouc
- * (« ビヨ〜ン! »), l'attrape au vol et le lui remet. `ship` : position et échelle du navire.
+ * The sailor's hat: on his head; a gust of wind blows it away, his arm stretches like rubber
+ * ("ビヨ〜ン!"), catches it in mid-air and puts it back. `ship`: position and scale of the ship.
  */
 function hatAndArm(ctx, s, now, ship) {
   const world = ([lx, ly]) => [ship.x + lx * ship.s, ship.y + ly * ship.s];
@@ -971,8 +971,8 @@ function hatAndArm(ctx, s, now, ship) {
   const size = 0.42 * ship.s;
   const hat = s.hat;
   const ease = (t) => 1 - (1 - t) ** 3;
-  // Le vent l'emporte vers l'arrière, à hauteur du pont (plus haut, les fiches de l'arbre le cacheraient),
-  // quand le navire est bien dans la toile
+  // The wind blows it backwards, at deck height (higher up, the tree cards would hide it),
+  // when the ship is well inside the canvas
   if (hat.mode === 'head' && now > s.nextBlow && ship.x > ship.w * 0.3 && ship.x < ship.w * 0.85) {
     Object.assign(hat, { mode: 'fly', x: top[0], y: top[1], vx: -rand(2.6, 3.4), vy: -0.9, born: now });
   }
@@ -1007,9 +1007,9 @@ function hatAndArm(ctx, s, now, ship) {
 }
 
 /**
- * Navire pirate à tête de mouton, cerné d'encre comme dans un manga (cap à droite si dir = 1) :
- * coque de planches, figure de proue laineuse, mât et nid-de-pie, grande voile gonflée à tête de
- * mort, foc, pavillon qui claque. Il tangue sur la houle.
+ * Pirate ship with a sheep's head, inked like a manga (heading right if dir = 1):
+ * plank hull, woolly figurehead, mast and crow's nest, billowing mainsail with a
+ * skull, jib, flapping flag. It rolls on the swell.
  */
 function pirateShip(ctx, x, y, s, dir, now, crew) {
   const roll = Math.sin(now / 900) * 0.05;
@@ -1019,7 +1019,7 @@ function pirateShip(ctx, x, y, s, dir, now, crew) {
   ctx.rotate(roll);
   ctx.scale(s * dir, s);
   ctx.lineJoin = 'round';
-  // Mât, foc et grande voile (derrière la coque)
+  // Mast, jib and mainsail (behind the hull)
   ctx.beginPath();
   ctx.rect(-3, -134, 6, 128);
   inked(ctx, '#7A4A22', 1.6);
@@ -1037,7 +1037,7 @@ function pirateShip(ctx, x, y, s, dir, now, crew) {
   ctx.quadraticCurveTo(0, -38 + puff, -48, -38);
   ctx.quadraticCurveTo(-48 + puff, -72, -48, -104);
   inked(ctx, '#FFFDF4', 2.2);
-  ctx.strokeStyle = 'rgba(20, 20, 20, .25)'; // plis de la toile
+  ctx.strokeStyle = 'rgba(20, 20, 20, .25)'; // folds of the canvas
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(-30, -98);
@@ -1049,7 +1049,7 @@ function pirateShip(ctx, x, y, s, dir, now, crew) {
   ctx.rect(-52, -108, 98, 5);
   inked(ctx, '#7A4A22', 1.4);
   skull(ctx, -3, -72, 1.5, INK, '#FFFFFF');
-  // Nid-de-pie et pavillon noir qui claque au vent
+  // Crow's nest and black flag flapping in the wind
   ctx.beginPath();
   ctx.rect(-10, -120, 20, 8);
   inked(ctx, '#8B5A2B', 1.4);
@@ -1060,7 +1060,7 @@ function pirateShip(ctx, x, y, s, dir, now, crew) {
   ctx.closePath();
   inked(ctx, INK, 1);
   skull(ctx, -15, -144, 0.48, INK, '#FFFFFF');
-  // Coque de planches
+  // Plank hull
   ctx.beginPath();
   ctx.moveTo(-66, -26);
   ctx.lineTo(-50, -26);
@@ -1088,10 +1088,10 @@ function pirateShip(ctx, x, y, s, dir, now, crew) {
     ctx.arc(hx, 6, 3.4, 0, TAU);
     inked(ctx, '#FFE7A3', 1.2);
   }
-  // Le capitaine et son équipage, debout derrière le bastingage (son bras droit, s'il est étiré, est dessiné à part)
+  // The captain and his crew, standing behind the rail (his right arm, when stretched, is drawn separately)
   sailor(ctx, crew && crew.armOut);
   for (const m of CREW) mate(ctx, m.x, now, m);
-  // Figure de proue : un mouton laineux, cerné, à corne en spirale
+  // Figurehead: a woolly sheep, outlined, with a spiral horn
   ctx.beginPath();
   for (const [dx, dy, r] of [[78, -32, 8], [86, -36, 7], [90, -27, 7], [82, -22, 7], [72, -25, 6]]) {
     ctx.moveTo(dx + r, dy);
@@ -1117,7 +1117,7 @@ function pirateShip(ctx, x, y, s, dir, now, crew) {
   ctx.restore();
 }
 
-/** Monstre marin : une tête de serpent géant cernée d'encre, qui surgit puis replonge. `age` : 0 à 1. */
+/** Sea monster: a giant serpent head outlined in ink, which surfaces then dives back. `age`: 0 to 1. */
 function seaMonster(ctx, x, base, age, now) {
   const rise = Math.sin(Math.min(1, age) * Math.PI);
   const top = base - rise * 170;
@@ -1135,13 +1135,13 @@ function seaMonster(ctx, x, base, age, now) {
   ctx.quadraticCurveTo(x + 14, top + 110, x + 28, base + 10);
   ctx.closePath();
   inked(ctx, '#3FA36B', 2.6);
-  ctx.beginPath(); // ventre
+  ctx.beginPath(); // belly
   ctx.moveTo(x + 16, top + 68);
   ctx.quadraticCurveTo(x + 14, top + 110, x + 26, base + 10);
   ctx.lineTo(x + 19, base + 10);
   ctx.quadraticCurveTo(x + 8, top + 110, x + 11, top + 68);
   inked(ctx, '#F1E3A0', 1.4);
-  for (let k = 0; k < 5; k++) { // crête
+  for (let k = 0; k < 5; k++) { // crest
     const cy = top + 22 + k * 20;
     ctx.beginPath();
     ctx.moveTo(x - 14 - k * 2, cy);
@@ -1149,13 +1149,13 @@ function seaMonster(ctx, x, base, age, now) {
     ctx.lineTo(x - 16 - k * 2, cy + 14);
     inked(ctx, '#1F7A4C', 1.4);
   }
-  ctx.beginPath(); // gueule
+  ctx.beginPath(); // jaws
   ctx.moveTo(x + 44, top + 34);
   ctx.lineTo(x + 26, top + 36);
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2;
   ctx.stroke();
-  ctx.beginPath(); // œil
+  ctx.beginPath(); // eye
   ctx.arc(x + 24, top + 16, 7, 0, TAU);
   inked(ctx, '#FFFFFF', 2);
   ctx.fillStyle = INK;
@@ -1163,14 +1163,14 @@ function seaMonster(ctx, x, base, age, now) {
   ctx.arc(x + 26 + Math.sin(now / 500) * 2, top + 16, 3.4, 0, TAU);
   ctx.fill();
   ctx.restore();
-  for (let k = 0; k < 8; k++) { // gerbe d'écume
+  for (let k = 0; k < 8; k++) { // spray of foam
     ctx.beginPath();
     ctx.arc(x - 34 + k * 10, base - 2 - Math.abs(Math.sin(now / 160 + k)) * 8 * rise, 5.5, 0, TAU);
     inked(ctx, '#FFFFFF', 1.4);
   }
 }
 
-/** Lignes de vitesse : des rayons d'encre qui partent d'un point, pour un moment fort. */
+/** Speed lines: ink rays radiating from a point, for a big moment. */
 function speedLines(ctx, x, y, w, h, strength, now) {
   const far = Math.hypot(w, h);
   ctx.save();
@@ -1187,7 +1187,7 @@ function speedLines(ctx, x, y, w, h, strength, now) {
   ctx.restore();
 }
 
-/** Onomatopée de manga : grosses lettres noires cernées de blanc, qui surgissent. */
+/** Manga sound effect: big black letters outlined in white, popping out. */
 function sfx(ctx, text, x, y, size, rot, pop) {
   const k = pop < 1 ? 0.5 + 0.7 * Math.sin((pop * Math.PI) / 2) : 1.2 - Math.min(0.2, (pop - 1) * 0.4);
   ctx.save();
@@ -1206,27 +1206,27 @@ function sfx(ctx, text, x, y, size, rot, pop) {
   ctx.restore();
 }
 
-/** Chapeau de paille du matelot : sur sa tête (`spin` nul) ou emporté par le vent, en tournoyant. */
+/** The sailor's straw hat: on his head (`spin` zero) or blown away by the wind, spinning. */
 function strawHat(ctx, x, y, size, spin) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(spin);
   ctx.scale(size, size);
   ctx.beginPath();
-  ctx.ellipse(0, 6, 34, 9, 0, 0, TAU); // bord
+  ctx.ellipse(0, 6, 34, 9, 0, 0, TAU); // brim
   inked(ctx, '#F2C24E', 2.2);
   ctx.beginPath();
   ctx.moveTo(-17, 4);
-  ctx.bezierCurveTo(-18, -20, 18, -20, 17, 4); // calotte
+  ctx.bezierCurveTo(-18, -20, 18, -20, 17, 4); // crown
   inked(ctx, '#F2C24E', 2.2);
   ctx.beginPath();
   ctx.moveTo(-17, 3);
-  ctx.bezierCurveTo(-17, -4, 17, -4, 17, 3); // ruban bleu marine
+  ctx.bezierCurveTo(-17, -4, 17, -4, 17, 3); // navy-blue ribbon
   ctx.lineTo(17.5, -2);
   ctx.bezierCurveTo(17, -9, -17, -9, -17.5, -2);
   ctx.closePath();
   inked(ctx, '#1F3A6E', 1.6);
-  ctx.strokeStyle = 'rgba(140, 100, 30, .55)'; // tressage
+  ctx.strokeStyle = 'rgba(140, 100, 30, .55)'; // weave
   ctx.lineWidth = 0.8;
   ctx.beginPath();
   for (let a = -28; a <= 28; a += 7) {
@@ -1237,21 +1237,21 @@ function strawHat(ctx, x, y, size, spin) {
   ctx.restore();
 }
 
-/** Marin : casquette blanche, col bleu ; il s'agite (bras levé par moments). */
+/** Navy sailor: white cap, blue collar; he moves about (arm raised now and then). */
 function marine(ctx, x, y, now, k) {
   ctx.beginPath();
-  ctx.rect(x - 4, y - 14, 8, 12); // vareuse
+  ctx.rect(x - 4, y - 14, 8, 12); // jumper
   inked(ctx, '#FFFFFF', 1.2);
   ctx.beginPath();
   ctx.moveTo(x - 4, y - 14);
   ctx.lineTo(x, y - 9);
   ctx.lineTo(x + 4, y - 14);
-  inked(ctx, '#2E5AAC', 1); // col bleu
+  inked(ctx, '#2E5AAC', 1); // blue collar
   ctx.beginPath();
   ctx.arc(x, y - 19, 4.5, 0, TAU);
   inked(ctx, SKIN, 1.2);
   ctx.beginPath();
-  ctx.rect(x - 5, y - 25, 10, 3.5); // casquette
+  ctx.rect(x - 5, y - 25, 10, 3.5); // cap
   inked(ctx, '#FFFFFF', 1);
   const wave = Math.sin(now / 180 + k * 1.7) > 0.3;
   ctx.strokeStyle = INK;
@@ -1263,7 +1263,7 @@ function marine(ctx, x, y, now, k) {
   ctx.stroke();
 }
 
-/** Voile carrée gonflée, de `x0` à `x1` et de `y0` à `y1`, avec ses deux plis. */
+/** Billowing square sail, from `x0` to `x1` and from `y0` to `y1`, with its two folds. */
 function squareSail(ctx, x0, x1, y0, y1, puff) {
   ctx.beginPath();
   ctx.moveTo(x0, y0);
@@ -1281,7 +1281,7 @@ function squareSail(ctx, x0, x1, y0, y1, puff) {
     ctx.quadraticCurveTo(x + puff / 2, (y0 + y1) / 2, x, y1 - 2);
   }
   ctx.stroke();
-  ctx.beginPath(); // vergue, aux bouts rouges
+  ctx.beginPath(); // yard, with red ends
   ctx.rect(x0 - 6, y0 - 4, x1 - x0 + 12, 4);
   inked(ctx, '#7A6A55', 1.2);
   for (const x of [x0 - 8, x1 + 2]) {
@@ -1291,7 +1291,7 @@ function squareSail(ctx, x0, x1, y0, y1, puff) {
   }
 }
 
-/** Nid-de-pie à toit rouge en haut d'un mât, et sa flamme blanche qui claque. */
+/** Red-roofed crow's nest at the top of a mast, and its flapping white pennant. */
 function lookout(ctx, x, y, now) {
   ctx.beginPath();
   ctx.rect(x - 8, y, 16, 10);
@@ -1319,19 +1319,19 @@ function lookout(ctx, x, y, now) {
   inked(ctx, '#FFFFFF', 1);
 }
 
-/** Figure de proue : un bouledogue qui tient un os, langue pendante, collier à pointes, long cou blanc. */
+/** Figurehead: a bulldog holding a bone, tongue hanging out, spiked collar, long white neck. */
 function dogHead(ctx, x, y, now) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(1.5, 1.5);
-  ctx.beginPath(); // cou blanc qui rejoint l'étrave
+  ctx.beginPath(); // white neck joining the stem
   ctx.moveTo(-14, 30);
   ctx.quadraticCurveTo(-6, 10, -4, 0);
   ctx.lineTo(14, 0);
   ctx.quadraticCurveTo(10, 22, 2, 34);
   ctx.closePath();
   inked(ctx, '#FFFFFF', 2);
-  ctx.beginPath(); // collier rouge à pointes
+  ctx.beginPath(); // red spiked collar
   ctx.rect(-8, -2, 26, 7);
   inked(ctx, '#C8202E', 1.4);
   for (const sx of [-6, 3, 12, 20]) {
@@ -1342,19 +1342,19 @@ function dogHead(ctx, x, y, now) {
     ctx.closePath();
     inked(ctx, '#F3E2B3', 1);
   }
-  ctx.beginPath(); // tête
+  ctx.beginPath(); // head
   ctx.ellipse(6, -16, 17, 15, 0, 0, TAU);
   inked(ctx, '#B68A5C', 2);
-  ctx.beginPath(); // oreille
+  ctx.beginPath(); // ear
   ctx.ellipse(-6, -28, 6, 4, -0.6, 0, TAU);
   inked(ctx, '#6E4F32', 1.4);
-  ctx.beginPath(); // museau
+  ctx.beginPath(); // muzzle
   ctx.ellipse(18, -10, 10, 8, 0, 0, TAU);
   inked(ctx, '#7A5A3C', 1.6);
-  ctx.beginPath(); // truffe
+  ctx.beginPath(); // nose
   ctx.ellipse(25, -14, 4, 3, 0, 0, TAU);
   inked(ctx, INK, 1);
-  ctx.beginPath(); // œil vert, sourcil froncé
+  ctx.beginPath(); // green eye, frowning brow
   ctx.ellipse(10, -22, 4, 3, 0, 0, TAU);
   inked(ctx, '#C8E86A', 1.2);
   ctx.fillStyle = INK;
@@ -1365,14 +1365,14 @@ function dogHead(ctx, x, y, now) {
   ctx.moveTo(5, -27);
   ctx.lineTo(15, -25);
   ctx.stroke();
-  const lick = Math.sin(now / 300) * 2; // langue rose qui pend
+  const lick = Math.sin(now / 300) * 2; // pink tongue hanging out
   ctx.beginPath();
   ctx.moveTo(14, -3);
   ctx.quadraticCurveTo(13, 8 + lick, 18, 9 + lick);
   ctx.quadraticCurveTo(23, 8 + lick, 22, -3);
   ctx.closePath();
   inked(ctx, '#E8607A', 1.2);
-  ctx.beginPath(); // l'os en travers de la gueule
+  ctx.beginPath(); // the bone across the jaws
   ctx.rect(2, -6, 34, 5);
   for (const bx of [2, 36]) {
     ctx.moveTo(bx + 3.5, -7);
@@ -1385,9 +1385,9 @@ function dogHead(ctx, x, y, now) {
 }
 
 /**
- * Navire de la marine (cap à droite) : coque vert d'eau zébrée, deux mâts à nids-de-pie à toit
- * rouge, voiles marquées « MARINE » et « 海軍 », bouledogue en figure de proue, marins sur le pont.
- * Il tangue lui aussi.
+ * Navy ship (heading right): striped sea-green hull, two masts with red-roofed crow's
+ * nests, sails marked "MARINE" and "海軍", bulldog figurehead, sailors on deck.
+ * It rolls too.
  */
 function navyShip(ctx, x, y, s, now) {
   ctx.save();
@@ -1396,7 +1396,7 @@ function navyShip(ctx, x, y, s, now) {
   ctx.scale(s, s);
   ctx.lineJoin = 'round';
   const puff = 8 + Math.sin(now / 650) * 2;
-  ctx.beginPath(); // grand mât (arrière) et mât de misaine (avant)
+  ctx.beginPath(); // mainmast (aft) and foremast (forward)
   ctx.rect(-33, -178, 6, 172);
   ctx.rect(31, -150, 6, 144);
   inked(ctx, '#7A6A55', 1.6);
@@ -1412,9 +1412,9 @@ function navyShip(ctx, x, y, s, now) {
   ctx.fillText('海軍', 34 + puff / 2, -66);
   lookout(ctx, -30, -188, now);
   lookout(ctx, 34, -160, now + 400);
-  // Marins sur le pont, derrière le bastingage
+  // Sailors on deck, behind the rail
   for (const [mx, k] of [[-56, 0], [-12, 1], [10, 2], [52, 3]]) marine(ctx, mx, -10, now, k);
-  // Coque vert d'eau, zébrée de bandes sombres, liston rouge, sabords et canons
+  // Sea-green hull, striped with dark bands, red wale, gunports and cannons
   ctx.beginPath();
   ctx.moveTo(-84, -30);
   ctx.lineTo(-66, -30);
@@ -1454,22 +1454,22 @@ function navyShip(ctx, x, y, s, now) {
   ctx.restore();
 }
 
-/** Tir de canon : éclair et fumée à la bouche, boulet en arc, gerbe d'eau à l'arrivée. `t` : 0 à 1. */
+/** Cannon shot: flash and smoke at the muzzle, ball in an arc, water spout on impact. `t`: 0 to 1. */
 function cannonShot(ctx, from, to, t) {
-  if (t < 0.2) { // éclair et fumée
+  if (t < 0.2) { // flash and smoke
     const k = t / 0.2;
     ctx.beginPath();
     ctx.arc(from[0] + 10, from[1], 10 + k * 16, 0, TAU);
     inked(ctx, k < 0.4 ? '#FFD45A' : '#F2F2F2', 1.4);
   }
-  if (t < 0.75) { // boulet en arc de cercle
+  if (t < 0.75) { // ball in an arc
     const k = t / 0.75;
     const x = from[0] + (to[0] - from[0]) * k;
     const y = from[1] + (to[1] - from[1]) * k - Math.sin(k * Math.PI) * 120;
     ctx.beginPath();
     ctx.arc(x, y, 5, 0, TAU);
     inked(ctx, '#2B2B2B', 1.4);
-  } else { // gerbe d'eau
+  } else { // water spout
     const k = (t - 0.75) / 0.25;
     const tall = Math.sin(k * Math.PI) * 70;
     ctx.beginPath();
@@ -1482,10 +1482,10 @@ function cannonShot(ctx, from, to, t) {
 }
 
 /**
- * La planche : ciel tramé, soleil, nuages, îles, mer en couches cernées d'encre, navire, mouettes ;
- * de temps en temps, un monstre marin qui surgit (lignes de vitesse et « ドン!! »), un « ザザーン »
- * de vagues, le chapeau du matelot que le vent emporte et qu'il rattrape d'un bras élastique, et un
- * navire de la marine qui le poursuit et tire au canon (« ドーン! », « ドボン! »).
+ * The page: toned sky, sun, clouds, islands, sea in inked layers, ship, gulls;
+ * now and then, a sea monster surfacing (speed lines and "ドン!!"), a "ザザーン"
+ * of waves, the sailor's hat blown away by the wind and caught with a rubber arm, and a
+ * navy ship chasing it and firing its cannons ("ドーン!", "ドボン!").
  */
 function grandLine(ctx, s, now, w, h) {
   const horizon = h * 0.6;
@@ -1494,7 +1494,7 @@ function grandLine(ctx, s, now, w, h) {
   sky.addColorStop(1, '#C9ECFA');
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, horizon);
-  // Trame dans le haut du ciel
+  // Screentone at the top of the sky
   ctx.save();
   ctx.globalAlpha = 0.16;
   ctx.fillStyle = screentone(ctx, s);
@@ -1506,7 +1506,7 @@ function grandLine(ctx, s, now, w, h) {
   island(ctx, w * 0.72, horizon + 2, 0.6);
   mangaWaves(ctx, horizon, w, now, 90, 2, '#6CC3EC', false);
   mangaWaves(ctx, horizon + h * 0.07, w, now, 60, 4, '#3DA2DA', true);
-  // Monstre marin : il surgit, lignes de vitesse et « ドン!! », puis replonge
+  // Sea monster: it surfaces, speed lines and "ドン!!", then dives back
   if (!s.monster && now > s.nextMonster) s.monster = { x: rand(0.2, 0.8) * w, born: now };
   if (s.monster) {
     const age = (now - s.monster.born) / 7000;
@@ -1514,25 +1514,25 @@ function grandLine(ctx, s, now, w, h) {
     const peak = Math.max(0, Math.sin(Math.min(1, age) * Math.PI));
     if (age > 0.12 && age < 0.8) speedLines(ctx, s.monster.x + 20, base - 120 * peak, w, h, peak, now);
     seaMonster(ctx, s.monster.x, base, age, now);
-    // En haut, dans le ciel : au milieu de la toile, les fiches de l'arbre le cacheraient
+    // At the top, in the sky: in the middle of the canvas, the tree cards would hide it
     if (age > 0.18 && age < 0.85) sfx(ctx, 'ドン!!', s.monster.x < w / 2 ? w * 0.3 : w * 0.62, h * 0.11, 92, -0.15, (age - 0.18) * 8);
     if (age > 1) {
       s.monster = null;
       s.nextMonster = now + rand(16000, 28000);
     }
   }
-  // Le navire traverse en boucle au bas de la toile, sous les fiches de l'arbre
+  // The ship crosses in a loop at the bottom of the canvas, under the tree cards
   const crossing = (w + 400) / 0.035;
   const shipX = ((now % crossing) / crossing) * (w + 400) - 200;
   const shipY = h * 0.9;
-  for (let k = 1; k < 6; k++) { // sillage
+  for (let k = 1; k < 6; k++) { // wake
     ctx.beginPath();
     ctx.ellipse(shipX - k * 28, shipY + 20 + Math.sin(now / 300 + k) * 2, 15 - k, 3.5, 0, 0, TAU);
     inked(ctx, '#FFFFFF', 1.2);
   }
   mangaWaves(ctx, horizon + h * 0.17, w, now, 40, 6, '#2B88C8', true);
   const shipScale = Math.min(1.4, h / 540);
-  // La marine le poursuit, un peu en arrière (plus loin, donc plus petite) ; elle tire de temps en temps
+  // The navy chases it, a little behind (further away, so smaller); it fires now and then
   const navyX = shipX - w * 0.42;
   const navyY = shipY - h * 0.05;
   navyShip(ctx, navyX, navyY, shipScale * 0.82, now);
@@ -1540,7 +1540,7 @@ function grandLine(ctx, s, now, w, h) {
   if (s.shot) {
     const t = (now - s.shot.born) / 2200;
     const from = [navyX + 34 * shipScale * 0.82, navyY];
-    const to = [shipX - 140 * shipScale, shipY + 20]; // juste derrière la poupe : raté !
+    const to = [shipX - 140 * shipScale, shipY + 20]; // just behind the stern: a miss!
     if (t > 1) {
       s.shot = null;
       s.nextShot = now + rand(6000, 11000);
@@ -1554,7 +1554,7 @@ function grandLine(ctx, s, now, w, h) {
   pirateShip(ctx, shipX, shipY, shipScale, 1, now, { armOut });
   mangaWaves(ctx, h * 0.93, w, now, 28, 8, '#1A6AA6', true);
   hatAndArm(ctx, s, now, { x: shipX, y: shipY + Math.sin(now / 700) * 3, s: shipScale, w });
-  // « ザザーン » : le bruit des vagues, de temps en temps, sur l'eau
+  // "ザザーン": the sound of the waves, now and then, on the water
   if (!s.wash && now > s.nextWash) s.wash = { x: rand(0.1, 0.9) * w, born: now };
   if (s.wash) {
     const age = (now - s.wash.born) / 2600;
@@ -1568,7 +1568,7 @@ function grandLine(ctx, s, now, w, h) {
       ctx.restore();
     }
   }
-  // Mouettes
+  // Gulls
   release(s.gulls, 4, 0.01, () => ({ ...flyer(w, h, [1, 2], [8, 12]), y: rand(0.08, 0.4) * h }));
   s.gulls = s.gulls.filter((b) => {
     const at = fly(b, now, w);
@@ -1577,9 +1577,9 @@ function grandLine(ctx, s, now, w, h) {
   });
 }
 
-/* ---------- Été : la plage ---------- */
+/* ---------- Summer: the beach ---------- */
 
-/** Mouette : deux ailes en accent circonflexe qui battent. */
+/** Gull: two wings like a circumflex accent, flapping. */
 function gull(ctx, x, y, b, now) {
   const f = Math.sin(now / 160 + b.phase) * 3;
   ctx.save();
@@ -1595,18 +1595,18 @@ function gull(ctx, x, y, b, now) {
   ctx.restore();
 }
 
-/** Petit requin : un aileron qui fend l'eau, son sillage d'écume, sa silhouette devinée dessous. */
+/** Small shark: a fin cutting through the water, its wake of foam, its shape glimpsed beneath. */
 function shark(ctx, k, now, horizon, shore) {
   const y = horizon + (shore - horizon) * k.depth + Math.sin(now / 700 + k.phase) * 1.5;
   const x = k.x;
-  const z = 0.8 + k.depth * 0.6; // plus proche, plus grand
+  const z = 0.8 + k.depth * 0.6; // closer, larger
   ctx.save();
-  // Silhouette sous l'eau
+  // Shape under the water
   ctx.fillStyle = 'rgba(30, 60, 80, .18)';
   ctx.beginPath();
   ctx.ellipse(x - k.dir * 6 * z, y + 5 * z, 26 * z, 5 * z, 0, 0, TAU);
   ctx.fill();
-  // Sillage : deux traînées d'écume en V derrière l'aileron
+  // Wake: two trails of foam in a V behind the fin
   ctx.strokeStyle = 'rgba(255, 255, 255, .75)';
   ctx.lineWidth = 1.2;
   ctx.beginPath();
@@ -1615,7 +1615,7 @@ function shark(ctx, k, now, horizon, shore) {
     ctx.quadraticCurveTo(x - k.dir * 20 * z, y + side * 3 * z, x - k.dir * 38 * z, y + side * 6 * z);
   }
   ctx.stroke();
-  // Aileron : bord d'attaque bombé, bord de fuite creusé
+  // Fin: rounded leading edge, hollow trailing edge
   ctx.fillStyle = '#5F6E7A';
   ctx.beginPath();
   ctx.moveTo(x + k.dir * 7 * z, y);
@@ -1623,14 +1623,14 @@ function shark(ctx, k, now, horizon, shore) {
   ctx.quadraticCurveTo(x - k.dir * 4 * z, y - 6 * z, x - k.dir * 9 * z, y);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = 'rgba(255, 255, 255, .8)'; // écume au pied de l'aileron
+  ctx.fillStyle = 'rgba(255, 255, 255, .8)'; // foam at the foot of the fin
   ctx.beginPath();
   ctx.ellipse(x, y + 0.5, 9 * z, 1.6 * z, 0, 0, TAU);
   ctx.fill();
   ctx.restore();
 }
 
-/** Baigneur flou : tête et bonnet qui dépassent de l'eau, bercés par les vagues. */
+/** Blurred swimmer: head and cap above the water, rocked by the waves. */
 function swimmer(ctx, p, now, horizon, shore) {
   const k = 0.9 + p.depth * 1.1;
   const x = p.x + Math.sin(now / 5000 + p.phase) * 12;
@@ -1640,7 +1640,7 @@ function swimmer(ctx, p, now, horizon, shore) {
   ctx.globalAlpha = 0.75;
   ctx.fillStyle = '#B07A5A';
   ctx.beginPath();
-  ctx.ellipse(x, y + 4 * k, 7 * k, 3.5 * k, 0, 0, TAU); // épaules, à fleur d'eau
+  ctx.ellipse(x, y + 4 * k, 7 * k, 3.5 * k, 0, 0, TAU); // shoulders, at the surface
   ctx.fill();
   ctx.beginPath();
   ctx.arc(x, y - 2 * k, 4.2 * k, 0, TAU);
@@ -1649,7 +1649,7 @@ function swimmer(ctx, p, now, horizon, shore) {
   ctx.beginPath();
   ctx.arc(x, y - 3 * k, 4.4 * k, Math.PI, 0);
   ctx.fill();
-  if (p.wave && Math.sin(now / 700 + p.phase) > 0.4) { // un bras qui salue
+  if (p.wave && Math.sin(now / 700 + p.phase) > 0.4) { // a waving arm
     ctx.strokeStyle = '#B07A5A';
     ctx.lineWidth = 2 * k;
     ctx.beginPath();
@@ -1662,25 +1662,25 @@ function swimmer(ctx, p, now, horizon, shore) {
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.ellipse(x, y + 4.5 * k, 9 * k, 2 * k, 0, 0, TAU); // remous autour du baigneur
+  ctx.ellipse(x, y + 4.5 * k, 9 * k, 2 * k, 0, 0, TAU); // ripples around the swimmer
   ctx.stroke();
   ctx.restore();
 }
 
-/** La plage : soleil, mer et vagues jusqu'à l'horizon, écume qui va et vient sur le sable. */
+/** The beach: sun, sea and waves to the horizon, foam coming and going on the sand. */
 function beach(ctx, s, now, w, h) {
   const horizon = h * 0.62;
   const shore = h * 0.9;
-  const wash = Math.sin(now / 2600); // la vague monte et redescend sur le sable
+  const wash = Math.sin(now / 2600); // the wave rises and falls back on the sand
   const shoreY = (x) => shore + Math.sin(x / 70 + now / 1400) * 3 + wash * 9;
-  // Soleil voilé de lumière
+  // Sun veiled in light
   const sun = ctx.createRadialGradient(w * 0.82, horizon - h * 0.28, 0, w * 0.82, horizon - h * 0.28, 90);
   sun.addColorStop(0, 'rgba(255, 214, 120, .9)');
   sun.addColorStop(0.3, 'rgba(255, 200, 90, .45)');
   sun.addColorStop(1, 'rgba(255, 200, 90, 0)');
   ctx.fillStyle = sun;
   ctx.fillRect(w * 0.82 - 90, horizon - h * 0.28 - 90, 180, 180);
-  // Mer : du turquoise de l'horizon au bleu du rivage
+  // Sea: from the turquoise of the horizon to the blue of the shore
   const sea = ctx.createLinearGradient(0, horizon, 0, shore);
   sea.addColorStop(0, 'rgba(120, 190, 210, .55)');
   sea.addColorStop(1, 'rgba(46, 140, 176, .6)');
@@ -1691,7 +1691,7 @@ function beach(ctx, s, now, w, h) {
   for (let x = w; x >= 0; x -= 12) ctx.lineTo(x, shoreY(x));
   ctx.closePath();
   ctx.fill();
-  // Vagues : des lignes d'écume qui ondulent, plus grandes près du rivage
+  // Waves: undulating lines of foam, larger near the shore
   ctx.strokeStyle = 'rgba(255, 255, 255, .55)';
   for (let k = 0; k < 6; k++) {
     const y0 = horizon + (shore - horizon) * ((k + 0.6) / 6.5);
@@ -1705,9 +1705,9 @@ function beach(ctx, s, now, w, h) {
     }
     ctx.stroke();
   }
-  // Baigneurs au loin, flous
+  // Swimmers in the distance, blurred
   for (const p of s.swimmers) swimmer(ctx, p, now, horizon, shore);
-  // De temps en temps, un petit requin traverse la mer
+  // Now and then, a small shark crosses the sea
   if (!s.shark && now > s.nextShark) {
     const dir = Math.random() < 0.5 ? 1 : -1;
     s.shark = { x: dir > 0 ? -40 : w + 40, dir, depth: rand(0.25, 0.75), speed: rand(1.6, 2.4), phase: rand(0, TAU) };
@@ -1720,7 +1720,7 @@ function beach(ctx, s, now, w, h) {
       s.nextShark = now + rand(8000, 20000);
     }
   }
-  // Sable mouillé et écume du rivage
+  // Wet sand and foam on the shore
   ctx.fillStyle = 'rgba(205, 180, 135, .35)';
   ctx.beginPath();
   for (let x = 0; x <= w; x += 12) ctx.lineTo(x, shoreY(x));
@@ -1735,7 +1735,7 @@ function beach(ctx, s, now, w, h) {
     else ctx.lineTo(x, shoreY(x));
   }
   ctx.stroke();
-  // Reflets du soleil sur l'eau, mouettes
+  // Sun reflections on the water, gulls
   release(s.glints, 5, 0.05, () => ({ x: rand(0, w), y: rand(horizon + 4, shore - 10), r: rand(4, 8), born: now }));
   s.glints = s.glints.filter((g) => glint(ctx, g, now));
   release(s.gulls, 3, 0.006, () => ({ ...flyer(w, h, [0.8, 1.6], [7, 11]), y: rand(0.08, 0.45) * h }));
@@ -1746,13 +1746,13 @@ function beach(ctx, s, now, w, h) {
   });
 }
 
-/* ---------- Automne : les arbres ---------- */
+/* ---------- Autumn: the trees ---------- */
 
 const AUTUMN = ['#C8642A', '#D9A13B', '#9C4A2A', '#B5651D', '#A83F1E', '#E3B23C', '#7A8A2E'];
 
 /**
- * Un arbre planté en (x, sol) : tronc et branches qui se ramifient au hasard (traits), et une
- * couronne de feuilles au bout des rameaux, chacune avec sa couleur.
+ * A tree planted at (x, ground): trunk and branches that branch out at random (lines), and a
+ * crown of leaves at the tips of the twigs, each with its own colour.
  */
 function tree(x, ground, height) {
   const branches = [];
@@ -1777,7 +1777,7 @@ function tree(x, ground, height) {
   return { branches, leaves };
 }
 
-/** Dessine un arbre : branches brunes, puis les feuilles encore accrochées (elles frémissent au vent). */
+/** Draws a tree: brown branches, then the leaves still attached (they quiver in the wind). */
 function drawTree(ctx, t, now, wind) {
   ctx.strokeStyle = 'rgba(90, 58, 34, .85)';
   ctx.lineCap = 'round';
@@ -1798,11 +1798,11 @@ function drawTree(ctx, t, now, wind) {
   }
 }
 
-/* ---------- Les scènes ---------- */
+/* ---------- The scenes ---------- */
 
 const WINGS = ['#F06AA0', '#4FA3E8', '#F2B91B', '#9B6BE0', '#FF8A3D', '#3FBF7F'];
 
-/** Lâche de temps en temps un objet volant dans la liste, jusqu'à `max`. */
+/** Releases a flying object into the list now and then, up to `max`. */
 function release(list, max, chance, make) {
   if (list.length < max && Math.random() < chance) list.push(make());
 }
@@ -1838,7 +1838,7 @@ const SCENES = {
       pumpkin(ctx, w * 0.95, h - 24, 1, now, 2);
       pumpkin(ctx, w * 0.9, h - 20, 0.7, now, 3);
       spider(ctx, w * 0.27, h, now);
-      // Des chauves-souris passent ; de temps en temps, une nuée jaillit d'un côté
+      // Bats pass; now and then, a swarm bursts from one side
       release(s.bats, 8, 0.03, () => flyer(w, h, [1.6, 3.4], [9, 18]));
       if (now > s.nextSwarm) {
         const lead = flyer(w, h, [2.6, 3.4], [8, 14]);
@@ -1866,7 +1866,7 @@ const SCENES = {
     draw(ctx, s, now, w, h) {
       s.branches.forEach((b, i) => drawCherry(ctx, b, now, i * 2));
       meadow(ctx, s.meadow, w, h, now);
-      // Pétales : ils s'envolent des branches et tombent en tournoyant
+      // Petals: they fly off the branches and fall spinning
       fall(s.fall, w, h, now, 0.25, (top) => {
         const b = pick(s.branches);
         const f = pick(b.flowers);
@@ -1892,7 +1892,7 @@ const SCENES = {
   },
   ete: {
     make: (w) => ({
-      // Surtout sur les côtés, là où les fiches de l'arbre les cachent moins
+      // Mostly on the sides, where the tree cards hide them less
       swimmers: [0.05, 0.13, 0.22, 0.5, 0.79, 0.88, 0.95].map((at, i) => ({
         x: (at + rand(-0.02, 0.02)) * w, depth: rand(0, 1), phase: rand(0, TAU),
         cap: pick(['#E0483E', '#F2C94C', '#3A7BD5', '#FFFFFF', '#E58CB0']), wave: i === 1 || i === 5,
@@ -1917,12 +1917,12 @@ const SCENES = {
       drift: Array.from({ length: Math.round((w * h) / 70000) }, () => faller(w, h, false, [4, 7], AUTUMN)),
     }),
     draw(ctx, s, now, w, h) {
-      // Coups de vent : la brise forcit puis retombe
+      // Gusts of wind: the breeze strengthens then dies down
       const wind = Math.max(0, Math.sin(now / 4000)) ** 3 * 2.2;
       for (const t of s.trees) {
         drawTree(ctx, t, now, wind);
         for (const l of t.leaves) {
-          // Une feuille repousse peu à peu ; une autre se détache, plus souvent quand il vente
+          // A leaf grows back little by little; another comes off, more often when it's windy
           if (l.on && l.back < 1) l.back += 0.01;
           if (!l.on && now > l.regrow) Object.assign(l, { on: true, back: 0, color: pick(AUTUMN) });
           if (l.on && l.back >= 1 && Math.random() < 0.0009 + wind * 0.002) {
@@ -1932,7 +1932,7 @@ const SCENES = {
           }
         }
       }
-      // Les feuilles détachées tombent puis se posent au sol, où elles s'effacent peu à peu
+      // Fallen leaves drop then settle on the ground, where they fade little by little
       s.falling = s.falling.filter((f) => {
         f.y += f.speed;
         f.x += Math.sin((now / 900) * f.sway + f.phase) * 0.6 + wind * 0.7;
@@ -1961,7 +1961,7 @@ const SCENES = {
   },
 };
 
-/** Une image de la scène en cours. */
+/** One frame of the current scene. */
 function frame() {
   if (document.hidden) return;
   const canvas = layer.firstChild;
@@ -1982,10 +1982,10 @@ function frame() {
   SCENES[scene.name].draw(ctx, scene.state, Date.now(), w, h);
 }
 
-/** État de la scène en cours (pour les tests : déclencher un moment sans attendre le hasard). */
+/** State of the current scene (for tests: trigger a moment without waiting for chance). */
 export const ambientState = () => (scene ? scene.state : null);
 
-/** Lance l'animation du thème `theme` s'il en a une, sinon l'arrête. */
+/** Starts the animation of theme `theme` if it has one, otherwise stops it. */
 export function setAmbient(theme) {
   const box = document.getElementById('canvas');
   const can = SCENES[theme] && !reduced && box && typeof box.prepend === 'function'
@@ -2008,10 +2008,10 @@ export function setAmbient(theme) {
     box.prepend(layer);
   }
   const canvas = layer.firstChild;
-  canvas.width = 0; // nouvelle scène : préparée à la première image
+  canvas.width = 0; // new scene: prepared on the first frame
   scene = { name: theme, state: null };
-  document.documentElement.dataset.ambient = theme; // le CSS peut alléger le motif fixe du fond
+  document.documentElement.dataset.ambient = theme; // the CSS can lighten the still background pattern
   frame();
-  // Après une première image réussie : une erreur de dessin ne laisse pas de minuteur tourner
+  // After a first successful frame: a drawing error doesn't leave a timer running
   if (!timer) timer = setInterval(frame, FRAME);
 }

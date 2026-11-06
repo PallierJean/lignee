@@ -1,6 +1,6 @@
 /**
- * Paires de fiches écartées par « Ce n'est pas un doublon », gardées dans ce navigateur,
- * par arbre : { [arbre]: ['idA|idB', …] }.
+ * Pairs of records dismissed with "Not a duplicate", kept in this browser,
+ * per tree: { [tree]: ['idA|idB', …] }.
  */
 import { DUP_KEY } from '../config.js';
 import { S } from '../state.js';
@@ -13,16 +13,16 @@ function readAll() {
   }
 }
 
-/** Paires écartées dans l'arbre ouvert. */
+/** Dismissed pairs in the open tree. */
 export const ignoredPairs = () => new Set(readAll()[S.tree] || []);
 
-/** Écarte durablement la paire `key` (« idA|idB ») de l'arbre ouvert. */
+/** Permanently dismisses the pair `key` ("idA|idB") in the open tree. */
 export function ignorePair(key) {
   const all = readAll();
   all[S.tree] = [...new Set([...(all[S.tree] || []), key])];
   try {
     localStorage.setItem(DUP_KEY, JSON.stringify(all));
   } catch (e) {
-    /* stockage plein ou refusé : la paire réapparaîtra au prochain chargement */
+    /* storage full or refused: the pair will reappear on the next load */
   }
 }

@@ -1,4 +1,4 @@
-/** Formulaire d'ajout et de modification d'une personne. */
+/** Form to add or edit a person. */
 import { S } from '../state.js';
 import { narrow } from '../config.js';
 import { esc } from '../utils/dom.js';
@@ -24,8 +24,8 @@ const TITLE_PREFIX = {
 const SEXES = [['M', 'f.sexM'], ['F', 'f.sexF'], ['U', 'f.sexU']];
 
 /**
- * Date d'un champ du formulaire : en toutes lettres quand elle est reconnue (« 01/01/1900 »,
- * reportée de l'INSEE ou saisie ainsi, s'affiche « 01 Janvier 1900 »), sinon telle que saisie.
+ * Date of a form field: spelled out when recognised ("01/01/1900",
+ * reported from INSEE or entered that way, shows as "01 Janvier 1900"), otherwise as entered.
  */
 const dateValue = (s) => longDate(s || '');
 
@@ -37,9 +37,9 @@ export function blankDraft() {
   };
 }
 
-/** Bloc photo du formulaire : aperçu, choix du fichier, retrait. */
+/** Photo block of the form: preview, file choice, removal. */
 function photoField(d) {
-  // Sans photo : l'avatar du sexe choisi (mis à jour quand le sexe change, voir events.js)
+  // No photo: the avatar of the chosen sex (updated when the sex changes, see events.js)
   const avatar = avatarOf(d.sex);
   const preview = d.photo
     ? `<img class="photo" src="${esc(photoSrc(d.photo))}" alt="${t('f.photoChosen')}">`
@@ -54,7 +54,7 @@ function photoField(d) {
     </div>`;
 }
 
-/** Options d'une liste déroulante de personnes, triées par nom. */
+/** Options of a drop-down list of people, sorted by name. */
 export function personOptions(selected, exclude = new Set()) {
   return [...S.people]
     .filter(([k]) => !exclude.has(k))
@@ -66,14 +66,14 @@ export function personOptions(selected, exclude = new Set()) {
     .join('');
 }
 
-/** Options de la situation familiale, accordées au sexe choisi. */
+/** Family situation options, inflected for the chosen sex. */
 export function situationOptions(d) {
   return `<option value="">${esc(situationNoneLabel(d.sex))}</option>` + SITUATIONS
     .map(([code]) => `<option value="${code}"${d.situation === code ? ' selected' : ''}>${esc(situationLabel(code, d.sex))}</option>`)
     .join('');
 }
 
-/** Conjoint décédé d'un veuvage : les autres conjoints du couple, les morts seulement s'il y en a. */
+/** Deceased spouse of a widowhood: the couple's other spouses, only the dead ones if there are any. */
 function formerOptions(e, u) {
   const ids = new Set([...(e.id ? partnersOf(e.id) : []), ...partnersOf(u.other)].map((x) => x.id));
   ids.delete(e.id);
@@ -84,27 +84,27 @@ function formerOptions(e, u) {
   return personOptions(u.formerId, new Set([...S.people.keys()].filter((k) => !shown.has(k))));
 }
 
-/** Lieu en quatre champs : ville, pays (France par défaut), lieu-dit et département ; `id` en préfixe (« f-bplace-city »). */
+/** Place in four fields: city, country (France by default), locality and department; `id` as prefix ("f-bplace-city"). */
 export function placeFields(id, value) {
   const pl = parsePlace(value);
   pl.country = pl.country || countryLabel('France');
-  // Sous le département, son nom d'après le numéro (mis à jour à la saisie, voir events.js)
+  // Under the department, its name from the number (updated on input, see events.js)
   const extra = (k) => (k === 'dept' ? `<small class="dept-name" id="${id}-deptname">${esc(departmentName(pl.dept))}</small>` : '');
   const field = (k, cls = '') => `<label class="fld${cls}"><span>${t('f.place_' + k)}</span>`
     + `<input id="${id}-${k}" value="${esc(pl[k])}" list="dl-place-${k}">${extra(k)}</label>`;
   return `<div class="place3">${field('city', ' city')}${field('country')}${field('hamlet')}${field('dept')}</div>`;
 }
 
-/** Nom d'un pays dans la langue de l'interface (les lieux gardent le nom saisi). */
+/** A country's name in the interface language (places keep the name entered). */
 function countryLabel(fr) {
   const row = COUNTRIES.find(([name]) => name === fr);
   return row && getLang() === 'en' ? row[1] : fr;
 }
 
-/** Vrai si le pays du lieu `id` (préfixe de placeFields) est la France, ou vide. */
+/** True if the country of place `id` (placeFields prefix) is France, or empty. */
 const inFrance = (id) => isFrance((document.getElementById(id + '-country') || {}).value);
 
-/** Texte sous le département `id` (préfixe de placeFields) : son nom, ou l'écart avec la ville. */
+/** Text under department `id` (placeFields prefix): its name, or the mismatch with the city. */
 export function departmentHint(id) {
   const value = (k) => (document.getElementById(id + '-' + k) || {}).value || '';
   const name = departmentName(value('dept'));
@@ -116,8 +116,8 @@ export function departmentHint(id) {
 }
 
 /**
- * La ville prime : quand elle n'existe que dans un département, celui-ci est rempli ou corrigé.
- * Dans plusieurs départements, le texte sous le champ les cite, sans rien changer.
+ * The city prevails: when it exists in only one department, that department is filled in or corrected.
+ * In several departments, the text under the field lists them, without changing anything.
  */
 export async function departmentFromCity(id) {
   await loadCommunes();
@@ -126,7 +126,7 @@ export async function departmentFromCity(id) {
   const label = document.getElementById(id + '-deptname');
   if (!city || !dept || !label) return;
   if (!inFrance(id)) {
-    label.textContent = departmentHint(id); // à l'étranger, la ville ne dit rien du département
+    label.textContent = departmentHint(id); // abroad, the city says nothing about the department
     return;
   }
   const expected = cityDepartments(city.value);
@@ -138,18 +138,18 @@ export async function departmentFromCity(id) {
   } else label.textContent = departmentHint(id);
 }
 
-/** Lieu saisi dans les quatre champs de placeFields(), en un seul texte (la France n'y est pas écrite). */
+/** Place entered in the four fields of placeFields(), as a single text (France isn't written). */
 export function placeValue(id) {
   const part = (k) => {
     const el = document.getElementById(id + '-' + k);
     return el ? el.value : '';
   };
-  // Un pays connu est écrit en français, comme les autres lieux de l'arbre
+  // A known country is written in French, like the other places in the tree
   const country = countryName(part('country')) || part('country');
   return formatPlace({ hamlet: part('hamlet'), city: part('city'), dept: part('dept'), country });
 }
 
-/** Lignes d'événements du formulaire. */
+/** Event rows of the form. */
 function eventRows(e) {
   return e.events.map((x, i) => (x.removed ? '' : `
     <div class="urow">
@@ -163,7 +163,7 @@ function eventRows(e) {
     </div>`)).join('');
 }
 
-/** Faits qu'une source peut appuyer : naissance, décès, événements, unions enregistrées. */
+/** Facts a source can support: birth, death, events, recorded unions. */
 function factOptions(e, selected) {
   const facts = [['', t('f.srcFactNone')], ['birth', t('birth')], ['death', t('death')]];
   for (const x of e.events) {
@@ -175,7 +175,7 @@ function factOptions(e, selected) {
   return facts.map(([v, label]) => `<option value="${esc(v)}"${v === selected ? ' selected' : ''}>${esc(label)}</option>`).join('');
 }
 
-/** Galerie du formulaire : une ligne par image. */
+/** Gallery of the form: one row per image. */
 function mediaRows(e) {
   return e.media.map((x, i) => (x.removed ? '' : `
     <div class="urow">
@@ -191,7 +191,7 @@ function mediaRows(e) {
     </div>`)).join('');
 }
 
-/** Lignes de sources du formulaire. */
+/** Source rows of the form. */
 function sourceRows(e) {
   return e.sources.map((x, i) => (x.removed ? '' : `
     <div class="urow">
@@ -234,12 +234,12 @@ export function formHTML() {
   const e = S.edit;
   const d = e.draft;
   const of = e.of ? P(e.of) : null;
-  const title = e.id ? t('editFiche') : e.rel && of ? t(TITLE_PREFIX[e.rel]) + fullName(of) : t('f.new');
+  const title = e.id ? t('editRecord') : e.rel && of ? t(TITLE_PREFIX[e.rel]) + fullName(of) : t('f.new');
   const self = new Set(e.id ? [e.id] : []);
-  // Nom déduit des parents : repère pour ne pas écraser un nom saisi à la main (voir events.js)
+  // Surname derived from the parents: marker so as not to overwrite a surname typed by hand (see events.js)
   const auto = esc(birthSurname(d.fatherId, d.motherId));
 
-  // Suggestions de saisie : parties des lieux et noms déjà utilisés
+  // Input suggestions: parts of places and names already used
   const parts = { hamlet: new Set(), city: new Set(), dept: new Set() };
   for (const { name } of placeUses()) {
     const pl = parsePlace(name);
@@ -341,7 +341,7 @@ export function formHTML() {
   </form>`;
 }
 
-/** Recopie les valeurs saisies dans le brouillon S.edit (avant un nouveau rendu ou l'enregistrement). */
+/** Copies the values entered into the S.edit draft (before a new render or saving). */
 export function captureDraft() {
   const e = S.edit;
   if (!e || !document.getElementById('editForm')) return;
@@ -350,7 +350,7 @@ export function captureDraft() {
     const el = document.getElementById(id);
     return el ? el.value : '';
   };
-  // Date affichée en toutes lettres (dateValue) : la saisie d'origine reste si elle désigne le même jour
+  // Date shown spelled out (dateValue): the original input stays if it refers to the same day
   const date = (id, before) => {
     const v = value(id);
     return dateValue(v) === dateValue(before) ? before : v;
