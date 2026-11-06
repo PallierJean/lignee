@@ -20,24 +20,24 @@ def stars():
 def porcelaine():
     """Décor de faïence en bleu de four : médaillons à rosace, rinceaux feuillus, fleurettes et
     perles d'or ; tout se raccorde d'une tuile à l'autre (médaillons aux coins, fleurettes aux bords)."""
-    C, G = '#1F4690', '#C9A227'
+    C, G = '#1A3F8F', '#C9A227'
     def medallion(cx, cy):
         petals = ''.join(f"<ellipse cx='{cx}' cy='{cy - 15}' rx='6.5' ry='15' transform='rotate({a} {cx} {cy})'/>" for a in range(0, 360, 45))
         pearls = ''.join(f"<circle cx='{cx + 33*math.cos(math.radians(a)):.1f}' cy='{cy + 33*math.sin(math.radians(a)):.1f}' r='1.6' fill='{G if a % 30 else C}'/>" for a in range(0, 360, 15))
-        return (f"<g opacity='.3'><circle cx='{cx}' cy='{cy}' r='44' fill='none' stroke='{C}' stroke-width='1.8'/>"
+        return (f"<g opacity='.48'><circle cx='{cx}' cy='{cy}' r='44' fill='none' stroke='{C}' stroke-width='1.8'/>"
                 f"<circle cx='{cx}' cy='{cy}' r='39' fill='none' stroke='{C}' stroke-width='.7'/>"
                 f"<g>{pearls}</g>"
-                f"<g fill='{C}' fill-opacity='.35' stroke='{C}' stroke-width='.9'>{petals}</g>"
+                f"<g fill='{C}' fill-opacity='.5' stroke='{C}' stroke-width='.9'>{petals}</g>"
                 f"<circle cx='{cx}' cy='{cy}' r='5.5' fill='{C}'/></g>"
                 f"<circle cx='{cx}' cy='{cy}' r='47.5' fill='none' stroke='{G}' stroke-width='1.4' opacity='.7'/>"
                 f"<circle cx='{cx}' cy='{cy}' r='36.5' fill='none' stroke='{G}' stroke-width='.6' opacity='.55'/>"
                 f"<circle cx='{cx}' cy='{cy}' r='2.4' fill='{G}' opacity='.9'/>")
     def floweret(cx, cy):
         petals = ''.join(f"<circle cx='{cx + 6*math.cos(math.radians(a)):.1f}' cy='{cy + 6*math.sin(math.radians(a)):.1f}' r='4'/>" for a in range(-90, 270, 72))
-        return f"<g fill='{C}' opacity='.26'>{petals}</g><circle cx='{cx}' cy='{cy}' r='2.4' fill='{G}' opacity='.75'/>"
+        return f"<g fill='{C}' opacity='.45'>{petals}</g><circle cx='{cx}' cy='{cy}' r='2.4' fill='{G}' opacity='.9'/>"
     def vine(d, leaves):
         lf = ''.join(f"<ellipse cx='{x}' cy='{y}' rx='7' ry='3' transform='rotate({r} {x} {y})'/>" for x, y, r in leaves)
-        return (f"<g opacity='.26'><path d='{d}' fill='none' stroke='{C}' stroke-width='1.4' stroke-linecap='round'/>"
+        return (f"<g opacity='.42'><path d='{d}' fill='none' stroke='{C}' stroke-width='1.4' stroke-linecap='round'/>"
                 f"<g fill='{C}'>{lf}</g></g>")
     b = medallion(180, 180) + ''.join(medallion(x, y) for x in (0, 360) for y in (0, 360))
     b += ''.join(floweret(x, y) for x, y in ((180, 0), (180, 360), (0, 180), (360, 180)))
@@ -52,7 +52,7 @@ def porcelaine():
         ang = math.degrees(math.atan2(dy, dx))
         b += vine(d, [(round(l1[0]), round(l1[1]), ang - 35), (round(l2[0]), round(l2[1]), ang + 40), (round(l3[0]), round(l3[1]), ang - 30)])
         t0 = at(48, 18)
-        b += f"<path d='M{t0[0]:.0f} {t0[1]:.0f}c{px*8+dx*4:.0f} {py*8+dy*4:.0f} {px*14-dx*2:.0f} {py*14-dy*2:.0f} {px*8-dx*6:.0f} {py*8-dy*6:.0f}' fill='none' stroke='{C}' stroke-width='.9' opacity='.26'/>"
+        b += f"<path d='M{t0[0]:.0f} {t0[1]:.0f}c{px*8+dx*4:.0f} {py*8+dy*4:.0f} {px*14-dx*2:.0f} {py*14-dy*2:.0f} {px*8-dx*6:.0f} {py*8-dy*6:.0f}' fill='none' stroke='{C}' stroke-width='.9' opacity='.42'/>"
         b += f"<circle cx='{t0[0] + px*8 - dx*6:.0f}' cy='{t0[1] + py*8 - dy*6:.0f}' r='1.5' fill='{G}' opacity='.75'/>"
     # Perles d'or semées
     b += f"<g fill='{G}' opacity='.7'>" + ''.join(f"<circle cx='{x}' cy='{y}' r='1.6'/>" for x, y in ((90, 90), (270, 90), (90, 270), (270, 270), (135, 45), (225, 315), (45, 225), (315, 135))) + "</g>"
@@ -89,8 +89,8 @@ THEMES = [
         ok='#8FE3C0', halo='#FFE7A3', male='#7FB2FF', female='#F5A3D0', scrim='rgba(2, 4, 16, .7)'),
    stars(), '400px', {}),
   ('porcelaine', 'Porcelaine de Limoges : émail blanc, décor de faïence en bleu de four (médaillons, rinceaux, fleurettes), filets et perles d’or ; frises festonnées, fiches en plaques émaillées, la personne au centre en bleu de four', 'light',
-   dict(paper='#F3F6FB', surface='#FFFFFF', ink='#10224A', muted='#45567C', line='#BFCBE0', edge='#1F4690', dot='#E3EAF5',
-        accent='#1F4690', **{'accent-ink': '#FFFFFF', 'accent-soft': '#DCE5F5'}, warn='#7A5200', danger='#A3263A', **{'danger-soft': '#F6DDE2'},
+   dict(paper='#FBF9F3', surface='#FFFFFF', ink='#10224A', muted='#45567C', line='#C6D0E4', edge='#1A3F8F', dot='#ECE6D8',
+        accent='#1A3F8F', **{'accent-ink': '#FFFFFF', 'accent-soft': '#DCE5F5'}, warn='#7A5200', danger='#A3263A', **{'danger-soft': '#F6DDE2'},
         ok='#2A6A4A', halo='#B8901A', male='#2E5A9E', female='#B04A7A', scrim='rgba(10, 20, 40, .45)'),
    porcelaine(), '360px', {'--frieze': uri(porcelain_frieze())}),
   ('matrix', 'Matrix : pluie de signes verts qui défile sur la toile (ui/rain.js), fiches de console', 'dark',
@@ -249,6 +249,12 @@ out.append("""
   box-shadow: inset 0 0 0 2px #FFFFFF, inset 0 0 0 3.5px #C9A227, inset 0 0 0 5px #FFFFFF, inset 0 0 0 5.6px rgba(201, 162, 39, .6), 0 2px 6px rgba(16, 34, 74, .12);
 }
 
+/* Fiches « Ajouter » : un simple cadre pointillé, sans filets */
+:root[data-theme="porcelaine"] .card.ph {
+  background: rgba(255, 255, 255, .7);
+  box-shadow: none;
+}
+
 /* Boutons principaux et onglet choisi : un filet d'or */
 :root[data-theme="porcelaine"] .btn.primary,
 :root[data-theme="porcelaine"] .seg button[aria-pressed="true"] {
@@ -259,22 +265,15 @@ out.append("""
   box-shadow: inset 0 -3px 0 #C9A227;
 }
 
-/* La personne au centre : une plaque bleu de four bordée d'or, au reflet blanc */
+/* La personne au centre : plaque blanche cerclée de filets d'or et de bleu de four, nom en bleu */
 :root[data-theme="porcelaine"] .card.is-focus {
-  border-color: #C9A227;
-  background: radial-gradient(120% 90% at 28% 18%, #3B66B8 0%, #1F4690 55%, #15346E 100%);
-  box-shadow: inset 0 0 0 2px #1F4690, inset 0 0 0 3px #E2C15A, 0 4px 12px rgba(16, 34, 74, .3);
-  color: #FFFFFF;
+  border-color: #1A3F8F;
+  background: radial-gradient(120% 90% at 28% 18%, #FFFFFF 0%, #F1F5FD 55%, #DFE8F8 100%);
+  box-shadow: inset 0 0 0 2px #FFFFFF, inset 0 0 0 4px #C9A227, inset 0 0 0 6px #FFFFFF, inset 0 0 0 7px #1A3F8F, 0 4px 14px rgba(16, 34, 74, .25);
 }
 
-:root[data-theme="porcelaine"] .card.is-focus * {
-  color: #F2F5FF;
-}
-
-/* Son symbole (homme, femme) en blanc ; son numéro Sosa, une pastille d'or */
-:root[data-theme="porcelaine"] .card.is-focus .sx {
-  background: #F2F5FF;
-  opacity: .9;
+:root[data-theme="porcelaine"] .card.is-focus .g {
+  color: #1A3F8F;
 }
 
 /* Son numéro Sosa : une pastille d'or */
