@@ -356,6 +356,37 @@
   }
 }
 
+/* Téléphone : barre d'outils et légende sur une seule ligne, qu'on fait défiler du doigt */
+@media (max-width: 600px) {
+  .stage-bar,
+  .legend {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .stage-bar {
+    gap: 14px;
+    padding: 6px 10px;
+  }
+
+  .stage-bar > *,
+  .legend > * {
+    flex: none;
+  }
+
+  .stage-bar .btn {
+    white-space: nowrap;
+  }
+
+  .legend {
+    gap: 14px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card {
     transition: none;
