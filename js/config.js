@@ -31,6 +31,9 @@ export const REPO_KEY = 'lignee.repo.v1';   // repository linked to each tree, w
 export const GEO_KEY = 'lignee.geo.v1';     // coordinates of places already located
 export const INSEE_KEY = 'lignee.insee.v1'; // INSEE death records found for each record
 export const DUP_KEY = 'lignee.dups.v1';     // "Not a duplicate" pairs, per tree
+export const EXPORT_KEY = 'lignee.exported.v1'; // time of each tree's last export
+export const EXPORT_STALE = 30;               // days after which the local banner reminds to export
+export const BANNER_SNOOZE = 7;               // days the local banner stays closed
 
 // Starting tree (and tree of the data created before multiple trees were supported);
 // its default name is t('ts.default')
