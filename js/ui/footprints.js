@@ -1,11 +1,14 @@
 /**
- * Thème « Carte du Maraudeur » : des empreintes rouges cheminent sur la toile. Chaque trajet a son
- * départ, sa direction, sa courbure et sa longueur, tirés au hasard ; ses pas s'impriment l'un après
- * l'autre puis s'effacent (animation step-print, css/tokens.css). Rien ne se répète d'un endroit à
- * l'autre, contrairement à un motif de fond. Arrêté hors de ce thème ou si le système demande
- * moins d'animations (les empreintes sont alors fixes, dans le fond).
+ * Thème « Carte du Maraudeur » : des empreintes rouges cheminent sur la toile, chaque trajet suivi
+ * d'un petit parchemin au nom d'une personne de l'arbre, comme sur la carte du roman. Chaque trajet a
+ * son départ, sa direction, sa courbure et sa longueur, tirés au hasard ; ses pas s'impriment l'un
+ * après l'autre puis s'effacent (animation step-print, css/tokens.css). Rien ne se répète d'un
+ * endroit à l'autre, contrairement à un motif de fond. Arrêté hors de ce thème ou si le système
+ * demande moins d'animations (les empreintes sont alors fixes, dans le fond).
  */
 import { reduced } from '../config.js';
+import { S } from '../state.js';
+import { fullName } from '../model/people.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const EVERY = 2200;       // un nouveau trajet toutes les … ms
@@ -33,6 +36,24 @@ function foot(x, y, angle, left, delay) {
   return g;
 }
 
+/** Parchemin au nom d'une personne de l'arbre, tirée au hasard ; vide si l'arbre est vide. */
+function nameTag() {
+  const people = [...S.people.values()];
+  if (!people.length) return null;
+  const name = fullName(people[Math.floor(Math.random() * people.length)]);
+  const half = name.length * 3.3 + 9;
+  const g = document.createElementNS(NS, 'g');
+  g.setAttribute('class', 'step-name');
+  const scroll = document.createElementNS(NS, 'path');
+  scroll.setAttribute('d', `M${-half} -9H${half}l-5 9 5 9H${-half}l5-9z`);
+  const text = document.createElementNS(NS, 'text');
+  text.setAttribute('y', '4');
+  text.setAttribute('text-anchor', 'middle');
+  text.textContent = name;
+  g.append(scroll, text);
+  return g;
+}
+
 /** Un trajet au hasard dans la zone visible : il tourne peu à peu, puis ses pas s'effacent. */
 function walk() {
   if (document.hidden) return;
@@ -48,13 +69,21 @@ function walk() {
   const turn = rand(-7, 7); // degrés par pas : une courbe douce
   const steps = Math.round(rand(5, 11));
   const trail = document.createElementNS(NS, 'g');
+  const tag = nameTag();
   for (let i = 0; i < steps; i++) {
     const rad = (heading * Math.PI) / 180;
     const side = i % 2 ? 1 : -1;
     trail.append(foot(x + Math.cos(rad) * 5 * side, y + Math.sin(rad) * 5 * side, heading, side < 0, i * STEP));
+    // Le parchemin suit les pas, juste au-dessus
+    if (tag) setTimeout((at) => tag.setAttribute('transform', at), i * STEP, `translate(${x.toFixed(1)} ${(y - 24).toFixed(1)})`);
     x += Math.sin(rad) * STRIDE;
     y -= Math.cos(rad) * STRIDE;
     heading += turn;
+  }
+  if (tag) {
+    trail.append(tag);
+    setTimeout(() => tag.setAttribute('class', 'step-name on'), 0);
+    setTimeout(() => tag.setAttribute('class', 'step-name'), steps * STEP + LIFE * 0.5);
   }
   svg.append(trail);
   setTimeout(() => trail.remove(), steps * STEP + LIFE);
