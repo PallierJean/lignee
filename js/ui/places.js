@@ -1,7 +1,7 @@
 /**
- * Carte des communes : points et migrations, dessinés en SVG sans fond de carte externe.
- * On l'explore : zoom (boutons, molette), déplacement à la souris, recadrage sur un département ;
- * un clic sur une commune liste ses personnes et met ses migrations en évidence.
+ * Commune map: dots and migrations, drawn in SVG with no external base map.
+ * It can be explored: zoom (buttons, wheel), mouse drag, framing a department;
+ * a click on a commune lists its people and highlights its migrations.
  */
 import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
@@ -15,27 +15,27 @@ import { toast } from './toast.js';
 const W = 340;
 const H = 360;
 const PAD = 26;
-const MIN_SPAN = 0.4;  // degrés : une seule commune n'est pas agrandie à l'infini
-const ZOOM = 1.6;      // facteur d'un cran de zoom
-const K_MAX = 4000;    // pixels par degré au plus
+const MIN_SPAN = 0.4;  // degrees: a single commune isn't enlarged infinitely
+const ZOOM = 1.6;      // factor of one zoom step
+const K_MAX = 4000;    // pixels per degree at most
 
-// Contour très simplifié de la France, seul repère du fond : [longitude, latitude]
+// Very simplified outline of France, the only background landmark: [longitude, latitude]
 const FRANCE = [[2.5, 51.1], [4.2, 50], [5.9, 49.5], [8.2, 49], [7.6, 47.6], [6.1, 46.2], [7, 45.9], [6.7, 45], [7.6, 44.1],
   [7.5, 43.8], [6, 43.1], [5.3, 43.3], [4.5, 43.4], [3.7, 43.4], [3, 42.5], [1.5, 42.5], [-1.7, 43.3], [-1.2, 44.6], [-1.2, 46.1],
   [-2.2, 47.2], [-3.1, 47.6], [-4.8, 48.4], [-2, 48.65], [-1.9, 49.7], [-1.3, 49.7], [-1.1, 49.3], [0.1, 49.5], [1.6, 50.4], [1.8, 50.9]];
 
-let busy = null;     // { done, total } pendant la localisation
-let view = null;     // { lon, lat, k } : centre et pixels par degré ; null : tout voir
-let selected = '';   // commune choisie
-let drag = null;     // { x, y, lon, lat, k, moved } pendant un glissé
+let busy = null;     // { done, total } while locating
+let view = null;     // { lon, lat, k }: centre and pixels per degree; null: show everything
+let selected = '';   // chosen commune
+let drag = null;     // { x, y, lon, lat, k, moved } during a drag
 
-/** Communes localisées : [{ name, n, ids, lat, lon }]. */
+/** Located communes: [{ name, n, ids, lat, lon }]. */
 function located() {
   const known = knownPlaces();
   return cityUses().filter((u) => known.get(u.name)).map((u) => ({ ...u, ...known.get(u.name) }));
 }
 
-/** Vue qui montre toutes ces communes. */
+/** View that shows all these communes. */
 function fit(points) {
   const lons = points.map((x) => x.lon);
   const lats = points.map((x) => x.lat);
@@ -47,7 +47,7 @@ function fit(points) {
   return { lon, lat, k: Math.min((W - 2 * PAD) / spanX, (H - 2 * PAD) / spanY) };
 }
 
-/** Passage des coordonnées à la carte (xy) et retour (lonLat), pour la vue `v`. */
+/** Conversion from coordinates to the map (xy) and back (lonLat), for view `v`. */
 function projector(v) {
   const squeeze = Math.cos((v.lat * Math.PI) / 180);
   return {
@@ -76,7 +76,7 @@ function mapSVG(points, moves, v) {
     return `<circle class="pt${p.name === selected ? ' sel' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(3 + 6 * Math.sqrt(p.n / maxN)).toFixed(1)}"`
       + ` data-act="map-point" data-name="${esc(p.name)}"><title>${esc(p.name)} (${p.n})</title></circle>`;
   }).join('');
-  // Les communes les plus citées d'abord (la choisie avant tout) ; une étiquette qui en recouvrirait une autre est omise
+  // Most cited communes first (the chosen one above all); a label that would overlap another is left out
   const placed = [];
   const labels = [...shown].sort((a, b) => (b.name === selected) - (a.name === selected) || b.n - a.n).map((p) => {
     const [x, y] = at.get(p.name);
@@ -92,7 +92,7 @@ function mapSVG(points, moves, v) {
     + `<polygon class="fr" points="${outline}"/>${lines}${dots}${labels}</svg>`;
 }
 
-/** Départements (ou pays) des communes localisées, les plus cités d'abord : [{ key, label, n, points }]. */
+/** Departments (or countries) of the located communes, most cited first: [{ key, label, n, points }]. */
 function regions(points) {
   const groups = new Map();
   for (const p of points) {
@@ -108,7 +108,7 @@ function regions(points) {
   return [...groups.values()].sort((a, b) => b.n - a.n);
 }
 
-/** Personnes de la commune choisie, avec un lien vers leur fiche. */
+/** People of the chosen commune, with a link to their record. */
 function placeHTML(points) {
   const p = points.find((x) => x.name === selected);
   if (!p) return '';
@@ -154,7 +154,7 @@ export function mapView() {
   return html;
 }
 
-/** Redessine la carte et la commune choisie, sans le reste de la vue (glissé, molette). */
+/** Redraws the map and the chosen commune, without the rest of the view (drag, wheel). */
 function redraw() {
   const box = $('#mapBox');
   const points = located();
@@ -163,47 +163,47 @@ function redraw() {
   $('#mapPlace').innerHTML = placeHTML(points);
 }
 
-/** Zoom d'un cran (`d` = 1 avant, -1 arrière) autour du point (x, y) de la carte, le centre par défaut. */
+/** Zooms one step (`d` = 1 in, -1 out) around map point (x, y), the centre by default. */
 export function mapZoom(d, x = W / 2, y = H / 2) {
   const points = located();
   if (!points.length) return;
   const v = view || fit(points);
   const [lon, lat] = projector(v).lonLat(x, y);
   const k = Math.min(K_MAX, Math.max(5, v.k * ZOOM ** d));
-  // Le point visé reste sous la souris
+  // The target point stays under the mouse
   const squeeze = Math.cos((v.lat * Math.PI) / 180);
   view = { k, lon: lon - (x - W / 2) / (squeeze * k), lat: lat + (y - H / 2) / k };
   redraw();
 }
 
-/** Recadre sur un département ou un pays (`key`), ou sur toutes les communes (`key` vide). */
+/** Frames a department or a country (`key`), or all communes (empty `key`). */
 export function mapFit(key) {
   const g = key && regions(located()).find((x) => x.key === key);
   view = g ? fit(g.points) : null;
   redraw();
 }
 
-/** Clic sur une commune : ses personnes ; un second clic la quitte. */
+/** Click on a commune: its people; a second click leaves it. */
 export function mapPick(name) {
-  if (drag && drag.moved) return; // fin d'un glissé, pas un clic
+  if (drag && drag.moved) return; // end of a drag, not a click
   selected = selected === name ? '' : name;
   redraw();
 }
 
-/** Point de la carte (coordonnées du SVG) sous la souris. */
+/** Map point (SVG coordinates) under the mouse. */
 function mapPoint(ev) {
   const r = $('#mapBox svg').getBoundingClientRect();
   return [((ev.clientX - r.left) * W) / r.width, ((ev.clientY - r.top) * H) / r.height];
 }
 
-/** Molette sur la carte : zoom autour de la souris. */
+/** Wheel on the map: zoom around the mouse. */
 export function mapWheel(ev) {
   if (!ev.target.closest || !ev.target.closest('#mapBox')) return;
   ev.preventDefault();
   mapZoom(ev.deltaY < 0 ? 1 : -1, ...mapPoint(ev));
 }
 
-/** Glisser la carte : appui, déplacement, relâchement. */
+/** Dragging the map: press, move, release. */
 export function mapDrag(ev) {
   if (ev.type === 'pointerdown') {
     if (!ev.target.closest || !ev.target.closest('#mapBox') || ev.button !== 0) return;
@@ -225,14 +225,14 @@ export function mapDrag(ev) {
     redraw();
     return;
   }
-  // Relâché : le clic qui suit voit encore le glissé (mapPick l'ignore), puis on l'oublie
+  // Released: the next click still sees the drag (mapPick ignores it), then it is forgotten
   const done = drag;
   setTimeout(() => {
     if (drag === done) drag = null;
   }, 0);
 }
 
-/** Localise les lieux encore inconnus, puis redessine la carte. */
+/** Locates the places still unknown, then redraws the map. */
 export async function locateMissing(refresh) {
   if (busy) return;
   const known = knownPlaces();
@@ -242,7 +242,7 @@ export async function locateMissing(refresh) {
   try {
     await locatePlaces(names, (done, total) => {
       busy = { done, total };
-      if (S.tab === 'analyse' && S.analyse === 'map') refresh();
+      if (S.tab === 'analysis' && S.analysis === 'map') refresh();
     });
   } catch (e) {
     toast(t('map.failed'), true);

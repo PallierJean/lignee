@@ -1,11 +1,11 @@
 /**
- * Rapprochement avec le fichier des décès de l'INSEE (décès survenus en France depuis 1970),
- * interrogé par server.js chez matchID. Ce module ne fait aucun appel réseau : il dit qui
- * vérifier et avec quoi (inseeQuery), choisit l'acte qui correspond (matchDeath) et liste
- * les écarts avec la fiche (deathDifferences).
+ * Matching against INSEE's death file (deaths in France since 1970),
+ * queried by server.js at matchID. This module makes no network call: it says whom to
+ * check and with what (inseeQuery), picks the matching certificate (matchDeath) and lists
+ * the differences with the record (deathDifferences).
  *
- * Un acte : { first: [prénoms], last, sex, birthDate: 'aaaammjj', birth: { city, dept, country },
- *             deathDate: 'aaaammjj', death: { city, dept, country }, certificate }
+ * A certificate: { first: [given names], last, sex, birthDate: 'yyyymmdd', birth: { city, dept, country },
+ *                  deathDate: 'yyyymmdd', death: { city, dept, country }, certificate }
  */
 import { S } from '../state.js';
 import { P, isDead, partnersOf, childrenOf, sourcesOf } from './people.js';
@@ -16,15 +16,15 @@ import { parsePlace, formatPlace } from './places.js';
 import { isFrance } from './countries.js';
 import { ACCENTED_FIRST_NAMES } from './first-names.js';
 
-export const INSEE_FROM = 1970;  // premiers décès du fichier
-const OLDEST_BIRTH = 1870;        // né avant : mort avant 1970, sauf exception
-const LIVING_AGE = 75;            // une personne marquée vivante n'est vérifiée qu'à partir de cet âge
-const ERA = 15;                   // écart toléré entre une naissance estimée et celle de l'acte
+export const INSEE_FROM = 1970;  // first deaths in the file
+const OLDEST_BIRTH = 1870;        // born before: died before 1970, barring exceptions
+const LIVING_AGE = 75;            // a person marked alive is only checked from this age
+const ERA = 15;                   // tolerated gap between an estimated birth and the certificate's
 
-/** Mots d'un nom, en minuscules sans accents : « Marie-Hélène » -> ['marie', 'helene']. */
+/** Words of a name, lowercase without accents: "Marie-Hélène" -> ['marie', 'helene']. */
 const words = (s) => norm(s).replace(/[^a-z]+/g, ' ').trim().split(' ').filter(Boolean);
 
-/** Ville comparable : sans article de tête, « saint » écrit en entier, sans espaces. */
+/** Comparable city: no leading article, "saint" written in full, no spaces. */
 function cityKey(s) {
   const w = words(s);
   if (['le', 'la', 'les', 'l'].includes(w[0]) && w.length > 1) w.shift();
@@ -32,10 +32,10 @@ function cityKey(s) {
 }
 const sameCity = (a, b) => !!a && !!b && cityKey(a) === cityKey(b);
 
-/** Nom de naissance : nom de jeune fille d'une femme, sinon le nom. */
+/** Birth surname: a woman's maiden name, otherwise the surname. */
 const birthName = (p) => String((p.sex === 'F' && p.maidenName) || p.surname || p.maidenName || '').trim();
 
-/** Mot de l'INSEE (en capitales, sans accents) en minuscules : « HELENE » -> « Helene », « D'ARC » -> « d'Arc ». */
+/** INSEE word (capitals, no accents) in lowercase: "HELENE" -> "Helene", "D'ARC" -> "d'Arc". */
 const PARTICLES = new Set(['de', 'du', 'des', 'la', 'le', 'van', 'von']);
 const capital = (w) => w.toLowerCase().replace(/(^|[-'])(\p{L})/gu, (m, sep, c) => sep + c.toUpperCase())
   .replace(/^D'/, "d'");
@@ -43,7 +43,7 @@ const capital = (w) => w.toLowerCase().replace(/(^|[-'])(\p{L})/gu, (m, sep, c) 
 const key = (w) => words(w).join('');
 const LISTED = new Map(ACCENTED_FIRST_NAMES.map((n) => [key(n), n]));
 
-/** Mots accentués des champs `fields` de l'arbre : « helene » -> « Hélène » (les mots composés, partie par partie). */
+/** Accented words of the tree's `fields`: "helene" -> "Hélène" (compound words, part by part). */
 function treeSpellings(fields) {
   const out = new Map();
   for (const p of S.people.values()) {
@@ -57,21 +57,21 @@ function treeSpellings(fields) {
 }
 
 /**
- * Mot de l'INSEE avec ses accents : écrit comme dans l'arbre s'il y figure accentué, sinon
- * (`listed`) comme dans la liste des prénoms accentués, sinon sans accent.
+ * INSEE word with its accents: written as in the tree if it appears there accented, otherwise
+ * (`listed`) as in the list of accented first names, otherwise without accents.
  */
 const accented = (w, spellings, listed) => w.split('-')
   .map((x) => spellings.get(key(x)) || (listed && LISTED.get(key(x))) || capital(x)).join('-');
 
-/** Nom de l'INSEE : particules en minuscules, accents repris des noms de l'arbre. */
+/** INSEE surname: particles in lowercase, accents taken from the tree's surnames. */
 const nameText = (s, spellings = new Map()) => String(s).trim().split(/\s+/)
   .map((w, i) => (i && PARTICLES.has(w.toLowerCase()) ? w.toLowerCase() : accented(w, spellings, false))).join(' ');
 
 /**
- * Prénoms de l'état civil, dans leur ordre, écrits comme dans la fiche quand elle les a déjà ;
- * les autres reprennent leurs accents (l'INSEE les retire), voir accented :
- * « Marie-Hélène » et MARIE HELENE JEANNE -> « Marie-Hélène Jeanne », MARGUERITE HELENE -> « Marguerite Hélène ».
- * Les prénoms de la fiche absents de l'acte suivent, puis un surnom entre parenthèses.
+ * Civil-registry first names, in their order, written as in the record when it already has them;
+ * the others get their accents back (INSEE strips them), see accented:
+ * "Marie-Hélène" and MARIE HELENE JEANNE -> "Marie-Hélène Jeanne", MARGUERITE HELENE -> "Marguerite Hélène".
+ * The record's first names missing from the certificate follow, then a nickname in brackets.
  */
 function mergedGiven(tree, official, spellings = new Map()) {
   const nick = (String(tree || '').match(/\(.*?\)/g) || []).join(' ');
@@ -86,29 +86,29 @@ function mergedGiven(tree, official, spellings = new Map()) {
     out.push(t ? t.x : accented(parts[i], spellings, true));
     i += t ? t.w.length : 1;
   }
-  // Prénoms de la fiche absents de l'acte (prénom d'usage…) : gardés à la suite
+  // The record's first names missing from the certificate (name in use…): kept after
   return [...out, ...tokens.filter((k) => !used.has(k)).map((k) => k.x), nick].filter(Boolean).join(' ');
 }
 
-/** Où va le nom de naissance : nom de jeune fille d'une femme (le nom d'usage reste), sinon le nom. */
+/** Where the birth surname goes: a woman's maiden name (the married name stays), otherwise the surname. */
 const birthField = (p) => (p.sex === 'F' && (p.maidenName || p.surname) ? 'maidenName' : 'surname');
 
-/** Premier prénom usuel, composé compris : « Jean-Baptiste Louis » -> « Jean-Baptiste ». */
+/** First usual given name, compounds included: "Jean-Baptiste Louis" -> "Jean-Baptiste". */
 function firstGiven(p) {
   const w = String(p.given || '').replace(/\(.*?\)/g, ' ').split(/[\s,]+/).find((x) => /\p{L}/u.test(x));
   return w ? w.replace(/[^\p{L}'-]/gu, '') : '';
 }
 
-/** Date de l'acte (aaaammjj) -> { y, m, d }, 0 pour une partie inconnue ; null si absente. */
+/** Certificate date (yyyymmdd) -> { y, m, d }, 0 for an unknown part; null if missing. */
 function actDate(s) {
   const m = /^(\d{4})(\d{2})(\d{2})$/.exec(String(s || ''));
   return m ? { y: +m[1], m: +m[2], d: +m[3] } : null;
 }
 
-// Mois en français, comme on les saisit : « 12 Décembre 1972 »
+// Months in French, as they are typed: "12 Décembre 1972"
 const MONTHS = DICT.fr.months.map((m) => m.charAt(0).toUpperCase() + m.slice(1));
 
-/** « 12 Décembre 1972 », la forme enregistrée dans la fiche quand on reporte une date de l'acte. */
+/** "12 Décembre 1972", the form stored in the record when a date is reported from the certificate. */
 export function actDateText(s) {
   const a = actDate(s);
   if (!a) return '';
@@ -116,7 +116,7 @@ export function actDateText(s) {
   return (a.d ? String(a.d).padStart(2, '0') + ' ' : '') + MONTHS[a.m - 1] + ' ' + a.y;
 }
 
-/** true si la date de la fiche et celle de l'acte concordent, false si elles se contredisent, null sinon. */
+/** true if the record's date and the certificate's agree, false if they contradict, null otherwise. */
 function sameDate(text, act) {
   const a = actDate(act);
   const b = dateBounds(text);
@@ -126,13 +126,13 @@ function sameDate(text, act) {
   return hi >= b.lo && lo <= b.hi;
 }
 
-/** Date de la fiche complète et sans approximation (jour, mois, année). */
+/** The record's date, complete and exact (day, month, year). */
 const exactDate = (text) => {
   const p = dateParts(text);
   return !!(p && !p.q && p.d);
 };
 
-/** Année de naissance connue, sinon estimée d'après le décès, un conjoint, les enfants ou les parents. */
+/** Known birth year, otherwise estimated from the death, a spouse, the children or the parents. */
 export function estimatedBirth(id) {
   const p = P(id);
   const y = (x) => (x ? yearOf(x.birthDate) : null);
@@ -150,9 +150,9 @@ export function estimatedBirth(id) {
 }
 
 /**
- * Ce qui part chez matchID pour cette personne : { lastName, firstName, sex?, birthDate? },
- * ou null si elle n'est pas à vérifier : morte avant 1970, née avant 1870, ou vivante et
- * de moins de 75 ans (ou d'âge inconnu) — les vivants plus jeunes ne sont jamais envoyés.
+ * What is sent to matchID for this person: { lastName, firstName, sex?, birthDate? },
+ * or null if they are not to be checked: died before 1970, born before 1870, or alive and
+ * under 75 (or of unknown age) — younger living people are never sent.
  */
 export function inseeQuery(id, year = new Date().getFullYear()) {
   const p = P(id);
@@ -174,10 +174,10 @@ export function inseeQuery(id, year = new Date().getFullYear()) {
   return q;
 }
 
-/** Empreinte de la question posée : une fiche est revérifiée quand elle change. */
+/** Fingerprint of the question asked: a record is checked again when it changes. */
 export const inseeSignature = (q) => (q ? [q.lastName, q.firstName, q.sex || '', q.birthDate || ''].join('|') : '');
 
-/** Actes qui peuvent être cette personne : même sexe, même premier prénom, naissance compatible. */
+/** Certificates that may be this person: same sex, same first given name, compatible birth. */
 export function candidates(id, acts) {
   const p = P(id);
   const first = words(firstGiven(p));
@@ -192,7 +192,7 @@ export function candidates(id, acts) {
   });
 }
 
-/** Points de concordance d'un acte avec la fiche, et ce qui concorde. */
+/** Points of agreement of a certificate with the record, and what agrees. */
 function score(p, a) {
   let n = 0;
   const why = [];
@@ -218,9 +218,9 @@ function score(p, a) {
 }
 
 /**
- * Acte retenu pour la personne : { act, level, others } ou null. level vaut 'sure' (naissance
- * exacte identique, sans homonyme), 'likely' (naissance ou décès concordants, sans homonyme
- * aussi bon) ou 'lead' (piste : seuls le nom et le prénom concordent vraiment).
+ * Certificate chosen for the person: { act, level, others } or null. level is 'sure' (identical
+ * exact birth, no namesake), 'likely' (matching birth or death, no namesake as good)
+ * or 'lead' (only the surname and first name really match).
  */
 export function matchDeath(id, acts) {
   const p = P(id);
@@ -236,22 +236,22 @@ export function matchDeath(id, acts) {
   return null;
 }
 
-/** Lieu d'un acte, écrit comme ceux de l'arbre : « Tulle (19) », « Fribourg, Allemagne ». */
+/** A certificate's place, written like the tree's: "Tulle (19)", "Fribourg, Allemagne". */
 export const actPlace = (l) => formatPlace({ city: l.city, dept: isFrance(l.country) ? l.dept : '', country: l.country });
 const placeText = actPlace;
 
 /**
- * Écarts entre la fiche et l'acte : [{ field, kind, tree, insee, patch? }]. kind vaut 'fix' (la
- * fiche contredit l'acte) ou 'add' (l'acte complète la fiche) ; patch est ce qu'on reporte
- * dans la fiche d'un clic. L'INSEE écrit les noms sans accents : les prénoms déjà dans la fiche
- * gardent leur orthographe, le nom de naissance s'écrit en minuscules (à accentuer au besoin).
+ * Differences between the record and the certificate: [{ field, kind, tree, insee, patch? }]. kind is 'fix' (the
+ * record contradicts the certificate) or 'add' (the certificate completes the record); patch is what is reported
+ * into the record with a click. INSEE writes names without accents: first names already in the record
+ * keep their spelling, the birth surname is written in lowercase (to be accented if needed).
  */
 export function deathDifferences(id, act) {
   const p = P(id);
   const out = [];
   const add = (field, kind, tree, insee, patch) => out.push({ field, kind, tree: String(tree || ''), insee, ...(patch ? { patch } : {}) });
 
-  const given = words(String(p.given || '').replace(/\(.*?\)/g, ' ')); // sans le surnom entre parenthèses
+  const given = words(String(p.given || '').replace(/\(.*?\)/g, ' ')); // without the nickname in brackets
   const official = mergedGiven(p.given, act.first.join(' '), treeSpellings(['given']));
   if (words(act.first.join(' ')).some((w) => !given.includes(w))) add('given', 'add', p.given, official, { given: official });
   if (words(act.last).join(' ') !== words(birthName(p)).join(' ')) {
@@ -273,9 +273,9 @@ export function deathDifferences(id, act) {
   }
   if (!isDead(p)) add('deceased', 'fix', '', '', { deceased: true });
 
-  // Numéro de l'acte de décès : une source de la fiche, sauf si elle le cite déjà
+  // Death certificate number: a source of the record, unless it already cites it
   const number = String(act.certificate || '').trim();
-  // Cité si ses mots s'y suivent : « 1094 N » dans « Acte n°1094 N », mais pas « 12 » dans « Acte n°123 »
+  // Cited if its words follow each other: "1094 N" in "Acte n°1094 N", but not "12" in "Acte n°123"
   const tokens = (x) => norm(x).match(/[a-z0-9]+/g) || [];
   const wanted = tokens(number);
   const cited = (s) => s.kind === 'death' && tokens(`${s.title} ${s.ref}`)

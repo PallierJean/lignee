@@ -1,4 +1,4 @@
-/** Lieux de l'arbre et déplacements d'une génération à l'autre. */
+/** Places in the tree and moves from one generation to the next. */
 import { S } from '../state.js';
 import { P, eventsOf } from './people.js';
 import { departmentCode } from './departments.js';
@@ -7,9 +7,9 @@ import { countryName, isFrance } from './countries.js';
 const clean = (x) => String(x || '').trim();
 
 /**
- * Lieu saisi en quatre parties, rangées dans un seul texte « Lieu-dit, Ville (Département), Pays » :
- * « Roussely, Orgnac-sur-Vézère (19) », « Bruxelles, Belgique ». Le pays n'est écrit que hors de
- * France : un lieu sans pays est en France. Le GEDCOM, la carte et la recherche lisent ce texte tel quel.
+ * Place entered in four parts, stored in a single text "Locality, City (Department), Country":
+ * "Roussely, Orgnac-sur-Vézère (19)", "Bruxelles, Belgique". The country is only written outside
+ * France: a place with no country is in France. GEDCOM, the map and search read this text as is.
  */
 export function parsePlace(s) {
   let rest = clean(s).replace(/\s+/g, ' ');
@@ -19,7 +19,7 @@ export function parsePlace(s) {
     rest = last[1].trim();
     country = isFrance(last[2]) ? '' : last[2].trim();
   } else if (!rest.includes(',') && !rest.includes('(') && countryName(rest) && !isFrance(rest)) {
-    return { hamlet: '', city: '', dept: '', country: rest }; // le pays seul : « Belgique »
+    return { hamlet: '', city: '', dept: '', country: rest }; // the country alone: "Belgique"
   }
   let dept = '';
   const m = /^(.*?)\s*\(([^()]*)\)$/.exec(rest);
@@ -31,7 +31,7 @@ export function parsePlace(s) {
   return { hamlet: parts.slice(0, -1).join(', '), city: parts.at(-1) || '', dept, country };
 }
 
-/** Texte d'un lieu à partir de ses parties ; une partie vide est omise, la France aussi. */
+/** A place's text from its parts; an empty part is omitted, and so is France. */
 export function formatPlace({ hamlet = '', city = '', dept = '', country = '' }) {
   const head = [clean(hamlet), clean(city)].filter(Boolean).join(', ');
   const place = [head, clean(dept) ? `(${clean(dept)})` : ''].filter(Boolean).join(' ');
@@ -39,7 +39,7 @@ export function formatPlace({ hamlet = '', city = '', dept = '', country = '' })
   return place ? place + ', ' + clean(country) : clean(country);
 }
 
-/** Champs qui portent un lieu, pour le renommer partout : [{ collection, id, patch }]. */
+/** Fields that hold a place, to rename it everywhere: [{ collection, id, patch }]. */
 export function renamePatches(from, to) {
   const out = [];
   const same = (x) => clean(x) === from;
@@ -54,7 +54,7 @@ export function renamePatches(from, to) {
   return out;
 }
 
-/** Lieux cités : [{ name, n, ids }], les plus cités d'abord. */
+/** Places cited: [{ name, n, ids }], most cited first. */
 export function placeUses() {
   const uses = new Map();
   const add = (place, id) => {
@@ -74,8 +74,8 @@ export function placeUses() {
 }
 
 /**
- * Rang d'un lieu : en France par département, 01 … 19, 2A, 2B, 21 … 95, 971 … ; un département
- * inconnu ou absent vient après ; l'étranger à la fin, par pays.
+ * Rank of a place: in France by department, 01 … 19, 2A, 2B, 21 … 95, 971 …; an unknown
+ * or missing department comes after; abroad at the end, by country.
  */
 function departmentRank(pl) {
   if (pl.country) return [2, pl.country];
@@ -84,7 +84,7 @@ function departmentRank(pl) {
   return [0, code === '2A' ? '020A' : code === '2B' ? '020B' : code.padStart(3, '0')];
 }
 
-/** Lieux cités, rangés par département (puis l'étranger, par pays), puis par ville, puis par lieu-dit (sans lieu-dit d'abord). */
+/** Places cited, sorted by department (then abroad, by country), then by city, then by locality (none first). */
 export function placesByDepartment() {
   const cmp = (a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' });
   const keyed = placeUses().map((u) => ({ u, pl: parsePlace(u.name) })).map((x) => ({ ...x, rank: departmentRank(x.pl) }));
@@ -94,15 +94,15 @@ export function placesByDepartment() {
 }
 
 /**
- * Commune d'un lieu, sans son lieu-dit : « Bourg, Masseret (19) » -> « Masseret (19) ». La carte ne
- * place que des communes : un lieu-dit est rarement connu du service de localisation.
+ * A place's commune, without its locality: "Bourg, Masseret (19)" -> "Masseret (19)". The map only
+ * places communes: a locality is rarely known to the geocoding service.
  */
 export function cityOf(place) {
   const pl = parsePlace(place);
   return pl.city || pl.country ? formatPlace({ ...pl, hamlet: '' }) : clean(place);
 }
 
-/** Communes citées, lieux-dits réunis : [{ name, n, ids }], les plus citées d'abord. */
+/** Communes cited, localities merged: [{ name, n, ids }], most cited first. */
 export function cityUses() {
   const cities = new Map();
   for (const u of placeUses()) {
@@ -114,7 +114,7 @@ export function cityUses() {
   return [...cities.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
 }
 
-/** Migrations : commune de naissance d'un parent -> celle de son enfant : [{ from, to, n }]. */
+/** Migrations: birth commune of a parent -> that of their child: [{ from, to, n }]. */
 export function migrations() {
   const moves = new Map();
   for (const p of S.people.values()) {

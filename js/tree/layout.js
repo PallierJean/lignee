@@ -1,41 +1,41 @@
 /**
- * Calcul de la mise en page de l'arbre autour de la personne centrale.
+ * Computes the tree layout around the focus person.
  *
- * - Ascendants au-dessus, en arbre binaire (père à gauche, mère à droite),
- *   numérotés selon le système Sosa (personne centrale = 1, père = 2n, mère = 2n + 1).
- *   Les autres conjoints d'un ancêtre (remariage, veuvage…) sont rattachés à côté de lui,
- *   vers l'extérieur : à gauche d'un père, à droite d'une mère. Ils n'ont pas de numéro Sosa.
- * - Descendants en dessous : chaque personne avec tous ses conjoints (le premier à droite, le
- *   second à gauche, les suivants au-delà du premier, reliés par un arc au-dessus des fiches)
- *   et les enfants regroupés sous le bon couple.
- * - Frères et sœurs de la personne centrale sur sa ligne, à sa gauche, reliés à ses parents.
- * - Emplacements vides « Ajouter le père / la mère / un conjoint / un enfant » près de la personne centrale,
- *   et « Ajouter un frère ou une sœur » à gauche de la fratrie quand un de ses parents est connu.
+ * - Ancestors above, as a binary tree (father on the left, mother on the right),
+ *   numbered with the Sosa system (focus person = 1, father = 2n, mother = 2n + 1).
+ *   An ancestor's other spouses (remarriage, widowhood…) are attached beside them,
+ *   outwards: left of a father, right of a mother. They have no Sosa number.
+ * - Descendants below: each person with all their spouses (the first on the right, the
+ *   second on the left, the next ones beyond the first, linked by an arc above the cards)
+ *   and the children grouped under the right couple.
+ * - Siblings of the focus person on their row, to their left, linked to their parents.
+ * - Empty slots "Add the father / the mother / a spouse / a child" near the focus person,
+ *   and "Add a sibling" left of the siblings when one of their parents is known.
  *
- * Renvoie { nodes, edges, marks, W, H } en coordonnées non zoomées.
+ * Returns { nodes, edges, marks, W, H } in unzoomed coordinates.
  */
 import { CW, CH, HG, VG, SG, PAD } from '../config.js';
 import { S } from '../state.js';
 import { P, partnersOf, childrenOf, siblingsOf, isMinor, UNION_AGE } from '../model/people.js';
 
-const ARC = 16;  // hauteur de l'arc qui relie une personne à ses conjoints suivants
-const LANE = 9;  // écart entre les barres d'enfants de deux unions
+const ARC = 16;  // height of the arc linking a person to their later spouses
+const LANE = 9;  // gap between the children bars of two unions
 
 export function buildLayout() {
   const focus = S.focus;
   if (!focus || !S.people.has(focus)) return null;
 
-  const nodes = [];  // fiches : { t: 'p', id, x, y, focus?, sosa?, partnerOf? } ou { t: 'ph', key, rel, of, x, y }
-  const edges = [];  // traits : { d: chemin SVG, dash }
-  const marks = [];  // symboles d'union « × » : { x, y, dash }
+  const nodes = [];  // cards: { t: 'p', id, x, y, focus?, sosa?, partnerOf? } or { t: 'ph', key, rel, of, x, y }
+  const edges = [];  // lines: { d: SVG path, dash }
+  const marks = [];  // union symbols "×": { x, y, dash }
   const rowH = CH + VG;
   let maxGen = 0;
   let maxDepth = 0;
 
-  /* ---------- 1. Mesure des ascendants (largeur de chaque sous-arbre) ---------- */
-  // side : côté des autres conjoints ('L' pour un père, 'R' pour une mère).
-  // coParent : l'autre parent de l'enfant, déjà affiché, donc exclu des autres conjoints.
-  // c : position de l'axe de la fiche depuis le bord gauche du sous-arbre.
+  /* ---------- 1. Measuring the ancestors (width of each subtree) ---------- */
+  // side: side of the other spouses ('L' for a father, 'R' for a mother).
+  // coParent: the child's other parent, already shown, so excluded from the other spouses.
+  // c: position of the card's axis from the left edge of the subtree.
   function measureAncestors(id, gen, side, coParent) {
     const p = P(id);
     const n = { id, gen, side, w: CW, c: CW / 2, f: null, m: null, extra: [] };
@@ -66,18 +66,18 @@ export function buildLayout() {
     return n;
   }
 
-  /* ---------- 2. Mesure des descendants ---------- */
+  /* ---------- 2. Measuring the descendants ---------- */
   const seen = new Set([focus]);
   function measureDescendants(id, depth) {
     const partners = partnersOf(id);
-    const R = partners[0] || null;  // conjoint à droite
-    const L = partners[1] || null;  // second conjoint, à gauche
-    const extra = partners.slice(2); // conjoints suivants, à droite du premier
-    // Sans conjoint, la personne centrale reçoit un emplacement « Ajouter un conjoint » à droite
-    // Pas de conjoint à proposer avant la majorité sexuelle
+    const R = partners[0] || null;  // spouse on the right
+    const L = partners[1] || null;  // second spouse, on the left
+    const extra = partners.slice(2); // later spouses, right of the first
+    // With no spouse, the focus person gets an "Add a spouse" slot on the right
+    // No spouse to suggest before the age of consent
     const phR = depth === 0 && S.canWrite && !R && !isMinor(P(id), undefined, UNION_AGE);
     const unitW = CW + (R || phR ? SG + CW : 0) + (L ? SG + CW : 0) + extra.length * (SG + CW);
-    const pL = L ? CW + SG : 0;     // décalage de la personne quand un conjoint est à gauche
+    const pL = L ? CW + SG : 0;     // offset of the person when a spouse is on the left
     const kids = [];
 
     if (depth < S.down) {
@@ -95,16 +95,16 @@ export function buildLayout() {
       for (const g of Object.keys(groups)) {
         for (const k of groups[g]) kids.push({ g, n: measureDescendants(k, depth + 1) });
       }
-      // Pas d'enfant à proposer à une personne de moins de 17 ans
+      // No child to suggest for a person under 17
       if (depth === 0 && S.canWrite && !isMinor(P(id))) kids.push({ g: R ? 'R' : 'C', n: { ph: 'child', of: id, w: CW, depth: 1 } });
     }
 
     const kidsW = kids.reduce((sum, o) => sum + o.n.w, 0) + HG * Math.max(0, kids.length - 1);
-    // Points d'attache des enfants : sous le couple de droite, de gauche, ou sous la personne seule
+    // Children's attachment points: under the right couple, the left one, or under the person alone
     const jR = pL + CW + SG / 2;
     const jL = pL - SG / 2;
     const jC = pL + CW / 2;
-    const jX = extra.map((_, i) => pL + (i + 2) * (CW + SG) + CW / 2); // sous chaque conjoint suivant
+    const jX = extra.map((_, i) => pL + (i + 2) * (CW + SG) + CW / 2); // under each later spouse
     const used = new Set(kids.map((o) => o.g));
     let anchor = jC;
     if (used.size === 1) {
@@ -129,19 +129,19 @@ export function buildLayout() {
 
   const anc = measureAncestors(focus, 0);
   const desc = measureDescendants(focus, 0);
-  // Frères et sœurs (hors conjoints déjà affichés), puis l'emplacement « Ajouter un frère ou une sœur »,
-  // à gauche de la personne centrale et de ses conjoints, reliés aux parents affichés
+  // Siblings (except spouses already shown), then the "Add a sibling" slot,
+  // left of the focus person and their spouses, linked to the parents shown
   const shown = new Set(partnersOf(focus).map((x) => x.id));
-  // Sans ascendants, pas de fratrie : elle se relie aux parents, alors absents
+  // With no ancestors, no siblings: they link to the parents, which are then absent
   const sibs = S.up ? siblingsOf(focus).filter((s) => !shown.has(s.id) && !seen.has(s.id)) : [];
   const sibPh = S.canWrite && [anc.f, anc.m].some((x) => x && !x.ph);
   const sibSlots = sibs.length + (sibPh ? 1 : 0);
-  const Y0 = PAD + maxGen * rowH;                      // ligne de la personne centrale
-  const Fx = PAD + Math.max(anc.c, desc.jC, desc.pL + CW / 2 + sibSlots * (CW + HG)); // axe vertical de la personne centrale
+  const Y0 = PAD + maxGen * rowH;                      // row of the focus person
+  const Fx = PAD + Math.max(anc.c, desc.jC, desc.pL + CW / 2 + sibSlots * (CW + HG)); // vertical axis of the focus person
   const ancLeft = Fx - anc.c;
   const descLeft = Fx - desc.jC;
 
-  /* ---------- 3. Placement des ascendants ---------- */
+  /* ---------- 3. Placing the ancestors ---------- */
   function placeAncestors(n, left, sosa) {
     const x = left + n.c - CW / 2;
     const y = Y0 - n.gen * rowH;
@@ -151,12 +151,12 @@ export function buildLayout() {
     }
     if (n.ph) return;
 
-    // Autres conjoints, alignés à côté de l'ancêtre
+    // Other spouses, aligned beside the ancestor
     const my = y + CH / 2;
     n.extra.forEach((pt, i) => {
       const step = (i + 1) * (SG + CW);
       const sx = n.side === 'L' ? x - step : x + step;
-      const gapL = n.side === 'L' ? sx + CW : sx - SG;  // bord gauche de l'espace entre les deux fiches
+      const gapL = n.side === 'L' ? sx + CW : sx - SG;  // left edge of the space between the two cards
       nodes.push({ t: 'p', id: pt.id, x: sx, y, partnerOf: n.id });
       edges.push({ d: `M${gapL},${my}H${gapL + SG}`, dash: !pt.uid });
       marks.push({ x: gapL + SG / 2, y: my, dash: !pt.uid });
@@ -181,7 +181,7 @@ export function buildLayout() {
     for (const c of centers) edges.push({ d: `M${c.c},${barY}V${parentY + CH}`, dash: c.ph });
   }
 
-  /* ---------- 4. Placement des descendants ---------- */
+  /* ---------- 4. Placing the descendants ---------- */
   function placeDescendants(n, left) {
     const y = Y0 + n.depth * rowH;
     if (n.depth > maxDepth) maxDepth = n.depth;
@@ -227,7 +227,7 @@ export function buildLayout() {
       (groups[k.g] = groups[k.g] || []).push({ c: center, ph: !!k.n.ph });
       l += k.n.w + HG;
     }
-    // Une barre par union, à sa hauteur : on voit de quel couple vient chaque enfant
+    // One bar per union, at its own height: you can see which couple each child comes from
     const unions = Object.keys(groups);
     unions.forEach((g, i) => {
       const busY = y + CH + VG / 2 + (i - (unions.length - 1) / 2) * LANE;
@@ -244,9 +244,9 @@ export function buildLayout() {
   placeAncestors(anc, ancLeft, 1);
   placeDescendants(desc, descLeft);
 
-  // Fratrie : de la plus âgée (à gauche) à la plus jeune (près de la personne centrale)
+  // Siblings: from the eldest (on the left) to the youngest (next to the focus person)
   const barY = Y0 - VG / 2;
-  const slotX = (i) => Fx - CW / 2 - desc.pL - (i + 1) * (CW + HG); // i = 0 : place la plus proche
+  const slotX = (i) => Fx - CW / 2 - desc.pL - (i + 1) * (CW + HG); // i = 0: closest slot
   sibs.forEach((s, i) => {
     const sx = slotX(sibs.length - 1 - i);
     const sc = sx + CW / 2;

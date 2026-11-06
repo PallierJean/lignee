@@ -1,7 +1,7 @@
 /**
- * Doublons probables, et fiche résultant de la fusion de deux personnes.
- * Deux fiches sont comparées si elles partagent un prénom usuel et un nom ; une date
- * ou un sexe contradictoire les écarte, chaque point commun renforce le score.
+ * Likely duplicates, and the record resulting from merging two people.
+ * Two records are compared if they share a usual first name and a surname; a conflicting
+ * date or sex rules them out, each point in common raises the score.
  */
 import { S } from '../state.js';
 import { fullDate, yearOf } from '../utils/dates.js';
@@ -13,7 +13,7 @@ const YEAR_MARGIN = 2;
 
 const same = (a, b) => !!norm(a).trim() && norm(a).trim() === norm(b).trim();
 
-/** Compare deux fiches : { score, reasons }, ou null si elles se contredisent. */
+/** Compares two records: { score, reasons }, or null if they contradict each other. */
 function compare(ida, idb) {
   const a = P(ida);
   const b = P(idb);
@@ -47,7 +47,7 @@ function compare(ida, idb) {
   return { score, reasons };
 }
 
-/** Paires probables, les plus sûres d'abord. `ignored` : paires « idA|idB » écartées. */
+/** Likely pairs, the surest first. `ignored`: dismissed "idA|idB" pairs. */
 export function findDuplicates(ignored = new Set()) {
   const buckets = new Map();
   for (const [id, p] of S.people) {
@@ -76,9 +76,9 @@ export function findDuplicates(ignored = new Set()) {
 }
 
 /**
- * Fiche fusionnée : `keep` garde ses champs remplis, `drop` complète les autres.
- * Événements, sources et documents s'ajoutent, sans répéter un événement identique.
- * `unionIds` : anciennes unions de `drop` -> unions conservées (pour les sources).
+ * Merged record: `keep` keeps its filled fields, `drop` fills in the others.
+ * Events, sources and documents are added, without repeating an identical event.
+ * `unionIds`: former unions of `drop` -> kept unions (for the sources).
  */
 export function mergedData(keep, drop, unionIds = new Map()) {
   const out = { ...keep };

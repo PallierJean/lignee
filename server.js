@@ -1,36 +1,36 @@
 /**
- * Serveur local de Lignée : sert l'application et enregistre chaque arbre
- * dans data/arbres/<id>.json (format de sauvegarde Lignée, avec son nom).
- * Les photos de l'arbre sont des fichiers dans data/arbres/<id>/photos/,
- * nommés NOM-Prénom-<uuid>.jpg ; la fiche garde « photos/<fichier> ».
+ * Lignée local server: serves the application and saves each tree
+ * in data/arbres/<id>.json (Lignée backup format, with its name).
+ * The tree's photos are files in data/arbres/<id>/photos/,
+ * named SURNAME-Firstname-<uuid>.jpg; the record keeps "photos/<file>".
  *
  *   node server.js            → http://localhost:8000
- *   PORT=9000 node server.js  → autre port
+ *   PORT=9000 node server.js  → another port
  *
- * GET    /api/trees                 : liste des arbres [{ id, name, count }]
- * GET    /api/trees/:id             : contenu d'un arbre (404 s'il n'existe pas encore)
- * PUT    /api/trees/:id             : crée ou remplace l'arbre (écriture atomique) ;
- *                                     supprime les photos qu'il n'utilise plus, sauf avec
- *                                     ?keepPhotos=1 (l'application peut encore les rétablir)
- * DELETE /api/trees/:id             : supprime l'arbre et ses photos
- * POST   /api/trees/:id/photos      : enregistre une photo { label, data (data URL) }
- *                                     et renvoie { photo: 'photos/<fichier>' }
- * POST   /api/trees/:id/photos/sweep : efface les photos que l'arbre enregistré n'utilise pas
- * GET    /api/trees/:id/photos/:f   : une photo de l'arbre
+ * GET    /api/trees                 : list of trees [{ id, name, count }]
+ * GET    /api/trees/:id             : content of a tree (404 if it doesn't exist yet)
+ * PUT    /api/trees/:id             : creates or replaces the tree (atomic write);
+ *                                     deletes the photos it no longer uses, except with
+ *                                     ?keepPhotos=1 (the application may still restore them)
+ * DELETE /api/trees/:id             : deletes the tree and its photos
+ * POST   /api/trees/:id/photos      : saves a photo { label, data (data URL) }
+ *                                     and returns { photo: 'photos/<file>' }
+ * POST   /api/trees/:id/photos/sweep : deletes the photos the saved tree doesn't use
+ * GET    /api/trees/:id/photos/:f   : a photo of the tree
  *
- * GET renvoie un ETag ; PUT avec If-Match refuse d'écraser (409) un arbre modifié entre-temps.
+ * GET returns an ETag; PUT with If-Match refuses to overwrite (409) a tree changed in the meantime.
  *
  * GET    /api/insee?lastName=&firstName=&sex=&birthDate=
- *                                   : décès du fichier de l'INSEE (depuis 1970), cherchés chez
- *                                     matchID (deces.matchid.io) ; seuls ces quatre champs partent.
- *                                     401 { error: 'login' } : il faut se connecter à matchID
- * GET    /api/insee/status          : { connected, user, expires } (connexion à matchID)
- * POST   /api/insee/register        : { email } — matchID envoie un code à cette adresse
- * POST   /api/insee/auth            : { email, code } — garde le jeton dans data/matchid.json
+ *                                   : deaths from INSEE's file (since 1970), looked up at
+ *                                     matchID (deces.matchid.io); only these four fields are sent.
+ *                                     401 { error: 'login' }: you must sign in to matchID
+ * GET    /api/insee/status          : { connected, user, expires } (matchID sign-in)
+ * POST   /api/insee/register        : { email } — matchID sends a code to this address
+ * POST   /api/insee/auth            : { email, code } — keeps the token in data/matchid.json
  *
- * Aucune dépendance. Le serveur n'écoute que sur cet ordinateur (127.0.0.1) et refuse les
- * requêtes venues d'un autre site (en-têtes Host et Origin).
- * Importé comme module, il fournit createServer() (utilisé par les tests).
+ * No dependencies. The server only listens on this computer (127.0.0.1) and refuses
+ * requests coming from another site (Host and Origin headers).
+ * Imported as a module, it provides createServer() (used by the tests).
  */
 import http from 'node:http';
 import fs from 'node:fs/promises';
@@ -40,7 +40,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
-const MAX_BODY = 20 * 1024 * 1024; // 20 Mo
+const MAX_BODY = 20 * 1024 * 1024; // 20 MB
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -58,8 +58,8 @@ const TYPES = {
   '.ged': 'text/plain; charset=utf-8',
 };
 
-// Ce que la page a le droit de charger : ses propres fichiers (polices comprises), le service de localisation ;
-// frame-ancestors : aucun autre site ne peut l'afficher dans un cadre
+// What the page may load: its own files (fonts included), the geocoding service;
+// frame-ancestors: no other site can show it in a frame
 const CSP = "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; "
   + "img-src 'self' data: blob:; connect-src 'self' https://nominatim.openstreetmap.org https://api.github.com https://raw.githubusercontent.com; "
   + "object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
@@ -75,9 +75,9 @@ function send(res, status, body, type = 'text/plain; charset=utf-8', headers = {
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 /**
- * Vrai si la requête vient bien de cet ordinateur et de l'application. Sans cela, un site
- * ouvert dans le navigateur pourrait viser le serveur : Host déjoue le « DNS rebinding »
- * (lecture des arbres), Origin les envois d'un autre site (écriture de fichiers).
+ * True if the request really comes from this computer and the application. Otherwise, a site
+ * open in the browser could target the server: Host defeats "DNS rebinding"
+ * (reading trees), Origin defeats submissions from another site (writing files).
  */
 function allowed(req) {
   const host = String(req.headers.host || '');
@@ -91,7 +91,7 @@ function allowed(req) {
   }
 }
 
-/** Empreinte du contenu d'un arbre : sa version. */
+/** Fingerprint of a tree's content: its version. */
 const versionOf = (text) => '"' + createHash('sha256').update(text).digest('hex').slice(0, 32) + '"';
 
 async function readBody(req) {
@@ -110,7 +110,7 @@ async function readBody(req) {
 const PHOTO_REF = /^photos\/([^/\\]+\.(?:jpg|png|webp|gif))$/;
 const PHOTO_EXT = { jpeg: '.jpg', png: '.png', webp: '.webp', gif: '.gif' };
 
-/** Texte utilisable comme nom de fichier ou de dossier (sans / \ : * ? " < > |). */
+/** Text usable as a file or folder name (without / \ : * ? " < > |). */
 export function safeName(s, fallback) {
   const t = String(s || '').normalize('NFC')
     .replace(/[\u0000-\u001f/\\:*?"<>|]+/g, '-')
@@ -121,7 +121,7 @@ export function safeName(s, fallback) {
   return t || fallback;
 }
 
-/** Fichiers photo cités par les fiches d'un arbre : portraits, documents des sources, galerie. */
+/** Photo files cited by a tree's records: portraits, source documents, gallery. */
 function photoRefs(o) {
   const refs = new Set();
   const add = (photo) => {
@@ -136,25 +136,25 @@ function photoRefs(o) {
   return refs;
 }
 
-/** Supprime des photos, puis les dossiers devenus vides. */
+/** Deletes photos, then the folders left empty. */
 async function removePhotos(dir, files) {
   for (const f of files) await fs.rm(path.join(dir, f), { force: true });
   for (const d of [dir, path.dirname(dir)]) {
     try {
       await fs.rmdir(d);
     } catch (e) {
-      break; // dossier absent ou pas vide
+      break; // folder missing or not empty
     }
   }
 }
 
-/* ---------- Décès de l'INSEE (matchID) ---------- */
+/* ---------- INSEE deaths (matchID) ---------- */
 
 const MATCHID = 'https://deces.matchid.io/deces/api/v1';
 const DAY = 24 * 3600 * 1000;
 const INSEE_FIELDS = { lastName: /^[\p{L}' -]{1,60}$/u, firstName: /^[\p{L}' -]{1,60}$/u, sex: /^[MF]$/, birthDate: /^(\d{2}\/\d{2}\/\d{4}|\d{4}(-\d{4})?)$/ };
 
-/** Lieu d'un décès ou d'une naissance chez matchID -> { city, dept, country }. */
+/** Place of a death or birth at matchID -> { city, dept, country }. */
 const placeOf = (l = {}) => ({
   city: [].concat(l.city || [])[0] || '', dept: l.departmentCode || '', country: l.country || '',
 });
@@ -162,9 +162,9 @@ const placeOf = (l = {}) => ({
 const httpError = (status, message, extra = {}) => Object.assign(new Error(message), { status, ...extra });
 
 /**
- * Client de matchID. Sans jeton, matchID n'accepte que quelques recherches ; l'inscription est
- * gratuite : un code reçu par e-mail donne un jeton, gardé dans `tokenFile` et renouvelé
- * la veille de son expiration.
+ * matchID client. Without a token, matchID only accepts a few searches; signing up is
+ * free: a code received by e-mail gives a token, kept in `tokenFile` and renewed
+ * the day before it expires.
  */
 export function matchidClient(tokenFile) {
   const call = (route, init = {}) => fetch(MATCHID + route, { signal: AbortSignal.timeout(20000), ...init });
@@ -173,12 +173,12 @@ export function matchidClient(tokenFile) {
     await fs.mkdir(path.dirname(tokenFile), { recursive: true });
     await fs.writeFile(tokenFile, JSON.stringify(t, null, 2) + '\n', { mode: 0o600 });
   };
-  // matchID date ses jetons en secondes Unix (« 1796334878 ») ; une date ISO est aussi acceptée
+  // matchID dates its tokens in Unix seconds ("1796334878"); an ISO date is also accepted
   const when = (v) => (/^\d+$/.test(String(v || '')) ? +v * 1000 : Date.parse(v || '') || 0);
   const expires = (t) => when(t && t.expiration_date);
   const iso = (t) => (expires(t) ? new Date(expires(t)).toISOString() : '');
 
-  /** Jeton valable, renouvelé s'il expire dans moins d'un jour ; null sans connexion. */
+  /** Valid token, renewed if it expires in less than a day; null when not signed in. */
   async function token() {
     const t = await readToken();
     if (!t || !t.access_token) return null;
@@ -194,14 +194,14 @@ export function matchidClient(tokenFile) {
     return t.access_token;
   }
 
-  /** Message d'erreur de matchID, s'il en donne un. */
+  /** matchID's error message, if it gives one. */
   const reason = async (res) => {
     const o = await res.json().catch(() => ({}));
     return String(o.message || o.msg || o.error || '');
   };
 
   return {
-    /** Décès trouvés : [{ first, last, sex, birthDate, birth, deathDate, death, certificate }]. */
+    /** Deaths found: [{ first, last, sex, birthDate, birth, deathDate, death, certificate }]. */
     async search(params) {
       const jwt = await token();
       const res = await call('/search?' + new URLSearchParams(params), jwt ? { headers: { Authorization: 'Bearer ' + jwt } } : {});
@@ -219,14 +219,14 @@ export function matchidClient(tokenFile) {
         certificate: (p.death || {}).certificateId || '',
       }));
     },
-    /** Demande à matchID d'envoyer un code à cette adresse. */
+    /** Asks matchID to send a code to this address. */
     async register(email) {
       const res = await call('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: email }) });
       const o = await res.json().catch(() => ({}));
       if (!res.ok || o.valid === false) throw httpError(502, String(o.msg || o.message || 'Inscription refusée par matchID'));
       return { sent: true };
     },
-    /** Échange le code reçu contre un jeton, gardé dans tokenFile. */
+    /** Exchanges the code received for a token, kept in tokenFile. */
     async auth(email, code) {
       const res = await call('/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: email, password: code }) });
       const o = await res.json().catch(() => ({}));
@@ -242,13 +242,13 @@ export function matchidClient(tokenFile) {
   };
 }
 
-/* ---------- Données : un fichier par arbre dans dataDir ---------- */
+/* ---------- Data: one file per tree in dataDir ---------- */
 
 function paths(dataDir) {
   const treeFile = (id) => path.join(dataDir, id + '.json');
   const photoDir = (id) => path.join(dataDir, id, 'photos');
 
-  /** Contenu enregistré d'un arbre, ou null. */
+  /** Saved content of a tree, or null. */
   async function readTree(id) {
     try {
       return JSON.parse(await fs.readFile(treeFile(id), 'utf8'));
@@ -257,7 +257,7 @@ function paths(dataDir) {
     }
   }
 
-  /** Identifiants des arbres présents dans dataDir. */
+  /** Ids of the trees present in dataDir. */
   async function treeIds() {
     let names = [];
     try {
@@ -272,8 +272,8 @@ function paths(dataDir) {
 }
 
 /**
- * Serveur HTTP de Lignée (sans l'écoute) : l'application dans `root`,
- * les arbres dans `dataDir`.
+ * Lignée HTTP server (without listening): the application in `root`,
+ * the trees in `dataDir`.
  */
 export function createServer({
   root = ROOT, dataDir = path.join(root, 'data', 'arbres'), tokenFile = path.join(root, 'data', 'matchid.json'),
@@ -281,16 +281,16 @@ export function createServer({
 } = {}) {
   const { treeFile, photoDir, readTree, treeIds } = paths(dataDir);
 
-  // Les écritures passent l'une après l'autre, dans l'ordre d'arrivée
+  // Writes go one after the other, in order of arrival
   let queue = Promise.resolve();
   const enqueue = (fn) => (queue = queue.then(fn, fn));
 
-  /** Liste des arbres : [{ id, name, count }]. */
+  /** List of trees: [{ id, name, count }]. */
   async function listTrees(res) {
     const trees = [];
     for (const id of await treeIds()) {
       const o = await readTree(id);
-      if (!o) continue; // fichier illisible : ignoré
+      if (!o) continue; // unreadable file: ignored
       trees.push({ id, name: o.name || id, count: Array.isArray(o.people) ? o.people.length : 0, createdAt: o.createdAt || 0 });
     }
     trees.sort((a, b) => a.createdAt - b.createdAt || a.name.localeCompare(b.name));
@@ -336,7 +336,7 @@ export function createServer({
       await fs.mkdir(dataDir, { recursive: true });
       await fs.writeFile(tmp, json, 'utf8');
       await fs.rename(tmp, treeFile(id));
-      // Photos retirées des fiches : supprimées
+      // Photos removed from the records: deleted
       const kept = photoRefs(o);
       if (before && !keepPhotos) await removePhotos(photoDir(id), [...photoRefs(before)].filter((f) => !kept.has(f)));
     });
@@ -347,7 +347,7 @@ export function createServer({
   async function deleteTree(res, id) {
     await enqueue(async () => {
       await fs.rm(treeFile(id), { force: true });
-      await fs.rm(path.dirname(photoDir(id)), { recursive: true, force: true }); // photos gardées pour Annuler comprises
+      await fs.rm(path.dirname(photoDir(id)), { recursive: true, force: true }); // photos kept for Undo included
     });
     send(res, 204, '');
   }
@@ -374,11 +374,11 @@ export function createServer({
     send(res, 201, JSON.stringify({ photo: 'photos/' + file }), TYPES['.json']);
   }
 
-  /** Efface les photos du dossier que l'arbre enregistré ne cite plus. */
+  /** Deletes the folder's photos that the saved tree no longer cites. */
   async function sweepPhotos(res, id) {
     await enqueue(async () => {
       const tree = await readTree(id);
-      if (!tree) return; // arbre illisible : on ne touche à rien
+      if (!tree) return; // unreadable tree: nothing is touched
       const kept = photoRefs(tree);
       let names = [];
       try {
@@ -423,7 +423,7 @@ export function createServer({
     send(res, 405, 'Méthode non autorisée');
   }
 
-  /** Décès de l'INSEE pour un nom : seuls les champs prévus, bien formés, sont transmis. */
+  /** INSEE deaths for a name: only the expected, well-formed fields are passed on. */
   async function insee(res, query) {
     const asked = new URLSearchParams(query);
     const params = {};
@@ -440,7 +440,7 @@ export function createServer({
   const EMAIL = /^[^\s@<>"]{1,64}@[^\s@<>"]{1,190}\.[a-z]{2,}$/i;
   const CODE = /^[A-Za-z0-9-]{3,64}$/;
 
-  /** Connexion à matchID : état, envoi du code, code reçu. */
+  /** matchID sign-in: status, sending the code, code received. */
   async function inseeLogin(req, res, step) {
     if (step === 'status' && req.method === 'GET') return send(res, 200, JSON.stringify(await deaths.status()), TYPES['.json']);
     if (req.method !== 'POST' || !['register', 'auth'].includes(step)) return send(res, 405, 'Méthode non autorisée');
@@ -459,10 +459,10 @@ export function createServer({
     send(res, 200, JSON.stringify(await deaths.auth(email, code)), TYPES['.json']);
   }
 
-  /* ---------- Fichiers de l'application ---------- */
+  /* ---------- Application files ---------- */
 
-  // Seuls les fichiers que publie aussi le site (scripts/build-site.sh) : ni .git, ni .env.test,
-  // ni le jeton matchID, ni les arbres personnels (servis par /api/trees)
+  // Only the files the site also publishes (scripts/build-site.sh): no .git, no .env.test,
+  // no matchID token, no personal trees (served by /api/trees)
   const PUBLIC = /^(index\.html|package\.json|(assets|css|images|js)\/.+|data\/arbres\/exemple-famille-bertrand\.json)$/;
 
   async function serveFile(req, res) {
@@ -512,13 +512,13 @@ export function createServer({
   });
 }
 
-/* ---------- Lancement : node server.js ---------- */
+/* ---------- Launch: node server.js ---------- */
 
 if (import.meta.main) {
   const PORT = Number(process.env.PORT) || 8000;
   const dataDir = path.join(ROOT, 'data', 'arbres');
   const server = createServer({ dataDir });
-  // Port déjà pris (souvent un Lignée lancé plus tôt, encore ouvert) : un message clair, pas une pile d'erreur
+  // Port already taken (often a Lignée started earlier, still open): a clear message, not a stack trace
   server.on('error', (e) => {
     if (e.code !== 'EADDRINUSE') throw e;
     console.error(`Le port ${PORT} est déjà utilisé, sans doute par un Lignée lancé plus tôt.`);

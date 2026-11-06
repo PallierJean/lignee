@@ -1,7 +1,7 @@
 /**
- * Coordonnées des lieux, gardées dans ce navigateur. Elles ne sont demandées à
- * OpenStreetMap (Nominatim) que sur demande de l'utilisateur, une par seconde comme
- * l'exige ce service : seul le nom du lieu est envoyé.
+ * Place coordinates, kept in this browser. They are requested from
+ * OpenStreetMap (Nominatim) only when the user asks, one per second as
+ * that service requires: only the place name is sent.
  */
 import { GEO_KEY } from '../config.js';
 import { sleep } from '../utils/helpers.js';
@@ -18,15 +18,15 @@ function readCache() {
   }
 }
 
-/** Coordonnées connues : Map nom -> { lat, lon }, ou null pour un lieu introuvable. */
+/** Known coordinates: Map name -> { lat, lon }, or null for a place that can't be found. */
 export const knownPlaces = () => readCache();
 
-/** Cherche les lieux `names`. Renvoie le nombre trouvé ; une panne réseau arrête la recherche. */
+/** Looks up places `names`. Returns the number found; a network failure stops the search. */
 export async function locatePlaces(names, onProgress) {
   const cache = readCache();
   let found = 0;
   for (const [i, name] of names.entries()) {
-    // Un lieu sans pays est en France : précisé, pour ne pas trouver une homonyme à l'étranger
+    // A place with no country is in France: said explicitly, so as not to find a namesake abroad
     const query = parsePlace(name).country ? name : name + ', France';
     const res = await fetch(URL_BASE + encodeURIComponent(query));
     if (!res.ok) throw new Error(String(res.status));
@@ -36,7 +36,7 @@ export async function locatePlaces(names, onProgress) {
     try {
       localStorage.setItem(GEO_KEY, JSON.stringify(Object.fromEntries(cache)));
     } catch (e) {
-      /* stockage plein : les coordonnées restent valables pour cette recherche */
+      /* storage full: the coordinates remain valid for this search */
     }
     onProgress(i + 1, names.length);
     if (i < names.length - 1) await sleep(PAUSE);

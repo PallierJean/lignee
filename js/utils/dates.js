@@ -1,26 +1,26 @@
 /**
- * Dates saisies librement : « 12/03/1932 », « 03/1932 », « 1932 », « 12 mars 1932 »,
- * « mars 1932 », « vers 1850 », « avant 1901 », « après 1790 » (ou « about », « before », « after »).
- * Elles sont affichées dans la langue de l'interface, au format « 04 Août 1961 ».
- * Ce qui reste du texte libre est affiché tel quel.
+ * Freely entered dates: "12/03/1932", "03/1932", "1932", "12 mars 1932",
+ * "mars 1932", "vers 1850", "avant 1901", "après 1790" (or "about", "before", "after").
+ * They are shown in the interface language, in the format "04 Août 1961".
+ * Remaining free text is shown as is.
  */
 import { t, DICT } from '../i18n.js';
 import { norm } from './helpers.js';
 
-/** Année contenue dans la date, ou null. */
+/** Year contained in the date, or null. */
 export function yearOf(s) {
   const m = /(\d{4})/.exec(s || '');
   return m ? +m[1] : null;
 }
 
-// Préfixes reconnus à la saisie, en français et en anglais
+// Prefixes recognised on input, in French and English
 const QUALIFIERS = [
   ['abt', /^(vers|env\.?|environ|ca\.?|c\.|about|abt\.?|circa|~)\s*/i],
   ['bef', /^(avant|av\.|before|bef\.?)\s*/i],
   ['aft', /^(apr[eè]s|ap\.|after|aft\.?)\s*/i],
 ];
 
-/** Décompose « vers 1850 » en { q: 'abt', rest: '1850' } (q vide sans préfixe). */
+/** Splits "vers 1850" into { q: 'abt', rest: '1850' } (q empty with no prefix). */
 export function splitQualifier(s) {
   s = String(s || '').trim();
   for (const [q, re] of QUALIFIERS) {
@@ -30,15 +30,15 @@ export function splitQualifier(s) {
   return { q: '', rest: s };
 }
 
-/** Vrai si le jour existe dans ce mois (années bissextiles comprises). */
+/** True if the day exists in that month (leap years included). */
 const validDay = (d, m, y) => m >= 1 && m <= 12 && d >= 1 && d <= new Date(Date.UTC(y, m, 0)).getUTCDate();
 
-// Mois écrits en toutes lettres, en français et en anglais, sans tenir compte de la casse ni des accents
+// Months written in full, in French and English, ignoring case and accents
 const MONTH_NUMBER = new Map(Object.values(DICT).flatMap((d) => d.months.map((name, i) => [norm(name), i + 1])));
 
 /**
- * Date reconnue : { q, y, m?, d? } pour « jj/mm/aaaa », « mm/aaaa », « aaaa », « jj mois aaaa »
- * ou « mois aaaa », avec ou sans préfixe. null pour un texte libre ou une date impossible
+ * Recognised date: { q, y, m?, d? } for "dd/mm/yyyy", "mm/yyyy", "yyyy", "dd month yyyy"
+ * or "month yyyy", with or without a prefix. null for free text or an impossible date
  * (31/02/1900, 13/1900).
  */
 export function dateParts(s) {
@@ -58,7 +58,7 @@ export function dateParts(s) {
   return m ? { q, y: +m[1] } : null;
 }
 
-/** Vrai si la date a la forme jj/mm/aaaa, mm/aaaa ou « jj mois aaaa » mais n'existe pas. */
+/** True if the date has the form dd/mm/yyyy, mm/yyyy or "dd month yyyy" but doesn't exist. */
 export function isImpossibleDate(s) {
   const { rest } = splitQualifier(s);
   const words = /^\d{1,2}\s+(\p{L}+)\s+\d{4}$/u.exec(rest);
@@ -66,7 +66,7 @@ export function isImpossibleDate(s) {
   return !!shaped && !dateParts(s);
 }
 
-/** Forme courte pour les fiches de l'arbre : « 1932 », « v. 1850 » (« c. 1850 » en anglais). */
+/** Short form for tree cards: "1932", "v. 1850" ("c. 1850" in English). */
 export function shortDate(s) {
   s = String(s || '').trim();
   if (!s) return '';
@@ -77,7 +77,7 @@ export function shortDate(s) {
 
 const capitalized = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** Forme longue pour la fiche détaillée : « 04 Août 1961 », « Mars 1932 », « vers 1850 ». */
+/** Long form for the detailed record: "04 Août 1961", "Mars 1932", "vers 1850". */
 export function longDate(s) {
   const { q, rest } = splitQualifier(s);
   if (!rest) return String(s || '').trim();
@@ -86,19 +86,19 @@ export function longDate(s) {
   const p = dateParts(s);
   if (p && p.d) return prefix + String(p.d).padStart(2, '0') + ' ' + months[p.m - 1] + ' ' + p.y;
   if (p && p.m) return prefix + months[p.m - 1] + ' ' + p.y;
-  return prefix + rest; // année seule, texte libre ou date impossible : tel que saisi
+  return prefix + rest; // year alone, free text or impossible date: as entered
 }
 
-/** Date complète jj/mm/aaaa (sans préfixe) décomposée, ou null. */
+/** Full date dd/mm/yyyy (no prefix) split up, or null. */
 export function fullDate(s) {
   const p = dateParts(s);
   return p && !p.q && p.d ? { y: p.y, m: p.m, d: p.d } : null;
 }
 
 /**
- * Bornes d'une date sous forme de nombres aaaammjj : { lo, hi }, ou null pour un texte libre.
- * « 1932 » couvre l'année, « vers » ajoute cinq ans de chaque côté, « avant » et « après »
- * laissent un côté ouvert. Les contrôles ne signalent que ce que ces bornes rendent certain.
+ * Bounds of a date as yyyymmdd numbers: { lo, hi }, or null for free text.
+ * "1932" covers the year, "vers" adds five years on each side, "avant" and "après"
+ * leave one side open. Checks only flag what these bounds make certain.
  */
 export function dateBounds(s) {
   const p = dateParts(s);
@@ -111,5 +111,5 @@ export function dateBounds(s) {
   return { lo, hi };
 }
 
-/** Nombre d'années révolues entre deux nombres aaaammjj. */
+/** Number of full years between two yyyymmdd numbers. */
 export const yearsBetween = (from, to) => Math.floor((to - from) / 10000);

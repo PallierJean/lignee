@@ -1,5 +1,5 @@
 /* ==========================================================
-   Mise en page : en-tête, grille arbre + panneau latéral
+   Layout: header, tree + side panel grid
    ========================================================== */
 
 .app {
@@ -30,7 +30,7 @@
   display: none;
 }
 
-/* Les deux panneaux : arbre (.stage) et fiche/registre (.side) */
+/* The two panels: tree (.stage) and record/register (.side) */
 .stage,
 .side {
   background: var(--surface);
@@ -43,7 +43,7 @@
   overflow: hidden;
 }
 
-/* Tablette et téléphone : une seule colonne, la page défile */
+/* Tablet and phone: a single column, the page scrolls */
 @media (max-width: 900px) {
   html,
   body,
@@ -56,7 +56,7 @@
     flex-direction: column;
   }
 
-  /* L'arbre prend presque tout l'écran quand on y arrive : la barre et la légende ne le mangent pas */
+  /* The tree takes almost the whole screen once reached: the toolbar and legend don't eat into it */
   .stage {
     height: calc(100vh - 24px);
     height: calc(100dvh - 24px);

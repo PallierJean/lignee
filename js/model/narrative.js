@@ -1,4 +1,4 @@
-/** Récit du livret de famille : un paragraphe par personne, regroupé par génération. */
+/** Family booklet narrative: one paragraph per person, grouped by generation. */
 import { S } from '../state.js';
 import { dateParts, longDate, yearOf } from '../utils/dates.js';
 import { t } from '../i18n.js';
@@ -10,13 +10,13 @@ import { generationMap } from '../tree/full-layout.js';
 
 const clean = (x) => String(x || '').trim();
 
-/** « le 12 mars 1932 », « en 1932 », « vers 1850 » ; vide sans date. */
+/** "le 12 mars 1932", "en 1932", "vers 1850"; empty with no date. */
 export function whenText(date) {
   const p = dateParts(date);
   const text = longDate(date);
   if (!text) return '';
   if (!p) {
-    // Texte libre : « 05 Octobre 1863 » est un jour, « Octobre 1863 » un mois, le reste tel quel
+    // Free text: "05 Octobre 1863" is a day, "Octobre 1863" a month, the rest as is
     if (/^\d{1,2}\s+\p{L}/u.test(text)) return t('nar.on') + ' ' + text;
     return /^\p{L}+\s+\d{4}$/u.test(text) && yearOf(text) ? t('nar.in') + ' ' + text : text;
   }
@@ -26,7 +26,7 @@ export function whenText(date) {
 
 const atPlace = (place) => (clean(place) ? t('nar.at', clean(place)) : '');
 
-/** Phrases sur une personne. */
+/** Sentences about a person. */
 export function personStory(id) {
   const p = P(id);
   const out = [];
@@ -34,7 +34,7 @@ export function personStory(id) {
   const father = P(p.fatherId);
   const mother = P(p.motherId);
   const parents = [father, mother].filter(Boolean).map(fullName);
-  // Sans naissance ni parents, le nom seul répéterait le titre de la fiche
+  // With no birth or parents, the name alone would repeat the record's title
   if (birth || parents.length) out.push(t('nar.born', given(p) || longName(p), p.sex, birth, parents));
   if (clean(p.occupation)) out.push(t('nar.occupation', occupationLabel(p)));
   for (const { id: other, uid } of partnersOf(id)) {
@@ -54,13 +54,13 @@ export function personStory(id) {
   return out.join(' ') || t('nar.none');
 }
 
-/** « Sources : … » pour une personne, ou vide. */
+/** "Sources: …" for a person, or empty. */
 export function personSources(id) {
   const sources = sourcesOf(P(id)).map((s) => clean(s.title) || t('src.' + (SOURCE_KINDS.includes(s.kind) ? s.kind : 'other')));
   return sources.length ? t('nar.sources', [...new Set(sources)].join(', ')) : '';
 }
 
-/** Ordre du livret : par naissance, chaque personne suivie de ses conjoints de la même génération. */
+/** Booklet order: by birth, each person followed by their spouses of the same generation. */
 export function withPartners(ids) {
   const here = new Set(ids);
   const seen = new Set();
@@ -77,12 +77,12 @@ export function withPartners(ids) {
   return out;
 }
 
-/** Texte d'une personne dans un livre : { id, name, years, text, sources }. */
+/** A person's text in a book: { id, name, years, text, sources }. */
 export const personEntry = (id) => ({
   id, name: longName(P(id)), years: lifeYears(P(id)), text: personStory(id), sources: personSources(id),
 });
 
-/** Sections du livret : [{ gen, people: [{ id, name, text }] }], la plus ancienne d'abord. */
+/** Booklet sections: [{ gen, people: [{ id, name, text }] }], oldest first. */
 export function bookSections() {
   const gens = new Map();
   for (const [id, g] of generationMap()) {

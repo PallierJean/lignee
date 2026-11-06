@@ -1,10 +1,10 @@
 /* ==========================================================
-   Recherche rapide de l'en-tête et liste des suggestions
+   Header quick search and suggestion list
    ========================================================== */
 
 .find {
   position: relative;
-  flex: 1 1 120px; /* étroite d'abord : l'en-tête tient sur une ligne, puis elle prend la place libre */
+  flex: 1 1 120px; /* narrow at first: the header fits on one line, then it takes the free space */
   max-width: 420px;
   min-width: 0;
 }
@@ -102,7 +102,7 @@
   color: var(--accent);
 }
 
-/* Recherche d'une personne dans le formulaire (ajout d'une union) */
+/* Person search in the form (adding a union) */
 .pick {
   position: relative;
 }

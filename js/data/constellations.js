@@ -1,7 +1,7 @@
 /**
- * Constellations visibles depuis la France : étoiles principales (ascension droite en heures,
- * déclinaison en degrés, J2000, à une fraction de degré près) et traits habituels des figures.
- * Les étoiles brillantes portent leur nom ; `b` marque les plus lumineuses (plus grosses à l'écran).
+ * Constellations visible from France: main stars (right ascension in hours,
+ * declination in degrees, J2000, to a fraction of a degree) and the usual figure lines.
+ * Bright stars carry their name; `b` marks the brightest (drawn larger).
  */
 export const CONSTELLATIONS = [
   { fr: 'Grande Ourse', en: 'Great Bear', stars: { dub: [11.06, 61.75, 'Dubhe'], mer: [11.03, 56.38], phe: [11.9, 53.69], meg: [12.26, 57.03], ali: [12.9, 55.96], miz: [13.4, 54.93], alk: [13.79, 49.31] },

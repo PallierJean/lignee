@@ -1,15 +1,15 @@
 /**
- * Enregistrement des données.
+ * Data storage.
  *
- * L'application gère une collection d'arbres ; un seul est ouvert à la fois
- * (S.tree), ses personnes et unions sont dans S.people et S.unions.
- * Trois modes, chacun dans son module de storage/ :
+ * The application manages a collection of trees; only one is open at a time
+ * (S.tree), its people and unions are in S.people and S.unions.
+ * Three modes, each in its own module under storage/:
  *
- * - « db » (storage/db.js) : base de données en ligne fournie par claude.ai ;
- * - « file » (storage/file.js) : un fichier par arbre dans data/arbres/, via server.js ;
- * - « local » (storage/local.js) : stockage du navigateur.
+ * - "db" (storage/db.js): online database provided by claude.ai;
+ * - "file" (storage/file.js): one file per tree in data/arbres/, via server.js;
+ * - "local" (storage/local.js): browser storage.
  *
- * Ce module choisit le bon mode pour chaque écriture et chaque opération sur les arbres.
+ * This module picks the right mode for each write and each tree operation.
  */
 import { S } from '../state.js';
 import { t } from '../i18n.js';
@@ -25,7 +25,7 @@ export { loadFile, storePhoto, storePhotos, convertPhotos, buildPortableBackup }
 export { dbSet, withRetry, subscribe } from './storage/db.js';
 export { beginAction, commitAction, track, canUndo, canRedo } from './history.js';
 
-/** Enregistre l'arbre hors base en ligne : dans le fichier (mode file) ou le navigateur. */
+/** Saves the tree outside the online database: to the file (file mode) or the browser. */
 export function saveLocal() {
   const tree = S.trees.get(S.tree);
   if (tree) tree.count = S.people.size;
@@ -33,11 +33,11 @@ export function saveLocal() {
   saveBrowserTree();
 }
 
-/* ---------- Écritures (tous les modes) ---------- */
+/* ---------- Writes (all modes) ---------- */
 
 export const mapOf = (collection) => (collection === 'people' ? S.people : S.unions);
 
-/** Crée ou remplace un document. */
+/** Creates or replaces a document. */
 export async function opSet(collection, id, data) {
   track(collection, id);
   mapOf(collection).set(id, data);
@@ -45,7 +45,7 @@ export async function opSet(collection, id, data) {
   else await saveLocal();
 }
 
-/** Modifie certains champs d'un document existant. */
+/** Changes some fields of an existing document. */
 export async function opUpdate(collection, id, patch) {
   const map = mapOf(collection);
   const current = map.get(id);
@@ -63,9 +63,9 @@ export async function opDelete(collection, id) {
   else await saveLocal();
 }
 
-/* ---------- Annuler / rétablir ---------- */
+/* ---------- Undo / redo ---------- */
 
-/** Remet chaque document dans l'état `side` ('before' ou 'after') de l'action. */
+/** Puts each document back in the action's `side` state ('before' or 'after'). */
 async function applyAction(action, side) {
   for (const c of action.changes) {
     const data = c[side];
@@ -79,7 +79,7 @@ async function applyAction(action, side) {
   await pool(action.changes, 3, (c) => (c[side] ? dbSet(c.collection, c.id, c[side]) : dbDelete(c.collection, c.id)));
 }
 
-/** Annule la dernière action. Renvoie l'action, ou null s'il n'y en a pas. */
+/** Undoes the last action. Returns the action, or null if there is none. */
 export async function undoAction() {
   const action = takeUndo();
   if (!action) return null;
@@ -93,7 +93,7 @@ export async function undoAction() {
   return action;
 }
 
-/** Rétablit la dernière action annulée. */
+/** Redoes the last undone action. */
 export async function redoAction() {
   const action = takeRedo();
   if (!action) return null;
@@ -107,14 +107,14 @@ export async function redoAction() {
   return action;
 }
 
-/* ---------- Gestion des arbres (tous les modes) ---------- */
+/* ---------- Tree management (all modes) ---------- */
 
-/** Ouvre un autre arbre de la collection. */
+/** Opens another tree of the collection. */
 export async function openTree(id) {
   if (!S.trees.has(id)) return;
   S.tree = id;
   resetHistory();
-  // Ce qui désigne des personnes de l'arbre quitté
+  // What refers to people of the tree being left
   if (S.kinShow) S.full = S.kinWasFull;
   S.kinShow = false;
   S.kinA = '';
@@ -124,7 +124,7 @@ export async function openTree(id) {
   else loadLocalTree();
 }
 
-/** Crée un arbre vide et renvoie son identifiant (sans l'ouvrir). */
+/** Creates an empty tree and returns its id (without opening it). */
 export async function createTree(name) {
   const id = rid('t');
   const tree = { name, createdAt: Date.now(), count: 0 };
@@ -151,7 +151,7 @@ export async function renameTree(id, name) {
   }
 }
 
-/** Supprime un arbre et toutes ses fiches. Ouvre un autre arbre si c'était l'arbre ouvert. */
+/** Deletes a tree and all its records. Opens another tree if it was the open one. */
 export async function deleteTree(id) {
   if (!S.trees.has(id) || S.trees.size < 2) return;
   if (S.mode === 'db') await deleteDbTree(id);

@@ -1,6 +1,6 @@
 /**
- * Recherche rapide de l'en-tête : suggestions au fil de la saisie,
- * navigation au clavier (flèches, Entrée, Échap), raccourci « / » ou Ctrl+K.
+ * Header quick search: suggestions as you type,
+ * keyboard navigation (arrows, Enter, Escape), shortcut "/" or Ctrl+K.
  */
 import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
@@ -10,11 +10,11 @@ import { P, given, surname, maiden, longName, lifeYears, cmpName, queryWords, ma
 
 const MAX = 8;
 
-let results = [];  // ids proposés
-let total = 0;     // nombre total de personnes trouvées
-let active = -1;   // suggestion sélectionnée au clavier
+let results = [];  // suggested ids
+let total = 0;     // total number of people found
+let active = -1;   // suggestion selected with the keyboard
 
-/** Les personnes dont le nom commence par la recherche passent en premier. */
+/** People whose name starts with the query come first. */
 function rank(p, q, words) {
   const name = norm([given(p), surname(p), maiden(p)].join(' '));
   const starts = [surname(p), maiden(p)].filter(Boolean).some((s) => norm(s + ' ' + given(p)).startsWith(q));
@@ -25,8 +25,8 @@ function rank(p, q, words) {
 }
 
 /**
- * Personnes correspondant à la recherche, les plus pertinentes d'abord.
- * Renvoie { ids: les `max` premières, total }. `exclude` : ids à écarter.
+ * People matching the query, most relevant first.
+ * Returns { ids: the first `max`, total }. `exclude`: ids to leave out.
  */
 export function searchPeople(query, max, exclude = new Set()) {
   const words = queryWords(query);
@@ -90,14 +90,14 @@ export function closeFind(clear) {
   input.removeAttribute('aria-activedescendant');
 }
 
-/** Personne choisie : `onPick` centre l'arbre sur elle. */
+/** Chosen person: `onPick` centres the tree on them. */
 export function pickFind(id, onPick) {
   closeFind(true);
   $('#find').blur();
   onPick(id);
 }
 
-/** Toutes les personnes trouvées, dans le registre. `onShow` ouvre l'onglet. */
+/** Everyone found, in the register. `onShow` opens the tab. */
 export function showAllFind(onShow) {
   S.query = $('#find').value;
   const q = $('#q');
@@ -106,7 +106,7 @@ export function showAllFind(onShow) {
   onShow();
 }
 
-/** Touches dans le champ de recherche. Renvoie vrai si la touche a été traitée. */
+/** Keys in the search field. Returns true if the key was handled. */
 export function onFindKey(ev, onPick) {
   if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
     if (!results.length) return true;
@@ -129,7 +129,7 @@ export function onFindKey(ev, onPick) {
   return false;
 }
 
-/** Recalcule les suggestions après un changement des données, si la liste est ouverte. */
+/** Recomputes the suggestions after a data change, if the list is open. */
 export function refreshFind() {
   const input = $('#find');
   if (!input || $('#findList').hidden) return;

@@ -23,7 +23,7 @@ export function resetApp() {
   S.tree = 'principal';
   S.trees = new Map([['principal', { name: 'Mon arbre', createdAt: 0, count: 0 }]]);
   Object.assign(S, {
-    focus: null, full: false, fan: false, line: true, tab: 'fiche', analyse: 'kin', popup: null, edit: null, busy: false,
+    focus: null, full: false, fan: false, line: true, tab: 'record', analysis: 'kin', popup: null, edit: null, busy: false,
     canWrite: true, writeKnown: false, pending: null, confirmDel: false, confirmEx: false, query: '', kinA: '', kinB: '',
     kinShow: false, calMonth: null, timeFamily: false, treeEdit: null, up: 3, down: 2, zoom: 1, lastLayout: null,
   });

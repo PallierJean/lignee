@@ -1,7 +1,7 @@
 /**
- * Prénoms français dont la forme courante porte des accents, pour rétablir ceux que l'INSEE
- * retire (« HELENE » -> « Hélène »). Seuls les prénoms sans forme concurrente sans accent :
- * ni Eva, ni Emma, ni Michele (prénom italien).
+ * French first names whose usual spelling has accents, to restore those INSEE strips
+ * ("HELENE" -> "Hélène"). Only names with no competing unaccented form:
+ * not Eva, Emma or Michele (an Italian name).
  */
 export const ACCENTED_FIRST_NAMES = [
   'Adèle', 'Adélaïde', 'Adélie', 'Adélina', 'Agnès', 'Aimé', 'Aimée', 'Aloïs', 'Amédée', 'Anaïs', 'Anaëlle',

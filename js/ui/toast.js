@@ -1,4 +1,4 @@
-/** Message court en bas de l'écran (confirmation ou erreur). */
+/** Short message at the bottom of the screen (confirmation or error). */
 import { $ } from '../utils/dom.js';
 
 let timer;

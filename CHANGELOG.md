@@ -1,4 +1,4 @@
-# Historique des versions
+# Changelog
 
 ## [1.19.0](https://github.com/PallierJean/lignee/compare/v1.18.0...v1.19.0) (2026-11-06)
 

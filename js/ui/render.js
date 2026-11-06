@@ -1,25 +1,25 @@
-/** Rendu général : en-tête, arbre et panneau latéral. */
+/** Overall rendering: header, tree and side panel. */
 import { S, isLoading } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { P, reindex, defaultFocus } from '../model/people.js';
 import { renderTree, scrollToFocus } from '../tree/render.js';
 import { renderHeader, renderControls } from './header.js';
-import { ficheHTML } from './fiche.js';
+import { recordHTML } from './record.js';
 import { formHTML } from './form.js';
-import { renderRegistre } from './registre.js';
-import { renderAnalyse } from './analyse.js';
+import { renderRegister } from './register.js';
+import { renderAnalysis } from './analysis.js';
 import { refreshFind } from './search.js';
 import { renderTrees } from './trees.js';
 import { renderPersonDlg } from './person-dlg.js';
 import { renderMedia } from './media.js';
 
 /**
- * Onglet « Fiche » : formulaire en cours, ou fiche de la personne centrale.
- * Le formulaire n'est pas reconstruit (pour ne pas perdre la saisie) sauf si `force`.
+ * "Record" tab: the form being edited, or the record of the focus person.
+ * The form is not rebuilt (so as not to lose input) unless `force`.
  */
-export function renderFiche(force) {
-  const pane = $('#paneFiche');
+export function renderRecord(force) {
+  const pane = $('#paneRecord');
 
   if (S.edit) {
     if (!force && pane.dataset.token === S.edit.token) return;
@@ -35,22 +35,22 @@ export function renderFiche(force) {
   }
   if (!P(S.focus)) {
     pane.innerHTML = S.people.size
-      ? `<p class="nofocus">${t('fiche.pick')}</p>`
-      : `<p class="nofocus">${t('fiche.intro')}</p>`;
+      ? `<p class="nofocus">${t('record.pick')}</p>`
+      : `<p class="nofocus">${t('record.intro')}</p>`;
     return;
   }
-  pane.innerHTML = ficheHTML(S.focus);
+  pane.innerHTML = recordHTML(S.focus);
 }
 
 export function renderSide(force) {
-  for (const [tab, id] of [['fiche', 'Fiche'], ['registre', 'Registre'], ['analyse', 'Analyse']]) {
+  for (const [tab, id] of [['record', 'Record'], ['register', 'Register'], ['analysis', 'Analysis']]) {
     $('#tab-' + tab).setAttribute('aria-selected', String(S.tab === tab));
     $('#pane' + id).hidden = S.tab !== tab;
   }
   $('#regCount').textContent = S.people.size ? String(S.people.size) : '';
-  renderRegistre();
-  renderAnalyse();
-  renderFiche(force);
+  renderRegister();
+  renderAnalysis();
+  renderRecord(force);
 }
 
 export function renderAll(force) {
@@ -59,13 +59,13 @@ export function renderAll(force) {
   renderTree();
   renderSide(force);
   refreshFind();
-  if (!S.treeEdit) renderTrees(); // pas pendant une saisie dans la fenêtre « Mes arbres »
+  if (!S.treeEdit) renderTrees(); // not while typing in the "My trees" dialog
   renderPersonDlg();
   renderMedia();
   if (S.scrollPending) requestAnimationFrame(scrollToFocus);
 }
 
-/** À appeler après tout changement des données : recalcule les index puis redessine. */
+/** Call after any data change: recomputes the indexes, then redraws. */
 export function afterData() {
   reindex();
   if (!isLoading()) {

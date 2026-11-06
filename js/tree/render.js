@@ -1,6 +1,6 @@
 /**
- * Dessin de l'arbre : fiches (boutons positionnés) et traits (SVG).
- * Les fiches existantes sont réutilisées pour que leur déplacement soit animé.
+ * Tree drawing: cards (positioned buttons) and lines (SVG).
+ * Existing cards are reused so their movement is animated.
  */
 import { CW, CH, reduced, RINGS_PATH } from '../config.js';
 import { S, cardEls, isLoading } from '../state.js';
@@ -20,7 +20,7 @@ const PH_LABEL = {
   sibling: 'addSibling',
 };
 
-/** Petite illustration de l'état vide : deux parents reliés à un enfant. */
+/** Small illustration of the empty state: two parents linked to a child. */
 const EMPTY_SVG = '<svg viewBox="0 0 120 70" aria-hidden="true">'
   + '<g fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3">'
   + '<rect x="4" y="4" width="40" height="18" rx="2"/><rect x="76" y="4" width="40" height="18" rx="2"/>'
@@ -28,11 +28,11 @@ const EMPTY_SVG = '<svg viewBox="0 0 120 70" aria-hidden="true">'
   + '<rect x="40" y="48" width="40" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>'
   + '<path d="M60 31v17" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
-// Deux anneaux entrelacés devant les dates d'une personne mariée
+// Two interlaced rings before a married person's dates
 const MARRIED_SVG = '<svg class="wed" viewBox="0 0 20 12" aria-hidden="true">'
   + `<path d="${RINGS_PATH}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 
-/** Le surlignage d'un lien de parenté passe avant le halo de la lignée. */
+/** Highlighting a kinship link takes precedence over the line halo. */
 const lineShown = () => S.line && !S.kinShow;
 
 function fillCard(el, n) {
@@ -72,7 +72,7 @@ function fillPlaceholder(el, n) {
   el.innerHTML = `<span class="plus" aria-hidden="true">+</span><span>${esc(label)}</span>`;
 }
 
-/** Tracé du lien de parenté, d'une fiche à la suivante. */
+/** Kinship link path, from one card to the next. */
 function pathEdges(L, path, cls = 'kin') {
   const at = new Map();
   for (const n of L.nodes) if (n.t === 'p' && !at.has(n.id)) at.set(n.id, n);
@@ -93,7 +93,7 @@ function pathEdges(L, path, cls = 'kin') {
   return d ? `<path class="${cls}" d="${d}"/>` : '';
 }
 
-/** Traits de la lignée directe : de chaque personne à ses parents affichés. */
+/** Direct-line strokes: from each person to their displayed parents. */
 function lineEdges(L) {
   if (!lineShown()) return '';
   return L.nodes.filter((n) => n.sosa).map((n) => {
@@ -160,12 +160,12 @@ export function renderTree() {
   empty.hidden = true;
   sizer.hidden = false;
 
-  // Taille de la zone de défilement (zoomée) et de l'arbre (non zoomé)
+  // Size of the scroll area (zoomed) and of the tree (unzoomed)
   const canvas = $('#canvas');
   sizer.style.width = Math.ceil(L.W * S.zoom) + 'px';
   sizer.style.height = Math.ceil(L.H * S.zoom) + 'px';
-  // Marges : l'arbre qui tient à l'écran y est centré, sans barre de défilement ; plus grand, les
-  // barres suivent exactement sa taille (voir treeMargins)
+  // Margins: a tree that fits on screen is centred in it, with no scrollbar; when larger, the
+  // scrollbars follow its size exactly (see treeMargins)
   const w = Math.ceil(L.W * S.zoom);
   const h = Math.ceil(L.H * S.zoom);
   sizer.style.margin = `${Math.max(0, Math.floor((canvas.clientHeight - h) / 2))}px ${Math.max(0, Math.floor((canvas.clientWidth - w) / 2))}px`;
@@ -176,7 +176,7 @@ export function renderTree() {
   svg.setAttribute('height', L.H);
   svg.setAttribute('viewBox', `0 0 ${L.W} ${L.H}`);
 
-  // Traits et symboles d'union
+  // Lines and union symbols
   L.sig = L.nodes.map((n) => (n.id || n.key) + n.x + ',' + n.y).join('|');
   const geometryChanged = !S.lastLayout || S.lastLayout.sig !== L.sig;
   svg.innerHTML = L.edges.map((e) => `<path d="${e.d}"${e.dash ? ' class="dash"' : ''}/>`).join('')
@@ -184,19 +184,19 @@ export function renderTree() {
       + `<text x="${m.x}" y="${m.y}" dy="0.36em" text-anchor="middle">×</text></g>`).join('')
     + lineEdges(L) + pathEdges(L, path);
   if (geometryChanged && !reduced && S.lastLayout) {
-    // Les traits réapparaissent une fois les fiches arrivées à leur place
+    // The lines reappear once the cards have reached their place
     svg.classList.add('fresh');
     requestAnimationFrame(() => requestAnimationFrame(() => svg.classList.remove('fresh')));
   }
 
-  // Fiches : on réutilise celles qui existent déjà
+  // Cards: existing ones are reused
   const used = new Set();
   const count = new Map();
   for (const n of L.nodes) {
     let key = n.t === 'p' ? n.id : n.key;
     const c = (count.get(key) || 0) + 1;
     count.set(key, c);
-    if (c > 1) key += '~' + c; // même personne présente deux fois (implexe)
+    if (c > 1) key += '~' + c; // same person present twice (pedigree collapse)
     used.add(key);
 
     let el = cardEls.get(key);
@@ -225,7 +225,7 @@ export function renderTree() {
   S.lastLayout = L;
 }
 
-/** Fait défiler la toile pour centrer la personne centrale. */
+/** Scrolls the canvas to centre the focus person. */
 export function scrollToFocus() {
   if (S.fan) {
     const canvas = $('#canvas');
@@ -241,13 +241,13 @@ export function scrollToFocus() {
   if (L) scrollToNode(L.nodes.find((x) => x.focus));
 }
 
-/** Fait défiler la toile jusqu'à une personne. */
+/** Scrolls the canvas to a person. */
 export function scrollToPerson(id) {
   const L = S.lastLayout;
   if (L) scrollToNode(L.nodes.find((x) => x.id === id));
 }
 
-/** Marges autour de l'arbre dans la zone de défilement : { x, y } en pixels. */
+/** Margins around the tree in the scroll area: { x, y } in pixels. */
 export function treeMargins() {
   const sizer = $('#sizer');
   return { x: parseFloat(sizer.style.marginLeft) || 0, y: parseFloat(sizer.style.marginTop) || 0 };
