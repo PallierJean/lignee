@@ -1263,9 +1263,131 @@ function marine(ctx, x, y, now, k) {
   ctx.stroke();
 }
 
+/** Voile carrée gonflée, de `x0` à `x1` et de `y0` à `y1`, avec ses deux plis. */
+function squareSail(ctx, x0, x1, y0, y1, puff) {
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.quadraticCurveTo((x0 + x1) / 2, y0 + puff / 2, x1, y0);
+  ctx.quadraticCurveTo(x1 + puff, (y0 + y1) / 2, x1, y1);
+  ctx.quadraticCurveTo((x0 + x1) / 2, y1 + puff, x0, y1);
+  ctx.quadraticCurveTo(x0 + puff, (y0 + y1) / 2, x0, y0);
+  inked(ctx, '#FFFFFF', 2);
+  ctx.strokeStyle = 'rgba(20, 20, 20, .2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (const k of [0.3, 0.7]) {
+    const x = x0 + (x1 - x0) * k;
+    ctx.moveTo(x, y0 + 4);
+    ctx.quadraticCurveTo(x + puff / 2, (y0 + y1) / 2, x, y1 - 2);
+  }
+  ctx.stroke();
+  ctx.beginPath(); // vergue, aux bouts rouges
+  ctx.rect(x0 - 6, y0 - 4, x1 - x0 + 12, 4);
+  inked(ctx, '#7A6A55', 1.2);
+  for (const x of [x0 - 8, x1 + 2]) {
+    ctx.beginPath();
+    ctx.rect(x, y0 - 5, 6, 6);
+    inked(ctx, '#C8202E', 1);
+  }
+}
+
+/** Nid-de-pie à toit rouge en haut d'un mât, et sa flamme blanche qui claque. */
+function lookout(ctx, x, y, now) {
+  ctx.beginPath();
+  ctx.rect(x - 8, y, 16, 10);
+  inked(ctx, '#F3E2B3', 1.2);
+  ctx.beginPath();
+  ctx.rect(x - 2, y + 3, 4, 4);
+  inked(ctx, '#2B2D42', 0.8);
+  ctx.beginPath();
+  ctx.moveTo(x - 11, y);
+  ctx.lineTo(x, y - 8);
+  ctx.lineTo(x + 11, y);
+  ctx.closePath();
+  inked(ctx, '#C8202E', 1.2);
+  ctx.beginPath();
+  ctx.moveTo(x, y - 8);
+  ctx.lineTo(x, y - 20);
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y - 20);
+  for (let k = 1; k <= 3; k++) ctx.lineTo(x - k * 7, y - 19 + Math.sin(now / 120 + k) * 2 * (k / 3));
+  ctx.lineTo(x, y - 14);
+  ctx.closePath();
+  inked(ctx, '#FFFFFF', 1);
+}
+
+/** Figure de proue : un bouledogue qui tient un os, langue pendante, collier à pointes, long cou blanc. */
+function dogHead(ctx, x, y, now) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(1.5, 1.5);
+  ctx.beginPath(); // cou blanc qui rejoint l'étrave
+  ctx.moveTo(-14, 30);
+  ctx.quadraticCurveTo(-6, 10, -4, 0);
+  ctx.lineTo(14, 0);
+  ctx.quadraticCurveTo(10, 22, 2, 34);
+  ctx.closePath();
+  inked(ctx, '#FFFFFF', 2);
+  ctx.beginPath(); // collier rouge à pointes
+  ctx.rect(-8, -2, 26, 7);
+  inked(ctx, '#C8202E', 1.4);
+  for (const sx of [-6, 3, 12, 20]) {
+    ctx.beginPath();
+    ctx.moveTo(sx - 3, 5);
+    ctx.lineTo(sx, 14);
+    ctx.lineTo(sx + 3, 5);
+    ctx.closePath();
+    inked(ctx, '#F3E2B3', 1);
+  }
+  ctx.beginPath(); // tête
+  ctx.ellipse(6, -16, 17, 15, 0, 0, TAU);
+  inked(ctx, '#B68A5C', 2);
+  ctx.beginPath(); // oreille
+  ctx.ellipse(-6, -28, 6, 4, -0.6, 0, TAU);
+  inked(ctx, '#6E4F32', 1.4);
+  ctx.beginPath(); // museau
+  ctx.ellipse(18, -10, 10, 8, 0, 0, TAU);
+  inked(ctx, '#7A5A3C', 1.6);
+  ctx.beginPath(); // truffe
+  ctx.ellipse(25, -14, 4, 3, 0, 0, TAU);
+  inked(ctx, INK, 1);
+  ctx.beginPath(); // œil vert, sourcil froncé
+  ctx.ellipse(10, -22, 4, 3, 0, 0, TAU);
+  inked(ctx, '#C8E86A', 1.2);
+  ctx.fillStyle = INK;
+  ctx.fillRect(10, -23, 1.8, 2);
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(5, -27);
+  ctx.lineTo(15, -25);
+  ctx.stroke();
+  const lick = Math.sin(now / 300) * 2; // langue rose qui pend
+  ctx.beginPath();
+  ctx.moveTo(14, -3);
+  ctx.quadraticCurveTo(13, 8 + lick, 18, 9 + lick);
+  ctx.quadraticCurveTo(23, 8 + lick, 22, -3);
+  ctx.closePath();
+  inked(ctx, '#E8607A', 1.2);
+  ctx.beginPath(); // l'os en travers de la gueule
+  ctx.rect(2, -6, 34, 5);
+  for (const bx of [2, 36]) {
+    ctx.moveTo(bx + 3.5, -7);
+    ctx.arc(bx, -7, 3.5, 0, TAU);
+    ctx.moveTo(bx + 3.5, 0);
+    ctx.arc(bx, 0, 3.5, 0, TAU);
+  }
+  inked(ctx, '#FFFDF4', 1.4);
+  ctx.restore();
+}
+
 /**
- * Navire de la marine (cap à droite) : coque blanche rayée de bleu, sabords et canons, grande voile
- * à ancre marquée « MARINE », pavillon bleu à ancre, marins sur le pont. Il tangue lui aussi.
+ * Navire de la marine (cap à droite) : coque vert d'eau zébrée, deux mâts à nids-de-pie à toit
+ * rouge, voiles marquées « MARINE » et « 海軍 », bouledogue en figure de proue, marins sur le pont.
+ * Il tangue lui aussi.
  */
 function navyShip(ctx, x, y, s, now) {
   ctx.save();
@@ -1273,73 +1395,62 @@ function navyShip(ctx, x, y, s, now) {
   ctx.rotate(Math.sin(now / 980 + 1) * 0.04);
   ctx.scale(s, s);
   ctx.lineJoin = 'round';
-  ctx.beginPath(); // mât
-  ctx.rect(-3, -140, 6, 134);
-  inked(ctx, '#7A6A55', 1.6);
   const puff = 8 + Math.sin(now / 650) * 2;
-  ctx.beginPath(); // grande voile
-  ctx.moveTo(-50, -110);
-  ctx.quadraticCurveTo(0, -110 + puff / 2, 44, -110);
-  ctx.quadraticCurveTo(44 + puff, -76, 44, -42);
-  ctx.quadraticCurveTo(0, -42 + puff, -50, -42);
-  ctx.quadraticCurveTo(-50 + puff, -76, -50, -110);
-  inked(ctx, '#FFFFFF', 2.2);
-  ctx.save(); // ancre bleue
-  ctx.translate(-3, -84);
-  ctx.strokeStyle = '#2E5AAC';
-  ctx.lineWidth = 3.4;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(0, -14);
-  ctx.lineTo(0, 12);
-  ctx.moveTo(-9, -8);
-  ctx.lineTo(9, -8);
-  ctx.moveTo(-13, 4);
-  ctx.quadraticCurveTo(-10, 14, 0, 14);
-  ctx.quadraticCurveTo(10, 14, 13, 4);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, -17, 3.5, 0, TAU);
-  ctx.stroke();
-  ctx.restore();
-  ctx.font = '800 11px "Atkinson Hyperlegible", sans-serif';
+  ctx.beginPath(); // grand mât (arrière) et mât de misaine (avant)
+  ctx.rect(-33, -178, 6, 172);
+  ctx.rect(31, -150, 6, 144);
+  inked(ctx, '#7A6A55', 1.6);
+  squareSail(ctx, -74, 14, -164, -128, puff * 0.7);
+  squareSail(ctx, -80, 20, -122, -52, puff);
+  squareSail(ctx, 0, 66, -134, -104, puff * 0.7);
+  squareSail(ctx, -4, 72, -98, -46, puff);
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#2E5AAC';
-  ctx.fillText('MARINE', -3, -54);
-  ctx.beginPath(); // pavillon bleu à ancre, qui claque
-  ctx.moveTo(3, -158);
-  for (let k = 0; k <= 4; k++) ctx.lineTo(3 - k * 9, -158 + Math.sin(now / 130 + k + 2) * 3 * (k / 4));
-  for (let k = 4; k >= 0; k--) ctx.lineTo(3 - k * 9, -140 + Math.sin(now / 130 + k + 2) * 3 * (k / 4));
-  ctx.closePath();
-  inked(ctx, '#2E5AAC', 1);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(-17, -152, 4, 8);
-  ctx.fillRect(-21, -149, 12, 2.5);
+  ctx.fillStyle = '#1F3A8E';
+  ctx.font = '900 15px "Atkinson Hyperlegible", sans-serif';
+  ctx.fillText('MARINE', -30 + puff / 2, -80);
+  ctx.font = '900 22px serif';
+  ctx.fillText('海軍', 34 + puff / 2, -66);
+  lookout(ctx, -30, -188, now);
+  lookout(ctx, 34, -160, now + 400);
   // Marins sur le pont, derrière le bastingage
-  for (const [mx, k] of [[-40, 0], [-22, 1], [22, 2], [40, 3]]) marine(ctx, mx, -8, now, k);
-  // Coque blanche rayée de bleu, sabords et canons
+  for (const [mx, k] of [[-56, 0], [-12, 1], [10, 2], [52, 3]]) marine(ctx, mx, -10, now, k);
+  // Coque vert d'eau, zébrée de bandes sombres, liston rouge, sabords et canons
   ctx.beginPath();
-  ctx.moveTo(-70, -22);
-  ctx.lineTo(-56, -22);
-  ctx.lineTo(-56, -8);
-  ctx.lineTo(56, -8);
-  ctx.quadraticCurveTo(70, -12, 78, -20);
-  ctx.quadraticCurveTo(74, 14, 42, 26);
-  ctx.lineTo(-46, 26);
-  ctx.quadraticCurveTo(-66, 14, -70, -22);
+  ctx.moveTo(-84, -30);
+  ctx.lineTo(-66, -30);
+  ctx.lineTo(-66, -10);
+  ctx.lineTo(66, -10);
+  ctx.quadraticCurveTo(80, -14, 88, -24);
+  ctx.quadraticCurveTo(86, 14, 50, 28);
+  ctx.lineTo(-56, 28);
+  ctx.quadraticCurveTo(-80, 16, -84, -30);
   ctx.closePath();
-  inked(ctx, '#E9EDF2', 2.6);
-  ctx.beginPath();
-  ctx.rect(-64, 6, 132, 6);
-  inked(ctx, '#2E5AAC', 1.2);
-  for (const cx of [-34, -10, 14, 38]) {
+  inked(ctx, '#2FA79A', 2.6);
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = '#17615C';
+  for (let k = -100; k < 100; k += 22) {
     ctx.beginPath();
-    ctx.rect(cx - 5, -4, 10, 8);
-    inked(ctx, '#2B2D42', 1.2);
-    ctx.beginPath();
-    ctx.rect(cx + 3, -2, 8, 4);
-    inked(ctx, '#3A3A3A', 1);
+    ctx.moveTo(k, -34);
+    ctx.quadraticCurveTo(k + 10, -6, k + 2, 30);
+    ctx.lineTo(k + 8, 30);
+    ctx.quadraticCurveTo(k + 16, -6, k + 6, -34);
+    ctx.closePath();
+    ctx.fill();
   }
+  ctx.restore();
+  ctx.beginPath();
+  ctx.rect(-66, -15, 132, 5);
+  inked(ctx, '#C8202E', 1.2);
+  for (const cx of [-44, -18, 8, 34]) {
+    ctx.beginPath();
+    ctx.arc(cx, 4, 5, 0, TAU);
+    inked(ctx, '#F3E2B3', 1.4);
+    ctx.beginPath();
+    ctx.arc(cx, 4, 2.6, 0, TAU);
+    inked(ctx, '#2B2D42', 0.8);
+  }
+  dogHead(ctx, 88, -50, now);
   ctx.restore();
 }
 
@@ -1428,7 +1539,7 @@ function grandLine(ctx, s, now, w, h) {
   if (!s.shot && now > s.nextShot && navyX > w * 0.08 && shipX < w * 0.95) s.shot = { born: now };
   if (s.shot) {
     const t = (now - s.shot.born) / 2200;
-    const from = [navyX + 82 * shipScale * 0.82, navyY - 2];
+    const from = [navyX + 34 * shipScale * 0.82, navyY];
     const to = [shipX - 140 * shipScale, shipY + 20]; // juste derrière la poupe : raté !
     if (t > 1) {
       s.shot = null;
