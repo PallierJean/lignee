@@ -210,11 +210,36 @@ describe('navigation et affichage', () => {
     assert.equal(S.calMonth, 12);
   });
 
-  test('pendant une saisie, on ne change pas de personne', () => {
+  test('pendant une saisie, changer de personne demande quoi faire de la fiche', () => {
+    const michel = ex.people.find((p) => p.given === 'Michel').id;
     A.startEdit(camille);
-    A.setFocus(ex.people.find((p) => p.given === 'Michel').id);
+    A.setFocus(michel);
     assert.equal(S.focus, camille);
-    assert.match(el('toast').textContent, /Enregistrez ou annulez/);
+    assert.equal(el('leaveDlg').hidden, false);
+    assert.match(el('leaveText').textContent, /Camille .* ouverte en modification/);
+    assert.match(el('leaveDrop').textContent, /Abandonner et afficher Michel/);
+    S.tab = 'register';
+    A.leaveEdit(false);
+    assert.equal(el('leaveDlg').hidden, true);
+    assert.equal(S.tab, 'record', 'back to the form');
+    assert.equal(S.edit.id, camille);
+    A.setFocus(camille);
+    assert.equal(el('leaveDlg').hidden, true, 'its own person: no question');
+    A.editPerson(michel);
+    assert.equal(el('leaveDlg').hidden, false);
+    assert.match(el('leaveDrop').textContent, /Abandonner et modifier Michel/);
+    A.leaveEdit(true);
+    assert.equal(el('leaveDlg').hidden, true);
+    assert.equal(S.focus, michel);
+    assert.equal(S.edit.id, michel, 'the other record opens for editing');
+    A.cancelEdit();
+    A.startEdit(camille);
+    A.setFocus(michel);
+    A.leaveEdit(true);
+    assert.equal(S.focus, michel);
+    assert.equal(S.edit, null);
+    A.setFocus(camille);
+    A.startEdit(camille);
     A.startNew();
     A.startAdd('child', camille);
     assert.equal(S.edit.id, camille);

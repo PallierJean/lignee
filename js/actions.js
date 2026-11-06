@@ -26,6 +26,7 @@ import { applyTheme } from './ui/theme.js';
 import { renderPersonDlg } from './ui/person-dlg.js';
 import { photoFromFile, DOCUMENT_SIDE } from './utils/image.js';
 import { cropPhoto } from './ui/crop.js';
+import { askLeave, closeLeave } from './ui/leave-dlg.js';
 
 /** Situations shared with the current spouse. */
 const COUPLE_SITUATIONS = new Set(['married', 'remarried', 'pacs', 'cohabiting']);
@@ -54,7 +55,8 @@ export function closeSheet(fromHistory) {
 export function setFocus(id, fromList) {
   if (!S.people.has(id)) return;
   if (S.edit) {
-    toast(t('finishFocus'));
+    if (S.edit.id === id) setTab('record');
+    else askLeave(id, () => setFocus(id, fromList));
     return;
   }
   const same = id === S.focus;
@@ -65,6 +67,21 @@ export function setFocus(id, fromList) {
   if (!same) S.scrollPending = true;
   renderAll();
   if (fromList) showSide();
+}
+
+/** Edits person `id` from outside their record (person dialog). */
+export function editPerson(id) {
+  if (S.edit && S.edit.id !== id) return askLeave(id, () => editPerson(id), true);
+  setFocus(id);
+  if (!S.edit) startEdit(id);
+}
+
+/** Answer to the "record being edited" dialog: back to the form, or discard it and go on. */
+export function leaveEdit(drop) {
+  const go = closeLeave(drop);
+  if (!go) return setTab('record');
+  cancelEdit();
+  go();
 }
 
 export function setTab(tab) {

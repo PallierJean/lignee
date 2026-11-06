@@ -234,7 +234,12 @@ const FR = {
   'ts.deleted': (name) => `Arbre « ${name} » supprimé`,
   'ts.default': 'Mon arbre',
   'finishFirst': 'Enregistrez ou annulez la fiche en cours d’abord.',
-  'finishFocus': 'Enregistrez ou annulez la fiche en cours avant de changer de personne.',
+  'leave.title': 'Fiche en cours de modification',
+  'leave.text': (name) => `La fiche de ${name} est ouverte en modification et n’est pas enregistrée.`,
+  'leave.textNew': 'Une nouvelle fiche est en cours de saisie et n’est pas enregistrée.',
+  'leave.resume': 'Reprendre la modification',
+  'leave.drop': (name) => `Abandonner et afficher ${name}`,
+  'leave.dropEdit': (name) => `Abandonner et modifier ${name}`,
 
   // Print dialog
   'pr.title': 'Imprimer l’arbre',
@@ -1008,7 +1013,12 @@ const EN = {
   'ts.deleted': (name) => `Tree “${name}” deleted`,
   'ts.default': 'My tree',
   'finishFirst': 'Save or cancel the current record first.',
-  'finishFocus': 'Save or cancel the current record before switching to another person.',
+  'leave.title': 'Record being edited',
+  'leave.text': (name) => `${name}’s record is open for editing and isn’t saved.`,
+  'leave.textNew': 'A new record is being entered and isn’t saved.',
+  'leave.resume': 'Resume editing',
+  'leave.drop': (name) => `Discard and show ${name}`,
+  'leave.dropEdit': (name) => `Discard and edit ${name}`,
 
   'pr.title': 'Print the tree',
   'pr.text': 'Everyone is scaled to fit on a single sheet. In the print window, choose “Save as PDF” to get the file, or a large-format printer.',
