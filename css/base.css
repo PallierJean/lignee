@@ -1,5 +1,5 @@
 /* ==========================================================
-   Base : remise à zéro, typographie, utilitaires
+   Base: reset, typography, utilities
    ========================================================== */
 
 html {
@@ -13,7 +13,7 @@ html {
   box-sizing: inherit;
 }
 
-/* Laisse la place aux encoches et barres système des téléphones */
+/* Leaves room for phone notches and system bars */
 :root {
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -43,7 +43,7 @@ img {
   outline-offset: 2px;
 }
 
-/* Texte réservé aux lecteurs d'écran */
+/* Text for screen readers only */
 .sr {
   position: absolute;
   width: 1px;
@@ -57,7 +57,7 @@ img {
   color: var(--muted);
 }
 
-/* Page affichée dans le cadre d'un autre site : l'application ne démarre pas */
+/* Page shown inside another site's frame: the application does not start */
 .framed {
   max-width: 32rem;
   margin: 4rem auto;
@@ -65,8 +65,8 @@ img {
   text-align: center;
 }
 
-/* Taille du texte de l'interface (ui/theme.js) : les tailles sont en rem, relatives à celle-ci,
-   elle-même relative au réglage du navigateur. Les fiches de l'arbre et l'impression restent en px. */
+/* Interface text size (ui/theme.js): sizes are in rem, relative to this one,
+   itself relative to the browser setting. Tree cards and printing stay in px. */
 :root[data-text="large"] {
   font-size: 125%;
 }

@@ -1,10 +1,10 @@
-/** Registre : toutes les personnes, regroupées par nom de famille, avec recherche. */
+/** Register: everyone, grouped by surname, with search. */
 import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
 import { P, given, surname, maiden, lifeYears, byBirth, queryWords, matchesWords } from '../model/people.js';
 
-export function renderRegistre() {
+export function renderRegister() {
   const list = $('#reglist');
 
   if (!S.people.size) {
@@ -16,7 +16,7 @@ export function renderRegistre() {
   const groups = new Map();
   for (const [id, p] of S.people) {
     if (!matchesWords(p, words)) continue;
-    // Une femme figure sous son nom d'usage et sous son nom de jeune fille
+    // A woman is listed under her married name and under her maiden name
     const names = [surname(p), maiden(p)].filter(Boolean);
     for (const key of names.length ? names : [t('noSurname')]) {
       if (!groups.has(key)) groups.set(key, []);
@@ -34,7 +34,7 @@ export function renderRegistre() {
     const ids = groups.get(key).sort(byBirth);
     const rows = ids.map((id) => {
       const p = P(id);
-      // Sous le nom de jeune fille, on rappelle le nom d'usage, et inversement
+      // Under the maiden name, the married name is recalled, and vice versa
       const other = maiden(p) && surname(p) ? (key === maiden(p) ? t('married') + ' ' + surname(p) : t('nee') + ' ' + maiden(p)) : '';
       const place = p.birthPlace ? `<span class="pl"> · ${esc(p.birthPlace)}</span>` : '';
       return `<button class="reg-row${id === S.focus ? ' cur' : ''}" type="button" data-act="focus" data-id="${esc(id)}">`

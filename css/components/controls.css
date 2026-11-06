@@ -1,5 +1,5 @@
 /* ==========================================================
-   Contrôles partagés : boutons et champs de saisie
+   Shared controls: buttons and input fields
    ========================================================== */
 
 .btn {
@@ -74,7 +74,7 @@
   cursor: pointer;
 }
 
-/* Champs de saisie (formulaire et recherche du registre) */
+/* Input fields (form and register search) */
 .fld input,
 .fld select,
 .fld textarea,

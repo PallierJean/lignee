@@ -1,8 +1,8 @@
 /* ==========================================================
-   Collection d'arbres : bouton de l'en-tête, fenêtre « Mes arbres »
+   Tree collection: header button, "My trees" dialog
    ========================================================== */
 
-/* Bouton de l'en-tête : nom de l'arbre ouvert */
+/* Header button: name of the open tree */
 .tree-switch {
   font: inherit;
   display: inline-flex;
@@ -46,7 +46,7 @@
   stroke-width: 1.6;
 }
 
-/* Liste des arbres */
+/* List of trees */
 .tree-list {
   list-style: none;
   margin: 0;

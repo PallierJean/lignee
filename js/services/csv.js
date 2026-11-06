@@ -1,11 +1,11 @@
-/** Export du registre au format CSV, lisible par Excel et LibreOffice. */
+/** Register export as CSV, readable by Excel and LibreOffice. */
 import { S } from '../state.js';
 import { t } from '../i18n.js';
 import { P, fullName, given, surname, maiden, cmpName, partnersOf, childrenOf, situationLabel, currentSituation } from '../model/people.js';
 
 /**
- * Cellule CSV : entre guillemets si besoin. Un texte commençant par = + - ou @ serait pris pour
- * une formule par le tableur (une fiche importée pourrait en contenir) : on le préfixe d'une apostrophe.
+ * CSV cell: quoted if needed. Text starting with = + - or @ would be taken as a formula
+ * by the spreadsheet (an imported record could contain one): it gets an apostrophe prefix.
  */
 function cell(value, sep) {
   let s = String(value ?? '');
@@ -13,7 +13,7 @@ function cell(value, sep) {
   return s.includes(sep) || /["\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 
-export function buildRegistreCsv() {
+export function buildRegisterCsv() {
   const sep = t('csv.sep');
   const names = (ids) => ids.map((id) => fullName(P(id))).join(', ');
   const parent = (id) => (P(id) ? fullName(P(id)) : '');
@@ -29,6 +29,6 @@ export function buildRegistreCsv() {
       parent(p.fatherId), parent(p.motherId), names(partnersOf(id).map((x) => x.id)), names(childrenOf(id)), p.notes,
     ]);
   }
-  // Le BOM indique l'UTF-8 à Excel, qui sinon abîme les accents
+  // The BOM tells Excel the file is UTF-8; otherwise it mangles accents
   return '﻿' + rows.map((r) => r.map((v) => cell(v, sep)).join(sep)).join('\r\n') + '\r\n';
 }

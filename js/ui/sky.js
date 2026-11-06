@@ -1,34 +1,34 @@
 /**
- * Thème « Constellations » : le vrai ciel de Bordeaux, dessiné sous l'arbre. Les étoiles des
- * constellations (model/sky.js) sont placées comme on les voit en levant la tête : zénith au centre,
- * nord en haut, est à gauche (projection stéréographique), assez agrandies pour que les figures
- * s'écartent. Le ciel part de l'heure qu'il est et tourne en accéléré (une heure toutes les 30 s)
- * pendant une minute, puis revient en fondu à l'heure réelle : on le voit tourner, toujours juste. Les étoiles scintillent, les plus brillantes portent
- * des aigrettes, une étoile au hasard s'embrase un instant, une étoile filante passe de temps en
- * temps. Si le système demande moins d'animations, le ciel est redessiné sans ces effets.
+ * "Constellations" theme: the real sky over Bordeaux, drawn under the tree. The constellation
+ * stars (model/sky.js) are placed as seen when looking up: zenith in the centre,
+ * north at the top, east on the left (stereographic projection), enlarged enough for the figures
+ * to spread out. The sky starts from the current time and turns fast (one hour every 30 s)
+ * for a minute, then fades back to the real time: you see it turn, always accurate. The stars twinkle, the brightest have
+ * spikes, a random star flares for a moment, a shooting star passes from time to
+ * time. If the system asks for reduced motion, the sky is redrawn without these effects.
  */
 import { reduced } from '../config.js';
 import { t, getLang } from '../i18n.js';
 import { skyAt } from '../model/sky.js';
 
 const FRAME = 100;     // ms entre deux images
-const SHOOT = 7000;    // une étoile filante toutes les … ms, en moyenne
-const ZOOM = 1.25;     // rayon de l'horizon, en hauteurs de toile : les constellations s'écartent
-const SPEED = 120;     // en accéléré : une heure du ciel toutes les 30 s
-const CYCLE = 60000;   // ms d'accéléré avant de revenir à l'heure réelle
-const FADE = 1200;     // ms de fondu au retour
+const SHOOT = 7000;    // a shooting star every … ms, on average
+const ZOOM = 1.25;     // horizon radius, in canvas heights: the constellations spread out
+const SPEED = 120;     // sped up: one hour of sky every 30 s
+const CYCLE = 60000;   // ms of fast motion before returning to the real time
+const FADE = 1200;     // ms of fade on return
 
 let layer = null;
 let timer = null;
-let start = 0;         // début du cycle d'accéléré
-let shooting = null;   // étoile filante en cours : { x, y, angle, born }
+let start = 0;         // start of the fast-motion cycle
+let shooting = null;   // current shooting star: { x, y, angle, born }
 let nextShoot = 0;
-let flash = null;      // étoile qui s'embrase un instant : { id, born }
+let flash = null;      // star flaring for a moment: { id, born }
 let nextFlash = 0;
-const FLASH = 1500;    // une étoile s'embrase toutes les … ms, en moyenne
+const FLASH = 1500;    // a star flares every … ms, on average
 const FLASH_LIFE = 1100;
 
-/** Projection : hauteur et azimut -> point de la toile (zénith au centre, horizon à `radius`). */
+/** Projection: altitude and azimuth -> canvas point (zenith in the centre, horizon at `radius`). */
 function projector(w, h) {
   const radius = h * ZOOM;
   const cx = w / 2;
@@ -40,7 +40,7 @@ function projector(w, h) {
   };
 }
 
-/** Une image du ciel. */
+/** One frame of the sky. */
 function frame() {
   if (document.hidden && !reduced) return;
   const canvas = layer.firstChild;
@@ -55,16 +55,16 @@ function frame() {
     canvas.style.height = `${h}px`;
   }
   const now = Date.now();
-  // Heure du ciel : l'heure réelle, plus l'avance prise depuis le début du cycle
+  // Sky time: the real time, plus the lead gained since the start of the cycle
   const elapsed = reduced ? 0 : (now - start) % CYCLE;
   const when = new Date(now + elapsed * SPEED);
   const ctx = canvas.getContext('2d');
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.clearRect(0, 0, w, h);
-  ctx.globalAlpha = reduced ? 1 : Math.min(1, elapsed / FADE, (CYCLE - elapsed) / FADE); // fondu au retour
+  ctx.globalAlpha = reduced ? 1 : Math.min(1, elapsed / FADE, (CYCLE - elapsed) / FADE); // fade on return
   const at = projector(w, h);
   const lang = getLang();
-  // Une étoile au hasard s'embrase un instant
+  // A random star flares for a moment
   if (!reduced && now > nextFlash) {
     const visible = skyAt(when).flatMap((c, ci) => Object.entries(c.stars).filter(([, s]) => s.alt > 5).map(([key]) => `${ci}:${key}`));
     flash = visible.length ? { id: visible[Math.floor(Math.random() * visible.length)], born: now } : null;
@@ -74,7 +74,7 @@ function frame() {
   for (const [ci, c] of skyAt(when).entries()) {
     const up = Object.values(c.stars).filter((s) => s.alt > 0);
     if (!up.length) continue;
-    // Traits de la figure : seulement entre deux étoiles au-dessus de l'horizon
+    // Figure lines: only between two stars above the horizon
     ctx.strokeStyle = 'rgba(176, 196, 255, .5)';
     ctx.lineWidth = 1.6;
     ctx.shadowColor = 'rgba(159, 180, 255, .8)';
@@ -90,7 +90,7 @@ function frame() {
       });
     }
     ctx.stroke();
-    // Étoiles : elles scintillent, chacune à son rythme ; les plus brillantes plus grosses
+    // Stars: they twinkle, each at its own pace; the brightest are bigger
     for (const [key, s] of Object.entries(c.stars)) {
       if (s.alt <= 0) continue;
       const [x, y] = at(s);
@@ -102,7 +102,7 @@ function frame() {
       ctx.beginPath();
       ctx.arc(x, y, (s.bright ? 4.2 : 2.7) * (0.85 + 0.15 * glow), 0, 2 * Math.PI);
       ctx.fill();
-      // Aigrettes des étoiles brillantes ; plus grandes pour celle qui s'embrase
+      // Spikes of bright stars; larger for the one flaring
       const age = flash && flash.id === `${ci}:${key}` ? (now - flash.born) / FLASH_LIFE : 1;
       const burst = age < 1 ? Math.sin(age * Math.PI) : 0;
       if (s.bright || burst > 0) sparkle(ctx, x, y, (s.bright ? 8 + 7 * glow : 0) + 22 * burst, 0.35 + 0.4 * glow * (s.bright ? 1 : 0) + 0.6 * burst);
@@ -113,7 +113,7 @@ function frame() {
         ctx.fillText(s.name, x + 9, y - 7);
       }
     }
-    // Nom de la constellation, au milieu de ses étoiles visibles
+    // Constellation name, in the middle of its visible stars
     if (up.length >= 2) {
       const pts = up.map(at);
       const mx = pts.reduce((sum, p) => sum + p[0], 0) / pts.length;
@@ -129,7 +129,7 @@ function frame() {
   ctx.globalAlpha = 1;
   if (!reduced) shootingStar(ctx, now, w, h);
 
-  // Légende : le lieu, la date et l'heure du ciel montré
+  // Caption: the place, date and time of the sky shown
   ctx.shadowBlur = 0;
   ctx.fillStyle = 'rgba(214, 224, 255, .6)';
   ctx.font = '11.5px "Atkinson Hyperlegible", sans-serif';
@@ -138,7 +138,7 @@ function frame() {
   ctx.fillText(t('sky.caption', date, time) + (reduced ? '' : t('sky.fast')), 12, h - 12);
 }
 
-/** Aigrettes : une croix de lumière fine autour d'une étoile, plus une croix plus courte en biais. */
+/** Spikes: a thin cross of light around a star, plus a shorter diagonal cross. */
 function sparkle(ctx, x, y, len, alpha) {
   if (len <= 0) return;
   ctx.save();
@@ -164,7 +164,7 @@ function sparkle(ctx, x, y, len, alpha) {
   ctx.restore();
 }
 
-/** Étoile filante : une traînée qui file en biais, puis s'éteint. */
+/** Shooting star: a trail that streaks diagonally, then fades. */
 function shootingStar(ctx, now, w, h) {
   if (!shooting && now > nextShoot) {
     shooting = { x: (0.15 + Math.random() * 0.7) * w, y: (0.1 + Math.random() * 0.5) * h, angle: (Math.random() < 0.5 ? 20 : 160) + Math.random() * 25, born: now };
@@ -192,7 +192,7 @@ function shootingStar(ctx, now, w, h) {
   ctx.stroke();
 }
 
-/** Lance (`on`) ou arrête le ciel. */
+/** Starts (`on`) or stops the sky. */
 export function setSky(on) {
   const box = document.getElementById('canvas');
   const can = on && box && typeof document.createElement('canvas').getContext === 'function';
@@ -213,6 +213,6 @@ export function setSky(on) {
   nextShoot = Date.now() + 3000;
   nextFlash = Date.now() + 800;
   frame();
-  // Moins d'animations : sans scintillement ni filantes, redessiné toutes les 30 s pour suivre le ciel
+  // Reduced motion: no twinkling or shooting stars, redrawn every 30 s to follow the sky
   timer = setInterval(frame, reduced ? 30000 : FRAME);
 }

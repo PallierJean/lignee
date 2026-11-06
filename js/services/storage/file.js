@@ -1,7 +1,7 @@
 /**
- * Mode « file » : un fichier par arbre dans data/arbres/ du projet, écrit par le
- * serveur local (node server.js). Même format que la sauvegarde .json, mais les
- * photos sont des fichiers à part, dans data/arbres/<id de l'arbre>/photos/.
+ * "file" mode: one file per tree in the project's data/arbres/, written by the
+ * local server (node server.js). Same format as the .json backup, but the
+ * photos are separate files, in data/arbres/<tree id>/photos/.
  */
 import { S, treeName } from '../../state.js';
 import { t } from '../../i18n.js';
@@ -22,8 +22,8 @@ async function fetchTrees() {
   return list;
 }
 
-// Version de l'arbre ouvert, reçue du serveur : un enregistrement n'écrase jamais une version
-// plus récente (autre onglet, autre appareil, modification du fichier)
+// Version of the open tree, received from the server: a save never overwrites a more
+// recent version (another tab, another device, an edit of the file)
 let version = null;
 
 async function putFileTree(id, body, keepPhotos, ifMatch) {
@@ -39,8 +39,8 @@ async function putFileTree(id, body, keepPhotos, ifMatch) {
 const emptyBackup = (name, createdAt) => buildBackup({ name, createdAt, people: new Map(), unions: new Map() });
 
 /**
- * Charge la liste des arbres de data/arbres/ puis l'arbre ouvert, via le serveur
- * local. Renvoie false si le serveur n'est pas là (autre serveur web…).
+ * Loads the list of trees in data/arbres/ then the open tree, through the local
+ * server. Returns false if the server isn't there (another web server…).
  */
 export async function loadFile() {
   let list;
@@ -52,7 +52,7 @@ export async function loadFile() {
   S.mode = 'file';
 
   if (!list.length) {
-    // Premier lancement : on reprend les arbres déjà gardés dans ce navigateur, s'il y en a
+    // First launch: the trees already kept in this browser are taken over, if any
     for (const t of readLocalTrees()) {
       const data = readLocalData(t.id);
       if (!data.people.size && !data.unions.size) continue;
@@ -60,7 +60,7 @@ export async function loadFile() {
         await putFileTree(t.id, buildBackup({ name: t.name, createdAt: t.createdAt, ...data }));
         list.push({ id: t.id, name: t.name, createdAt: t.createdAt, count: data.people.size });
       } catch (e) {
-        /* copie impossible : l'arbre reste dans le navigateur */
+        /* copy impossible: the tree stays in the browser */
       }
     }
   }
@@ -71,14 +71,14 @@ export async function loadFile() {
 }
 
 export async function loadFileTree() {
-  await fileQueue; // les enregistrements en attente partent d'abord
+  await fileQueue; // pending saves go first
   version = null;
   S.people = new Map();
   S.unions = new Map();
   let text;
   try {
     const res = await fetch(API + encodeURIComponent(S.tree), { cache: 'no-store' });
-    if (res.status === 404) return; // arbre pas encore enregistré
+    if (res.status === 404) return; // tree not saved yet
     if (!res.ok) throw new Error(String(res.status));
     version = res.headers.get('ETag');
     text = await res.text();
@@ -89,18 +89,18 @@ export async function loadFileTree() {
   const data = parseBackup(text);
   S.people = new Map(data.people.map((x) => [x.id, x.data]));
   S.unions = new Map(data.unions.map((x) => [x.id, x.data]));
-  // Photos encore intégrées à la fiche (enregistrées avant les fichiers photo) : on les sort
-  if (await storePhotos()) await saveFile().catch(() => {}); // message déjà affiché
-  // Photos retirées lors de la session précédente : plus rien ne permet de les rétablir
+  // Photos still embedded in the record (saved before photo files existed): they are moved out
+  if (await storePhotos()) await saveFile().catch(() => {}); // message already shown
+  // Photos removed during the previous session: nothing can restore them any more
   fetch(API + encodeURIComponent(S.tree) + '/photos/sweep', { method: 'POST' }).catch(() => {});
 }
 
-/* ---------- Photos en fichiers ---------- */
+/* ---------- Photos as files ---------- */
 
 /**
- * Photo à enregistrer dans la fiche `p` : en mode file, une data URL devient un
- * fichier de data/arbres/<id de l'arbre>/photos/ et la fiche garde « photos/<fichier> ».
- * Dans les autres modes, la photo reste intégrée.
+ * Photo to save in record `p`: in file mode, a data URL becomes a
+ * file in data/arbres/<tree id>/photos/ and the record keeps "photos/<file>".
+ * In the other modes, the photo stays embedded.
  */
 export async function storePhoto(photo, p) {
   if (S.mode !== 'file' || !isPhotoData(photo)) return photo;
@@ -118,11 +118,11 @@ export async function storePhoto(photo, p) {
   }
 }
 
-/** Vrai si la fiche contient une photo ou un document encore intégré. */
+/** True if the record contains a photo or a document still embedded. */
 const attached = (p) => [...sourcesOf(p), ...mediaList(p)];
 const hasPhotoData = (p) => isPhotoData(p.photo) || attached(p).some((x) => isPhotoData(x.photo));
 
-/** Fiche dont la photo et les documents des sources sont passés par `convert`. */
+/** Record whose photo and source documents have gone through `convert`. */
 export async function convertPhotos(p, convert) {
   const out = Object.assign({}, p);
   if (p.photo) out.photo = await convert(p.photo);
@@ -134,7 +134,7 @@ export async function convertPhotos(p, convert) {
   return out;
 }
 
-/** Sort en fichiers les photos intégrées de l'arbre ouvert. Renvoie le nombre de fiches modifiées. */
+/** Moves the open tree's embedded photos out to files. Returns the number of records changed. */
 export async function storePhotos() {
   if (S.mode !== 'file') return 0;
   const ids = [...S.people].filter(([, p]) => hasPhotoData(p)).map(([id]) => id);
@@ -146,13 +146,13 @@ export async function storePhotos() {
       if (S.people.get(id) === p) S.people.set(id, stored);
       n++;
     } catch (e) {
-      /* la photo reste intégrée : elle s'affiche toujours, nouvel essai au prochain chargement */
+      /* the photo stays embedded: it still shows, another try on the next load */
     }
   });
   return n;
 }
 
-/** Contenu d'un fichier photo en data URL. */
+/** Content of a photo file as a data URL. */
 async function photoData(photo) {
   const res = await fetch(photoSrc(photo), { cache: 'no-store' });
   if (!res.ok) throw new Error(String(res.status));
@@ -165,40 +165,40 @@ async function photoData(photo) {
   });
 }
 
-/** Sauvegarde .json autonome : en mode file, les photos y sont intégrées en data URL. */
+/** Standalone .json backup: in file mode, photos are embedded in it as data URLs. */
 export async function buildPortableBackup() {
   if (S.mode !== 'file') return buildBackup();
   const people = new Map(S.people);
   const hasFile = (p) => isPhotoFile(p.photo) || attached(p).some((x) => isPhotoFile(x.photo));
   await pool([...people].filter(([, p]) => hasFile(p)), 4, async ([id, p]) => {
-    // Fichier introuvable : la fiche part sans cette photo
+    // File not found: the record goes without this photo
     const portable = await convertPhotos(p, (photo) => (isPhotoFile(photo) ? photoData(photo).catch(() => '') : photo));
     if (!portable.photo) delete portable.photo;
-    if (portable.media) portable.media = portable.media.filter((m) => m.photo); // image introuvable
+    if (portable.media) portable.media = portable.media.filter((m) => m.photo); // image not found
     people.set(id, portable);
   });
   return buildBackup({ name: treeName(), createdAt: (S.trees.get(S.tree) || {}).createdAt, people, unions: S.unions });
 }
 
-/* ---------- Enregistrement et gestion des arbres ---------- */
+/* ---------- Saving and tree management ---------- */
 
-// Les enregistrements partent l'un après l'autre, chacun avec l'arbre complet au moment de l'appel
+// Saves go one after the other, each with the whole tree at the time of the call
 let fileQueue = Promise.resolve();
 
-/** Enregistre l'arbre ; la promesse échoue si rien n'a été écrit, pour que l'action ne dise pas le contraire. */
+/** Saves the tree; the promise fails if nothing was written, so the action doesn't claim otherwise. */
 export function saveFile() {
   const id = S.tree;
   const body = buildBackup();
   const run = fileQueue.then(async () => {
     try {
-      // Les photos retirées restent sur le disque : Annuler peut encore en avoir besoin
+      // Removed photos stay on disk: Undo may still need them
       version = await putFileTree(id, body, true, version);
     } catch (e) {
       toast(t(e.status === 409 ? 'st.conflict' : 'st.fileFailed'), true);
       throw e;
     }
   });
-  fileQueue = run.catch(() => {}); // un échec ne bloque pas les enregistrements suivants
+  fileQueue = run.catch(() => {}); // a failure doesn't block the following saves
   return run;
 }
 
@@ -211,7 +211,7 @@ export async function createFileTree(id, tree) {
   }
 }
 
-/** Nouveau nom (déjà posé dans S.trees) enregistré dans le fichier de l'arbre. */
+/** New name (already set in S.trees) saved in the tree's file. */
 export async function renameFileTree(id, tree) {
   if (id === S.tree) return saveFile();
   const res = await fetch(API + encodeURIComponent(id), { cache: 'no-store' });

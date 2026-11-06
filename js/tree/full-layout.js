@@ -1,49 +1,49 @@
 /**
- * Mise en page de l'arbre complet : toutes les personnes, à plat, par génération.
+ * Layout of the whole tree: everyone, flat, by generation.
  *
- * 1. Chaque groupe de personnes reliées entre elles (famille) est traité à part,
- *    puis les groupes sont posés côte à côte.
- * 2. Génération de chaque personne : un enfant est au moins une ligne sous ses parents,
- *    deux conjoints sont sur la même ligne, et une personne sans parents connus
- *    descend juste au-dessus de son premier enfant.
- * 3. Sur chaque ligne, les conjoints forment un bloc (fiches côte à côte).
- *    L'ordre des blocs suit un parcours de la famille, des aînés vers les enfants.
- * 4. Position horizontale : plusieurs passes alternées qui centrent les parents
- *    au-dessus de leurs enfants, puis les enfants sous leurs parents, sans chevauchement.
+ * 1. Each group of people linked to each other (family) is handled separately,
+ *    then the groups are placed side by side.
+ * 2. Generation of each person: a child is at least one row below their parents,
+ *    two spouses are on the same row, and a person with no known parents
+ *    moves down to just above their first child.
+ * 3. On each row, spouses form a block (cards side by side).
+ *    The order of the blocks follows a walk through the family, from elders to children.
+ * 4. Horizontal position: several alternating passes that centre the parents
+ *    above their children, then the children under their parents, without overlap.
  *
- * Renvoie { nodes, edges, marks, W, H } comme buildLayout(), sans emplacements vides.
+ * Returns { nodes, edges, marks, W, H } like buildLayout(), without empty slots.
  *
- * Variante compacte (impression) : fiches plus étroites, écarts réduits, et les frères et sœurs
- * sans conjoint ni enfant empilés en colonne sous leurs parents, reliés par un trait sur leur gauche.
- * Elle renvoie aussi cw (largeur des fiches) et gens (nombre de générations).
+ * Compact variant (printing): narrower cards, smaller gaps, and siblings with no
+ * spouse or child stacked in a column under their parents, linked by a line on their left.
+ * It also returns cw (card width) and gens (number of generations).
  */
 import { CW, CH, HG, VG, SG, PAD } from '../config.js';
 import { S } from '../state.js';
 import { P, partnersOf, childrenOf } from '../model/people.js';
 
 const STANDARD = {
-  cw: CW,                    // largeur d'une fiche
-  sg: SG,                    // écart entre deux conjoints
-  blockGap: HG * 2,          // écart entre deux frères et sœurs
-  familyGap: CW / 2,         // écart entre deux fratries différentes
-  groupGap: CW,              // écart entre deux familles sans lien
-  stack: false,              // empiler les frères et sœurs sans descendance
+  cw: CW,                    // card width
+  sg: SG,                    // gap between two spouses
+  blockGap: HG * 2,          // gap between two siblings
+  familyGap: CW / 2,         // gap between two different sibling groups
+  groupGap: CW,              // gap between two unrelated families
+  stack: false,              // stack siblings with no descendants
 };
 const COMPACT = { cw: 128, sg: 18, blockGap: 14, familyGap: 30, groupGap: 60, stack: true };
-const STACK_GAP = 8;         // écart vertical entre deux fiches empilées
-const SPINE = 9;             // trait d'une pile : à gauche des fiches
-let K = STANDARD;            // mesures de la mise en page en cours
-const PASSES = 6;            // passes de centrage
-const LANE = 16;             // écart entre deux barres horizontales superposées
-const BUS_MARGIN = 22;       // espace entre une fiche et la barre la plus proche
+const STACK_GAP = 8;         // vertical gap between two stacked cards
+const SPINE = 9;             // a stack's line: left of the cards
+let K = STANDARD;            // measurements of the current layout
+const PASSES = 6;            // centring passes
+const LANE = 16;             // gap between two stacked horizontal bars
+const BUS_MARGIN = 22;       // space between a card and the nearest bar
 
-/** Parents présents dans l'arbre. */
+/** Parents present in the tree. */
 function parentsOf(id) {
   const p = P(id);
   return [p.fatherId, p.motherId].filter((x, i, a) => x && x !== id && S.people.has(x) && a.indexOf(x) === i);
 }
 
-/** Groupes de personnes reliées par filiation ou union. */
+/** Groups of people linked by parentage or union. */
 function components() {
   const seen = new Set();
   const out = [];
@@ -69,9 +69,9 @@ function components() {
 }
 
 /**
- * Génération relative de chaque personne : un parcours de la famille met un enfant
- * une ligne sous ses parents et un conjoint sur la même ligne (le premier lien vu l'emporte
- * si les données se contredisent). Le résultat commence à 0.
+ * Relative generation of each person: a walk through the family puts a child
+ * one row below their parents and a spouse on the same row (the first link seen wins
+ * if the data contradict each other). The result starts at 0.
  */
 function relativeGenerations(comp) {
   const gen = new Map([[comp[0], 0]]);
@@ -95,7 +95,7 @@ function relativeGenerations(comp) {
   return gen;
 }
 
-/** Génération de chaque personne (0 = la plus ancienne ligne du groupe). */
+/** Generation of each person (0 = the group's oldest row). */
 function generations(comp) {
   const gen = relativeGenerations(comp);
   const limit = comp.length + 2;
@@ -112,7 +112,7 @@ function generations(comp) {
       const parents = parentsOf(id);
       for (const q of parents) raise(id, gen.get(q) + 1);
       for (const x of partnersOf(id)) raise(id, gen.get(x.id));
-      // Sans parents connus : juste au-dessus de son enfant le plus haut
+      // With no known parents: just above their highest child
       const kids = childrenOf(id);
       if (!parents.length && kids.length) raise(id, Math.min(...kids.map((k) => gen.get(k))) - 1);
     }
@@ -120,14 +120,14 @@ function generations(comp) {
   return gen;
 }
 
-/** Génération de chaque personne de l'arbre, comme dans « Tout l'arbre » : id -> numéro (0 = la plus ancienne). */
+/** Generation of each person in the tree, as in "Whole tree": id -> number (0 = the oldest). */
 export function generationMap() {
   const out = new Map();
   for (const comp of components()) for (const [id, g] of generations(comp)) out.set(id, g);
   return out;
 }
 
-/** Ordre de parcours : chaque personne, ses conjoints, ses parents encore non vus, puis ses enfants. */
+/** Walk order: each person, their spouses, their parents not yet seen, then their children. */
 function visitOrder(comp, gen) {
   const order = new Map();
   const roots = comp.slice().sort((a, b) => gen.get(a) - gen.get(b));
@@ -143,7 +143,7 @@ function visitOrder(comp, gen) {
   return order;
 }
 
-/** Ordre des personnes dans un bloc de conjoints : une chaîne si possible, l'homme à gauche d'un couple. */
+/** Order of the people in a block of spouses: a chain if possible, the man on the left of a couple. */
 function blockOrder(members) {
   if (members.length === 1) return members;
   const set = new Set(members);
@@ -162,7 +162,7 @@ function blockOrder(members) {
     }
     return path;
   }
-  // Une personne avec plusieurs conjoints : au milieu, les conjoints de part et d'autre
+  // A person with several spouses: in the middle, the spouses on either side
   const hub = members.reduce((a, b) => (adj.get(b).length > adj.get(a).length ? b : a));
   const left = [];
   const right = [];
@@ -171,7 +171,7 @@ function blockOrder(members) {
   return [...left.reverse(), hub, ...right, ...rest];
 }
 
-/** Écart à laisser après chaque bloc : plus large entre deux fratries différentes. */
+/** Gap to leave after each block: wider between two different sibling groups. */
 function gapsOf(blocks) {
   return blocks.map((b, i) => {
     const c = blocks[i + 1];
@@ -180,8 +180,8 @@ function gapsOf(blocks) {
 }
 
 /**
- * Place les blocs d'une ligne au plus près de leurs positions souhaitées, dans l'ordre
- * et sans chevauchement (régression isotone pondérée).
+ * Places a row's blocks as close as possible to their desired positions, in order
+ * and without overlap (weighted isotonic regression).
  */
 function placeRow(blocks, targets) {
   const gaps = gapsOf(blocks);
@@ -211,14 +211,14 @@ function placeRow(blocks, targets) {
   }
 }
 
-/** Mise en page d'un groupe : blocs par ligne, avec leurs positions. */
+/** Layout of a group: blocks per row, with their positions. */
 function layoutComponent(comp) {
   const gen = generations(comp);
   const order = visitOrder(comp, gen);
   const blockOf = new Map();   // id -> { block, i }
   const rows = [];
 
-  // Blocs de conjoints de chaque ligne
+  // Blocks of spouses on each row
   const done = new Set();
   for (const id of comp) {
     if (done.has(id)) continue;
@@ -238,7 +238,7 @@ function layoutComponent(comp) {
     }
     members.sort((a, b) => order.get(a) - order.get(b));
     const ids = blockOrder(members);
-    // Fratrie du bloc : celle du premier membre dont les parents sont connus
+    // The block's sibling group: that of the first member whose parents are known
     const withParents = ids.find((x) => parentsOf(x).length);
     const fam = withParents ? parentsOf(withParents).slice().sort().join('|') : '';
     const block = { ids, g, fam, w: ids.length * K.cw + (ids.length - 1) * K.sg, left: 0, rank: Math.min(...ids.map((x) => order.get(x))) };
@@ -259,7 +259,7 @@ function layoutComponent(comp) {
   const offsetIn = (id) => blockOf.get(id).i * (K.cw + K.sg) + K.cw / 2;
   const mean = (xs) => xs.reduce((s, x) => s + x, 0) / xs.length;
 
-  // Familles : parents (1 ou 2) et leurs enfants
+  // Families: parents (1 or 2) and their children
   const families = new Map();
   for (const id of comp) {
     const parents = parentsOf(id);
@@ -270,7 +270,7 @@ function layoutComponent(comp) {
   }
   const anchorOf = (f) => mean(f.parents.map(center));
 
-  // Familles dont au moins un parent est dans chaque bloc
+  // Families with at least one parent in each block
   const familiesOf = new Map();
   for (const f of families.values()) {
     for (const b of new Set(f.parents.map((q) => blockOf.get(q).block))) {
@@ -279,7 +279,7 @@ function layoutComponent(comp) {
     }
   }
 
-  // Les parents au-dessus de leurs enfants
+  // Parents above their children
   const alignUp = (row) => {
     const targets = row.map((b) => {
       let sum = 0;
@@ -295,7 +295,7 @@ function layoutComponent(comp) {
     placeRow(row, targets);
   };
 
-  // Les enfants sous leurs parents
+  // Children under their parents
   const alignDown = (row) => {
     const targets = row.map((b) => {
       let sum = 0;
@@ -311,8 +311,8 @@ function layoutComponent(comp) {
     placeRow(row, targets);
   };
 
-  // Ordre des blocs d'une ligne : sous les parents (à défaut au-dessus des enfants),
-  // les frères et sœurs côte à côte, pour limiter les croisements de traits
+  // Order of a row's blocks: under the parents (failing that, above the children),
+  // siblings side by side, to limit crossing lines
   const reorder = (row) => {
     const key = new Map(row.map((b) => {
       const up = b.ids.filter((id) => parentsOf(id).length).map((id) => mean(parentsOf(id).map(center)));
@@ -335,7 +335,7 @@ function layoutComponent(comp) {
   return { rows: ordered, blockOf, families, anchorOf, center, gen, minLeft, width: maxRight - minLeft, height: rows.length };
 }
 
-/** Pile d'une ligne : les frères et sœurs sans conjoint ni enfant d'une même fratrie, en une colonne. */
+/** A row's stack: siblings of the same group with no spouse or child, in one column. */
 function stackLeaves(row, blockOf) {
   const leaves = new Map();
   for (const b of row) {
@@ -354,7 +354,7 @@ function stackLeaves(row, blockOf) {
   }
 }
 
-/** Numéros Sosa des ancêtres de la personne centrale (le plus petit en cas d'implexe). */
+/** Sosa numbers of the focus person's ancestors (the smallest in case of pedigree collapse). */
 function sosaMap() {
   const out = new Map();
   if (!S.focus || !S.people.has(S.focus)) return out;
@@ -389,12 +389,12 @@ function fullLayout() {
   const marks = [];
   const sosa = sosaMap();
 
-  // Les plus grandes familles d'abord
+  // Largest families first
   const comps = components().map(layoutComponent).sort((a, b) => b.blockOf.size - a.blockOf.size);
 
-  // Barres de filiation : une barre horizontale sous les parents par famille, sur sa propre
-  // voie quand elle croiserait celle d'une autre famille
-  const lanesAt = [];   // génération des parents -> nombre de voies
+  // Parentage bars: one horizontal bar under the parents per family, on its own
+  // lane when it would cross another family's
+  const lanesAt = [];   // parents' generation -> number of lanes
   let X = PAD;
   const placed = comps.map((c) => {
     const dx = X - c.minLeft;
@@ -408,7 +408,7 @@ function fullLayout() {
       const starts = adjacent
         ? [{ x: c.anchorOf(f) + dx, g: c.gen.get(a), mid: true }]
         : f.parents.map((q) => ({ x: xOf(q) + K.cw / 2, g: c.gen.get(q) }));
-      // Une pile d'enfants n'a qu'un point d'attache : son trait, à gauche des fiches
+      // A stack of children has a single attachment point: its line, left of the cards
       const kids = [];
       const stacks = new Map();
       for (const k of f.kids) {
@@ -441,8 +441,8 @@ function fullLayout() {
     return { c, xOf, byGen };
   });
 
-  // Hauteur de chaque intervalle entre deux générations, selon le nombre de voies,
-  // et de chaque ligne, selon sa plus haute pile
+  // Height of each gap between two generations, by number of lanes,
+  // and of each row, by its tallest stack
   const maxRows = Math.max(...comps.map((c) => c.height));
   const gapOf = (g) => Math.max(VG, 2 * BUS_MARGIN + ((lanesAt[g] || 1) - 1) * LANE);
   const depth = [];
@@ -455,13 +455,13 @@ function fullLayout() {
   for (const { c, xOf, byGen } of placed) {
     const yOf = (id) => stackY(c.gen.get(id), c.blockOf.get(id).k);
 
-    // Fiches et unions
+    // Cards and unions
     for (const row of c.rows) {
       for (const b of row) {
         b.ids.forEach((id, i) => {
           const s = sosa.get(id);
           nodes.push({ t: 'p', id, x: xOf(id), y: yOf(id), focus: id === S.focus, sosa: s || null });
-          // Union avec un conjoint placé plus à gauche dans le même bloc
+          // Union with a spouse placed further left in the same block
           for (const pt of partnersOf(id)) {
             const o = c.blockOf.get(pt.id);
             if (!o || o.block !== b || o.i >= i) continue;
@@ -475,7 +475,7 @@ function fullLayout() {
       }
     }
 
-    // Filiation : les voies sont réparties dans l'intervalle, la première en haut
+    // Parentage: the lanes are spread across the gap, the first at the top
     for (const [g, items] of byGen) {
       const base = rowY[g] + rowH(g);
       const n = lanesAt[g];

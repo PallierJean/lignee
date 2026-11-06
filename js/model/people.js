@@ -1,55 +1,55 @@
 /**
- * Modèle : personnes, noms, dates de vie et liens de parenté.
+ * Model: people, names, life dates and kinship links.
  *
- * Une personne : { given, surname, maidenName, sex ('M'|'F'|'U'), birthDate, birthPlace,
+ * A person: { given, surname, maidenName, sex ('M'|'F'|'U'), birthDate, birthPlace,
  *   deathDate, deathPlace, deceased, occupation, situation, situationDate, notes, fatherId, motherId,
  *   createdAt, updatedAt, photo?, example? }
- *   situation est la situation familiale (code de SITUATIONS, ou vide) ; situationDate,
- *   la date ou l'année du mariage ou du pacs (facultative).
- *   photo est une image JPEG réduite (facultative) : intégrée en data URL, ou, avec le
- *   serveur local, « photos/<fichier> » dans le dossier des photos de l'arbre.
- *   surname est le nom d'usage ; maidenName, le nom de jeune fille d'une femme (facultatif).
- *   events (facultatif) : autres événements [{ id, type, date, place, note, label? }].
- *   sources (facultatif) : actes cités [{ id, fact, kind, title, place, ref, note, photo? }] ;
- *   fact est le fait appuyé : 'birth', 'death', l'id d'un événement, 'union:<id d'union>',
- *   ou vide pour la fiche en général.
- *   media (facultatif) : galerie [{ id, photo, title, date, note, tags: [{ id, x, y }] }] ;
- *   tags : personnes identifiées sur l'image (x, y en pourcentage).
- * Une union : { a, b, type?, date, place, end?, endDate?, cause?, formerId?, createdAt, example? } ;
- * type : code de UNION_TYPES ; end : fin de l'union, code de UNION_ENDS (absent tant qu'elle dure) ;
- * cause : pour un remariage, code de REMARRIAGE_CAUSES ; formerId : le conjoint décédé d'un veuvage.
+ *   situation is the family situation (a SITUATIONS code, or empty); situationDate,
+ *   the date or year of the marriage or civil partnership (optional).
+ *   photo is a downscaled JPEG image (optional): embedded as a data URL, or, with the
+ *   local server, "photos/<file>" in the tree's photo folder.
+ *   surname is the surname in use; maidenName, a woman's maiden name (optional).
+ *   events (optional): other events [{ id, type, date, place, note, label? }].
+ *   sources (optional): certificates cited [{ id, fact, kind, title, place, ref, note, photo? }];
+ *   fact is the supported fact: 'birth', 'death', an event id, 'union:<union id>',
+ *   or empty for the record in general.
+ *   media (optional): gallery [{ id, photo, title, date, note, tags: [{ id, x, y }] }];
+ *   tags: people identified on the image (x, y as percentages).
+ * A union: { a, b, type?, date, place, end?, endDate?, cause?, formerId?, createdAt, example? };
+ * type: a UNION_TYPES code; end: end of the union, a UNION_ENDS code (missing while it lasts);
+ * cause: for a remarriage, a REMARRIAGE_CAUSES code; formerId: the deceased spouse of a widowhood.
  */
 import { S, idx } from '../state.js';
 import { yearOf, shortDate, longDate, fullDate, dateBounds, yearsBetween } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
 import { t, getLang } from '../i18n.js';
 
-/* ---------- Accès et noms ---------- */
+/* ---------- Access and names ---------- */
 
 export const P = (id) => (id ? S.people.get(id) : undefined);
 export const given = (p) => String((p && p.given) || '').trim();
 export const surname = (p) => String((p && p.surname) || '').trim().toUpperCase();
 
-/** Nom de jeune fille, seulement pour une femme et s'il diffère du nom d'usage. */
+/** Maiden name, only for a woman and if it differs from the surname in use. */
 export function maiden(p) {
   if (!p || p.sex !== 'F') return '';
   const m = String(p.maidenName || '').trim().toUpperCase();
   return m && m !== surname(p) ? m : '';
 }
 
-/** Nom d'une famille : noms de naissance des deux parents, « DURAND – ROCHE » (un seul s'ils sont identiques). */
+/** A family's name: birth surnames of both parents, "DURAND – ROCHE" (just one if they are identical). */
 export function coupleName(father, mother) {
   const names = [father, mother].filter(Boolean).map((p) => maiden(p) || surname(p)).filter(Boolean);
   return [...new Set(names)].join(' – ');
 }
 
-/** Nom de la famille dont une personne est l'enfant, d'après son père et sa mère ; vide s'ils sont inconnus. */
+/** Name of the family a person is a child of, from their father and mother; empty if they are unknown. */
 export function parentsName(id) {
   const p = P(id);
   return p ? coupleName(P(p.fatherId), P(p.motherId)) : '';
 }
 
-/** Nom de naissance déduit des parents : celui du père, à défaut celui de naissance de la mère. */
+/** Birth surname derived from the parents: the father's, failing that the mother's birth surname. */
 export function birthSurname(fatherId, motherId) {
   const f = P(fatherId);
   if (f && surname(f)) return f.surname.trim();
@@ -58,15 +58,15 @@ export function birthSurname(fatherId, motherId) {
   return (maiden(m) ? m.maidenName : m.surname || '').trim();
 }
 
-/* ---------- Situation familiale ---------- */
+/* ---------- Family situation ---------- */
 
-/** Codes des situations ; libellés [masculin, féminin] dans i18n.js (« situ.<code> »). */
+/** Situation codes; [masculine, feminine] labels in i18n.js ("situ.<code>"). */
 export const SITUATIONS = [['single'], ['cohabiting'], ['pacs'], ['married'], ['remarried'], ['separated'], ['divorced'], ['widowed']];
 
-/** Situations pour lesquelles on peut indiquer une date. */
+/** Situations for which a date can be given. */
 export const DATED_SITUATIONS = new Set(['married', 'remarried', 'pacs']);
 
-/** Libellé accordé au sexe : « Mariée », « Pacsé(e) » si le sexe n'est pas précisé. */
+/** Label inflected for the sex: "Mariée", "Pacsé(e)" if the sex isn't specified. */
 export function situationLabel(code, sex) {
   if (!SITUATIONS.some(([c]) => c === code)) return '';
   const [m, f] = t('situ.' + code);
@@ -75,12 +75,12 @@ export function situationLabel(code, sex) {
   return m + ' / ' + f;
 }
 
-/** « Non précisée », accordé au sexe ; « Non précisé(e) » s'il n'est pas précisé. */
+/** "Non précisée", inflected for the sex; "Non précisé(e)" if it isn't specified. */
 export function situationNoneLabel(sex) {
   return t('situ.none')[sex === 'M' ? 0 : sex === 'F' ? 1 : 2];
 }
 
-/** Situation que donne une union (Veuf, Divorcé, Remarié, Pacsé…) ; vide si son type ne dit rien. */
+/** Situation given by a union (Widowed, Divorced, Remarried, Partnered…); empty if its type says nothing. */
 export function situationOfUnion(type, end) {
   const ended = { death: 'widowed', divorce: 'divorced', separation: 'separated' }[end];
   if (ended) return ended;
@@ -91,8 +91,8 @@ export function situationOfUnion(type, end) {
 const diedBefore = (a, b) => isDead(a) && yearOf(a.deathDate) && yearOf(b.deathDate) && yearOf(a.deathDate) < yearOf(b.deathDate);
 
 /**
- * Situation du moment, d'après la dernière union : Veuve, Divorcé, Séparée, Mariée, Remarié…
- * Sans union renseignée, c'est la situation saisie sur la fiche.
+ * Current situation, from the last union: Widowed, Divorced, Separated, Married, Remarried…
+ * With no union given, it is the situation entered on the record.
  */
 export function currentSituation(id) {
   const p = P(id);
@@ -102,7 +102,7 @@ export function currentSituation(id) {
   const u = S.unions.get(last.uid);
   const partner = P(last.id);
   let end = u.end || (partner && isDead(partner) && !isDead(p) ? 'death' : '');
-  // Union close par le décès de la personne elle-même : elle n'est pas veuve
+  // Union ended by the person's own death: they are not widowed
   if (end === 'death' && isDead(p) && !(partner && diedBefore(partner, p))) end = '';
   if (end) return situationOfUnion('', end) || p.situation || '';
   const type = unionType(u);
@@ -113,7 +113,7 @@ export function currentSituation(id) {
   return type === 'pacs' || type === 'cohabiting' ? type : p.situation || '';
 }
 
-/** « Mariée (12 Mars 1956) » si une date est connue. Avec `id`, la situation du moment. */
+/** "Mariée (12 Mars 1956)" if a date is known. With `id`, the current situation. */
 export function situationText(p, id) {
   const code = id ? currentSituation(id) : p && p.situation;
   const label = situationLabel(code, p && p.sex);
@@ -127,19 +127,19 @@ export function situationText(p, id) {
   return d ? label + ' (' + d + ')' : label;
 }
 
-/* ---------- Événements et sources ---------- */
+/* ---------- Events and sources ---------- */
 
-/** Types d'union ; libellés dans i18n.js (« ut.<type> »). */
+/** Union types; labels in i18n.js ("ut.<type>"). */
 export const UNION_TYPES = ['married', 'remarried', 'religious', 'pacs', 'cohabiting', 'other'];
 
 const MARRIAGE_TYPES = ['married', 'remarried', 'religious'];
 
-/** Causes d'un remariage ; libellés dans i18n.js (« urc.<code> », « urt.<code> »). */
+/** Causes of a remarriage; labels in i18n.js ("urc.<code>", "urt.<code>"). */
 export const REMARRIAGE_CAUSES = ['divorce', 'widowed'];
 
 /**
- * Type d'une union : celui enregistré, sinon la situation d'un conjoint (Marié, Pacsé, En concubinage,
- * mêmes codes) dont c'est la dernière union. Vide si rien ne permet de le savoir.
+ * Type of a union: the one saved, otherwise the situation of a spouse (Married, Partnered, Cohabiting,
+ * same codes) whose last union it is. Empty if nothing tells.
  */
 export function unionType(u) {
   if (!u) return '';
@@ -154,16 +154,16 @@ export function unionType(u) {
   return '';
 }
 
-/** Fins d'union ; libellés dans i18n.js (« ue.<code> »). */
+/** Union ends; labels in i18n.js ("ue.<code>"). */
 export const UNION_ENDS = ['death', 'divorce', 'separation'];
 
-/** « Divorce, 1980 », ou vide si l'union n'a pas de fin renseignée. */
+/** "Divorce, 1980", or empty if the union has no end given. */
 export function unionEndText(u) {
   if (!u || !UNION_ENDS.includes(u.end)) return '';
   return [t('ue.' + u.end), longDate(u.endDate)].filter(Boolean).join(', ');
 }
 
-/** « après le décès de Marc PALLIER », ou vide si ce n'est pas un remariage à la cause connue. */
+/** "after the death of Marc PALLIER", or empty if it isn't a remarriage with a known cause. */
 export function unionCauseText(u) {
   if (!u || u.type !== 'remarried' || !REMARRIAGE_CAUSES.includes(u.cause)) return '';
   const former = u.cause === 'widowed' && P(u.formerId);
@@ -171,8 +171,8 @@ export function unionCauseText(u) {
 }
 
 /**
- * Date de fin par défaut d'une union : la mort du premier des deux conjoints.
- * null si les deux sont en vie ; vide si la date du décès n'est pas connue.
+ * Default end date of a union: the death of the first of the two spouses.
+ * null if both are alive; empty if the date of death isn't known.
  */
 export function unionDeathEnd(a, b) {
   const dead = [a, b].filter((p) => p && isDead(p));
@@ -181,17 +181,17 @@ export function unionDeathEnd(a, b) {
   return dates.sort((x, y) => (yearOf(x) || 9999) - (yearOf(y) || 9999))[0] || '';
 }
 
-/** Libellé du type d'une union, ou vide s'il n'est pas connu. */
+/** Label of a union's type, or empty if it isn't known. */
 export function unionTypeLabel(u) {
   const code = unionType(u);
   return code ? t('ut.' + code) : '';
 }
 
-/** Types d'événements ; libellés dans i18n.js (« ev.<type> »), balises dans gedcom.js. */
+/** Event types; labels in i18n.js ("ev.<type>"), tags in gedcom.js. */
 export const EVENT_TYPES = ['baptism', 'burial', 'cremation', 'census', 'residence', 'occupation', 'emigration',
   'immigration', 'naturalization', 'graduation', 'retirement', 'will', 'other'];
 
-/** Types de sources ; libellés dans i18n.js (« src.<kind> »). */
+/** Source types; labels in i18n.js ("src.<kind>"). */
 export const SOURCE_KINDS = ['birth', 'baptism', 'marriage', 'death', 'burial', 'census', 'military', 'notary',
   'family', 'book', 'web', 'other'];
 
@@ -200,7 +200,7 @@ const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'obj
 export const sourcesOf = (p) => listOf(p && p.sources);
 export const mediaList = (p) => listOf(p && p.media);
 
-/** Galerie d'une personne : ses images, et celles où elle est identifiée : [{ owner, m }]. */
+/** A person's gallery: their images, and those where they are identified: [{ owner, m }]. */
 export function mediaOf(id) {
   const out = mediaList(P(id)).map((m) => ({ owner: id, m }));
   for (const [owner, p] of S.people) {
@@ -211,12 +211,12 @@ export function mediaOf(id) {
 }
 
 /**
- * Personnes nommées dans un texte (légende d'une photo) : premier prénom et nom (d'usage ou de
- * naissance) présents tous deux, sans tenir compte des accents ni des tirets. Dans l'ordre du texte.
+ * People named in a text (a photo caption): first given name and surname (in use or at
+ * birth) both present, ignoring accents and hyphens. In the order of the text.
  */
 export function peopleNamedIn(text) {
   const split = (s) => norm(s).replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
-  // Une personne est nommée dans un même morceau : virgules, points, parenthèses et tirets isolés séparent
+  // A person is named within a single chunk: commas, full stops, brackets and lone dashes separate
   const parts = String(text || '').split(/[,;:.()–—]|\s-\s/).map(split);
   const found = [];
   for (const [id, p] of S.people) {
@@ -229,7 +229,7 @@ export function peopleNamedIn(text) {
       for (const g of first.length ? starts(first) : []) {
         const after = g + first.length;
         const near = names.some((name) => starts(name).some((n) =>
-          // Le nom après le prénom, séparé seulement par ses autres prénoms ; ou juste avant (« LACCORRE Geneviève »)
+          // The surname after the first name, separated only by their other given names; or just before ("LACCORRE Geneviève")
           (n >= after && words.slice(after, n).every((w) => givens.includes(w))) || n + name.length === g));
         if (near && pos < 0) pos = part * 1000 + g;
       }
@@ -239,10 +239,10 @@ export function peopleNamedIn(text) {
   return found.sort((a, b) => a.pos - b.pos).map((x) => x.id);
 }
 
-/** Toutes les images de l'arbre. */
+/** All the images in the tree. */
 export const allMedia = () => [...S.people].flatMap(([owner, p]) => mediaList(p).map((m) => ({ owner, m })));
 
-/** Événements d'une personne, dans l'ordre des dates (sans date lisible : à la fin). */
+/** A person's events, in date order (with no readable date: at the end). */
 export function eventsOf(p) {
   const key = (e) => {
     const b = dateBounds(e.date);
@@ -253,7 +253,7 @@ export function eventsOf(p) {
 
 export const eventLabel = (e) => (e.type === 'other' && e.label) || t(EVENT_TYPES.includes(e.type) ? 'ev.' + e.type : 'ev.other');
 
-/** Libellé du fait appuyé par une source de la personne `id` ; vide pour la fiche en général. */
+/** Label of the fact supported by a source of person `id`; empty for the record in general. */
 export function factLabel(id, fact) {
   if (fact === 'birth') return t('birth');
   if (fact === 'death') return t('death');
@@ -266,21 +266,21 @@ export function factLabel(id, fact) {
   return e ? eventLabel(e) : '';
 }
 
-/** Fiche de l'arbre : le nom sur une ligne, « née FAURE » sur la suivante (vide sans nom de jeune fille). */
+/** Tree card: the name on one line, "née FAURE" on the next (empty with no maiden name). */
 export function cardNames(p) {
   const s = surname(p);
   const m = maiden(p);
   return { name: s || m, maiden: s && m ? t('nee') + ' ' + m : '' };
 }
 
-/** Nom complet avec le nom de jeune fille : « Marguerite DUPONT née FAURE ». */
+/** Full name with the maiden name: "Marguerite DUPONT née FAURE". */
 export function longName(p) {
   const m = maiden(p);
   return fullName(p) + (m && surname(p) ? ' ' + t('nee') + ' ' + m : '');
 }
 
 export const isPhotoData = (s) => /^data:image\/(jpeg|png|webp|gif);base64,/.test(String(s || ''));
-/** Début du nom de fichier d'une photo : « PALLIER-Jean », « photo » pour une fiche sans nom. */
+/** Start of a photo's file name: "PALLIER-Jean", "photo" for a record with no name. */
 export function photoLabel(p) {
   const name = [surname(p) || String(p.maidenName || '').trim().toUpperCase(), given(p)].join(' ').normalize('NFC');
   return name.replace(/[^\p{L}\p{M}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'photo';
@@ -289,8 +289,8 @@ export function photoLabel(p) {
 export const isPhotoFile = (s) => /^photos\/[^/\\]+\.(jpg|png|webp|gif)$/.test(String(s || ''));
 
 /**
- * Adresse affichable d'une photo enregistrée (champ photo d'une fiche), ou '' :
- * data URL telle quelle, fichier du serveur local, les autres adresses sont ignorées.
+ * Displayable address of a saved photo (photo field of a record), or '':
+ * data URL as is, local server file; other addresses are ignored.
  */
 export function photoSrc(s) {
   if (isPhotoData(s)) return s;
@@ -300,12 +300,12 @@ export function photoSrc(s) {
   return '';
 }
 
-/** Photo de la personne (adresse affichable), ou ''. */
+/** The person's photo (displayable address), or ''. */
 export const photoOf = (p) => photoSrc(p && p.photo);
 
 const AVATARS = { F: 'images/avatar_femme.jpeg', M: 'images/avatar_homme.jpeg', U: 'images/avatar_neutre.jpeg' };
 
-/** Avatar par défaut selon le sexe ; neutre si le sexe n'est pas précisé. */
+/** Default avatar by sex; neutral if the sex isn't specified. */
 export const avatarOf = (sex) => AVATARS[sex] || AVATARS.U;
 
 export function fullName(p) {
@@ -319,14 +319,14 @@ export function cmpName(pa, pb) {
   return (surname(pa) || '~').localeCompare(surname(pb) || '~', getLang()) || given(pa).localeCompare(given(pb), getLang());
 }
 
-/* ---------- Recherche ---------- */
+/* ---------- Search ---------- */
 
-/** Mots de la recherche, en minuscules et sans accents. */
+/** Search words, lowercase and without accents. */
 export const queryWords = (query) => norm(query).split(/\s+/).filter(Boolean);
 
 /**
- * Vrai si chaque mot de la recherche figure dans le nom, les lieux, la profession
- * ou les dates de la personne, dans n'importe quel ordre.
+ * True if every search word appears in the person's name, places, occupation
+ * or dates, in any order.
  */
 export function matchesWords(p, words) {
   if (!words.length) return true;
@@ -334,7 +334,7 @@ export function matchesWords(p, words) {
   return words.every((w) => text.includes(w));
 }
 
-/** Tri par année de naissance, puis par nom. */
+/** Sort by birth year, then by name. */
 export function byBirth(a, b) {
   const pa = P(a);
   const pb = P(b);
@@ -344,12 +344,12 @@ export function byBirth(a, b) {
   return fullName(pa).localeCompare(fullName(pb), getLang());
 }
 
-/* ---------- Dates de vie ---------- */
+/* ---------- Life dates ---------- */
 
 export const isDead = (p) =>
   !!(String(p.deathDate || '').trim() || String(p.deathPlace || '').trim() || p.deceased);
 
-/** « 1932 – 2004 », « ° 1958 » ou « † 1971 ». */
+/** "1932 – 2004", "° 1958" or "† 1971". */
 export function lifeYears(p) {
   const b = shortDate(p.birthDate);
   const d = shortDate(p.deathDate);
@@ -359,7 +359,7 @@ export function lifeYears(p) {
   return '';
 }
 
-/** Ligne de dates d'une fiche de l'arbre. */
+/** Dates line of a tree card. */
 export function cardDates(p) {
   const b = shortDate(p.birthDate);
   const d = shortDate(p.deathDate);
@@ -370,7 +370,7 @@ export function cardDates(p) {
   return out.join('  ');
 }
 
-/** Âge actuel ou âge au décès, ou null si on ne peut pas le calculer. */
+/** Current age or age at death, or null if it can't be computed. */
 export function ageInfo(p) {
   const by = yearOf(p.birthDate);
   if (!by) return null;
@@ -401,14 +401,14 @@ export function ageInfo(p) {
   return { label: t('age'), text: t('about', approx) };
 }
 
-// Âges en dessous desquels l'arbre et la fiche ne proposent pas d'ajout
-export const CHILD_AGE = 17; // un enfant
-export const UNION_AGE = 15; // un conjoint ou une union : majorité sexuelle (on se mariait jadis dès 15 ans)
+// Ages below which the tree and the record don't offer additions
+export const CHILD_AGE = 17; // a child
+export const UNION_AGE = 15; // a spouse or a union: age of consent (people used to marry from 15)
 
 /**
- * Vrai si la personne a sûrement moins de `age` ans, aujourd'hui ou à sa mort : l'arbre et la fiche
- * ne proposent pas de lui ajouter un enfant (CHILD_AGE) ou un conjoint (UNION_AGE). Une date
- * incertaine ou absente ne conclut rien.
+ * True if the person is surely under `age`, today or at their death: the tree and the record
+ * don't offer to add a child (CHILD_AGE) or a spouse (UNION_AGE). An uncertain
+ * or missing date proves nothing.
  */
 export function isMinor(p, now = new Date(), age = CHILD_AGE) {
   const birth = dateBounds(p && p.birthDate);
@@ -422,9 +422,9 @@ export function isMinor(p, now = new Date(), age = CHILD_AGE) {
   return yearsBetween(birth.lo, end) < age;
 }
 
-/* ---------- Liens de parenté ---------- */
+/* ---------- Kinship links ---------- */
 
-/** Nombre de générations d'ancêtres au-dessus de la personne `id` (0 sans parent connu). */
+/** Number of generations of ancestors above person `id` (0 with no known parent). */
 export function ancestorDepth(id) {
   let depth = 0;
   let row = [id];
@@ -437,7 +437,7 @@ export function ancestorDepth(id) {
   }
 }
 
-/** Descendants de la personne `id`, génération par génération : [[enfants], [petits-enfants], …]. */
+/** Descendants of person `id`, generation by generation: [[children], [grandchildren], …]. */
 export function descendantRows(id) {
   const rows = [];
   let row = [id];
@@ -450,10 +450,10 @@ export function descendantRows(id) {
   }
 }
 
-/** Nombre de générations de descendants sous la personne `id` (0 sans enfant). */
+/** Number of generations of descendants under person `id` (0 with no child). */
 export const descendantDepth = (id) => descendantRows(id).length;
 
-/** Recalcule les index enfants et conjoints à partir des personnes et des unions. */
+/** Recomputes the children and spouses indexes from the people and unions. */
 export function reindex() {
   idx.children = new Map();
   idx.partners = new Map();
@@ -468,7 +468,7 @@ export function reindex() {
     m.set(b, uid || m.get(b) || null);
   };
 
-  // Unions déclarées
+  // Declared unions
   for (const [uid, u] of S.unions) {
     if (S.people.has(u.a) && S.people.has(u.b)) {
       addPartner(u.a, u.b, uid);
@@ -476,7 +476,7 @@ export function reindex() {
     }
   }
 
-  // Enfants, et couples déduits des parents communs
+  // Children, and couples deduced from shared parents
   for (const [id, p] of S.people) {
     const seen = new Set();
     for (const key of ['fatherId', 'motherId']) {
@@ -498,7 +498,7 @@ export function reindex() {
 
 export const childrenOf = (id) => idx.children.get(id) || [];
 
-/** Conjoints, triés par date d'union. `uid` est null pour un couple déduit des enfants. */
+/** Spouses, sorted by union date. `uid` is null for a couple deduced from the children. */
 export function partnersOf(id) {
   const m = idx.partners.get(id);
   if (!m) return [];
@@ -511,7 +511,7 @@ export function partnersOf(id) {
   return list.sort((a, b) => key(a) - key(b));
 }
 
-/** Frères et sœurs, avec la mention « même père » ou « même mère » pour les demi. */
+/** Siblings, with "same father" or "same mother" for half-siblings. */
 export function siblingsOf(id) {
   const p = P(id);
   if (!p || (!p.fatherId && !p.motherId)) return [];
@@ -535,7 +535,7 @@ export function unionBetween(a, b) {
   return !!unionIdBetween(a, b);
 }
 
-/** Id de l'union entre deux personnes, ou vide. */
+/** Id of the union between two people, or empty. */
 export function unionIdBetween(a, b) {
   for (const [uid, u] of S.unions) {
     if ((u.a === a && u.b === b) || (u.a === b && u.b === a)) return uid;
@@ -555,7 +555,7 @@ function ancestorCount(id, gen, limit) {
   return n;
 }
 
-/** Personne à centrer par défaut : celle qui a le plus d'ancêtres connus sur 3 générations. */
+/** Person to centre by default: the one with the most known ancestors over 3 generations. */
 export function defaultFocus() {
   let best = null;
   let bestScore = -1;

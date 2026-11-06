@@ -1,8 +1,8 @@
 /* ==========================================================
-   Panneau latéral : onglets et fiche d'une personne
+   Side panel: tabs and person record
    ========================================================== */
 
-/* Onglets Fiche / Registre */
+/* Record / Register tabs */
 .tabs {
   display: flex;
   border-bottom: 1px solid var(--line);
@@ -43,14 +43,14 @@
   padding: 18px 18px 22px;
 }
 
-/* En-tête de la fiche : photo facultative à gauche du nom */
-.fiche-head {
+/* Record header: optional photo left of the name */
+.record-head {
   display: flex;
   align-items: flex-start;
   gap: 14px;
 }
 
-.fiche-head > div {
+.record-head > div {
   min-width: 0;
 }
 
@@ -59,13 +59,13 @@
   width: 84px;
   height: 105px;
   object-fit: cover;
-  object-position: 50% 18%; /* portrait : le visage est en haut */
+  object-position: 50% 18%; /* portrait: the face is at the top */
   border-radius: 6px;
   border: 1px solid var(--line);
   background: var(--paper);
 }
 
-/* Avatar par défaut : l'image a déjà son cadre ovale */
+/* Default avatar: the image already has its oval frame */
 .photo.avatar {
   border: 0;
   background: transparent;
@@ -85,7 +85,7 @@
 .name {
   font-family: var(--f-display);
   font-weight: 400;
-  font-size: min(1.9375rem, 36px); /* texte agrandi : le nom tient encore dans la largeur du panneau */
+  font-size: min(1.9375rem, 36px); /* larger text: the name still fits in the panel width */
   line-height: 1.08;
   margin: 0;
   text-wrap: balance;
@@ -97,7 +97,7 @@
   letter-spacing: .02em;
 }
 
-/* « née FAURE » sous le nom */
+/* "née FAURE" under the name */
 .maiden {
   margin: 4px 0 0;
   font-size: 1.0625rem;
@@ -115,7 +115,7 @@
   color: var(--muted);
 }
 
-/* Naissance, décès, âge */
+/* Birth, death, age */
 .facts {
   margin: 16px 0 0;
   border-top: 1px solid var(--line);
@@ -141,7 +141,7 @@
   overflow-wrap: anywhere;
 }
 
-/* Parents, unions, enfants, frères et sœurs */
+/* Parents, unions, children, siblings */
 .rel {
   margin-top: 20px;
 }
@@ -241,7 +241,7 @@
   max-width: 65ch;
 }
 
-/* Actions en bas de la fiche */
+/* Actions at the bottom of the record */
 .actions {
   display: flex;
   flex-wrap: wrap;

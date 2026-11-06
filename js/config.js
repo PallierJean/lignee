@@ -1,53 +1,53 @@
 /**
- * Constantes de l'application : dimensions de l'arbre, zoom, formats de date,
- * clés de stockage du navigateur.
+ * Application constants: tree dimensions, zoom, date formats,
+ * browser storage keys.
  */
 
-// Dimensions de l'arbre, en pixels (CW et CH doivent correspondre à .card dans tree.css)
-export const CW = 176;  // largeur d'une fiche
-export const CH = 88;   // hauteur d’une fiche
-export const HG = 18;   // écart horizontal entre deux fiches voisines
-export const VG = 58;   // écart vertical entre deux générations
-export const SG = 32;   // écart entre deux conjoints
-export const PAD = 48;  // marge autour de l'arbre
+// Tree dimensions, in pixels (CW and CH must match .card in tree.css)
+export const CW = 176;  // card width
+export const CH = 88;   // card height
+export const HG = 18;   // horizontal gap between two neighbouring cards
+export const VG = 58;   // vertical gap between two generations
+export const SG = 32;   // gap between two spouses
+export const PAD = 48;  // margin around the tree
 
-// Niveaux de zoom proposés
+// Available zoom levels
 export const ZOOMS = [0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.6, 2, 2.5, 3];
 
-// Thèmes de couleur (css/tokens.css) ; « auto » suit le système, « season » change avec la date
+// Colour themes (css/tokens.css); "auto" follows the system, "season" changes with the date
 export const THEMES = ['auto', 'season', 'light', 'dark', 'noel', 'halloween', 'printemps', 'ete', 'automne', 'maraudeur', 'constellations', 'porcelaine', 'matrix', 'grandline', 'daltonisme', 'contraste', 'contraste-sombre'];
-// Taille du texte de l'interface (attribut data-text de <html>, css/base.css) ; l'arbre a son propre zoom
+// Interface text size (data-text attribute on <html>, css/base.css); the tree has its own zoom
 export const TEXT_SIZES = ['normal', 'large', 'xlarge'];
 
-// Mois en GEDCOM (import/export) ; les mois affichés sont dans i18n.js
+// GEDCOM months (import/export); displayed months are in i18n.js
 export const GM = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-// Clés du stockage local du navigateur
-export const PREF_KEY = 'lignee.view.v1';   // préférences d'affichage
-export const TREES_KEY = 'lignee.trees.v1'; // liste des arbres en mode local
-export const TREE_KEY = 'lignee.tree.';     // + identifiant : données d'un arbre en mode local
-export const LANG_KEY = 'lignee.lang.v1';   // langue de l'interface : 'fr' ou 'en'
-export const REPO_KEY = 'lignee.repo.v1';   // dépôt relié à chaque arbre, sans le jeton
-export const GEO_KEY = 'lignee.geo.v1';     // coordonnées des lieux déjà localisés
-export const INSEE_KEY = 'lignee.insee.v1'; // actes de décès de l'INSEE trouvés pour chaque fiche
-export const DUP_KEY = 'lignee.dups.v1';     // paires « Ce n'est pas un doublon », par arbre
+// Browser local storage keys
+export const PREF_KEY = 'lignee.view.v1';   // display preferences
+export const TREES_KEY = 'lignee.trees.v1'; // list of trees in local mode
+export const TREE_KEY = 'lignee.tree.';     // + id: data of a tree in local mode
+export const LANG_KEY = 'lignee.lang.v1';   // interface language: 'fr' or 'en'
+export const REPO_KEY = 'lignee.repo.v1';   // repository linked to each tree, without the token
+export const GEO_KEY = 'lignee.geo.v1';     // coordinates of places already located
+export const INSEE_KEY = 'lignee.insee.v1'; // INSEE death records found for each record
+export const DUP_KEY = 'lignee.dups.v1';     // "Not a duplicate" pairs, per tree
 
-// Arbre de départ (et arbre des données créées avant la gestion de plusieurs arbres) ;
-// son nom par défaut est t('ts.default')
+// Starting tree (and tree of the data created before multiple trees were supported);
+// its default name is t('ts.default')
 export const DEFAULT_TREE = 'principal';
-export const EXAMPLE_FILE = 'data/arbres/exemple-famille-bertrand.json'; // famille chargée à la première visite
+export const EXAMPLE_FILE = 'data/arbres/exemple-famille-bertrand.json'; // family loaded on the first visit
 
 /**
- * Règle @page d'une feuille, en millimètres : Chrome ne connaît pas le mot-clé A2,
- * ignore toute la règle et coupe la feuille sur son format par défaut.
+ * A sheet's @page rule, in millimetres: Chrome doesn't know the A2 keyword,
+ * ignores the whole rule and cuts the sheet to its default size.
  */
 export const pageRule = (w, h, margin) => `@page { size: ${w}mm ${h}mm; margin: ${margin}mm; }`;
 
-// Préférences du système
+// System preferences
 export const reduced = window.matchMedia
   ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
   : false;
 export const narrow = () => (window.matchMedia ? window.matchMedia('(max-width: 900px)').matches : false);
 
-/** Deux anneaux entrelacés (personne mariée), dans une boîte de 20 × 12. */
+/** Two interlaced rings (married person), in a 20 × 12 box. */
 export const RINGS_PATH = 'M8.86 10.64A5 5 0 1 1 10.93 9.09M11.14 1.36A5 5 0 1 1 9.07 2.91';

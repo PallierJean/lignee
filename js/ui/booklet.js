@@ -1,7 +1,7 @@
 /**
- * Livret de famille : de vraies pages A4 construites ici. Les marges font partie de chaque
- * page, elles ne dépendent donc pas des réglages de la fenêtre d'impression. Les blocs sont
- * mesurés hors écran pour répartir le texte, ce qui donne aussi les numéros du sommaire.
+ * Family booklet: real A4 pages built here. The margins are part of each
+ * page, so they don't depend on the print dialog settings. Blocks are
+ * measured off screen to lay out the text, which also gives the table of contents page numbers.
  */
 import { S } from '../state.js';
 import { esc } from '../utils/dom.js';
@@ -13,13 +13,13 @@ import { bookChapters } from '../model/book-branches.js';
 import { familyBook, familyBookName } from '../model/family-book.js';
 import { fanSVG, fanSize } from '../tree/fan.js';
 
-const MM = 96 / 25.4;      // pixels CSS par millimètre
-const BODY_H = 256;        // hauteur du texte d'une page, en mm (voir .bk-page dans print.css)
-const COVER_FAN = 150;     // largeur de la roue en couverture, en mm
-const COVER_GENS = 5;      // générations de la roue en couverture : au-delà, illisible
-const SAFETY = 4;          // marge de sûreté de la répartition, en mm
+const MM = 96 / 25.4;      // CSS pixels per millimetre
+const BODY_H = 256;        // text height of a page, in mm (see .bk-page in print.css)
+const COVER_FAN = 150;     // width of the cover fan chart, in mm
+const COVER_GENS = 5;      // generations of the cover fan chart: beyond this, unreadable
+const SAFETY = 4;          // safety margin for the layout, in mm
 
-/** Le logo de Lignée, repris en couverture. */
+/** The Lignée logo, reused on the cover. */
 const MARK = '<svg class="bk-mark" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="4" width="13" height="9" rx="1.5"/>'
   + '<rect x="24" y="4" width="13" height="9" rx="1.5"/><rect class="f" x="13.5" y="27" width="13" height="9" rx="1.5"/>'
   + '<path d="M9.5 13v6h21v-6M20 19v8"/></svg>';
@@ -33,7 +33,7 @@ function entryHTML(x) {
     + (x.sources ? `<p class="bk-src">${esc(x.sources)}</p>` : '') + '</article>';
 }
 
-/** Années couvertes par une génération : « 1787 – 1892 », ou vide. */
+/** Years covered by a generation: "1787 – 1892", or empty. */
 function span(section) {
   const years = section.people.map((x) => yearOf(P(x.id).birthDate)).filter(Boolean);
   if (!years.length) return '';
@@ -44,13 +44,13 @@ function span(section) {
 const chapterHTML = (s) => `<div class="bk-chapter"><span class="bk-num">${s.gen}</span>`
   + `<div><h2>${esc(t('stat.gen', s.gen))}</h2><p>${esc(span(s))}</p></div></div>`;
 
-/** Blocs à répartir : { html, chapter?, glue? } ; un titre reste avec la fiche qui le suit. */
+/** Blocks to lay out: { html, chapter?, glue? }; a heading stays with the record that follows it. */
 const blocksOf = (sections) => sections.flatMap((s) => [
   { html: chapterHTML(s), chapter: s, glue: true },
   ...s.people.map((x) => ({ html: entryHTML(x) })),
 ]);
 
-/** Répartit les blocs sur des pages, d'après leur hauteur réelle. */
+/** Lays the blocks out on pages, from their real height. */
 async function paginate(blocks) {
   const box = document.createElement('div');
   box.className = 'bk-measure';
@@ -100,9 +100,9 @@ const today = () => {
 const pageHTML = (body, n, title) => `<section class="bk-page"><div class="bk-body">${body}</div>`
   + `<footer class="bk-foot"><span>${esc(title)}</span><span>${n}</span></footer></section>`;
 
-/* ---------- Livret d'une personne ---------- */
+/* ---------- A person's booklet ---------- */
 
-/** Extrait d'une personne : son nom et ses faits, avec en tête « Premier enfant » ou « Époux… ». */
+/** A person's extract: their name and facts, headed "First child" or "Husband…". */
 function extractHTML(x, label) {
   return '<article class="bk-entry bk-extract">'
     + (x.photo ? `<img class="bk-photo" src="${esc(x.photo)}" alt="">` : '')
@@ -113,7 +113,7 @@ function extractHTML(x, label) {
 
 const sectionHTML = (title, sub) => `<div class="bk-chapter"><div><h2>${esc(title)}</h2>${sub ? `<p>${esc(sub)}</p>` : ''}</div></div>`;
 
-/** Le livret de famille de la personne `id`, façon mairie : ses unions et ses enfants directs. */
+/** The family booklet of person `id`, town-hall style: their unions and direct children. */
 export async function familyBookHTML(id) {
   const book = familyBook(id);
   const names = [book.holder, ...book.unions.map((u) => u.partner)].map((x) => x.name);
@@ -136,11 +136,11 @@ export async function familyBookHTML(id) {
   return cover + pages.map((page, i) => pageHTML(page.map((b) => b.html).join(''), i + 2, title)).join('');
 }
 
-/** Le livret complet : couverture, sommaire, puis les pages de texte. */
+/** The full booklet: cover, table of contents, then the text pages. */
 export async function bookletHTML(title) {
   const sections = bookSections();
   const pages = await paginate(blocksOf(sections));
-  const FIRST = 3; // couverture et sommaire avant le texte
+  const FIRST = 3; // cover and table of contents before the text
   const lines = pages.flatMap((page, i) => page.filter((b) => b.chapter).map((b) => {
     const when = span(b.chapter);
     return `<li><span>${esc(t('stat.gen', b.chapter.gen))}${when ? ` <small>${esc(when)}</small>` : ''}</span><i></i><b>${i + FIRST}</b></li>`;
@@ -150,17 +150,17 @@ export async function bookletHTML(title) {
     + pages.map((page, i) => pageHTML(page.map((b) => b.html).join(''), i + FIRST, title)).join('');
 }
 
-/* ---------- Livre de famille complet ---------- */
+/* ---------- Full family book ---------- */
 
-const TIMELINE_ROWS = 22;  // lignes de frise par bloc : un bloc tient sur une page
-const ALBUM_ITEMS = 6;     // images par bloc d'album
+const TIMELINE_ROWS = 22;  // timeline rows per block: a block fits on a page
+const ALBUM_ITEMS = 6;     // images per album block
 
 const chunks = (list, n) => Array.from({ length: Math.ceil(list.length / n) }, (_, i) => list.slice(i * n, i * n + n));
 
 const branchHeadHTML = (ch, n) => `<div class="bk-chapter"><span class="bk-num">${n}</span>`
   + `<div><h2>${esc(ch.title)}</h2>${ch.sub ? `<p>${esc(ch.sub)}</p>` : ''}</div></div>`;
 
-// Un bloc est un seul élément : la répartition mesure chaque enfant de la boîte de mesure
+// A block is a single element: the layout measures each child of the measuring box
 const timelineHTML = (rows, first) => '<div class="bk-block">' + (first ? `<h3 class="bk-sub">${esc(t('bb.timeline'))}</h3>` : '')
   + '<table class="bk-timeline">' + rows.map((r) => `<tr class="${r.kind}"><th>${r.year}</th><td>${esc(r.label)}</td></tr>`).join('') + '</table></div>';
 
@@ -168,7 +168,7 @@ const albumHTML = (items, first) => '<div class="bk-block">' + (first ? `<h3 cla
   + '<div class="bk-album">' + items.map(({ m }) => `<figure><img src="${esc(photoSrc(m.photo))}" alt="">`
     + `${m.title || m.date ? `<figcaption>${esc([m.title, m.date].filter(Boolean).join(' · '))}</figcaption>` : ''}</figure>`).join('') + '</div></div>';
 
-/** Le livre complet : couverture, sommaire, puis un chapitre par branche, avec frise et album. */
+/** The full book: cover, table of contents, then one chapter per branch, with timeline and album. */
 export async function fullBookHTML(title) {
   const chapters = bookChapters(S.focus);
   const blocks = chapters.flatMap((ch, i) => [

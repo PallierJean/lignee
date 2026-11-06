@@ -1,9 +1,9 @@
 /**
- * Lecture d'un dépôt GitHub depuis le navigateur : une sauvegarde Lignée (.json) et ses photos.
- * Dépôt public : fichiers lus sur raw.githubusercontent.com, sans limite de 60 requêtes par heure.
- * Dépôt privé : fichiers lus par l'API avec un jeton, le seul accès qui l'accepte depuis une page.
- * Avec un jeton autorisé, l'arbre et ses photos repartent vers le dépôt en un seul commit.
- * Le jeton n'est jamais enregistré ; il ne part que vers api.github.com.
+ * Reading a GitHub repository from the browser: a Lignée backup (.json) and its photos.
+ * Public repository: files read from raw.githubusercontent.com, with no 60-requests-per-hour limit.
+ * Private repository: files read through the API with a token, the only access that allows it from a page.
+ * With an authorised token, the tree and its photos go back to the repository in a single commit.
+ * The token is never stored; it is only sent to api.github.com.
  */
 import { convertPhotos } from './storage.js';
 import { parseBackup } from './backup.js';
@@ -12,8 +12,8 @@ import { pool, sleep } from '../utils/helpers.js';
 
 const API = 'https://api.github.com/repos/';
 const RAW = 'https://raw.githubusercontent.com/';
-const MAX_BACKUPS = 20; // fichiers .json lus au plus pour trouver les sauvegardes
-const HEAD_READS = 6; // lectures du dernier commit avant de conclure qu'il a changé
+const MAX_BACKUPS = 20; // .json files read at most to find the backups
+const HEAD_READS = 6; // reads of the last commit before concluding that it changed
 const HEAD_WAIT = 400; // ms entre deux lectures
 const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
 const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
@@ -28,7 +28,7 @@ function checked(res) {
   throw fail(codes[res.status] || 'failed');
 }
 
-/** Lit « owner/depot », son adresse https ou ssh. Renvoie { owner, repo }, ou null. */
+/** Reads "owner/repo", its https or ssh address. Returns { owner, repo }, or null. */
 export function parseRepo(input) {
   const m = String(input || '').trim().match(
     /^(?:https?:\/\/(?:www\.)?github\.com\/|(?:ssh:\/\/)?git@github\.com[:/])?([A-Za-z0-9-]{1,39})\/([\w.-]{1,100}?)(?:\.git)?\/?(?:[/?#].*)?$/,
@@ -37,7 +37,7 @@ export function parseRepo(input) {
   return { owner: m[1], repo: m[2] };
 }
 
-/** Accès au dépôt : api(chemin) et send(méthode, chemin, corps) par l'API, raw(fichier, commit) pour lire un fichier. */
+/** Repository access: api(path) and send(method, path, body) through the API, raw(file, commit) to read a file. */
 function client({ owner, repo }, token) {
   const base = `${API}${owner}/${repo}`;
   const api = async (path, accept = 'application/vnd.github+json', init = {}) => checked(await fetch(base + path, {
@@ -60,7 +60,7 @@ function client({ owner, repo }, token) {
 
 const headCommit = async (api) => (await (await api('/commits/HEAD', 'application/vnd.github.sha')).text()).trim();
 
-/** Vrai si le dépôt est toujours à `commit`. GitHub peut relire l'ancien commit juste après un envoi : on insiste un peu. */
+/** True if the repository is still at `commit`. GitHub may read back the old commit right after a push: retry a little. */
 async function stillAt(api, commit) {
   for (let i = 0; i < HEAD_READS; i++) {
     if (i) await sleep(HEAD_WAIT);
@@ -70,9 +70,9 @@ async function stillAt(api, commit) {
 }
 
 /**
- * Vrai si le jeton peut écrire. GitHub ne donne pas les droits d'un jeton à accès limité :
- * on demande une référence au nom invalide, qui ne peut rien créer. 422 (409 sur un dépôt vide) :
- * demande examinée, donc droit d'écriture ; 403 ou 404 : refusée avant cela. Dans le doute : lecture seule.
+ * True if the token can write. GitHub doesn't report the permissions of a fine-grained token:
+ * we ask for a reference with an invalid name, which can't create anything. 422 (409 on an empty repository):
+ * request examined, so write permission; 403 or 404: refused before that. When in doubt: read-only.
  */
 async function canWrite(send) {
   try {
@@ -84,10 +84,10 @@ async function canWrite(send) {
 }
 
 /**
- * Cherche les sauvegardes Lignée du dépôt, à la racine d'abord. Renvoie { name, read, files,
+ * Looks for the repository's Lignée backups, at the root first. Returns { name, read, files,
  * backups: [{ path, name, people, unions }], write, head, branch, api, send }.
- * Avec `forSave`, un dépôt vide ou sans sauvegarde convient : head et backups sont alors vides.
- * Échoue avec une erreur portant `code` : invalid, notFound, badToken, forbidden, empty, noBackup ou failed.
+ * With `forSave`, an empty repository or one with no backup is fine: head and backups are then empty.
+ * Fails with an error carrying `code`: invalid, notFound, badToken, forbidden, empty, noBackup or failed.
  */
 export async function openRepo(input, token, forSave = false) {
   const target = parseRepo(input);
@@ -113,14 +113,14 @@ export async function openRepo(input, token, forSave = false) {
     try {
       backup = parseBackup(text);
     } catch (e) {
-      /* autre fichier .json du dépôt */
+      /* another .json file in the repository */
     }
     if (backup && backup.people.length) backups.push({ path: file.path, ...backup });
   });
   if (!backups.length && !forSave) throw fail('noBackup');
   backups.sort((a, b) => a.path.localeCompare(b.path));
 
-  // Les noms de fichiers peuvent différer par la forme de leurs accents
+  // File names may differ in the form of their accents
   const files = new Map(blobs.map((x) => [x.path.normalize('NFC'), x]));
   const write = !!token && await canWrite(send);
   const branch = write ? (await (await api('')).json()).default_branch : '';
@@ -135,10 +135,10 @@ async function dataUrl(res, photo) {
 }
 
 /**
- * Remplace les chemins « photos/… » de la sauvegarde par les images du dépôt, cherchées dans
- * <nom de la sauvegarde>/photos/ puis à côté du fichier. Une image absente est retirée de la fiche.
- * Renvoie { found, missing, photos } ; photos associe chaque image à son fichier, pour le renvoi.
- * Une autre erreur (réseau, accès) interrompt la lecture.
+ * Replaces the backup's "photos/…" paths with the repository's images, looked up in
+ * <backup name>/photos/ then next to the file. A missing image is removed from the record.
+ * Returns { found, missing, photos }; photos maps each image to its file, for sending back.
+ * Any other error (network, access) interrupts the read.
  */
 export async function attachPhotos(repo, backup) {
   const base = backup.path.replace(/\.json$/i, '/');
@@ -172,10 +172,10 @@ export async function attachPhotos(repo, backup) {
 }
 
 /**
- * Envoie la sauvegarde `text` (photos en data URL) vers target.path, en un commit sur la branche par
- * défaut. Seules les nouvelles photos sont transférées ; celles que l'arbre ne cite plus quittent le
- * dépôt, en restant dans son historique. Refuse d'écraser un dépôt modifié depuis sa lecture (`conflict`).
- * Un dépôt vide reçoit d'abord un premier commit, seule écriture que l'API accepte sur lui.
+ * Sends backup `text` (photos as data URLs) to target.path, in one commit on the default
+ * branch. Only new photos are transferred; those the tree no longer cites leave the
+ * repository, while staying in its history. Refuses to overwrite a repository changed since it was read (`conflict`).
+ * An empty repository first gets an initial commit, the only write the API accepts on it.
  */
 export async function pushBackup(repo, target, text, message) {
   if (!repo.head) {

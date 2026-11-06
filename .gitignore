@@ -1,15 +1,15 @@
-# Données personnelles : arbres et photos, sauf la famille d'exemple (fictive)
+# Personal data: trees and photos, except the (fictional) example family
 /data/arbres/*
 !/data/arbres/exemple-famille-bertrand.json
-# Jeton d'accès au service des décès (matchID)
+# Access token for the deaths service (matchID)
 /data/matchid.json
 *.tmp
 
-# Outils
+# Tools
 node_modules/
 _site/
 coverage/
 .DS_Store
 
-# Jetons des tests réels sur GitHub
+# Tokens for the real GitHub tests
 .env.test

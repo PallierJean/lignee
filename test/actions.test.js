@@ -64,8 +64,8 @@ describe('navigation et affichage', () => {
     assert.equal(S.focus, michel);
     A.setFocus('absent');
     assert.equal(S.focus, michel);
-    A.setTab('registre');
-    assert.equal(el('paneRegistre').hidden, false);
+    A.setTab('register');
+    assert.equal(el('paneRegister').hidden, false);
     A.setGenerations('up', 7);
     assert.equal(S.up, 7);
     A.setGenerations('up', 7);
@@ -179,10 +179,10 @@ describe('navigation et affichage', () => {
     assert.equal(S.panel, false);
     assert.equal(el('main').className, 'main side-off');
     assert.equal(el('btnPanel').attrs['aria-pressed'], 'false');
-    A.setTab('registre'); // un onglet demandé rouvre le panneau
+    A.setTab('register'); // un onglet demandé rouvre le panneau
     assert.equal(S.panel, true);
     assert.equal(el('main').className, 'main');
-    A.setTab('fiche');
+    A.setTab('record');
     A.toggleLang();
     assert.equal(el('btnLang').textContent, 'FR');
     A.toggleLang();
@@ -190,7 +190,7 @@ describe('navigation et affichage', () => {
 
   test('parenté : ouverture, choix, surlignage, retour à la vue d’avant', () => {
     A.openKin(camille);
-    assert.equal(S.tab, 'analyse');
+    assert.equal(S.tab, 'analysis');
     A.setKin('kinB', ex.people.find((p) => p.given === 'Michel').id);
     A.showKin();
     assert.deepEqual([S.kinShow, S.full], [true, true]);
@@ -200,7 +200,7 @@ describe('navigation et affichage', () => {
   });
 
   test('frise et éphémérides', () => {
-    A.setAnalyseView('time');
+    A.setAnalysisView('time');
     A.setTimeScope(true);
     assert.equal(S.timeFamily, true);
     S.calMonth = 12;
@@ -228,7 +228,7 @@ describe('formulaire', () => {
 
   test('ajouter, annuler, rétablir', async () => {
     A.startNew();
-    assert.ok(html('paneFiche').includes('Nouvelle personne'));
+    assert.ok(html('paneRecord').includes('Nouvelle personne'));
     fill({ 'f-given': 'Lou', 'f-surname': 'Noir', 'f-bdate': '1990' });
     await A.submitEdit();
     assert.equal(S.people.size, ex.people.length + 1);
@@ -243,7 +243,7 @@ describe('formulaire', () => {
     loadTree([person('a', { given: 'Ana', surname: 'Roux', birthDate: '01/01/1900', deathDate: '1970' })]);
     S.focus = 'a';
     A.startEdit('a');
-    const form = html('paneFiche');
+    const form = html('paneRecord');
     assert.match(form, /id="f-bdate" value="01 Janvier 1900"/);
     assert.match(form, /id="f-ddate" value="1970"/);
     fill({ 'f-bdate': '01 Janvier 1900' });
@@ -527,7 +527,7 @@ describe('suppression, exemples, fusion', () => {
   test('supprimer une fiche : liens retirés, annulation complète', async () => {
     const michel = ex.people.find((p) => p.given === 'Michel').id;
     A.confirmDelete(true);
-    assert.ok(html('paneFiche').includes('data-act="delete-yes"'));
+    assert.ok(html('paneRecord').includes('data-act="delete-yes"'));
     await A.doDelete(michel);
     assert.ok(!S.people.has(michel));
     assert.equal(S.people.get(camille).fatherId, null);
@@ -542,7 +542,7 @@ describe('suppression, exemples, fusion', () => {
     assert.match(html('personCard'), new RegExp(`data-act="delete-ask" data-id="${hugo}"`));
     A.confirmDelete(true, hugo);
     assert.match(html('personCard'), new RegExp(`data-act="delete-yes" data-id="${hugo}"`));
-    assert.doesNotMatch(html('paneFiche'), /data-act="delete-yes"/, 'la fiche de Camille ne demande rien');
+    assert.doesNotMatch(html('paneRecord'), /data-act="delete-yes"/, 'la fiche de Camille ne demande rien');
     await A.doDelete(hugo);
     assert.ok(!S.people.has(hugo));
     assert.equal(S.focus, camille);
@@ -554,15 +554,15 @@ describe('suppression, exemples, fusion', () => {
   test('supprimer depuis le formulaire d’une fiche créée au mauvais endroit', async () => {
     const lea = ex.people.find((p) => p.given === 'Léa').id;
     A.startEdit(lea);
-    assert.match(html('paneFiche'), /data-act="form-delete-ask"/);
-    assert.match(html('paneFiche'), new RegExp(`id="f-delconfirm" hidden>.*data-act="delete-yes" data-id="${lea}"`, 's'));
+    assert.match(html('paneRecord'), /data-act="form-delete-ask"/);
+    assert.match(html('paneRecord'), new RegExp(`id="f-delconfirm" hidden>.*data-act="delete-yes" data-id="${lea}"`, 's'));
     await A.doDelete(lea);
     assert.equal(S.edit, null, 'la saisie est abandonnée');
     assert.ok(!S.people.has(lea));
     await A.undo();
     assert.ok(S.people.has(lea));
     A.startNew();
-    assert.doesNotMatch(html('paneFiche'), /form-delete-ask/, 'rien à supprimer pour une fiche pas encore créée');
+    assert.doesNotMatch(html('paneRecord'), /form-delete-ask/, 'rien à supprimer pour une fiche pas encore créée');
     A.cancelEdit();
   });
 
@@ -635,8 +635,8 @@ describe('événements de la page', () => {
   };
 
   test('chaque bouton lance son action', async () => {
-    click({ act: 'tab', tab: 'registre' });
-    assert.equal(S.tab, 'registre');
+    click({ act: 'tab', tab: 'register' });
+    assert.equal(S.tab, 'register');
     click({ act: 'up', n: '5' });
     assert.equal(S.up, 5);
     click({ act: 'down', n: '1' });
@@ -647,7 +647,7 @@ describe('événements de la page', () => {
     click({ act: 'line' });
     click({ act: 'lang' });
     click({ act: 'lang' });
-    click({ act: 'analyse-view', view: 'cal' });
+    click({ act: 'analysis-view', view: 'cal' });
     click({ act: 'cal-month', d: '1' });
     click({ act: 'time-scope', family: 'true' });
     click({ act: 'kin-open', id: camille });

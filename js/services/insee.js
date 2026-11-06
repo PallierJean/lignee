@@ -1,8 +1,8 @@
 /**
- * Vérification des fiches dans le fichier des décès de l'INSEE, par server.js (mode fichier) :
- * seuls le nom de naissance, le premier prénom, le sexe et la naissance partent, une fiche
- * par seconde. Les actes trouvés sont gardés dans ce navigateur, par arbre et par fiche, avec
- * la question posée : une fiche n'est revérifiée que si cette question change.
+ * Checking records against INSEE's death file, through server.js (file mode):
+ * only the birth surname, first given name, sex and birth are sent, one record
+ * per second. The certificates found are kept in this browser, per tree and per record, with
+ * the question asked: a record is only checked again if that question changes.
  */
 import { INSEE_KEY } from '../config.js';
 import { S } from '../state.js';
@@ -10,7 +10,7 @@ import { inseeQuery, inseeSignature, matchDeath } from '../model/insee.js';
 import { sleep } from '../utils/helpers.js';
 
 const PAUSE = 1000;
-const KEPT = 10; // actes gardés par fiche
+const KEPT = 10; // certificates kept per record
 
 function readAll() {
   try {
@@ -24,20 +24,20 @@ function writeAll(all) {
   try {
     localStorage.setItem(INSEE_KEY, JSON.stringify(all));
   } catch (e) {
-    /* stockage plein : les résultats restent valables jusqu'au rechargement */
+    /* storage full: the results stay valid until reload */
   }
 }
 
-let memo = null; // { [arbre]: { [fiche]: { sig, acts, ignored } } }
+let memo = null; // { [tree]: { [record]: { sig, acts, ignored } } }
 const all = () => (memo = memo || readAll());
 
-/** Résultats de l'arbre ouvert : { [fiche]: { sig, acts, ignored } }. */
+/** Results for the open tree: { [record]: { sig, acts, ignored } }. */
 export const inseeResults = () => all()[S.tree] || {};
 
-/** La recherche passe par server.js : disponible seulement en mode fichier. */
+/** The search goes through server.js: only available in file mode. */
 export const inseeAvailable = () => S.mode === 'file';
 
-/** Identifiants des fiches à vérifier : nouvelles, ou dont la question a changé depuis la dernière vérification. */
+/** Ids of the records to check: new ones, or those whose question changed since the last check. */
 export function inseePending() {
   const done = inseeResults();
   return [...S.people.keys()].filter((id) => {
@@ -46,19 +46,19 @@ export function inseePending() {
   });
 }
 
-/** Garde le résultat d'une fiche. */
+/** Keeps a record's result. */
 function keep(id, entry) {
   const store = all();
   store[S.tree] = { ...(store[S.tree] || {}), [id]: entry };
   writeAll(store);
 }
 
-/** Empreinte d'un acte : son décès et son numéro. */
+/** Fingerprint of a certificate: its death and its number. */
 const actKey = (a) => [a.last, a.deathDate, a.certificate].join('|');
 
 /**
- * Acte retenu pour la fiche `id` : comme matchDeath(), mais une piste confirmée par
- * l'utilisateur (« C'est bien lui ») passe au niveau 'confirmed'.
+ * Certificate kept for record `id`: like matchDeath(), but a lead confirmed by
+ * the user ("That's them") moves up to the 'confirmed' level.
  */
 export function inseeMatch(id) {
   const entry = inseeResults()[id];
@@ -66,33 +66,33 @@ export function inseeMatch(id) {
   return m && m.level === 'lead' && entry.confirmed === actKey(m.act) ? { ...m, level: 'confirmed' } : m;
 }
 
-/** « C'est bien lui » : la piste de la fiche devient son acte, ses écarts se reportent. */
+/** "That's them": the record's lead becomes its certificate, its differences can be reported. */
 export function confirmInsee(id) {
   const entry = inseeResults()[id];
   const m = inseeMatch(id);
   if (entry && m) keep(id, { ...entry, confirmed: actKey(m.act) });
 }
 
-/** N'affiche plus l'écart de cette fiche, tant que sa question ne change pas. */
+/** Stops showing this record's difference, as long as its question doesn't change. */
 export function ignoreInsee(id) {
   const entry = inseeResults()[id];
   if (entry) keep(id, { ...entry, ignored: true });
 }
 
-/** Oublie les vérifications de l'arbre ouvert : tout sera revérifié. */
+/** Forgets the open tree's checks: everything will be checked again. */
 export function forgetInsee() {
   const store = all();
   delete store[S.tree];
   writeAll(store);
 }
 
-/** Erreur d'une réponse du serveur ; `login` : matchID demande une connexion. */
+/** Error from a server response; `login`: matchID asks to sign in. */
 async function failure(res) {
   const text = await res.text().catch(() => '');
   return Object.assign(new Error(text.startsWith('{') ? '' : text), { login: res.status === 401 });
 }
 
-/** Connexion à matchID : { connected, user, expires }. */
+/** matchID sign-in: { connected, user, expires }. */
 export async function inseeStatus() {
   const res = await fetch('api/insee/status', { cache: 'no-store' });
   if (!res.ok) throw await failure(res);
@@ -105,13 +105,13 @@ async function post(route, body) {
   return res.json();
 }
 
-/** matchID envoie un code à cette adresse. */
+/** matchID sends a code to this address. */
 export const inseeRegister = (email) => post('register', { email });
 
-/** Code reçu par e-mail : le serveur garde le jeton. */
+/** Code received by e-mail: the server keeps the token. */
 export const inseeAuth = (email, code) => post('auth', { email, code });
 
-/** Vérifie les fiches `ids` une à une ; une panne, ou une connexion demandée, arrête la vérification. */
+/** Checks records `ids` one by one; a failure, or a sign-in request, stops the check. */
 export async function checkInsee(ids, onProgress) {
   for (const [i, id] of ids.entries()) {
     const q = inseeQuery(id);
@@ -125,7 +125,7 @@ export async function checkInsee(ids, onProgress) {
   }
 }
 
-/** Pour les tests : relit le stockage. */
+/** For tests: reloads the storage. */
 export const resetInseeMemo = () => {
   memo = null;
 };

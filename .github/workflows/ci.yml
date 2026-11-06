@@ -1,5 +1,5 @@
-# Intégration continue : tous les tests à chaque push sur main et sur chaque pull request.
-# L'application n'a aucune dépendance : pas d'installation, Node (.nvmrc) suffit.
+# Continuous integration: all the tests on every push to main and on every pull request.
+# The application has no dependencies: no install step, Node (.nvmrc) is enough.
 name: CI
 
 on:
@@ -11,7 +11,7 @@ on:
 permissions:
   contents: read
 
-# Un nouveau push sur la même branche annule la vérification devenue inutile
+# A new push to the same branch cancels the check that became pointless
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -26,12 +26,12 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
-      - name: Lancer les tests avec la couverture
+      - name: Run the tests with coverage
         run: npm run test:coverage
 
-  # Après des tests réussis sur main : version, CHANGELOG.md, tag et GitHub Release, d'après les commits.
-  # Outils lancés ici seulement, versions figées : l'application reste sans dépendance.
-  # conventional-changelog-conventionalcommits reste en 9.x : la 10 exige un rédacteur de notes plus récent.
+  # After successful tests on main: version, CHANGELOG.md, tag and GitHub Release, from the commits.
+  # Tools run here only, with pinned versions: the application stays dependency-free.
+  # conventional-changelog-conventionalcommits stays on 9.x: 10 requires a newer release-notes writer.
   release:
     name: Version
     needs: test
@@ -59,8 +59,8 @@ jobs:
           -p conventional-changelog-conventionalcommits@9.3.1
           semantic-release
 
-  # Site GitHub Pages, une fois le dépôt public. Après la version, pour afficher le bon numéro.
-  # Seuls les fichiers de l'application sont publiés, avec la famille d'exemple.
+  # GitHub Pages site, once the repository is public. After the version, to show the right number.
+  # Only the application files are published, with the example family.
   pages:
     name: Site
     needs: [test, release]
@@ -78,11 +78,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
-      - name: Préparer le site
+      - name: Build the site
         run: sh scripts/build-site.sh
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          name: github-pages-${{ github.run_attempt }} # un artefact par tentative : Re-run reste possible
+          name: github-pages-${{ github.run_attempt }} # one artifact per attempt: Re-run stays possible
           path: _site
       - id: deploy
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

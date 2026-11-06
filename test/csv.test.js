@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
-import { buildRegistreCsv } from '../js/services/csv.js';
+import { buildRegisterCsv } from '../js/services/csv.js';
 import { loadTree, person } from './helpers.js';
 
 describe('registre CSV', () => {
@@ -9,7 +9,7 @@ describe('registre CSV', () => {
       person('a', { given: 'Jean; Paul', surname: 'Martin', sex: 'M', notes: 'dit "le grand"\nfin' }),
       person('b', { given: '=CMD()', surname: 'Martin', sex: 'F', fatherId: 'a' }),
     ]);
-    const csv = buildRegistreCsv();
+    const csv = buildRegisterCsv();
     assert.ok(csv.startsWith('﻿Nom de famille;Prénoms;'));
     assert.ok(csv.includes('"Jean; Paul"'));
     assert.ok(csv.includes('"dit ""le grand""\nfin"'));

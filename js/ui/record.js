@@ -1,4 +1,4 @@
-/** Fiche détaillée d'une personne (onglet « Fiche »). */
+/** Detailed record of a person ("Record" tab). */
 import { S } from '../state.js';
 import { esc } from '../utils/dom.js';
 import { longDate } from '../utils/dates.js';
@@ -9,9 +9,9 @@ import {
 } from '../model/people.js';
 import { occupationLabel } from '../model/occupations.js';
 
-/** Vignettes de la galerie ; un clic ouvre la visionneuse. */
+/** Gallery thumbnails; a click opens the viewer. */
 export function mediaGrid(items) {
-  // Sur chaque vignette, le nombre de personnes identifiées
+  // On each thumbnail, the number of people identified
   const count = (m) => (Array.isArray(m.tags) ? m.tags.filter((x) => x && P(x.id)).length : 0);
   const cells = items.filter(({ m }) => photoSrc(m.photo)).map(({ owner, m }) => `<button class="med" type="button" data-act="media-open" data-owner="${esc(owner)}" data-id="${esc(m.id)}" title="${esc(m.title || '')}">`
     + `<img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">`
@@ -19,7 +19,7 @@ export function mediaGrid(items) {
   return cells.length ? `<div class="meds">${cells.join('')}</div>` : '';
 }
 
-/** Liste des sources d'une personne : acte, fait appuyé, cote, note et document. */
+/** A person's sources: certificate, supported fact, reference, note and document. */
 export function sourcesHTML(id) {
   const items = sourcesOf(P(id)).map((s) => {
     const img = photoSrc(s.photo);
@@ -34,7 +34,7 @@ export function sourcesHTML(id) {
   return items.length ? `<ul class="srcs">${items.join('')}</ul>` : '';
 }
 
-/** Bouton vers une autre personne, avec ses années et une mention facultative. */
+/** Button to another person, with their years and an optional note. */
 function chip(id, extra, label) {
   const q = P(id);
   if (!q) return '';
@@ -44,27 +44,27 @@ function chip(id, extra, label) {
     + `${sub ? `<span class="cx">${esc(sub)}</span>` : ''}</button>`;
 }
 
-/** Bouton « + Ajouter… », seulement si l'utilisateur peut modifier l'arbre. */
+/** "+ Add…" button, only if the user can edit the tree. */
 function addButton(rel, of, label, withId) {
   if (!S.canWrite) return '';
   return `<button class="addline" type="button" data-act="add" data-rel="${rel}" data-of="${esc(of)}"${withId ? ` data-with="${esc(withId)}"` : ''}>+ ${esc(label)}</button>`;
 }
 
 function unionText(partner) {
-  if (!partner.uid) return t('fiche.commonKids');
+  if (!partner.uid) return t('record.commonKids');
   const u = S.unions.get(partner.uid) || {};
   const d = longDate(u.date);
   const parts = [unionTypeLabel(u), unionCauseText(u), d, String(u.place || '').trim()].filter(Boolean);
   const end = unionEndText(u);
-  return '× ' + (parts.join(', ') || t('fiche.union')) + (end ? ' · ' + t('ue.ended', end) : '');
+  return '× ' + (parts.join(', ') || t('record.union')) + (end ? ' · ' + t('ue.ended', end) : '');
 }
 
 function fact(date, place) {
   const text = [longDate(date), String(place || '').trim()].filter(Boolean).join(', ');
-  return text ? esc(text) : `<span class="muted">${t('fiche.notSet')}</span>`;
+  return text ? esc(text) : `<span class="muted">${t('record.notSet')}</span>`;
 }
 
-export function ficheHTML(id) {
+export function recordHTML(id) {
   const p = P(id);
   const sexWord = t(p.sex === 'F' || p.sex === 'M' ? 'sex.' + p.sex : 'sex.U');
   const partners = partnersOf(id);
@@ -72,14 +72,14 @@ export function ficheHTML(id) {
   const siblings = siblingsOf(id);
   const age = ageInfo(p);
   const hasDeathInfo = String(p.deathDate || '').trim() || String(p.deathPlace || '').trim();
-  const death = hasDeathInfo ? fact(p.deathDate, p.deathPlace) : p.deceased ? t('fiche.unknownDate') : '<span class="muted">—</span>';
+  const death = hasDeathInfo ? fact(p.deathDate, p.deathPlace) : p.deceased ? t('record.unknownDate') : '<span class="muted">—</span>';
 
   const parentLine = (rel, parentId, label) => {
     if (parentId && S.people.has(parentId)) return chip(parentId, '', label);
     if (S.canWrite) return addButton(rel, id, t(rel === 'father' ? 'addFather' : 'addMother'));
     return `<p class="unknown">${t(rel === 'father' ? 'fatherUnknown' : 'motherUnknown')}</p>`;
   };
-  // Autres conjoints des parents : « Conjoint de la mère », « Conjointe du père »
+  // Parents' other spouses: "Mother's spouse", "Father's spouse"
   const stepChips = [[p.fatherId, p.motherId, false], [p.motherId, p.fatherId, true]]
     .filter(([parentId]) => parentId && S.people.has(parentId))
     .flatMap(([parentId, otherId, ofMother]) => partnersOf(parentId)
@@ -87,8 +87,8 @@ export function ficheHTML(id) {
       .map((pt) => chip(pt.id, '', t('stepOf', P(pt.id).sex === 'F', ofMother))))
     .join('');
   const severalPartners = partners.length > 1;
-  const minor = isMinor(P(id)); // moins de 17 ans : pas d'enfant à ajouter
-  const young = isMinor(P(id), undefined, UNION_AGE); // moins de 15 ans : pas de conjoint à ajouter
+  const minor = isMinor(P(id)); // under 17: no child to add
+  const young = isMinor(P(id), undefined, UNION_AGE); // under 15: no spouse to add
   const childChip = (k) => {
     const c = P(k);
     const other = c.fatherId === id ? c.motherId : c.fatherId;
@@ -98,8 +98,8 @@ export function ficheHTML(id) {
   const photo = photoOf(p);
   const avatar = photo ? '' : avatarOf(p.sex);
 
-  let html = `<article class="fiche">
-    <div class="fiche-head">
+  let html = `<article class="record">
+    <div class="record-head">
       ${photo ? `<img class="photo zoomable" src="${esc(photo)}" alt="${esc(t('photoOf', fullName(p)))}" data-act="photo-zoom">` : ''}
       ${avatar ? `<img class="photo avatar" src="${esc(avatar)}" alt="">` : ''}
       <div>
@@ -157,7 +157,7 @@ export function ficheHTML(id) {
 
     ${p.notes ? `<section class="rel"><h3>${t('notes')}</h3><p class="notes">${esc(p.notes)}</p></section>` : ''}
 
-    <div class="fiche-tools"><button class="link" type="button" data-act="family-book" data-id="${esc(id)}">${t('fb.open')}</button>`
+    <div class="record-tools"><button class="link" type="button" data-act="family-book" data-id="${esc(id)}">${t('fb.open')}</button>`
     + `<button class="link" type="button" data-act="kin-open" data-id="${esc(id)}">${t('kin.ask')}</button></div>`;
 
   if (S.canWrite) {
@@ -166,7 +166,7 @@ export function ficheHTML(id) {
       ? `<div class="confirm"><p>${esc(t('deleteAsk', fullName(p)))}</p>`
         + `<button class="btn danger" type="button" data-act="delete-yes">${t('delete')}</button>`
         + `<button class="btn" type="button" data-act="delete-no">${t('cancel')}</button></div>`
-      : `<button class="btn primary" type="button" data-act="edit">${t('editFiche')}</button>`
+      : `<button class="btn primary" type="button" data-act="edit">${t('editRecord')}</button>`
         + `<button class="btn quiet" type="button" data-act="delete-ask">${t('delete')}</button>`;
     html += '</div>';
   }

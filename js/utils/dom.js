@@ -1,17 +1,17 @@
-/** Utilitaires DOM. */
+/** DOM utilities. */
 
 export const $ = (selector) => document.querySelector(selector);
 
 const ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
-/** Échappe une valeur avant de l'insérer dans du HTML. */
+/** Escapes a value before inserting it into HTML. */
 export function esc(value) {
   return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ENTITIES[c]);
 }
 
 /**
- * Remplace le contenu de `el` par `html`. Les styles calculés (positions, tailles) s'y écrivent
- * data-style="…" : la politique de sécurité interdit l'attribut style dans le HTML, pas en JavaScript.
+ * Replaces the content of `el` with `html`. Computed styles (positions, sizes) are written as
+ * data-style="…": the security policy forbids the style attribute in HTML, not in JavaScript.
  */
 export function setHTML(el, html) {
   el.innerHTML = html;

@@ -1,71 +1,71 @@
 /**
- * État partagé de l'application.
- * Un seul objet S, lu et modifié par les autres modules.
+ * Shared application state.
+ * A single object S, read and modified by the other modules.
  */
 import { ZOOMS, THEMES, TEXT_SIZES, PREF_KEY, DEFAULT_TREE } from './config.js';
 
 export const S = {
-  mode: 'loading',       // 'loading' | 'db' (base en ligne) | 'file' (data/arbres/) | 'local' (navigateur)
-  tree: DEFAULT_TREE,    // identifiant de l'arbre ouvert
-  trees: new Map(),      // id -> { name, count, createdAt } : tous les arbres de la collection
-  loadedT: false,        // liste des arbres reçue de la base
-  treeEdit: null,        // fenêtre « Mes arbres » : { id, kind: 'rename' | 'delete' } ou null
-  people: new Map(),     // id -> personne
+  mode: 'loading',       // 'loading' | 'db' (online database) | 'file' (data/arbres/) | 'local' (browser)
+  tree: DEFAULT_TREE,    // id of the open tree
+  trees: new Map(),      // id -> { name, count, createdAt }: every tree in the collection
+  loadedT: false,        // tree list received from the database
+  treeEdit: null,        // "My trees" dialog: { id, kind: 'rename' | 'delete' } or null
+  people: new Map(),     // id -> person
   unions: new Map(),     // id -> union { a, b, date, place }
-  loadedP: false,        // personnes reçues de la base
-  loadedU: false,        // unions reçues de la base
+  loadedP: false,        // people received from the database
+  loadedU: false,        // unions received from the database
 
-  focus: null,           // id de la personne au centre de l'arbre
-  foci: {},              // id d'arbre -> personne centrale, retrouvée en revenant sur l'arbre
-  up: 3,                 // générations d'ascendants affichées
-  down: 2,               // générations de descendants affichées
+  focus: null,           // id of the person at the centre of the tree
+  foci: {},              // tree id -> focus person, restored when coming back to the tree
+  up: 3,                 // generations of ancestors shown
+  down: 2,               // generations of descendants shown
   zoom: 1,
-  full: false,           // arbre complet, à plat (sinon vue centrée sur la personne)
-  fan: false,            // roue d'ascendance à la place de l'arbre
-  line: true,            // halo sur la lignée directe de la personne centrale
-  panel: true,           // panneau fiche/registre affiché
-  closed: {},            // bandeaux fermés : ex (famille d'exemple), local (mode local)
-  theme: 'auto',         // thème de couleur : voir THEMES dans config.js
-  textSize: 'normal',    // taille du texte de l'interface : voir TEXT_SIZES dans config.js
-  tab: 'fiche',          // onglet du panneau : 'fiche' | 'registre' | 'analyse'
-  analyse: 'kin',        // vue de l'onglet Analyse : voir VIEWS dans ui/analyse.js
-  timeFamily: false,     // frise : la famille proche plutôt que la personne seule
-  calMonth: null,        // mois affiché dans les éphémérides (1 à 12), null = mois en cours
-  kinA: '',              // personnes comparées dans le lien de parenté
+  full: false,           // whole tree, flat (otherwise a view centred on the person)
+  fan: false,            // fan chart instead of the tree
+  line: true,            // halo on the focus person's direct line
+  panel: true,           // record/register panel shown
+  closed: {},            // closed banners: ex (example family), local (local mode)
+  theme: 'auto',         // colour theme: see THEMES in config.js
+  textSize: 'normal',    // interface text size: see TEXT_SIZES in config.js
+  tab: 'record',          // panel tab: 'record' | 'register' | 'analysis'
+  analysis: 'kin',       // Analysis tab view: see VIEWS in ui/analysis.js
+  timeFamily: false,     // timeline: the close family rather than the person alone
+  calMonth: null,        // month shown in the anniversaries (1 to 12), null = current month
+  kinA: '',              // people compared in the kinship view
   kinB: '',
-  kinShow: false,        // chemin de parenté surligné dans l'arbre
-  kinWasFull: false,     // vue de l'arbre à retrouver en retirant le surlignage
-  popup: null,           // id de la personne dont la fiche est ouverte en fenêtre, ou null
+  kinShow: false,        // kinship path highlighted in the tree
+  kinWasFull: false,     // tree view to restore when removing the highlight
+  popup: null,           // id of the person whose record is open in a dialog, or null
 
-  edit: null,            // brouillon du formulaire en cours, ou null
-  confirmDel: false,     // confirmation de suppression affichée
-  repoLink: null,        // dépôt GitHub lié à un arbre ; jamais enregistré, le jeton reste en mémoire
-  repoConfirm: false,    // confirmation de sauvegarde vers le dépôt affichée
-  repoError: '',         // échec de la dernière sauvegarde
-  repoSavedAt: '',       // heure de la dernière sauvegarde
-  confirmEx: false,      // confirmation de retrait des exemples affichée
-  query: '',             // recherche du registre
+  edit: null,            // draft of the form being edited, or null
+  confirmDel: false,     // delete confirmation shown
+  repoLink: null,        // GitHub repository linked to a tree; never stored, the token stays in memory
+  repoConfirm: false,    // confirmation of the save to the repository shown
+  repoError: '',         // last save failed
+  repoSavedAt: '',       // time of the last save
+  confirmEx: false,      // confirmation of removing the examples shown
+  query: '',             // register search
 
-  canWrite: true,        // l'utilisateur peut modifier l'arbre
-  writeKnown: false,     // le droit d'écriture a été confirmé par la plateforme
-  busy: false,           // enregistrement en cours
-  pending: null,         // import lu, en attente de confirmation
+  canWrite: true,        // the user can edit the tree
+  writeKnown: false,     // write permission confirmed by the platform
+  busy: false,           // save in progress
+  pending: null,         // import read, waiting for confirmation
 
-  scrollPending: true,   // recentrer l'arbre au prochain rendu
-  lastLayout: null,      // dernière mise en page calculée
+  scrollPending: true,   // recentre the tree on the next render
+  lastLayout: null,      // last computed layout
   firstScroll: true,
 };
 
-/** Index recalculés à chaque changement : enfants et conjoints de chaque personne. */
+/** Indexes recomputed on every change: children and spouses of each person. */
 export const idx = {
-  children: new Map(),   // id parent -> [id enfants]
-  partners: new Map(),   // id -> Map(id conjoint -> id union | null)
+  children: new Map(),   // parent id -> [child ids]
+  partners: new Map(),   // id -> Map(spouse id -> union id | null)
 };
 
-/** Éléments DOM des fiches de l'arbre, réutilisés d'un rendu à l'autre. */
+/** DOM elements of the tree cards, reused from one render to the next. */
 export const cardEls = new Map();
 
-/** Services fournis par claude.ai quand l'application y est publiée (sinon null). */
+/** Services provided by claude.ai when the application is published there (otherwise null). */
 export const services = {
   db: null,
   downloads: null,
@@ -73,7 +73,7 @@ export const services = {
 
 export const isLoading = () => S.mode === 'loading' || (S.mode === 'db' && (!S.loadedP || !S.loadedT));
 
-/** Nom de l'arbre ouvert. */
+/** Name of the open tree. */
 export const treeName = () => (S.trees.get(S.tree) || {}).name || '';
 
 export function loadPrefs() {
@@ -93,7 +93,7 @@ export function loadPrefs() {
     if (THEMES.includes(v.theme)) S.theme = v.theme;
     if (TEXT_SIZES.includes(v.textSize)) S.textSize = v.textSize;
   } catch (e) {
-    /* stockage indisponible : on garde les valeurs par défaut */
+    /* storage unavailable: the defaults are kept */
   }
 }
 
@@ -103,6 +103,6 @@ export function savePrefs() {
     else delete S.foci[S.tree];
     localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci, theme: S.theme, textSize: S.textSize }));
   } catch (e) {
-    /* stockage indisponible : préférences non mémorisées */
+    /* storage unavailable: preferences not remembered */
   }
 }

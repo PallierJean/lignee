@@ -11,7 +11,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Outils de version figés dans le workflow (npx -p paquet@version)",
+      "description": "Release tools pinned in the workflow (npx -p package@version)",
       "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
       "matchStrings": ["-p (?<depName>@?[a-z0-9/-]+)@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
       "datasourceTemplate": "npm"
@@ -19,13 +19,13 @@
   ],
   "packageRules": [
     {
-      "description": "Les outils de version évoluent ensemble, et à la main : ils ne tournent qu'après la fusion, les tests ne les vérifient pas",
+      "description": "Release tools are updated together, by hand: they only run after the merge, the tests don't check them",
       "matchPackageNames": ["semantic-release", "@semantic-release/**", "conventional-changelog-conventionalcommits"],
-      "groupName": "outils de version",
+      "groupName": "release tools",
       "automerge": false
     },
     {
-      "description": "La version 10 casse les notes de version de semantic-release",
+      "description": "Version 10 breaks semantic-release's release notes",
       "matchPackageNames": ["conventional-changelog-conventionalcommits"],
       "allowedVersions": "<10"
     }

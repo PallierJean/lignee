@@ -1,4 +1,4 @@
-/** Grands repères historiques de la frise : [année, français, anglais]. */
+/** Major historical landmarks for the timeline: [year, French, English]. */
 export const HISTORY = [
   [1539, 'Ordonnance de Villers-Cotterêts : registres de baptêmes', 'Ordinance of Villers-Cotterêts: baptism registers'],
   [1598, 'Édit de Nantes', 'Edict of Nantes'],

@@ -1,10 +1,10 @@
 /**
- * Vérification de cohérence : ce qui ne peut pas être vrai (erreurs) ou qui est très
- * peu probable (à vérifier). Les dates imprécises ne sont signalées que si l'incohérence
- * est certaine ; les dates en texte libre ne sont pas contrôlées.
+ * Consistency check: what cannot be true (errors) or is very
+ * unlikely (to check). Imprecise dates are only flagged if the inconsistency
+ * is certain; free-text dates are not checked.
  *
- * Une anomalie : { code, level: 'error' | 'warn', ids, n } ; `ids` : personnes concernées,
- * la principale d'abord ; `n` : âge ou date cité. Textes dans i18n.js (« chk.<code> »).
+ * An issue: { code, level: 'error' | 'warn', ids, n }; `ids`: people involved,
+ * the main one first; `n`: age or date cited. Texts in i18n.js ("chk.<code>").
  */
 import { S } from '../state.js';
 import { dateBounds, isImpossibleDate, yearsBetween } from '../utils/dates.js';
@@ -14,24 +14,24 @@ import { placeUses, parsePlace } from './places.js';
 import { placeDepartmentIssue, departmentsText } from './communes.js';
 import { t } from '../i18n.js';
 
-const MIN_PARENT = 12;   // âge minimal d'un parent ou à l'union
-const MAX_MOTHER = 55;   // âge à la naissance d'un enfant
+const MIN_PARENT = 12;   // minimum age of a parent or at a union
+const MAX_MOTHER = 55;   // age at a child's birth
 const MAX_FATHER = 80;
-const MAX_AGE = 120;     // âge au décès
-const MAX_LIVING = 110;  // âge d'une personne sans décès connu
-const MIN_TWO_GENS = 34; // écart minimal entre un grand-parent et son petit-enfant
-const POSTHUMOUS = 10000; // un père peut mourir jusqu'à un an (aaaammjj) avant la naissance
+const MAX_AGE = 120;     // age at death
+const MAX_LIVING = 110;  // age of a person with no known death
+const MIN_TWO_GENS = 34; // minimum gap between a grandparent and their grandchild
+const POSTHUMOUS = 10000; // a father can die up to a year (yyyymmdd) before the birth
 
-// Événements normalement postérieurs au décès, ou sans date attendue par rapport à lui
+// Events normally after death, or with no expected date relative to it
 const AFTER_DEATH = new Set(['burial', 'cremation', 'will', 'other']);
 const BURIALS = new Set(['burial', 'cremation']);
-// Situations qui supposent une union enregistrée (« en couple » peut viser un conjoint absent de l'arbre)
+// Situations that assume a recorded union ("in a couple" may refer to a spouse not in the tree)
 const WITH_UNION = new Set(['married', 'remarried', 'pacs', 'separated', 'divorced', 'widowed']);
 
-/** Nom pour comparer : sans casse, accents, espaces ni tirets. */
+/** Name for comparison: no case, accents, spaces or hyphens. */
 const nameKey = (s) => norm(s).replace(/[^a-z]/g, '');
 
-/** Nom de naissance, s'il est connu : pour une femme mariée sans nom de jeune fille, le nom porté peut être celui du mari. */
+/** Birth surname, if known: for a married woman with no maiden name, the surname borne may be the husband's. */
 function birthName(id) {
   const p = P(id);
   if (p.sex === 'F' && p.maidenName) return p.maidenName;
@@ -39,7 +39,7 @@ function birthName(id) {
   return p.surname || '';
 }
 
-/** Boucles dans les liens de parenté : une personne qui serait son propre ancêtre. */
+/** Loops in parentage links: a person who would be their own ancestor. */
 export function findCycles() {
   const done = new Set();
   const cycles = [];
@@ -98,7 +98,7 @@ export function findIssues(now = new Date()) {
       }
       if (birth && pd && birth.lo > pd.hi + grace) add('bornAfterDeath', 'error', [id, p[key]]);
       if (parent.sex === (key === 'fatherId' ? 'F' : 'M')) add(key === 'fatherId' ? 'fatherSex' : 'motherSex', 'error', [id, p[key]]);
-      // Deux générations : grand-parent et petit-enfant
+      // Two generations: grandparent and grandchild
       for (const gkey of ['fatherId', 'motherId']) {
         const g = P(parent[gkey]);
         const gb = g && parent[gkey] !== id && dateBounds(g.birthDate);
@@ -108,7 +108,7 @@ export function findIssues(now = new Date()) {
       }
     }
 
-    // Un seul parent connu, dont l'unique conjoint pourrait être l'autre
+    // A single known parent, whose only spouse could be the other one
     for (const [key, missing, sex] of [['fatherId', 'motherId', 'M'], ['motherId', 'fatherId', 'F']]) {
       if (!P(p[key]) || p[missing]) continue;
       const partners = partnersOf(p[key]);
@@ -121,7 +121,7 @@ export function findIssues(now = new Date()) {
 
     if (WITH_UNION.has(p.situation) && !partnersOf(id).length) add('situationNoUnion', 'warn', [id]);
 
-    // Personne sans décès connu : d'après sa naissance, ou à défaut celle de son premier enfant
+    // Person with no known death: from their birth, or failing that their first child's
     if (!isDead(p)) {
       const kids = childrenOf(id).map((c) => dateBounds(P(c).birthDate)).filter(Boolean);
       const age = birth ? yearsBetween(birth.hi, today)
@@ -131,10 +131,10 @@ export function findIssues(now = new Date()) {
 
     const father = P(p.fatherId);
     if (father && father.sex !== 'F' && p.fatherId !== id) {
-      // Le nom du père, ou le double nom du père et de la mère, dans un sens ou dans l'autre
+      // The father's surname, or the father's and mother's double surname, in either order
       const own = nameKey(birthName(id));
       const his = nameKey(father.surname);
-      // Nom de naissance de la mère : saisi, sinon celui de son propre père
+      // Mother's birth surname: entered, otherwise her own father's
       const mother = P(p.motherId);
       const hers = mother ? nameKey(birthName(p.motherId) || birthSurname(mother.fatherId, mother.motherId)) : '';
       const both = hers ? [his + hers, hers + his] : [];
@@ -168,7 +168,7 @@ export function findIssues(now = new Date()) {
     }
   }
 
-  // Lieux : le département doit être celui de la ville (liste des communes chargée)
+  // Places: the department must be the city's (commune list loaded)
   for (const u of placeUses()) {
     const issue = placeDepartmentIssue(u.name);
     if (issue) add('placeDept', 'warn', [...u.ids].slice(0, 1), t('chk.placeDeptDetail', u.name, parsePlace(u.name).city, departmentsText(issue.expected), u.n));

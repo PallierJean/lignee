@@ -7,10 +7,10 @@
   <meta name="description" content="Arbre généalogique : fiches, unions, numéros Sosa, registre et import/export GEDCOM.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 
-  <!-- Polices, servies par le site lui-même -->
+  <!-- Fonts, served by the site itself -->
   <link rel="stylesheet" href="css/fonts.css">
 
-  <!-- Styles : jetons, base, mise en page, puis composants -->
+  <!-- Styles: tokens, base, layout, then components -->
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/themes.css">
   <link rel="stylesheet" href="css/base.css">
@@ -21,16 +21,16 @@
   <link rel="stylesheet" href="css/components/tree.css">
   <link rel="stylesheet" href="css/components/panel.css">
   <link rel="stylesheet" href="css/components/form.css">
-  <link rel="stylesheet" href="css/components/registre.css">
+  <link rel="stylesheet" href="css/components/register.css">
   <link rel="stylesheet" href="css/components/search.css">
   <link rel="stylesheet" href="css/components/modal.css">
   <link rel="stylesheet" href="css/components/person.css">
   <link rel="stylesheet" href="css/components/toast.css">
   <link rel="stylesheet" href="css/components/print.css">
   <link rel="stylesheet" href="css/components/trees.css">
-  <link rel="stylesheet" href="css/components/analyse.css">
+  <link rel="stylesheet" href="css/components/analysis.css">
 
-  <!-- Application (module ES, chargé après le HTML) -->
+  <!-- Application (ES module, loaded after the HTML) -->
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
@@ -62,7 +62,7 @@
       </div>
       <div class="top-actions">
         <span class="pill" id="status"><i></i><span>Connexion…</span></span>
-        <!-- Affichage : thème de couleur et taille du texte, dans un menu pour garder l'en-tête sur une ligne -->
+        <!-- Display: colour theme and text size, in a menu to keep the header on one line -->
         <details class="appearance" id="appearance">
           <summary class="btn" title="Affichage : thème et taille du texte" aria-label="Affichage : thème et taille du texte"
             data-i18n-attr="title:look.title; aria-label:look.title">Aa</summary>
@@ -116,7 +116,7 @@
     <div class="banner repo-banner" id="repoBanner" hidden></div>
 
     <main class="main" id="main">
-      <!-- Arbre -->
+      <!-- Tree -->
       <section class="stage" aria-label="Arbre généalogique" data-i18n-attr="aria-label:stage.label">
         <div class="stage-bar">
           <div class="ctl">
@@ -177,28 +177,28 @@
         </p>
       </section>
 
-      <!-- Fiche et registre -->
+      <!-- Record and register -->
       <aside class="side" aria-label="Fiche et registre" data-i18n-attr="aria-label:side.label">
         <div class="tabs" role="tablist">
-          <button type="button" role="tab" id="tab-fiche" data-act="tab" data-tab="fiche" aria-controls="paneFiche" data-i18n="tab.fiche">Fiche</button>
-          <button type="button" role="tab" id="tab-registre" data-act="tab" data-tab="registre" aria-controls="paneRegistre"><span data-i18n="tab.registre">Registre</span><span class="n" id="regCount"></span></button>
-          <button type="button" role="tab" id="tab-analyse" data-act="tab" data-tab="analyse" aria-controls="paneAnalyse"><span data-i18n="tab.analyse">Analyse</span><span class="n" id="anCount"></span></button>
+          <button type="button" role="tab" id="tab-record" data-act="tab" data-tab="record" aria-controls="paneRecord" data-i18n="tab.record">Fiche</button>
+          <button type="button" role="tab" id="tab-register" data-act="tab" data-tab="register" aria-controls="paneRegister"><span data-i18n="tab.register">Registre</span><span class="n" id="regCount"></span></button>
+          <button type="button" role="tab" id="tab-analysis" data-act="tab" data-tab="analysis" aria-controls="paneAnalysis"><span data-i18n="tab.analysis">Analyse</span><span class="n" id="anCount"></span></button>
         </div>
-        <div class="pane" id="paneFiche" role="tabpanel" aria-labelledby="tab-fiche"></div>
-        <div class="pane" id="paneRegistre" role="tabpanel" aria-labelledby="tab-registre" hidden>
+        <div class="pane" id="paneRecord" role="tabpanel" aria-labelledby="tab-record"></div>
+        <div class="pane" id="paneRegister" role="tabpanel" aria-labelledby="tab-register" hidden>
           <label class="search">
             <span class="sr" data-i18n="reg.searchLabel">Rechercher dans le registre</span>
             <input id="q" type="search" placeholder="Nom, prénom, lieu ou profession" data-i18n-attr="placeholder:reg.searchPlaceholder" autocomplete="off">
           </label>
-          <div class="row-btns reg-tools"><button class="btn small" type="button" data-act="registre-csv" data-i18n="reg.csv">Exporter le registre (.csv)</button></div>
+          <div class="row-btns reg-tools"><button class="btn small" type="button" data-act="register-csv" data-i18n="reg.csv">Exporter le registre (.csv)</button></div>
           <div id="reglist"></div>
         </div>
-        <div class="pane" id="paneAnalyse" role="tabpanel" aria-labelledby="tab-analyse" hidden></div>
+        <div class="pane" id="paneAnalysis" role="tabpanel" aria-labelledby="tab-analysis" hidden></div>
       </aside>
     </main>
   </div>
 
-  <!-- Fenêtre Importer ou Exporter -->
+  <!-- Import or Export dialog -->
   <div class="overlay" id="transfer" hidden>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="trTitle">
       <div class="sheet-head">
@@ -233,7 +233,7 @@
     </div>
   </div>
 
-  <!-- Fenêtre Mes arbres -->
+  <!-- My trees dialog -->
   <div class="overlay" id="treesDlg" hidden>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tsTitle">
       <div class="sheet-head">
@@ -257,7 +257,7 @@
     </div>
   </div>
 
-  <!-- Fenêtre Imprimer l'arbre -->
+  <!-- Print the tree dialog -->
   <div class="overlay" id="printDlg" hidden>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="prTitle">
       <div class="sheet-head">
@@ -309,20 +309,20 @@
     </div>
   </div>
 
-  <!-- Fiche d'une personne, en lecture seule (clic sur une fiche de l'arbre) -->
+  <!-- Read-only person record (click on a card in the tree) -->
   <div class="overlay person-dlg" id="personDlg" hidden>
     <article class="pd-card" id="personCard" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="pdName"></article>
   </div>
 
-  <!-- Feuille imprimée (visible à l'impression seulement) -->
+  <!-- Printed sheet (visible only when printing) -->
   <div class="print-area" id="printArea" aria-hidden="true"></div>
 
-  <!-- Galerie : image et personnes identifiées -->
+  <!-- Gallery: image and people identified -->
   <div class="overlay" id="mediaDlg" hidden>
     <div class="sheet media-sheet" id="mediaCard" role="dialog" aria-modal="true" aria-labelledby="mdTitle"></div>
   </div>
 
-  <!-- Recadrage de la photo d'une fiche, au moment de la choisir (ui/crop.js) -->
+  <!-- Cropping a record's photo when choosing it (ui/crop.js) -->
   <div class="overlay" id="cropDlg" hidden>
     <div class="sheet crop-sheet" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
       <h2 id="cropTitle" data-i18n="crop.title">Recadrer la photo</h2>
@@ -337,7 +337,7 @@
     </div>
   </div>
 
-  <!-- Agrandissement de la photo d'une fiche : un clic n'importe où le ferme -->
+  <!-- Enlarged record photo: a click anywhere closes it -->
   <div class="overlay photo-zoom" id="photoZoom" hidden>
     <img id="photoZoomImg" src="" alt="">
   </div>

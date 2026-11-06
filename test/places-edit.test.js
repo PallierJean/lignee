@@ -117,7 +117,7 @@ describe('lieux en trois parties', () => {
       el(id + '-hamlet').value = '';
       el(id + '-dept').value = '19';
     }
-    A.setTab('analyse');
+    A.setTab('analysis');
     await A.renamePlace('Estivaux (19)', 'Estivaux, Orgnac (19)');
     assert.equal(S.people.get('b').deathPlace, 'Estivaux, Orgnac (19)');
     assert.equal(S.edit.draft.birthPlace, 'Estivaux, Orgnac (19)');
@@ -139,15 +139,15 @@ describe('lieux en trois parties', () => {
     resetHistory();
     loadTree([person('a', { birthPlace: 'Villagr de Freyssinet' }), person('b', { birthPlace: 'Village de Freyssinet' })]);
     S.focus = 'a';
-    A.setTab('analyse');
-    A.setAnalyseView('places');
-    assert.match(html('paneAnalyse'), /Villagr de Freyssinet/);
-    assert.match(html('paneAnalyse'), /data-act="place-rename"/);
+    A.setTab('analysis');
+    A.setAnalysisView('places');
+    assert.match(html('paneAnalysis'), /Villagr de Freyssinet/);
+    assert.match(html('paneAnalysis'), /data-act="place-rename"/);
     const i = placesByDepartment().findIndex((u) => u.name === 'Villagr de Freyssinet');
     el(`pl-${i}-city`).value = 'Village de Freyssinet';
     el(`pl-${i}-hamlet`).value = '';
     el(`pl-${i}-dept`).value = '19';
-    const { placeRowValue } = await import('../js/ui/analyse.js');
+    const { placeRowValue } = await import('../js/ui/analysis.js');
     await A.renamePlace('Villagr de Freyssinet', placeRowValue(i));
     assert.equal(S.people.get('a').birthPlace, 'Village de Freyssinet (19)');
   });

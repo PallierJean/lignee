@@ -1,6 +1,6 @@
 /**
- * Fenêtre « Mes arbres » : collection d'arbres généalogiques.
- * Ouvrir un autre arbre, en créer un, le renommer ou le supprimer.
+ * "My trees" dialog: collection of family trees.
+ * Open another tree, create one, rename or delete it.
  */
 import { S, savePrefs, treeName } from '../state.js';
 import { $, esc } from '../utils/dom.js';
@@ -11,10 +11,10 @@ import { toast } from './toast.js';
 import { t } from '../i18n.js';
 
 
-/** Nombre de personnes d'un arbre (à jour pour l'arbre ouvert). */
+/** Number of people in a tree (up to date for the open tree). */
 const countOf = (id) => (id === S.tree ? S.people.size : (S.trees.get(id) || {}).count || 0);
 
-/* ---------- Ouverture / fermeture ---------- */
+/* ---------- Opening / closing ---------- */
 
 export function openTrees() {
   S.treeEdit = null;
@@ -32,7 +32,7 @@ export function closeTrees() {
   S.treeEdit = null;
 }
 
-/* ---------- Rendu ---------- */
+/* ---------- Rendering ---------- */
 
 function rowHTML(id, tree) {
   const cur = id === S.tree;
@@ -87,7 +87,7 @@ export function renderTrees() {
 
 /* ---------- Actions ---------- */
 
-/** Ouvre l'arbre `id` à la place de l'arbre actuel. */
+/** Opens tree `id` in place of the current tree. */
 export async function switchTree(id) {
   if (id === S.tree || !S.trees.has(id)) {
     closeTrees();
@@ -97,7 +97,7 @@ export async function switchTree(id) {
     toast(t('finishFirst'));
     return;
   }
-  savePrefs(); // garde la personne centrale de l'arbre quitté
+  savePrefs(); // keeps the focus person of the tree being left
   await openTree(id);
   S.focus = S.foci[id] || null;
   S.confirmDel = false;
@@ -109,7 +109,7 @@ export async function switchTree(id) {
   toast(t('ts.opened', treeName()));
 }
 
-/** Crée un arbre vide nommé `name` et l'ouvre. Renvoie son identifiant, ou null. */
+/** Creates an empty tree named `name` and opens it. Returns its id, or null. */
 export async function newTree(name) {
   name = String(name || '').trim().slice(0, 80);
   if (!name) {
@@ -146,7 +146,7 @@ export async function submitRename(id, name) {
   try {
     await renameTree(id, name);
   } catch (e) {
-    /* message déjà affiché */
+    /* message already shown */
   }
   S.treeEdit = null;
   renderTrees();

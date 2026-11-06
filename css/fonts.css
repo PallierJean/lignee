@@ -1,8 +1,8 @@
 /*
- * Polices de l'application, servies par le site lui-même (aucune requête vers Google Fonts) :
- * Atkinson Hyperlegible, Gloock, IBM Plex Mono et IM Fell English (thème « Carte du Maraudeur »),
- * sous licence SIL Open Font License 1.1
- * (assets/fonts/OFL-*.txt). Jeux de caractères latin et latin étendu, tirés de Google Fonts.
+ * Application fonts, served by the site itself (no request to Google Fonts):
+ * Atkinson Hyperlegible, Gloock, IBM Plex Mono and IM Fell English ("Marauder's Map" theme),
+ * under the SIL Open Font License 1.1
+ * (assets/fonts/OFL-*.txt). Latin and Latin Extended subsets, taken from Google Fonts.
  */
 
 @font-face {

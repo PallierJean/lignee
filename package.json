@@ -3,7 +3,7 @@
   "version": "1.19.0",
   "private": true,
   "type": "module",
-  "description": "Application web d'arbre généalogique : fiches, unions, numéros Sosa, registre, import/export GEDCOM.",
+  "description": "Family tree web application: records, unions, Sosa numbers, register, GEDCOM import/export.",
   "engines": {
     "node": ">=26"
   },

@@ -1,20 +1,20 @@
 /**
- * Thème « Carte du Maraudeur » : des empreintes rouges cheminent sur la toile, chaque trajet suivi
- * d'un petit parchemin au nom d'une personne de l'arbre, comme sur la carte du roman. Chaque trajet a
- * son départ, sa direction, sa courbure et sa longueur, tirés au hasard ; ses pas s'impriment l'un
- * après l'autre puis s'effacent (animation step-print, css/tokens.css). Rien ne se répète d'un
- * endroit à l'autre, contrairement à un motif de fond. Arrêté hors de ce thème ou si le système
- * demande moins d'animations (les empreintes sont alors fixes, dans le fond).
+ * "Marauder's Map" theme: red footprints wander across the canvas, each trail followed by a small
+ * scroll bearing the name of a person from the tree, as on the map in the novel. Each trail has
+ * its own start, direction, curve and length, drawn at random; its steps print one after
+ * the other, then fade (step-print animation, css/tokens.css). Nothing repeats from one
+ * place to another, unlike a background pattern. Stopped outside this theme or if the system
+ * asks for reduced motion (the footprints are then still, in the background).
  */
 import { reduced } from '../config.js';
 import { S } from '../state.js';
 import { fullName } from '../model/people.js';
 
 const NS = 'http://www.w3.org/2000/svg';
-const EVERY = 2200;       // un nouveau trajet toutes les … ms
-const STEP = 380;         // ms entre deux pas
-const STRIDE = 26;        // px entre deux pas
-const LIFE = 6500;        // durée de vie d'un pas (animation step-print)
+const EVERY = 2200;       // a new trail every … ms
+const STEP = 380;         // ms between two steps
+const STRIDE = 26;        // px between two steps
+const LIFE = 6500;        // lifetime of a step (step-print animation)
 const FOOT = ['M0-9c3.2 0 4.4 3.4 4 6.4-.4 2.6-1.8 4-4 4s-3.4-1.6-3.6-4.2C.2-5.6-3.2-9 0-9z', 'M3 6.6a2.7 3 0 1 1-5.4 0a2.7 3 0 1 1 5.4 0z'];
 
 let timer = null;
@@ -22,7 +22,7 @@ let layer = null;
 
 const rand = (a, b) => a + Math.random() * (b - a);
 
-/** Un pas : semelle et talon, tournés de `angle` degrés, pied gauche en miroir. */
+/** One step: sole and heel, rotated by `angle` degrees, left foot mirrored. */
 function foot(x, y, angle, left, delay) {
   const g = document.createElementNS(NS, 'g');
   g.setAttribute('class', 'step');
@@ -36,7 +36,7 @@ function foot(x, y, angle, left, delay) {
   return g;
 }
 
-/** Parchemin au nom d'une personne de l'arbre, tirée au hasard ; vide si l'arbre est vide. */
+/** Scroll bearing the name of a random person from the tree; empty if the tree is empty. */
 function nameTag() {
   const people = [...S.people.values()];
   if (!people.length) return null;
@@ -54,7 +54,7 @@ function nameTag() {
   return g;
 }
 
-/** Un trajet au hasard dans la zone visible : il tourne peu à peu, puis ses pas s'effacent. */
+/** A random trail in the visible area: it turns little by little, then its steps fade. */
 function walk() {
   if (document.hidden) return;
   const svg = layer.firstChild;
@@ -66,7 +66,7 @@ function walk() {
   let x = rand(0.05, 0.95) * w;
   let y = rand(0.05, 0.95) * h;
   let heading = rand(0, 360);
-  const turn = rand(-7, 7); // degrés par pas : une courbe douce
+  const turn = rand(-7, 7); // degrees per step: a gentle curve
   const steps = Math.round(rand(5, 11));
   const trail = document.createElementNS(NS, 'g');
   const tag = nameTag();
@@ -74,7 +74,7 @@ function walk() {
     const rad = (heading * Math.PI) / 180;
     const side = i % 2 ? 1 : -1;
     trail.append(foot(x + Math.cos(rad) * 5 * side, y + Math.sin(rad) * 5 * side, heading, side < 0, i * STEP));
-    // Le parchemin suit les pas, juste au-dessus
+    // The scroll follows the steps, just above
     if (tag) setTimeout((at) => tag.setAttribute('transform', at), i * STEP, `translate(${x.toFixed(1)} ${(y - 24).toFixed(1)})`);
     x += Math.sin(rad) * STRIDE;
     y -= Math.cos(rad) * STRIDE;
@@ -89,7 +89,7 @@ function walk() {
   setTimeout(() => trail.remove(), steps * STEP + LIFE);
 }
 
-/** Lance (`on`) ou arrête les empreintes. */
+/** Starts (`on`) or stops the footprints. */
 export function setFootprints(on) {
   const canvas = document.getElementById('canvas');
   const can = on && !reduced && canvas && typeof document.createElementNS === 'function';

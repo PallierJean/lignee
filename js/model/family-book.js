@@ -1,6 +1,6 @@
 /**
- * Livret de famille d'une personne, sur le modèle de celui remis en mairie : ses unions
- * et ses enfants directs, présentés en extraits. Document de famille, sans valeur officielle.
+ * A person's family booklet, modelled on the one issued by the town hall: their unions
+ * and their direct children, presented as extracts. A family document, with no official value.
  */
 import { S } from '../state.js';
 import { longDate } from '../utils/dates.js';
@@ -11,15 +11,15 @@ import { occupationLabel } from './occupations.js';
 const clean = (x) => String(x || '').trim();
 const fact = (date, place) => [longDate(date), clean(place)].filter(Boolean).join(', ');
 
-/** Une union en quelques mots : « Mariage avec Anne ROUX, 12 mars 1956, Lyon ». */
+/** A union in a few words: "Mariage avec Anne ROUX, 12 mars 1956, Lyon". */
 function unionLine(id, x) {
   const u = x.uid ? S.unions.get(x.uid) : null;
-  const what = [u && unionTypeLabel(u), t('with', fullName(P(x.id)))].filter(Boolean).join(' '); // la ligne s'intitule déjà « Union »
+  const what = [u && unionTypeLabel(u), t('with', fullName(P(x.id)))].filter(Boolean).join(' '); // the row is already titled "Union"
   const end = unionEndText(u);
   return [what, u && fact(u.date, u.place), end && t('ue.ended', end)].filter(Boolean).join(', ');
 }
 
-/** Extrait d'une personne : { id, name, photo, rows: [[libellé, valeur], ...] }. `unions` : avec ses unions. */
+/** A person's extract: { id, name, photo, rows: [[label, value], ...] }. `unions`: with their unions. */
 export function extract(id, unions = true) {
   const p = P(id);
   const rows = [];
@@ -31,13 +31,13 @@ export function extract(id, unions = true) {
   add(t('mother'), P(p.motherId) ? longName(P(p.motherId)) : '');
   add(t('f.occupation'), occupationLabel(p));
   if (unions) partnersOf(id).forEach((x) => add(t('union'), unionLine(id, x)));
-  if (isDead(p)) add(t('death'), fact(p.deathDate, p.deathPlace) || t('fiche.unknownDate'));
+  if (isDead(p)) add(t('death'), fact(p.deathDate, p.deathPlace) || t('record.unknownDate'));
   return { id, name: longName(p), photo: photoOf(p), rows };
 }
 
 /**
- * Nom du livret de la personne `id` : elle et son conjoint sont les parents du livret, le père
- * d'abord. Avec plusieurs unions, celle qui a le plus d'enfants ; sans conjoint, son nom seul.
+ * Name of the booklet of person `id`: they and their spouse are the booklet's parents, the father
+ * first. With several unions, the one with the most children; with no spouse, their name alone.
  */
 export function familyBookName(id) {
   const count = (other) => childrenOf(id).filter((k) => [P(k).fatherId, P(k).motherId].includes(other)).length;
@@ -46,7 +46,7 @@ export function familyBookName(id) {
   return b && a.sex === 'F' ? coupleName(b, a) : coupleName(a, b);
 }
 
-/** Le livret de la personne `id` : ses unions avec leurs enfants, et les enfants sans autre parent connu. */
+/** The booklet of person `id`: their unions with their children, and the children with no other known parent. */
 export function familyBook(id) {
   const otherParent = (k) => {
     const c = P(k);
@@ -54,7 +54,7 @@ export function familyBook(id) {
   };
   const kids = childrenOf(id);
   const partners = partnersOf(id);
-  // Un enfant figure comme à sa naissance : ses propres unions n'ont pas leur place dans ce livret
+  // A child appears as at birth: their own unions don't belong in this booklet
   const child = (k) => extract(k, false);
   return {
     holder: extract(id),

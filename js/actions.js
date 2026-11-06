@@ -1,6 +1,6 @@
 /**
- * Actions de l'utilisateur : navigation dans l'arbre, ajout, modification,
- * suppression de personnes, affichage.
+ * User actions: navigating the tree, adding, editing and
+ * deleting people, display.
  */
 import { ZOOMS, narrow, reduced } from './config.js';
 import { S, savePrefs } from './state.js';
@@ -16,7 +16,7 @@ import { deathDifferences } from './model/insee.js';
 import { inseeMatch, ignoreInsee, confirmInsee } from './services/insee.js';
 import { ignorePair } from './services/dup-ignore.js';
 import { renderTree, scrollToFocus, scrollToPerson, treeMargins } from './tree/render.js';
-import { renderAll, renderSide, renderFiche, afterData } from './ui/render.js';
+import { renderAll, renderSide, renderRecord, afterData } from './ui/render.js';
 import { renderHeader, renderControls } from './ui/header.js';
 import { blankDraft, captureDraft, focusFirstField } from './ui/form.js';
 import { toast } from './ui/toast.js';
@@ -27,18 +27,18 @@ import { renderPersonDlg } from './ui/person-dlg.js';
 import { photoFromFile, DOCUMENT_SIDE } from './utils/image.js';
 import { cropPhoto } from './ui/crop.js';
 
-/** Situations partagées avec le conjoint actuel. */
+/** Situations shared with the current spouse. */
 const COUPLE_SITUATIONS = new Set(['married', 'remarried', 'pacs', 'cohabiting']);
 
-/** Situation d'une personne seule -> fin de sa dernière union. */
+/** Situation of a single person -> end of their last union. */
 const ENDING_SITUATIONS = { widowed: 'death', divorced: 'divorce', separated: 'separation' };
 
-/** Sur téléphone, fait défiler jusqu'au panneau latéral. */
+/** On a phone, scrolls down to the side panel. */
 function showSide() {
   if (narrow()) $('.side').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
 }
 
-/* ---------- Navigation et affichage ---------- */
+/* ---------- Navigation and display ---------- */
 
 export function setFocus(id, fromList) {
   if (!S.people.has(id)) return;
@@ -49,7 +49,7 @@ export function setFocus(id, fromList) {
   const same = id === S.focus;
   S.focus = id;
   S.confirmDel = false;
-  S.tab = 'fiche';
+  S.tab = 'record';
   savePrefs();
   if (!same) S.scrollPending = true;
   renderAll();
@@ -60,13 +60,13 @@ export function setTab(tab) {
   S.tab = tab;
   if (!S.panel) togglePanel();
   renderSide();
-  if (tab === 'registre' && !narrow()) {
+  if (tab === 'register' && !narrow()) {
     const search = $('#q');
     if (search) search.focus({ preventScroll: true });
   }
 }
 
-/** Nombre de générations affichées : kind = 'up' (ascendants) ou 'down' (descendants). */
+/** Number of generations shown: kind = 'up' (ancestors) or 'down' (descendants). */
 export function setGenerations(kind, n) {
   S[kind] = n;
   savePrefs();
@@ -76,10 +76,10 @@ export function setGenerations(kind, n) {
   requestAnimationFrame(scrollToFocus);
 }
 
-/** Zoom avant (+1) ou arrière (-1), en gardant le centre de la vue. */
+/** Zoom in (+1) or out (-1), keeping the centre of the view. */
 export function zoomBy(step) {
   const canvas = $('#canvas');
-  // Point de l'arbre au centre de la vue, qu'on y garde après le zoom
+  // Tree point at the centre of the view, kept there after zooming
   let m = treeMargins();
   const cx = (canvas.scrollLeft + canvas.clientWidth / 2 - m.x) / S.zoom;
   const cy = (canvas.scrollTop + canvas.clientHeight / 2 - m.y) / S.zoom;
@@ -93,7 +93,7 @@ export function zoomBy(step) {
   canvas.scrollTop = m.y + cy * S.zoom - canvas.clientHeight / 2;
 }
 
-/** Bascule entre la vue centrée sur une personne et l'arbre complet, à plat. */
+/** Switches between the view centred on a person and the whole tree, flat. */
 export function toggleFull() {
   S.full = S.fan ? true : !S.full;
   S.fan = false;
@@ -104,7 +104,7 @@ export function toggleFull() {
   requestAnimationFrame(scrollToFocus);
 }
 
-/** Bascule entre l'arbre et la roue d'ascendance. */
+/** Switches between the tree and the fan chart. */
 export function toggleFan() {
   S.fan = !S.fan;
   savePrefs();
@@ -114,7 +114,7 @@ export function toggleFan() {
   requestAnimationFrame(scrollToFocus);
 }
 
-/** Affiche ou retire le halo de la lignée directe. */
+/** Shows or removes the direct-line halo. */
 export function toggleLine() {
   S.line = !S.line;
   savePrefs();
@@ -122,12 +122,12 @@ export function toggleLine() {
   renderTree();
 }
 
-/** Affiche ou masque le panneau fiche/registre : l'arbre prend toute la largeur. */
+/** Shows or hides the record/register panel: the tree takes the full width. */
 export function togglePanel() {
   S.panel = !S.panel;
   savePrefs();
   renderControls();
-  renderTree(); // ses marges suivent la largeur de la toile
+  renderTree(); // its margins follow the canvas width
   requestAnimationFrame(recenter);
 }
 
@@ -136,7 +136,7 @@ export function recenter() {
   scrollToFocus();
 }
 
-/** Change le thème de couleur ; redessine ce qui lit les couleurs à l'affichage (carte…). */
+/** Changes the colour theme; redraws what reads colours at display time (map…). */
 export function setTheme(theme) {
   S.theme = theme;
   savePrefs();
@@ -144,7 +144,7 @@ export function setTheme(theme) {
   renderAll(true);
 }
 
-/** Change la taille du texte de l'interface ; les panneaux se remettent en page. */
+/** Changes the interface text size; the panels re-layout. */
 export function setTextSize(size) {
   S.textSize = size;
   savePrefs();
@@ -152,7 +152,7 @@ export function setTextSize(size) {
   renderAll(true);
 }
 
-/** Bascule l'interface entre le français et l'anglais, sans perdre la saisie en cours. */
+/** Switches the interface between French and English, without losing the input in progress. */
 export function toggleLang() {
   captureDraft();
   setLang(getLang() === 'fr' ? 'en' : 'fr');
@@ -160,7 +160,7 @@ export function toggleLang() {
   if (!$('#printDlg').hidden) updatePrintInfo();
 }
 
-/* ---------- Annuler / rétablir ---------- */
+/* ---------- Undo / redo ---------- */
 
 async function runHistory(run, doneKey) {
   if (S.busy) return;
@@ -173,7 +173,7 @@ async function runHistory(run, doneKey) {
   try {
     action = await run();
   } catch (e) {
-    /* message déjà affiché par l'enregistrement */
+    /* message already shown by the save */
   }
   S.busy = false;
   if (action) {
@@ -189,10 +189,10 @@ async function runHistory(run, doneKey) {
 export const undo = () => runHistory(undoAction, 'hist.undone');
 export const redo = () => runHistory(redoAction, 'hist.redone');
 
-/* ---------- Analyse ---------- */
+/* ---------- Analysis ---------- */
 
-export function setAnalyseView(view) {
-  S.analyse = view;
+export function setAnalysisView(view) {
+  S.analysis = view;
   renderSide();
 }
 
@@ -201,18 +201,18 @@ export function setTimeScope(family) {
   renderSide();
 }
 
-/** Éphémérides : mois précédent (-1) ou suivant (+1). */
+/** Anniversaries: previous (-1) or next (+1) month. */
 export function shiftMonth(step) {
   const current = S.calMonth || new Date().getMonth() + 1;
   S.calMonth = ((current - 1 + step + 12) % 12) + 1;
   renderSide();
 }
 
-/** Ouvre le lien de parenté, avec la personne `id` en premier. */
+/** Opens the kinship view, with person `id` first. */
 export function openKin(id) {
   S.kinA = id;
-  S.analyse = 'kin';
-  S.tab = 'analyse';
+  S.analysis = 'kin';
+  S.tab = 'analysis';
   renderSide();
   showSide();
 }
@@ -223,7 +223,7 @@ export function setKin(side, id) {
   renderSide();
 }
 
-/** Surligne le chemin dans l'arbre complet, le seul où il est sûrement visible en entier. */
+/** Highlights the path in the whole tree, the only view where it is surely visible in full. */
 export function showKin() {
   const { path } = relationship(S.kinA, S.kinB);
   if (!path.length) return;
@@ -247,23 +247,23 @@ export function hideKin() {
   requestAnimationFrame(scrollToFocus);
 }
 
-/* ---------- Formulaire ---------- */
+/* ---------- Form ---------- */
 
 function openEdit(edit) {
   S.edit = Object.assign({ token: rid('e'), error: '' }, edit);
-  S.tab = 'fiche';
+  S.tab = 'record';
   S.confirmDel = false;
   renderSide(true);
   showSide();
   focusFirstField();
 }
 
-/** Ligne d'union vide du formulaire. */
+/** Empty union row of the form. */
 function draftUnion(other) {
   return { uid: null, other, type: '', date: '', place: '', end: '', endDate: '', cause: '', formerId: '', removed: false };
 }
 
-/** Champs enregistrés d'une ligne d'union : la cause ne vaut que pour un remariage. */
+/** Saved fields of a union row: the cause only applies to a remarriage. */
 function unionFields(u) {
   const cause = u.type === 'remarried' ? u.cause : '';
   return {
@@ -272,7 +272,7 @@ function unionFields(u) {
   };
 }
 
-/** Unions de la personne : sans autre fin renseignée, elles s'arrêtent à la mort du premier conjoint. */
+/** The person's unions: with no other end given, they stop at the death of the first spouse. */
 async function closeUnionsAtDeath(id) {
   for (const x of partnersOf(id)) {
     const date = x.uid ? unionDeathEnd(P(id), P(x.id)) : null;
@@ -283,7 +283,7 @@ async function closeUnionsAtDeath(id) {
   }
 }
 
-/** La cause d'un remariage donne la fin de l'union précédente, si elle n'en a pas. */
+/** A remarriage's cause gives the end of the previous union, if it has none. */
 async function endFormerUnion(id, row) {
   const { cause, formerId } = unionFields(row);
   if (row.removed || !cause) return;
@@ -303,8 +303,8 @@ export function startNew() {
 }
 
 /**
- * Ajout d'un proche de la personne `of` : rel = 'father' | 'mother' | 'child' | 'spouse' | 'sibling'.
- * Pour un enfant, `withId` est l'autre parent ; par défaut, le dernier conjoint.
+ * Adding a relative of person `of`: rel = 'father' | 'mother' | 'child' | 'spouse' | 'sibling'.
+ * For a child, `withId` is the other parent; by default, the last spouse.
  */
 export function startAdd(rel, of, withId) {
   if (!S.canWrite || !S.people.has(of)) return;
@@ -336,10 +336,10 @@ export function startAdd(rel, of, withId) {
     }
     d.surname = birthSurname(d.fatherId, d.motherId);
   } else if (rel === 'sibling') {
-    // Frère ou sœur : mêmes parents que la personne (modifiables pour un demi-frère ou une demi-sœur)
+    // Sibling: same parents as the person (editable for a half-sibling)
     d.fatherId = o.fatherId && S.people.has(o.fatherId) ? o.fatherId : '';
     d.motherId = o.motherId && S.people.has(o.motherId) ? o.motherId : '';
-    // Nom de naissance commun (pas le nom d'usage d'une sœur mariée)
+    // Shared birth surname (not a married sister's married name)
     d.surname = birthSurname(d.fatherId, d.motherId) || (o.sex === 'F' ? o.maidenName || o.surname : o.surname) || '';
   }
   openEdit({ id: null, rel, of, draft: d, unions, events: [], sources: [], media: [] });
@@ -360,7 +360,7 @@ export function startEdit(id) {
     .filter((x) => x.uid && S.unions.has(x.uid))
     .map((x) => {
       const u = S.unions.get(x.uid);
-      // Par défaut, l'union s'arrête à la mort du premier conjoint
+      // By default, the union stops at the death of the first spouse
       const death = unionDeathEnd(p, P(x.id));
       const end = u.end || (death === null ? '' : 'death');
       return {
@@ -369,9 +369,9 @@ export function startEdit(id) {
         orig: { type: u.type || '', date: u.date || '', place: u.place || '', end: u.end || '', endDate: u.endDate || '', cause: u.cause || '', formerId: u.formerId || '' },
       };
     });
-  // La fiche montre la situation du moment : celle des unions, si elle a changé depuis
+  // The record shows the current situation: the unions', if it has changed since
   d.situation = currentSituation(id);
-  // Des textes, même si la fiche vient d'un fichier importé mal formé
+  // Strings, even if the record comes from a malformed imported file
   const texts = (x, keys) => Object.fromEntries(keys.map((k) => [k, x[k] == null ? '' : String(x[k])]));
   const events = eventsOf(p).map((x) => ({ ...x, ...texts(x, ['date', 'place', 'note']), removed: false }));
   const sources = sourcesOf(p).map((x) => ({
@@ -402,7 +402,7 @@ export function removeDraftUnion(i) {
   renderSide(true);
 }
 
-/** Images choisies dans le formulaire : ajoutées à la galerie du brouillon. */
+/** Images chosen in the form: added to the draft's gallery. */
 export async function addDraftMedia(files) {
   if (!S.edit) return;
   const token = S.edit.token;
@@ -452,13 +452,13 @@ export function removeDraftSource(i) {
   renderSide(true);
 }
 
-/** Redessine le formulaire : un libellé d'événement a changé dans la liste des faits. */
+/** Redraws the form: an event label changed in the list of facts. */
 export function refreshDraft() {
   captureDraft();
   renderSide(true);
 }
 
-/** Document d'une source (photo d'un acte) : réduit moins qu'un portrait, pour rester lisible. */
+/** A source's document (photo of a certificate): downscaled less than a portrait, to stay readable. */
 export async function setDraftSourcePhoto(i, file) {
   if (!S.edit || !file) return;
   const token = S.edit.token;
@@ -482,7 +482,7 @@ export function removeDraftSourcePhoto(i) {
   renderSide(true);
 }
 
-/** Photo choisie dans le formulaire : recadrée en portrait, puis gardée dans le brouillon. */
+/** Photo chosen in the form: cropped to portrait, then kept in the draft. */
 export async function setDraftPhoto(file) {
   if (!S.edit || !file) return;
   const token = S.edit.token;
@@ -493,8 +493,8 @@ export async function setDraftPhoto(file) {
     toast(err.message, true);
     return;
   }
-  if (!photo) return; // recadrage annulé
-  if (!S.edit || S.edit.token !== token) return; // formulaire fermé entre-temps
+  if (!photo) return; // crop cancelled
+  if (!S.edit || S.edit.token !== token) return; // form closed in the meantime
   captureDraft();
   S.edit.draft.photo = photo;
   renderSide(true);
@@ -579,7 +579,7 @@ export async function submitEdit() {
     for (const { removed, ...x } of e.sources) {
       const s = { ...x, title: x.title.trim(), place: x.place.trim(), ref: x.ref.trim(), note: x.note.trim() };
       if (removed || !(s.title || s.place || s.ref || s.note || s.photo)) continue;
-      // Fait retiré du formulaire : la source reste, pour la fiche en général
+      // Fact removed from the form: the source stays, for the record in general
       if (/^e_/.test(s.fact) && !facts.has(s.fact)) s.fact = '';
       if (s.photo) s.photo = await storePhoto(s.photo, data);
       else delete s.photo;
@@ -594,7 +594,7 @@ export async function submitEdit() {
     if (media.length) data.media = media;
     await opSet('people', id, data);
 
-    // Nouveau parent : on le relie à l'enfant, et on crée l'union avec l'autre parent s'il est connu
+    // New parent: linked to the child, and the union with the other parent is created if known
     if ((e.rel === 'father' || e.rel === 'mother') && S.people.has(e.of)) {
       const field = e.rel === 'father' ? 'fatherId' : 'motherId';
       await opUpdate('people', e.of, { [field]: id });
@@ -605,7 +605,7 @@ export async function submitEdit() {
       }
     }
 
-    // Unions modifiées, retirées ou ajoutées dans le formulaire
+    // Unions changed, removed or added in the form
     for (const u of e.unions) {
       if (u.uid) {
         if (u.removed) await opDelete('unions', u.uid);
@@ -618,7 +618,7 @@ export async function submitEdit() {
     await closeUnionsAtDeath(id);
     for (const u of e.unions) await endFormerUnion(id, u);
 
-    // Dernière union modifiée, situation inchangée : c'est l'union qui donne la situation
+    // Last union changed, situation unchanged: the union sets the situation
     const latest = partnersOf(id).pop();
     const row = latest && e.unions.find((u) => !u.removed && u.other === latest.id);
     if (row && (!row.uid || row.type !== row.orig.type || row.end !== row.orig.end)
@@ -632,10 +632,10 @@ export async function submitEdit() {
       }
     }
 
-    // Personne mariée, pacsée ou en concubinage : la date (mariage ou pacs) est celle de
-    // l'union la plus récente (les unions précédentes gardent la leur), et le conjoint
-    // actuel prend la même situation
-    // Veuf, divorcé ou séparé : c'est la fin de la dernière union, si elle n'en a pas déjà une
+    // Married, in a civil partnership or cohabiting: the date (marriage or partnership) is that of
+    // the most recent union (previous unions keep theirs), and the current
+    // spouse takes the same situation
+    // Widowed, divorced or separated: it's the end of the last union, if it doesn't already have one
     if (ENDING_SITUATIONS[data.situation]) {
       reindex();
       const last = partnersOf(id).pop();
@@ -644,9 +644,9 @@ export async function submitEdit() {
     if (COUPLE_SITUATIONS.has(data.situation)) {
       reindex();
       const current = partnersOf(id).pop();
-      // Le conjoint n'est pas forcément remarié : pour lui, « remarié » vaut « marié »
+      // The spouse hasn't necessarily remarried: for them, "remarried" means "married"
       const shared = data.situation === 'remarried' ? 'married' : data.situation;
-      // Union de type non précisé ou statut changé : la situation donne le type (mêmes codes)
+      // Union of unspecified type or status changed: the situation gives the type (same codes)
       if (current && current.uid) {
         const { type } = S.unions.get(current.uid);
         const changed = !previous || previous.situation !== data.situation;
@@ -657,7 +657,7 @@ export async function submitEdit() {
       let date = data.situationDate;
       if (DATED_SITUATIONS.has(data.situation)) {
         const u = current && current.uid && S.unions.get(current.uid);
-        // Une date de situation modifiée dans le formulaire l'emporte ; sinon, celle de l'union
+        // A situation date changed in the form prevails; otherwise, the union's
         const typed = date && date !== ((previous && previous.situationDate) || '');
         const unionDate = u ? String(u.date || '').trim() : '';
         if (u && date && (typed || !unionDate) && date !== unionDate) await opUpdate('unions', current.uid, { date });
@@ -665,7 +665,7 @@ export async function submitEdit() {
         if (date !== data.situationDate) await opUpdate('people', id, { situationDate: date });
       }
 
-      // Seulement si la personne est aussi la dernière union du conjoint
+      // Only if the person is also the spouse's last union
       const spouse = current && P(current.id);
       const spouseCurrent = spouse && partnersOf(current.id).pop();
       if (spouseCurrent && spouseCurrent.id === id && !(current.uid && S.unions.get(current.uid).end)
@@ -674,7 +674,7 @@ export async function submitEdit() {
         await opUpdate('people', current.id, { situation: shared, situationDate: date, updatedAt: Date.now() });
       }
     } else if (!data.situation || data.situation === 'single') {
-      // Sans statut de couple : la personne reprend celui de l'union en cours
+      // With no couple status: the person takes that of the current union
       reindex();
       const current = partnersOf(id).pop();
       const u = current && current.uid && S.unions.get(current.uid);
@@ -686,7 +686,7 @@ export async function submitEdit() {
       }
     }
 
-    // Union terminée : le conjoint dont c'est la dernière union est lui aussi veuf, divorcé ou séparé
+    // Union ended: the spouse whose last union it is is also widowed, divorced or separated
     reindex();
     const ended = partnersOf(id).pop();
     if (ended && ended.uid && S.unions.get(ended.uid).end && partnersOf(ended.id).pop().id === id) {
@@ -717,19 +717,19 @@ export async function submitEdit() {
   }
 }
 
-/* ---------- Suppression ---------- */
+/* ---------- Deletion ---------- */
 
-/** Affiche (ou retire) la confirmation de suppression de la fiche `id` : panneau ou fenêtre de la personne. */
+/** Shows (or removes) the delete confirmation for record `id`: panel or person dialog. */
 export function confirmDelete(show, id = S.focus) {
   S.confirmDel = show ? id : false;
-  renderFiche();
+  renderRecord();
   renderPersonDlg();
 }
 
-/** Supprime la fiche `id` (personne centrale ou non, même en cours de modification). */
+/** Deletes record `id` (focus person or not, even while being edited). */
 export async function doDelete(id) {
   if (!S.canWrite || !S.people.has(id)) return;
-  if (S.edit && S.edit.id === id) S.edit = null; // supprimée depuis son formulaire : la saisie est abandonnée
+  if (S.edit && S.edit.id === id) S.edit = null; // deleted from its own form: the input is abandoned
   const p = P(id);
   const kids = childrenOf(id).slice();
   const partners = partnersOf(id);
@@ -751,7 +751,7 @@ export async function doDelete(id) {
     }
     await opDelete('people', id);
     S.confirmDel = false;
-    if (S.focus === id) S.focus = next; // une autre fiche supprimée : la personne centrale reste
+    if (S.focus === id) S.focus = next; // another record deleted: the focus person stays
     commitAction();
     S.scrollPending = true;
     savePrefs();
@@ -764,15 +764,15 @@ export async function doDelete(id) {
   }
 }
 
-/* ---------- Doublons ---------- */
+/* ---------- Duplicates ---------- */
 
-/** « Ce n'est pas un doublon » : la paire n'est plus proposée, même après rechargement. */
+/** "Not a duplicate": the pair is no longer suggested, even after a reload. */
 export function ignoreDuplicate(key) {
   ignorePair(key);
   renderSide();
 }
 
-/** Fusionne `drop` dans `keep` : liens, unions et enfants passent à `keep`, puis `drop` disparaît. */
+/** Merges `drop` into `keep`: links, unions and children move to `keep`, then `drop` disappears. */
 export async function mergePeople(keep, drop) {
   if (!S.canWrite || S.busy || !S.people.has(keep) || !S.people.has(drop)) return;
   if (S.edit) {
@@ -807,12 +807,12 @@ export async function mergePeople(keep, drop) {
       const patch = {};
       if (p.fatherId === drop) patch.fatherId = keep;
       if (p.motherId === drop) patch.motherId = keep;
-      // Identifications sur les photos : elles suivent la personne conservée
+      // Identifications on photos: they follow the person kept
       const tagged = (m) => (Array.isArray(m.tags) ? m.tags : []);
       if (mediaList(p).some((m) => tagged(m).some((x) => x.id === drop))) {
         patch.media = mediaList(p).map((m) => ({ ...m, tags: tagged(m).map((x) => (x.id === drop ? { ...x, id: keep } : x)) }));
       }
-      // Sources du mariage portées par un conjoint : elles suivent l'union conservée
+      // Marriage sources carried by a spouse: they follow the union kept
       const moved = (s) => String(s.fact || '').startsWith('union:') && unionIds.has(s.fact.slice(6));
       if (sourcesOf(p).some(moved)) {
         patch.sources = sourcesOf(p).map((s) => (moved(s) ? { ...s, fact: 'union:' + unionIds.get(s.fact.slice(6)) } : s));
@@ -839,8 +839,8 @@ export async function mergePeople(keep, drop) {
 }
 
 /**
- * Renomme un lieu partout où il est cité (naissances, décès, événements, unions) ; s'annule en une fois.
- * Une fiche en cours de saisie suit aussi : l'enregistrer ne remet pas l'ancien lieu.
+ * Renames a place everywhere it is cited (births, deaths, events, unions); undone in one go.
+ * A record being edited follows too: saving it doesn't bring the old place back.
  */
 export async function renamePlace(from, to) {
   to = String(to || '').trim();
@@ -852,7 +852,7 @@ export async function renamePlace(from, to) {
   const patches = renamePatches(from, to);
   if (!patches.length) return;
   if (S.edit) {
-    captureDraft(); // le formulaire reste dans la page, masqué : sa saisie d'abord, puis le nouveau lieu
+    captureDraft(); // the form stays in the page, hidden: its input first, then the new place
     const same = (x) => String(x || '').trim() === from;
     const d = S.edit.draft;
     if (same(d.birthPlace)) d.birthPlace = to;
@@ -867,20 +867,20 @@ export async function renamePlace(from, to) {
     commitAction();
     S.busy = false;
     afterData();
-    if (S.edit) renderFiche(true); // le formulaire masqué reprend son brouillon, avec le nouveau lieu
+    if (S.edit) renderRecord(true); // the hidden form takes its draft back, with the new place
   }
   toast(t('pl.renamed', patches.length));
 }
 
-/* ---------- Décès de l'INSEE ---------- */
+/* ---------- INSEE deaths ---------- */
 
-/** Écarts reportables d'une fiche avec son acte INSEE (correspondance sûre ou probable). */
+/** Reportable differences between a record and its INSEE certificate (sure or likely match). */
 export function inseeDifferences(id) {
   const m = inseeMatch(id);
   return m && m.level !== 'lead' ? deathDifferences(id, m.act) : [];
 }
 
-/** Reporte dans la fiche l'écart n° `i` de son acte INSEE, ou tous (`i` absent). */
+/** Reports difference no. `i` of its INSEE certificate into the record, or all of them (no `i`). */
 export async function applyInsee(id, i) {
   if (!S.canWrite || S.busy) return;
   if (S.edit) {
@@ -904,21 +904,21 @@ export async function applyInsee(id, i) {
   toast(t('ins.applied', diffs.length));
 }
 
-/** « C'est bien lui » : la piste INSEE de cette fiche devient son acte. */
+/** "That's them": this record's INSEE lead becomes its certificate. */
 export function confirmInseeOf(id) {
   confirmInsee(id);
   renderSide();
 }
 
-/** N'affiche plus les écarts INSEE de cette fiche. */
+/** Stops showing this record's INSEE differences. */
 export function ignoreInseeOf(id) {
   ignoreInsee(id);
   renderSide();
 }
 
-/* ---------- Famille d'exemple ---------- */
+/* ---------- Example family ---------- */
 
-/** Ferme un bandeau d'information, durablement sur ce navigateur. */
+/** Closes an information banner, permanently in this browser. */
 export function closeBanner(kind) {
   S.closed[kind] = true;
   savePrefs();
