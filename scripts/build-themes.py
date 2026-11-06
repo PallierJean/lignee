@@ -64,6 +64,15 @@ def porcelain_frieze():
                "<path d='M0 1.2h36M0 4.2h36' stroke='#D9B440' stroke-width='1.2'/><path d='M3 12a6 4 0 0 0 12 0M21 12a6 4 0 0 0 12 0' fill='none' stroke='#FFFFFF' stroke-width='1' opacity='.8'/>"
                "<circle cx='9' cy='8' r='1.4' fill='#C9A227'/><circle cx='27' cy='8' r='1.4' fill='#C9A227'/>")
 
+def sea_still():
+    """Vagues de manga figées (si le système demande moins d'animations) : crêtes d'écume en volutes."""
+    b = ''
+    for row, y in enumerate(range(20, 200, 36)):
+        off = (row % 2) * 30
+        for x in range(-30 + off, 240, 60):
+            b += f"<path d='M{x} {y}q15-14 30 0q-8-2-10 4q-6-10-20-4' fill='#FFFFFF' opacity='.55'/>"
+    return svg(240, 200, f"<rect width='240' height='200' fill='#BFE3F5'/>{b}")
+
 def matrix_still():
     """Pluie figée (si le système demande moins d'animations) : quelques colonnes de signes verts."""
     random.seed(11)
@@ -98,6 +107,11 @@ THEMES = [
         accent='#00FF41', **{'accent-ink': '#001A07', 'accent-soft': '#063A16'}, warn='#E6FF6A', danger='#FF6B6B', **{'danger-soft': '#3A0E0E'},
         ok='#7DFFA0', halo='#B6FF00', male='#5CE1FF', female='#FF7AD9', scrim='rgba(0, 0, 0, .75)'),
    svg(4, 4, ''), '4px', {'--f-display': '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace'}),
+  ('grandline', 'Grand Line : ciel d’aventure et mer de manga, un navire pirate à tête de mouton qui vogue, îles, mouettes et monstre marin (ui/ambient.js) ; la personne au centre est recherchée (WANTED)', 'light',
+   dict(paper='#CFEAF8', surface='#FFF8E6', ink='#14213D', muted='#3F4A66', line='#E2CFA0', edge='#7A4E24', dot='#B8DDF0',
+        accent='#C41E3A', **{'accent-ink': '#FFFFFF', 'accent-soft': '#FBE3C2'}, warn='#7A4E00', danger='#A3172E', **{'danger-soft': '#F8D7D2'},
+        ok='#22693A', halo='#E8A317', male='#1F5FA8', female='#C83E78', scrim='rgba(10, 30, 60, .45)'),
+   sea_still(), '240px 200px', {'--f-display': '"Gloock", Georgia, serif'}),
 ]
 
 out = ["""/* ==========================================================
@@ -352,6 +366,31 @@ out.append("""
   position: absolute;
   top: 0;
   left: 0;
+}
+
+/* Grand Line : fiches en avis de recherche, la personne au centre « WANTED » */
+:root[data-theme="grandline"] .card {
+  background: linear-gradient(180deg, #FFF8E6, #F6E7C1);
+  box-shadow: 0 3px 8px rgba(20, 33, 61, .18);
+}
+
+:root[data-theme="grandline"] .card.is-focus {
+  border-color: #C41E3A;
+}
+
+:root[data-theme="grandline"] .card.is-focus::after {
+  content: 'WANTED';
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  padding: 1px 5px;
+  border: 1.5px solid #C41E3A;
+  border-radius: 2px;
+  color: #C41E3A;
+  font: 700 10px/1.2 var(--f-display);
+  letter-spacing: .12em;
+  transform: rotate(-8deg);
+  opacity: .9;
 }
 
 /* Constellations : le vrai ciel de Bordeaux, dessiné par ui/sky.js sous l'arbre */
