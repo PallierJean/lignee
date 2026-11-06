@@ -1,5 +1,15 @@
 # Historique des versions
 
+## [1.18.0](https://github.com/PallierJean/lignee/compare/v1.17.0...v1.18.0) (2026-11-06)
+
+### Features
+
+* recadrer la photo d'une fiche au moment de l'ajouter ([dc5f9ff](https://github.com/PallierJean/lignee/commit/dc5f9ff533880d9d44864f62a807441dc50bdd39))
+
+### Bug Fixes
+
+* Carte du Maraudeur sans motif répété ([dae7d10](https://github.com/PallierJean/lignee/commit/dae7d10c96b081dd37cd80f3caa7fd59195989e5))
+
 ## [1.17.0](https://github.com/PallierJean/lignee/compare/v1.16.0...v1.17.0) (2026-11-06)
 
 ### Features
