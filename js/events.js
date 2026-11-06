@@ -22,6 +22,7 @@ import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hove
 import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
 import { closeCrop, cropZoomInput, cropWheel, cropDrag, cropOpen } from './ui/crop.js';
 import { pinch } from './ui/pinch.js';
+import { leaveOpen } from './ui/leave-dlg.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo } from './ui/repo-link.js';
@@ -144,11 +145,11 @@ const CLICK_ACTIONS = {
     A.setFocus(el.dataset.id);
   },
   'person-edit': (el) => {
-    if (S.edit) return A.setFocus(el.dataset.id); // shows the "Save or cancel…" message
     closePersonDlg();
-    A.setFocus(el.dataset.id);
-    A.startEdit(el.dataset.id);
+    A.editPerson(el.dataset.id);
   },
+  'leave-resume': () => A.leaveEdit(false),
+  'leave-drop': () => A.leaveEdit(true),
 
   // Tree and navigation
   focus: (el) => A.setFocus(el.dataset.id, !!el.closest('#reglist')),
@@ -453,7 +454,7 @@ export function bindEvents() {
     }
     // Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y: in a field, it's the input's own undo
     const key = String(ev.key || '').toLowerCase(); // no key on an autofill
-    const dialogOpen = ['transfer', 'printDlg', 'treesDlg', 'personDlg', 'mediaDlg', 'photoZoom'].some((id) => !document.getElementById(id).hidden);
+    const dialogOpen = ['transfer', 'printDlg', 'treesDlg', 'personDlg', 'mediaDlg', 'photoZoom', 'leaveDlg'].some((id) => !document.getElementById(id).hidden);
     if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && (key === 'z' || key === 'y') && !typing(ev.target)
       && S.canWrite && !S.edit && !dialogOpen) {
       ev.preventDefault();
@@ -478,6 +479,10 @@ export function bindEvents() {
       return;
     }
     if (ev.key !== 'Escape') return;
+    if (leaveOpen()) {
+      A.leaveEdit(false);
+      return;
+    }
     if (cropOpen()) {
       closeCrop(false);
       return;

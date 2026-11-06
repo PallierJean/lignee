@@ -323,6 +323,18 @@
     <div class="sheet media-sheet" id="mediaCard" role="dialog" aria-modal="true" aria-labelledby="mdTitle"></div>
   </div>
 
+  <!-- Switching to another person while a record is being edited (ui/leave-dlg.js) -->
+  <div class="overlay" id="leaveDlg" hidden>
+    <div class="sheet leave-sheet" role="alertdialog" aria-modal="true" aria-labelledby="leaveTitle" aria-describedby="leaveText">
+      <h2 id="leaveTitle" data-i18n="leave.title">Fiche en cours de modification</h2>
+      <p id="leaveText"></p>
+      <div class="row-btns">
+        <button class="btn primary" type="button" id="leaveResume" data-act="leave-resume" data-i18n="leave.resume">Reprendre la modification</button>
+        <button class="btn" type="button" id="leaveDrop" data-act="leave-drop"></button>
+      </div>
+    </div>
+  </div>
+
   <!-- Cropping a record's photo when choosing it (ui/crop.js) -->
   <div class="overlay" id="cropDlg" hidden>
     <div class="sheet crop-sheet" role="dialog" aria-modal="true" aria-labelledby="cropTitle">

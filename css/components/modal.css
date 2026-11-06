@@ -121,6 +121,12 @@ input[type="file"] {
   object-fit: contain;
 }
 
+/* Another person chosen while a record is being edited (ui/leave-dlg.js) */
+.leave-sheet {
+  max-width: 440px;
+  gap: 14px;
+}
+
 /* Photo crop (ui/crop.js): the photo slides behind a 4:5 portrait frame */
 .crop-sheet {
   max-width: 360px;
