@@ -21,6 +21,7 @@ import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
 import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
 import { closeCrop, cropZoomInput, cropWheel, cropDrag, cropOpen } from './ui/crop.js';
+import { pinch } from './ui/pinch.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo } from './ui/repo-link.js';
@@ -256,6 +257,7 @@ const CLICK_ACTIONS = {
 
   // Example family
   'banner-close': (el) => A.closeBanner(el.dataset.kind),
+  'sheet-close': () => A.closeSheet(),
   'ex-ask': () => A.confirmRemoveExamples(true),
   'ex-no': () => A.confirmRemoveExamples(false),
   'ex-yes': once(() => A.removeExamples()),
@@ -314,6 +316,12 @@ export function bindEvents() {
   // Photo crop: drag, wheel, zoom slider
   document.addEventListener('wheel', cropWheel, { passive: false });
   for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, cropDrag);
+  // Tree: pinch with two fingers to zoom
+  for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, pinch);
+  // Phone: the Back button closes the side panel opened over the tree
+  window.addEventListener('popstate', () => {
+    if (!(history.state && history.state.sheet)) A.closeSheet(true);
+  });
   document.addEventListener('dblclick', (ev) => {
     const id = fanRecenter(ev.target);
     if (id) A.setFocus(id);
@@ -506,5 +514,6 @@ export function bindEvents() {
       return;
     }
     if (S.edit && !S.busy) A.cancelEdit();
+    else if (S.sheet) A.closeSheet();
   });
 }

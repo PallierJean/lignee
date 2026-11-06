@@ -2,7 +2,7 @@
  * User actions: navigating the tree, adding, editing and
  * deleting people, display.
  */
-import { ZOOMS, narrow, reduced } from './config.js';
+import { ZOOMS, narrow } from './config.js';
 import { S, savePrefs } from './state.js';
 import { $ } from './utils/dom.js';
 import { rid, pool } from './utils/helpers.js';
@@ -33,9 +33,20 @@ const COUPLE_SITUATIONS = new Set(['married', 'remarried', 'pacs', 'cohabiting']
 /** Situation of a single person -> end of their last union. */
 const ENDING_SITUATIONS = { widowed: 'death', divorced: 'divorce', separated: 'separation' };
 
-/** On a phone, scrolls down to the side panel. */
+/** On a phone, opens the side panel over the tree; the Back button closes it. */
 function showSide() {
-  if (narrow()) $('.side').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  if (!narrow() || S.sheet) return;
+  S.sheet = true;
+  history.pushState({ sheet: true }, '');
+  renderControls();
+}
+
+/** Closes the side panel opened over the tree on a phone. `fromHistory`: the Back button already went back. */
+export function closeSheet(fromHistory) {
+  if (!S.sheet) return;
+  S.sheet = false;
+  if (!fromHistory && history.state && history.state.sheet) history.back();
+  renderControls();
 }
 
 /* ---------- Navigation and display ---------- */
@@ -58,7 +69,8 @@ export function setFocus(id, fromList) {
 
 export function setTab(tab) {
   S.tab = tab;
-  if (!S.panel) togglePanel();
+  if (narrow()) showSide();
+  else if (!S.panel) togglePanel();
   renderSide();
   if (tab === 'register' && !narrow()) {
     const search = $('#q');
@@ -124,6 +136,11 @@ export function toggleLine() {
 
 /** Shows or hides the record/register panel: the tree takes the full width. */
 export function togglePanel() {
+  if (narrow()) {
+    if (S.sheet) closeSheet();
+    else showSide();
+    return;
+  }
   S.panel = !S.panel;
   savePrefs();
   renderControls();

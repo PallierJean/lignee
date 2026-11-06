@@ -1,7 +1,7 @@
 /** Header (open tree, summary, save status), banner and tree toolbar. */
 import { renderRepoBanner, savedRepo } from './repo-link.js';
 import { lastExport } from '../services/exported.js';
-import { EXPORT_STALE, BANNER_SNOOZE } from '../config.js';
+import { EXPORT_STALE, BANNER_SNOOZE, narrow } from '../config.js';
 import { S, isLoading, treeName } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { yearOf } from '../utils/dates.js';
@@ -40,8 +40,8 @@ export function renderControls() {
   $('#btnFull').setAttribute('aria-pressed', String(S.full && !S.fan));
   $('#btnFan').setAttribute('aria-pressed', String(S.fan));
   $('#btnLine').setAttribute('aria-pressed', String(S.line));
-  $('#btnPanel').setAttribute('aria-pressed', String(S.panel));
-  $('#main').className = S.panel ? 'main' : 'main side-off';
+  $('#btnPanel').setAttribute('aria-pressed', String(narrow() ? S.sheet : S.panel));
+  $('#main').className = 'main' + (S.panel ? '' : ' side-off') + (S.sheet ? ' sheet' : '');
   $('#zoomVal').textContent = t('percent', Math.round(S.zoom * 100));
   $('#undoCtl').hidden = !S.canWrite;
   $('#btnUndo').disabled = !canUndo();

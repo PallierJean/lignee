@@ -43,12 +43,19 @@
   overflow: hidden;
 }
 
-/* Tablet and phone: a single column, the page scrolls */
+/* Close button of the side panel: only when it opens over the tree (phone) */
+.sheet-close {
+  display: none;
+}
+
+/* Tablet and phone: like an app. The page doesn't scroll, the tree fills the screen under the
+   header; the record and register open over it, full screen (the Back button closes them) */
 @media (max-width: 900px) {
-  html,
-  body,
   .app {
-    height: auto;
+    height: 100vh;
+    height: 100dvh;
+    padding-block: 10px;
+    gap: 8px;
   }
 
   .main {
@@ -56,12 +63,43 @@
     flex-direction: column;
   }
 
-  /* The tree takes almost the whole screen once reached: the toolbar and legend don't eat into it */
   .stage {
-    height: calc(100vh - 24px);
-    height: calc(100dvh - 24px);
-    min-height: 420px;
-    max-height: 900px;
-    flex: none;
+    flex: 1;
+    min-height: 320px;
+  }
+
+  /* Pinching with two fingers zooms the tree (ui/pinch.js), not the whole page */
+  .canvas {
+    touch-action: pan-x pan-y;
+  }
+
+  .main .side,
+  .main.side-off .side {
+    display: none;
+  }
+
+  .main.sheet .side {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    border: 0;
+    border-radius: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .main.sheet .tabs {
+    padding-right: 52px;
+  }
+
+  .main.sheet .sheet-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 6px);
+    right: 8px;
+    z-index: 1;
   }
 }
