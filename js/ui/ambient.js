@@ -717,21 +717,24 @@ function skull(ctx, x, y, s, ink, bone) {
 const SAILOR = { head: [-27, -52], shoulder: [-19, -41] };
 const SKIN = '#F2C29B';
 
-/** Matelot original : cheveux noirs en bataille, marinière rayée ; bras droit le long du corps s'il n'est pas étiré. */
+/** Le capitaine : cheveux noirs en bataille, gilet rouge sans manches ; bras droit le long du corps s'il n'est pas étiré. */
 function sailor(ctx, armOut) {
   const [hx, hy] = SAILOR.head;
   ctx.beginPath(); // jambes (le bas est caché par la coque)
   ctx.rect(-33, -26, 5, 18);
   ctx.rect(-26, -26, 5, 18);
   inked(ctx, '#2B2D42', 1.2);
-  ctx.beginPath(); // marinière
+  ctx.beginPath(); // gilet rouge sans manches, ouvert, à boutons
   ctx.roundRect(-36, -46, 18, 22, 4);
-  inked(ctx, '#FFFFFF', 1.6);
-  ctx.save();
-  ctx.clip();
-  ctx.fillStyle = '#1F3A6E';
-  for (let y = -44; y < -24; y += 4) ctx.fillRect(-36, y, 18, 1.8);
-  ctx.restore();
+  inked(ctx, '#C8202E', 1.6);
+  ctx.beginPath();
+  ctx.moveTo(-27, -46);
+  ctx.lineTo(-27, -24);
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = '#FFD45A';
+  for (const by of [-41, -35, -29]) ctx.fillRect(-30, by, 2, 2);
   for (const [x0, y0, x1, y1] of armOut ? [[-35, -42, -40, -29]] : [[-35, -42, -40, -29], [-19, -42, -15, -29]]) {
     ctx.lineCap = 'round';
     ctx.strokeStyle = INK;
@@ -762,6 +765,170 @@ function sailor(ctx, armOut) {
   ctx.arc(hx + 2, hy + 3, 3.5, 0.1, Math.PI - 0.6);
   ctx.stroke();
 }
+
+/** Un bras cerné d'encre, de (x0, y0) à (x1, y1), couleur `color` (peau ou manche). */
+function limb(ctx, x0, y0, x1, y1, color) {
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 5.4;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x1, y1);
+  ctx.stroke();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3.2;
+  ctx.stroke();
+}
+
+/**
+ * Un membre d'équipage debout sur le pont, à l'abscisse `x` (même gabarit que le capitaine) :
+ * `top` haut, `legs` pantalon, `hair` cheveux ; `extra(ctx, x, hx, hy, now)` pour ce qui le
+ * distingue (sabres, cigarette, long nez…), `arm(now)` pour son bras droit qui bouge.
+ */
+function mate(ctx, x, now, { top, legs, hair, hairStyle, arm, extra }) {
+  const hx = x;
+  const hy = -52 + Math.sin(now / 260 + x) * 0.8;
+  ctx.beginPath();
+  ctx.rect(x - 7, -26, 5, 18);
+  ctx.rect(x + 1, -26, 5, 18);
+  inked(ctx, legs, 1.2);
+  ctx.beginPath();
+  ctx.roundRect(x - 9, -46, 18, 22, 4);
+  inked(ctx, top, 1.6);
+  limb(ctx, x - 8, -42, x - 12, -29, SKIN);
+  const [ax, ay] = arm ? arm(now) : [x + 12, -29];
+  limb(ctx, x + 8, -42, ax, ay, SKIN);
+  if (hairStyle === 'long') { // longs cheveux, derrière la tête
+    ctx.beginPath();
+    ctx.roundRect(hx - 10, hy - 9, 20, 22, 7);
+    inked(ctx, hair, 1.2);
+  }
+  ctx.beginPath();
+  ctx.arc(hx, hy, 8.5, 0, TAU);
+  inked(ctx, SKIN, 1.6);
+  if (hairStyle !== 'none') {
+    ctx.beginPath(); // frange
+    ctx.moveTo(hx - 9, hy + 1);
+    ctx.quadraticCurveTo(hx - 8, hy - 11, hx + 2, hy - 10);
+    ctx.quadraticCurveTo(hx + 10, hy - 9, hx + 9, hy - 1);
+    ctx.quadraticCurveTo(hx + 2, hy - 6, hx - 3, hy - 3);
+    ctx.closePath();
+    inked(ctx, hair, 1);
+  }
+  ctx.fillStyle = INK; // œil et sourire
+  ctx.beginPath();
+  ctx.arc(hx + 3.5, hy, 1.3, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.arc(hx + 2, hy + 3, 3.2, 0.1, Math.PI - 0.6);
+  ctx.stroke();
+  if (extra) extra(ctx, x, hx, hy, now);
+}
+
+/** L'équipage, du grand mât à la proue : navigatrice, sabreur, cuisinier, tireur. */
+const CREW = [
+  { // navigatrice : longs cheveux orange, haut blanc à col bleu ; elle brandit sa carte
+    x: -7, top: '#FFFFFF', legs: '#3B6FB6', hair: '#F07F2A', hairStyle: 'long',
+    arm: (now) => [-1, -64 + Math.sin(now / 400) * 2],
+    extra(ctx, x, hx, hy, now) {
+      ctx.beginPath(); // jupe bleue
+      ctx.rect(x - 9, -30, 18, 7);
+      inked(ctx, '#3B6FB6', 1);
+      ctx.save(); // la carte
+      ctx.translate(x + 5, -70 + Math.sin(now / 400) * 2);
+      ctx.rotate(0.15);
+      ctx.beginPath();
+      ctx.rect(-3, -9, 10, 13);
+      inked(ctx, '#F3E2B3', 1.2);
+      ctx.strokeStyle = '#C41E3A';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-1, -5);
+      ctx.lineTo(5, 1);
+      ctx.moveTo(5, -5);
+      ctx.lineTo(-1, 1);
+      ctx.stroke();
+      ctx.restore();
+    },
+  },
+  { // sabreur : bandana vert, chemise blanche, ceinture verte, trois sabres à la hanche ; bras croisés
+    x: 12, top: '#F4F1E6', legs: '#2B2D42', hair: '#6FBF5A', hairStyle: 'short',
+    arm: () => [7, -36],
+    extra(ctx, x, hx, hy) {
+      ctx.beginPath(); // bandana
+      ctx.moveTo(hx - 9.5, hy - 1);
+      ctx.quadraticCurveTo(hx, hy - 15, hx + 9.5, hy - 1);
+      ctx.lineTo(hx - 9.5, hy - 1);
+      inked(ctx, '#2F7D3A', 1.2);
+      ctx.beginPath();
+      ctx.rect(x - 9, -29, 18, 4); // ceinture
+      inked(ctx, '#2F7D3A', 1);
+      for (const [k, col] of [[0, '#FFFFFF'], [1, '#141414'], [2, '#C41E3A']]) { // trois sabres à la hanche
+        ctx.strokeStyle = INK;
+        ctx.lineWidth = 3.4;
+        ctx.beginPath();
+        ctx.moveTo(x + 6 + k * 2, -30);
+        ctx.lineTo(x + 2 + k * 3, -12);
+        ctx.stroke();
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+      }
+    },
+  },
+  { // cuisinier : cheveux blonds sur un œil, costume noir, cravate ; une volute de fumée
+    x: 31, top: '#1E1E24', legs: '#1E1E24', hair: '#F2D04B', hairStyle: 'short',
+    extra(ctx, x, hx, hy, now) {
+      ctx.beginPath(); // la mèche qui cache un œil
+      ctx.moveTo(hx + 1, hy - 9);
+      ctx.quadraticCurveTo(hx + 9, hy - 3, hx + 7, hy + 3);
+      ctx.lineTo(hx + 1, hy - 2);
+      ctx.closePath();
+      inked(ctx, '#F2D04B', 1);
+      ctx.beginPath(); // chemise et cravate
+      ctx.moveTo(x - 3, -43);
+      ctx.lineTo(x, -32);
+      ctx.lineTo(x + 3, -43);
+      inked(ctx, '#3B6FB6', 1);
+      ctx.strokeStyle = INK; // cigarette et fumée
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(hx + 4, hy + 4);
+      ctx.lineTo(hx + 10, hy + 2);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(80, 80, 80, .6)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(hx + 10, hy + 1);
+      for (let k = 1; k <= 4; k++) ctx.lineTo(hx + 10 + Math.sin(now / 300 + k) * 3, hy + 1 - k * 4);
+      ctx.stroke();
+    },
+  },
+  { // tireur : long nez, bandana à carreaux, cheveux noirs frisés, salopette ; il salue de la main
+    x: 50, top: '#C8A46A', legs: '#6B4E2E', hair: '#141414', hairStyle: 'none',
+    arm: (now) => [60, -60 + Math.sin(now / 150) * 4],
+    extra(ctx, x, hx, hy) {
+      ctx.beginPath(); // boucles noires
+      for (const [dx, dy] of [[-8, 3], [-9, -3], [-6, 7]]) {
+        ctx.moveTo(hx + dx + 3.5, hy + dy);
+        ctx.arc(hx + dx, hy + dy, 3.5, 0, TAU);
+      }
+      inked(ctx, '#141414', 1);
+      ctx.beginPath(); // bandana à carreaux
+      ctx.moveTo(hx - 9.5, hy - 1);
+      ctx.quadraticCurveTo(hx, hy - 15, hx + 9.5, hy - 1);
+      ctx.lineTo(hx - 9.5, hy - 1);
+      inked(ctx, '#C9B35A', 1.2);
+      ctx.beginPath(); // long nez
+      ctx.moveTo(hx + 7, hy - 1);
+      ctx.lineTo(hx + 19, hy + 1);
+      ctx.lineTo(hx + 7, hy + 3);
+      inked(ctx, SKIN, 1.2);
+    },
+  },
+];
 
 /** Bras élastique : du caoutchouc qui ondule de l'épaule à la main, et un poing au bout. */
 function rubberArm(ctx, from, to, s, now) {
@@ -921,8 +1088,9 @@ function pirateShip(ctx, x, y, s, dir, now, crew) {
     ctx.arc(hx, 6, 3.4, 0, TAU);
     inked(ctx, '#FFE7A3', 1.2);
   }
-  // Le matelot, debout derrière le bastingage (son bras droit, s'il est étiré, est dessiné à part)
+  // Le capitaine et son équipage, debout derrière le bastingage (son bras droit, s'il est étiré, est dessiné à part)
   sailor(ctx, crew && crew.armOut);
+  for (const m of CREW) mate(ctx, m.x, now, m);
   // Figure de proue : un mouton laineux, cerné, à corne en spirale
   ctx.beginPath();
   for (const [dx, dy, r] of [[78, -32, 8], [86, -36, 7], [90, -27, 7], [82, -22, 7], [72, -25, 6]]) {
