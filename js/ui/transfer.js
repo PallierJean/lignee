@@ -11,6 +11,8 @@ import { afterData } from './render.js';
 import { toast } from './toast.js';
 import { newTree } from './trees.js';
 import { linkRepo, connectTree, holdsTree, savedRepo } from './repo-link.js';
+import { markExported } from '../services/exported.js';
+import { renderHeader } from './header.js';
 import { t } from '../i18n.js';
 
 const inClaude = () => !!(window.claude && window.claude.use);
@@ -73,6 +75,7 @@ function downloadBlob(filename, text, type) {
  * - In claude.ai: the platform's download service,
  *   otherwise the text is shown for copying.
  */
+/** Offers the file to the user; returns true if it was handed over (downloaded or saved). */
 async function saveFile({ filename, standaloneName = filename, type, text, hint, standaloneHint = hint }) {
   const hintEl = $('#exportHint');
   $('#exportText').hidden = true;
@@ -81,14 +84,14 @@ async function saveFile({ filename, standaloneName = filename, type, text, hint,
   if (!inClaude()) {
     downloadBlob(standaloneName, text, type);
     hintEl.textContent = standaloneHint;
-    return;
+    return true;
   }
 
   if (services.downloads) {
     try {
       await services.downloads.save({ filename, data: text });
       hintEl.textContent = hint;
-      return;
+      return true;
     } catch (e) {
       const code = e && e.code;
       if (code === 'declined') {
@@ -115,7 +118,7 @@ export async function exportGedcom() {
     return;
   }
   const name = fileBase() + '.ged';
-  await saveFile({
+  const saved = await saveFile({
     filename: name + '.txt',               // claude.ai doesn't accept the .ged extension
     standaloneName: name,
     type: 'text/plain;charset=utf-8',
@@ -123,6 +126,13 @@ export async function exportGedcom() {
     hint: t('tr.gedHint', name),
     standaloneHint: t('tr.gedHintStandalone', name),
   });
+  if (saved) exported();
+}
+
+/** A full export (GEDCOM or backup) was handed over: the local banner stops reminding. */
+function exported() {
+  markExported();
+  renderHeader();
 }
 
 export async function exportBackup() {
@@ -130,12 +140,13 @@ export async function exportBackup() {
     $('#exportHint').textContent = t('tr.empty');
     return;
   }
-  await saveFile({
+  const saved = await saveFile({
     filename: fileBase() + '-' + t('tr.backupSuffix') + '.json',
     type: 'application/json',
     text: await buildPortableBackup(),
     hint: t('tr.backupHint'),
   });
+  if (saved) exported();
 }
 
 export async function exportCsv() {

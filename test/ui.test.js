@@ -14,6 +14,8 @@ import { resetHistory } from '../js/services/history.js';
 import { setLang } from '../js/i18n.js';
 import { mapZoom, mapFit, mapPick, mapDrag } from '../js/ui/places.js';
 import { example, loadTree, person, resetApp, html } from './helpers.js';
+import { markExported } from '../js/services/exported.js';
+import { EXPORT_KEY } from '../js/config.js';
 
 const el = (id) => document.getElementById(id);
 const ex = example();
@@ -46,13 +48,41 @@ describe('rendu général', () => {
   test('bandeaux fermés : exemple puis mode local, l’arbre garde ses exemples', () => {
     S.mode = 'local';
     A.closeBanner('ex');
-    assert.ok(el('banner').innerHTML.includes('Mode local'));
-    A.closeBanner('local');
-    assert.equal(el('banner').hidden, true);
+    assert.equal(el('banner').hidden, true, 'only the example family: nothing to lose');
     assert.equal(S.people.size, 16);
     S.closed = {};
     renderHeader();
     assert.ok(el('banner').innerHTML.includes('data-act="banner-close"'));
+  });
+
+  test('local mode: the banner reminds to export a tree of your own until it is exported', () => {
+    const DAY = 86400000;
+    S.mode = 'local';
+    S.closed = { ex: true };
+    localStorage.removeItem(EXPORT_KEY);
+    [...S.people.values()][0].example = false;
+    renderHeader();
+    const banner = () => (el('banner').hidden ? '' : el('banner').innerHTML);
+    assert.match(banner(), /que dans ce navigateur/);
+    assert.match(banner(), /jamais été exporté/);
+    assert.match(banner(), /data-act="export-open"/);
+    assert.match(banner(), /data-act="repo-link-open"/);
+    markExported(Date.now() - 40 * DAY);
+    renderHeader();
+    assert.match(banner(), /Dernier export il y a 40 jours/);
+    markExported();
+    renderHeader();
+    assert.equal(banner(), '', 'exported recently');
+    markExported(Date.now() - 40 * DAY);
+    A.closeBanner('local');
+    assert.equal(banner(), '', 'closed: snoozed');
+    S.closed.local = Date.now() - 8 * DAY;
+    renderHeader();
+    assert.match(banner(), /il y a 40 jours/, 'back after a week');
+    S.mode = 'file';
+    renderHeader();
+    assert.doesNotMatch(banner(), /que dans ce navigateur/, 'saved on disk by the local server');
+    localStorage.removeItem(EXPORT_KEY);
   });
 
   test('fiche : faits, proches et actions', () => {

@@ -274,6 +274,10 @@ const CLICK_ACTIONS = {
   'copy-export': () => copyExport(),
   'repo-connect': (el) => connectRepo(el),
   'repo-connect-open': once(connectOpenedRepo),
+  'repo-link-open': () => {
+    openTransfer('import');
+    setTimeout(() => document.getElementById('repoUrl').focus(), 40);
+  },
   'repo-reconnect': () => {
     openTransfer('import');
     setTimeout(() => document.getElementById('repoToken').focus(), 40);

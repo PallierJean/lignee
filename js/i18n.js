@@ -284,7 +284,11 @@ const FR = {
   'ex.remove': 'Retirer les exemples',
   'ex.banner': '<b>Famille d’exemple.</b> Les Bertrand et leurs proches sont là pour vous montrer comment fonctionne l’arbre. Retirez-les quand vous commencez le vôtre.',
   'ex.removed': 'Les exemples ont été retirés',
-  'local.banner': '<b>Mode local.</b> L’arbre est gardé dans ce navigateur uniquement. Pensez à l’exporter régulièrement.',
+  'local.banner': '<b>Cet arbre n’est enregistré que dans ce navigateur :</b> vider ses données ou changer d’appareil le ferait disparaître. Exportez-le ou reliez-le à GitHub.',
+  'local.never': 'Il n’a encore jamais été exporté.',
+  'local.last': (n) => `Dernier export il y a ${n} jour${n > 1 ? 's' : ''}.`,
+  'local.export': 'Exporter',
+  'local.github': 'Relier à GitHub',
 
   // Record panel
   'record.pick': 'Choisissez une personne dans l’arbre ou dans le registre pour voir sa fiche.',
@@ -1052,7 +1056,11 @@ const EN = {
   'ex.remove': 'Remove examples',
   'ex.banner': '<b>Example family.</b> The Bertrands and their relatives are here to show you how the tree works. Remove them when you start your own.',
   'ex.removed': 'The examples have been removed',
-  'local.banner': '<b>Local mode.</b> The tree is kept in this browser only. Remember to export it regularly.',
+  'local.banner': '<b>This tree is only saved in this browser:</b> clearing its data or switching device would lose it. Export it or link it to GitHub.',
+  'local.never': 'It has never been exported yet.',
+  'local.last': (n) => `Last export ${n} day${n > 1 ? 's' : ''} ago.`,
+  'local.export': 'Export',
+  'local.github': 'Link to GitHub',
 
   'record.pick': 'Choose a person in the tree or in the register to see their record.',
   'record.intro': 'Each person’s record appears here: birth, death, parents, unions and children.',

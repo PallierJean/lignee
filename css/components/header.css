@@ -78,6 +78,12 @@
   background: var(--accent-soft);
 }
 
+/* Local mode warning: the tree only lives in this browser */
+.banner.warn {
+  border: 1px solid var(--warn);
+  background: color-mix(in srgb, var(--warn) 14%, var(--surface));
+}
+
 .banner p {
   margin: 0;
   max-width: 72ch;
