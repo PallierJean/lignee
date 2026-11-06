@@ -59,6 +59,7 @@
   width: 84px;
   height: 105px;
   object-fit: cover;
+  object-position: 50% 18%; /* portrait : le visage est en haut */
   border-radius: 6px;
   border: 1px solid var(--line);
   background: var(--paper);

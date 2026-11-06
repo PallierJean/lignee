@@ -20,6 +20,7 @@ import {
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
 import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
+import { closeCrop, cropZoomInput, cropWheel, cropDrag, cropOpen } from './ui/crop.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo } from './ui/repo-link.js';
@@ -173,6 +174,8 @@ const CLICK_ACTIONS = {
   'dup-ignore': (el) => A.ignoreDuplicate(el.dataset.key),
   'time-scope': (el) => A.setTimeScope(el.dataset.family === 'true'),
   'map-locate': () => startLocate(),
+  'crop-ok': () => closeCrop(true),
+  'crop-cancel': () => closeCrop(false),
   'map-zoom': (el) => mapZoom(+el.dataset.d),
   'map-region': (el) => mapFit(el.dataset.key || ''),
   'map-point': (el) => mapPick(el.dataset.name),
@@ -304,6 +307,9 @@ export function bindEvents() {
   // Carte des lieux : molette pour zoomer, glisser pour se déplacer
   document.addEventListener('wheel', mapWheel, { passive: false });
   for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, mapDrag);
+  // Recadrage d'une photo : glisser, molette, curseur de zoom
+  document.addEventListener('wheel', cropWheel, { passive: false });
+  for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, cropDrag);
   document.addEventListener('dblclick', (ev) => {
     const id = fanRecenter(ev.target);
     if (id) A.setFocus(id);
@@ -389,6 +395,7 @@ export function bindEvents() {
   });
 
   document.addEventListener('input', (ev) => {
+    if (ev.target.id === 'cropZoom') cropZoomInput(ev.target.value);
     if (ev.target.id === 'find') onFindInput();
     if (ev.target.id === 'f-spouse') onSpouseInput();
     if (ev.target.id.endsWith('-dept')) {
@@ -459,6 +466,10 @@ export function bindEvents() {
       return;
     }
     if (ev.key !== 'Escape') return;
+    if (cropOpen()) {
+      closeCrop(false);
+      return;
+    }
     const look = document.getElementById('appearance');
     if (look.open) {
       look.open = false;
