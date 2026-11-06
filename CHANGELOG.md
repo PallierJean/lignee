@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0](https://github.com/PallierJean/lignee/compare/v1.19.1...v1.20.0) (2026-11-06)
+
+### Features
+
+* an app-like layout on phones ([e2a3250](https://github.com/PallierJean/lignee/commit/e2a325092a4b12c94e0fc10d419d3226b1ac196f))
+* warn that a browser-only tree must be exported ([54418fb](https://github.com/PallierJean/lignee/commit/54418fb96ae521df1b64826295828bc709103c8c))
+
 ## [1.19.1](https://github.com/PallierJean/lignee/compare/v1.19.0...v1.19.1) (2026-11-06)
 
 ### Bug Fixes
