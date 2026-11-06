@@ -142,23 +142,23 @@
 
 /* Printemps : vert tendre, fleurs */
 :root[data-theme="printemps"] {
-  --paper: #F3F6EC;
-  --surface: #FFFFFC;
-  --ink: #1F2A1E;
-  --muted: #5C6B57;
-  --line: #D3DEC8;
-  --edge: #8FA286;
-  --dot: #D6E2CB;
-  --accent: #B23E6E;
+  --paper: #EEF8E6;
+  --surface: #FFFFFF;
+  --ink: #1C2A1A;
+  --muted: #4F6248;
+  --line: #CFE5C0;
+  --edge: #7FA86A;
+  --dot: #D8ECCA;
+  --accent: #C2185B;
   --accent-ink: #FFF6FA;
-  --accent-soft: #F6DDE8;
-  --warn: #9A6A12;
+  --accent-soft: #FCE1EC;
+  --warn: #8A5A00;
   --danger: #A33A28;
   --danger-soft: #F6E1DC;
   --ok: #2F7A4B;
-  --halo: #6DBE45;
-  --male: #4F86C6;
-  --female: #D96C98;
+  --halo: #7CC242;
+  --male: #3F86D6;
+  --female: #E2669E;
   --scrim: rgba(14, 24, 21, .42);
   --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cg opacity='.4'%3E%3Cg fill='%23E58CB0'%3E%3Ccircle cx='46.0' cy='46.0' r='4.5'/%3E%3Ccircle cx='41.9' cy='51.7' r='4.5'/%3E%3Ccircle cx='35.1' cy='49.5' r='4.5'/%3E%3Ccircle cx='35.1' cy='42.5' r='4.5'/%3E%3Ccircle cx='41.9' cy='40.3' r='4.5'/%3E%3C/g%3E%3Ccircle cx='40' cy='46' r='3.3' fill='%23F2C94C'/%3E%3Cg fill='%23B79AE0'%3E%3Ccircle cx='164.0' cy='30.0' r='3.0'/%3E%3Ccircle cx='161.2' cy='33.8' r='3.0'/%3E%3Ccircle cx='156.8' cy='32.4' r='3.0'/%3E%3Ccircle cx='156.8' cy='27.6' r='3.0'/%3E%3Ccircle cx='161.2' cy='26.2' r='3.0'/%3E%3C/g%3E%3Ccircle cx='160' cy='30' r='2.2' fill='%23F2C94C'/%3E%3Cg fill='%23F2A7C3'%3E%3Ccircle cx='127.0' cy='140.0' r='5.2'/%3E%3Ccircle cx='122.2' cy='146.7' r='5.2'/%3E%3Ccircle cx='114.3' cy='144.1' r='5.2'/%3E%3Ccircle cx='114.3' cy='135.9' r='5.2'/%3E%3Ccircle cx='122.2' cy='133.3' r='5.2'/%3E%3C/g%3E%3Ccircle cx='120' cy='140' r='3.9' fill='%23F2C94C'/%3E%3Cg fill='%23E58CB0'%3E%3Ccircle cx='34.0' cy='180.0' r='3.0'/%3E%3Ccircle cx='31.2' cy='183.8' r='3.0'/%3E%3Ccircle cx='26.8' cy='182.4' r='3.0'/%3E%3Ccircle cx='26.8' cy='177.6' r='3.0'/%3E%3Ccircle cx='31.2' cy='176.2' r='3.0'/%3E%3C/g%3E%3Ccircle cx='30' cy='180' r='2.2' fill='%23F2C94C'/%3E%3Cg fill='%239CC8F0'%3E%3Ccircle cx='201.0' cy='190.0' r='3.8'/%3E%3Ccircle cx='197.5' cy='194.8' r='3.8'/%3E%3Ccircle cx='192.0' cy='192.9' r='3.8'/%3E%3Ccircle cx='192.0' cy='187.1' r='3.8'/%3E%3Ccircle cx='197.5' cy='185.2' r='3.8'/%3E%3C/g%3E%3Ccircle cx='196' cy='190' r='2.8' fill='%23F2C94C'/%3E%3C/g%3E%3C/svg%3E");
   --deco-size: 220px;
@@ -372,6 +372,27 @@
   animation: step-print 6.5s linear forwards;
 }
 
+/* Le parchemin au nom de la personne qui marche : il apparaît, la suit, puis s'efface */
+.steps .step-name {
+  opacity: 0;
+  transition: opacity .8s, transform .35s ease-out;
+}
+
+.steps .step-name.on {
+  opacity: .92;
+}
+
+.steps .step-name path {
+  fill: #F3E4BC;
+  stroke: #4A2A18;
+  stroke-width: .8;
+}
+
+.steps .step-name text {
+  font: italic 12px "IM Fell English", Georgia, serif;
+  fill: #3A2414;
+}
+
 /* Le pas s'imprime d'un coup, pâlit, puis s'efface */
 @keyframes step-print {
   0% {
@@ -389,4 +410,25 @@
   100% {
     opacity: 0;
   }
+}
+
+/* Animations des thèmes fêtes et saisons (ui/ambient.js) : calque collé à la zone visible, sous l'arbre */
+.ambient {
+  position: sticky;
+  top: 0;
+  left: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.ambient canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Été et printemps animés : la plage, ou le cerisier et la prairie, remplacent le motif fixe */
+:root[data-theme="ete"][data-ambient="ete"] .canvas,
+:root[data-theme="printemps"][data-ambient="printemps"] .canvas {
+  background-image: radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
 }
