@@ -464,7 +464,7 @@ describe('actes de décès à demander, par commune', () => {
     resetActsHalls();
     directory = async () => ({ ok: false, status: 503 });
     await findActsHall(0);
-    assert.match(html('paneAnalysis'), /ne répond pas/);
+    assert.match(html('paneAnalysis'), /n’a pas pu être joint/);
     resetTownHalls();
     resetActsHalls();
     directory = async () => ({ ok: true, json: async () => ({ results: [{ nom: 'Mairie - Limoges', adresse_courriel: 'pas une adresse' }] }) });

@@ -617,7 +617,7 @@ export const EN = {
   'acts.findHall': 'Find the town hall',
   'acts.hallBusy': 'Searching the service-public.fr directory…',
   'acts.hallNone': 'Town hall not found in the directory.',
-  'acts.hallError': 'The service-public.fr directory is not responding.',
+  'acts.hallError': 'The service-public.fr directory could not be reached. Check your connection; after updating Lignée, restart <code>npm start</code>.',
   'acts.hallSearch': 'Search on service-public.fr',
   'acts.hallSource': 'source: service-public.fr directory',
   'acts.hallForm': 'contact form',

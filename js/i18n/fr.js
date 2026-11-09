@@ -645,7 +645,7 @@ export const FR = {
   'acts.findHall': 'Trouver la mairie',
   'acts.hallBusy': 'Recherche dans l’annuaire de service-public.fr…',
   'acts.hallNone': 'Mairie introuvable dans l’annuaire.',
-  'acts.hallError': 'L’annuaire de service-public.fr ne répond pas.',
+  'acts.hallError': 'L’annuaire de service-public.fr n’a pas pu être joint. Vérifiez votre connexion ; après une mise à jour de Lignée, relancez <code>npm start</code>.',
   'acts.hallSearch': 'Chercher sur service-public.fr',
   'acts.hallSource': 'source : annuaire de service-public.fr',
   'acts.hallForm': 'formulaire de contact',

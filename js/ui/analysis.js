@@ -245,18 +245,18 @@ function mailTo(email, g) {
 function hallBlock(g) {
   const found = halls.get(g.place);
   if (!found) return '';
-  if (found.busy) return `<p class="hint">${t('acts.hallBusy')}</p>`;
+  if (found.busy) return `<p class="hint an-hint">${t('acts.hallBusy')}</p>`;
   const search = `<a href="${esc(townHallSearchUrl(found.city || g.city))}" target="_blank" rel="noopener noreferrer">${t('acts.hallSearch')}</a>`;
-  if (found.error) return `<p class="hint">${t('acts.hallError')} ${search}</p>`;
-  if (found.none) return `<p class="hint">${t('acts.hallNone')} ${search}</p>`;
+  if (found.error) return `<p class="hint an-hint">${t('acts.hallError')} ${search}</p>`;
+  if (found.none) return `<p class="hint an-hint">${t('acts.hallNone')} ${search}</p>`;
   const { hall } = found;
   const link = (url, label) => `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
   const details = [
     hall.email && esc(hall.email), hall.phone && esc(hall.phone), hall.form && link(hall.form, t('acts.hallForm')), hall.site && link(hall.site, t('acts.hallSite')),
   ].filter(Boolean).join(' · ');
-  return `<p class="hint">${esc(hall.name)}${details ? ' : ' + details : ''} <small>(${t('acts.hallSource')})</small></p>`
+  return `<p class="hint an-hint">${esc(hall.name)}${details ? ' : ' + details : ''} <small>(${t('acts.hallSource')})</small></p>`
     + (hall.email ? `<div class="row-btns"><a class="btn small primary" href="${esc(mailTo(hall.email, g))}">${t('acts.mail')}</a></div>`
-      : `<p class="hint">${t('acts.hallNoEmail')}</p>`);
+      : `<p class="hint an-hint">${t('acts.hallNoEmail')}</p>`);
 }
 
 /** Looks up the town hall of group `i` in the service-public.fr directory, then shows how to write to it. */
