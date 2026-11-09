@@ -29,7 +29,7 @@ describe('ville et département', () => {
     assert.deepEqual(cityDepartments('Mézières-sur-Issoire'), ['87']); // commune déléguée de Val-d'Issoire
     assert.deepEqual(cityDepartments('St-Étienne'), ['42']);
     assert.ok(cityDepartments('Saint-Martin').length > 1);
-    assert.deepEqual(cityDepartments('Village de Freyssinet'), []);
+    assert.deepEqual(cityDepartments('Village des Combes'), []);
     assert.deepEqual(['19', '9', 'Corrèze', 'correze', 'Aude', 'Digne', ''].map(departmentCode), ['19', '09', '19', '19', '11', '', '']);
   });
 

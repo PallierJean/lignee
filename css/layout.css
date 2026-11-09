@@ -30,6 +30,18 @@
   display: none;
 }
 
+/* Copyright line under the panels */
+.foot {
+  flex: none;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.foot a {
+  color: inherit;
+}
+
 /* The two panels: tree (.stage) and record/register (.side) */
 .stage,
 .side {

@@ -123,7 +123,7 @@ describe('photos', () => {
   test('formats reconnus', () => {
     assert.ok(isPhotoData('data:image/jpeg;base64,AAAA'));
     assert.ok(!isPhotoData('data:text/html;base64,AAAA'));
-    assert.equal(photoLabel({ surname: 'Tellier', given: 'Jean' }), 'TELLIER-Jean');
+    assert.equal(photoLabel({ surname: 'Garnier', given: 'Paul' }), 'GARNIER-Paul');
     assert.equal(photoLabel({ surname: "d'Aubigné", given: 'Jean-Luc  Émile' }), 'D-AUBIGNÉ-Jean-Luc-Émile');
     assert.equal(photoLabel({ maidenName: 'Faure', given: 'Anne' }), 'FAURE-Anne');
     assert.equal(photoLabel({ given: 'a/b' }), 'a-b');

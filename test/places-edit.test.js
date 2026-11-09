@@ -137,18 +137,18 @@ describe('lieux en trois parties', () => {
   test('vue Lieux : une ligne par lieu, renommage depuis ses trois champs', async () => {
     resetApp();
     resetHistory();
-    loadTree([person('a', { birthPlace: 'Villagr de Freyssinet' }), person('b', { birthPlace: 'Village de Freyssinet' })]);
+    loadTree([person('a', { birthPlace: 'Villagr des Combes' }), person('b', { birthPlace: 'Village des Combes' })]);
     S.focus = 'a';
     A.setTab('analysis');
     A.setAnalysisView('places');
-    assert.match(html('paneAnalysis'), /Villagr de Freyssinet/);
+    assert.match(html('paneAnalysis'), /Villagr des Combes/);
     assert.match(html('paneAnalysis'), /data-act="place-rename"/);
-    const i = placesByDepartment().findIndex((u) => u.name === 'Villagr de Freyssinet');
-    el(`pl-${i}-city`).value = 'Village de Freyssinet';
+    const i = placesByDepartment().findIndex((u) => u.name === 'Villagr des Combes');
+    el(`pl-${i}-city`).value = 'Village des Combes';
     el(`pl-${i}-hamlet`).value = '';
     el(`pl-${i}-dept`).value = '19';
     const { placeRowValue } = await import('../js/ui/analysis.js');
-    await A.renamePlace('Villagr de Freyssinet', placeRowValue(i));
-    assert.equal(S.people.get('a').birthPlace, 'Village de Freyssinet (19)');
+    await A.renamePlace('Villagr des Combes', placeRowValue(i));
+    assert.equal(S.people.get('a').birthPlace, 'Village des Combes (19)');
   });
 });

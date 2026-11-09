@@ -2,6 +2,9 @@
 import { s, g, de, art, kinFr } from './grammar.js';
 
 export const FR = {
+  // Footer
+  'foot.copyright': '© 2026 Jean Pallier · Logiciel libre sous licence <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">GNU AGPL 3.0</a> · <a href="https://github.com/PallierJean/lignee" target="_blank" rel="noopener noreferrer">Code source</a>',
+
   // Language
   'lang.switch': 'EN',
   'lang.switchTitle': 'Switch to English',

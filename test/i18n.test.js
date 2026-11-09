@@ -63,3 +63,12 @@ test('clés construites : situations familiales et qualificatifs de date', async
   ];
   for (const lang of ['fr', 'en']) assert.deepEqual(keys.filter((k) => !(k in DICT[lang])), [], lang);
 });
+
+test('pied de page : copyright, licence et lien vers le code source (AGPL)', () => {
+  const foot = read('index.html').match(/<footer class="foot"[^>]*>(.*?)<\/footer>/s)[1];
+  assert.equal(foot, DICT.fr['foot.copyright'], 'le HTML reprend le texte français');
+  for (const lang of ['fr', 'en']) {
+    assert.match(DICT[lang]['foot.copyright'], /© \d{4} Jean Pallier/, lang);
+    assert.match(DICT[lang]['foot.copyright'], /href="https:\/\/github\.com\/PallierJean\/lignee"/, lang);
+  }
+});
