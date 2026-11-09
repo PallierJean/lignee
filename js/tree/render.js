@@ -32,6 +32,18 @@ const EMPTY_SVG = '<svg viewBox="0 0 120 70" aria-hidden="true">'
 const MARRIED_SVG = '<svg class="wed" viewBox="0 0 20 12" aria-hidden="true">'
   + `<path d="${RINGS_PATH}" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
 
+const SABERS = ['green', 'blue', 'red'];
+
+/**
+ * Laser sword of a person, in the Star Wars theme (css/themes.css): its colour and its hilt, always
+ * the same for the same person, drawn from the id. The focus person's one is purple, in CSS.
+ */
+export function saberOf(id) {
+  let h = 0;
+  for (const c of String(id)) h = (h * 31 + c.codePointAt(0)) >>> 0;
+  return { saber: SABERS[h % 3], hilt: String(Math.floor(h / 3) % 6) };
+}
+
 /** Highlighting a kinship link takes precedence over the line halo. */
 const lineShown = () => S.line && !S.kinShow;
 
@@ -43,6 +55,7 @@ function fillCard(el, n) {
     + (lineShown() && n.sosa && !n.focus ? ' is-line' : '') + (names.maiden ? ' has-maiden' : '');
   el.dataset.act = 'person-open';
   el.dataset.id = n.id;
+  Object.assign(el.dataset, saberOf(n.id));
   delete el.dataset.rel;
   delete el.dataset.of;
   const dates = cardDates(p);
@@ -64,6 +77,8 @@ function fillPlaceholder(el, n) {
   el.dataset.rel = n.rel;
   el.dataset.of = n.of;
   delete el.dataset.id;
+  delete el.dataset.saber;
+  delete el.dataset.hilt;
   const of = P(n.of);
   const label = t(n.rel === 'spouse'
     ? (of.sex === 'M' ? 'addSpouseF' : of.sex === 'F' ? 'addSpouseM' : 'addSpouse')
