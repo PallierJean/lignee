@@ -374,7 +374,10 @@ describe('animations des thèmes fêtes et saisons', () => {
       await new Promise((r) => setTimeout(r, 80));
       assert.equal(sky.cruiser, null);
       // On the ice: the walker fires bursts of heavy green bolts at the speeders
-      Object.assign(sky, { nextBurst: 0, burst: null, iceBolts: [] });
+      // Known state: the walker standing in sight, no cable, every speeder flying (chance may have
+      // brought it down or shot them all during the previous steps)
+      Object.assign(sky, { nextBurst: 0, burst: null, iceBolts: [], fall: null, tow: null, nextTow: Infinity, walkStart: Date.now() - 4000 });
+      for (const p of sky.speeders) p.down = 0;
       await new Promise((r) => setTimeout(r, 120));
       assert.ok(sky.iceBolts.some((b) => b.heavy && b.color === '#7CFF6B'), 'the walker fires');
       // The front line: the turrets fire orange bolts at the walkers, blasts throw up snow
@@ -418,6 +421,7 @@ describe('animations des thèmes fêtes et saisons', () => {
       assert.equal(box.children.length, 0);
     } finally {
       Math.random = random;
+      await setAmbient('auto'); // even after a failure: an animation left running would keep the tests from ending
       Object.assign(document, { createElement: saved.create, getElementById: saved.byId });
     }
   });
