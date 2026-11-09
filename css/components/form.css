@@ -223,12 +223,6 @@
   margin-left: auto;
 }
 
-@media (max-width: 900px) {
-  .form-actions {
-    bottom: env(safe-area-inset-bottom, 0px);
-  }
-}
-
 @media (max-width: 480px) {
   .row2 {
     grid-template-columns: 1fr;

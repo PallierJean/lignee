@@ -272,12 +272,6 @@
   margin: 0;
 }
 
-@media (max-width: 900px) {
-  .pane {
-    overflow: visible;
-  }
-}
-
 @media (max-width: 480px) {
   .facts > div {
     grid-template-columns: 98px minmax(0, 1fr);
