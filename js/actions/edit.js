@@ -17,6 +17,8 @@ import { photoFromFile, DOCUMENT_SIDE } from '../utils/image.js';
 import { cropPhoto } from '../ui/crop.js';
 import { askLeave, closeLeave } from '../ui/leave-dlg.js';
 import { showSide, setFocus, setTab } from './view.js';
+import { openMedia } from '../ui/media.js';
+import { mediaGroups } from '../ui/record.js';
 
 /** Edits person `id` from outside their record (person dialog). */
 export function editPerson(id) {
@@ -282,6 +284,10 @@ export async function submitEdit() {
     button.textContent = t('f.saving');
   }
 
+  // Images added in this form: once saved, the viewer opens on them to identify the people
+  const had = new Set(e.id ? mediaList(P(e.id)).map((m) => m.id) : []);
+  const added = e.media.filter((x) => !x.removed && !had.has(x.id)).map((x) => x.id);
+
   beginAction(e.id ? 'hist.edit' : 'hist.add');
   try {
     const id = await inBatch(() => savePerson(e));
@@ -294,6 +300,10 @@ export async function submitEdit() {
     savePrefs();
     afterData();
     toast(t(e.id ? 'f.saved' : 'f.added'));
+    if (added.length && S.canWrite && mediaList(P(id)).some((m) => m.id === added[0])) {
+      mediaGroups.set('new:' + id, added.map((m) => ({ owner: id, id: m })));
+      openMedia(id, added[0], 'new:' + id);
+    }
   } catch (err) {
     reportError(err);
     commitAction();

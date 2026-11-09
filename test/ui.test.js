@@ -6,7 +6,7 @@ import { renderHeader } from '../js/ui/header.js';
 import { renderAll, afterData, renderRecord } from '../js/ui/render.js';
 import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
 import {
-  openMedia, closeMedia, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption,
+  openMedia, closeMedia, stepMedia, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption,
 } from '../js/ui/media.js';
 import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind } from '../js/ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from '../js/ui/spouse-pick.js';
@@ -388,6 +388,41 @@ describe('fiche : événements, sources, galerie', () => {
     editCaption(true);
     assert.doesNotMatch(html('mediaCard'), /id="mdEditNote"/);
     A.cancelEdit();
+    closeMedia();
+  });
+
+  test('visionneuse : image précédente et suivante, dans l’ordre de la galerie, au bouton ou au clavier', () => {
+    loadTree([
+      person('a', { given: 'Anne', surname: 'Roux', sex: 'F', media: [
+        { id: 'm1', photo: 'data:image/jpeg;base64,AAAA', title: 'Noce' },
+        { id: 'm2', photo: 'data:image/jpeg;base64,AAAA', title: 'Baptême' },
+      ] }),
+      person('b', { given: 'Paul', surname: 'Blanc', sex: 'M', media: [{ id: 'm3', photo: 'data:image/jpeg;base64,AAAA', title: 'Pêche', tags: [{ id: 'a', x: 5, y: 5 }] }] }),
+    ]);
+    S.focus = 'a';
+    S.tab = 'record';
+    renderAll();
+    assert.match(html('paneRecord'), /data-act="media-open" data-owner="a" data-id="m1" data-group="person:a"/);
+    openMedia('a', 'm1', 'person:a');
+    assert.match(html('mediaCard'), /<span class="n">1 \/ 3<\/span>/, 'ses images et celles où elle est identifiée');
+    assert.ok(stepMedia(1));
+    assert.match(html('mediaCard'), /Baptême.*2 \/ 3/s);
+    stepMedia(1);
+    assert.match(html('mediaCard'), /Pêche.*3 \/ 3/s);
+    stepMedia(1);
+    assert.match(html('mediaCard'), /Noce.*1 \/ 3/s, 'on repart du début');
+    stepMedia(-1);
+    assert.match(html('mediaCard'), /Pêche/, 'et à l’envers');
+    // Pas pendant qu'un repère attend sa personne
+    const pic = { querySelector: () => ({ getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }) }) };
+    placePin(pic, { target: { closest: () => null }, clientX: 10, clientY: 10 });
+    assert.equal(stepMedia(1), false);
+    cancelPin();
+    closeMedia();
+    // Ouverte hors d'une galerie, ou avec une seule image : pas de navigation
+    openMedia('b', 'm3');
+    assert.doesNotMatch(html('mediaCard'), /media-step/);
+    assert.equal(stepMedia(1), false);
     closeMedia();
   });
 
