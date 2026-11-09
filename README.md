@@ -69,6 +69,8 @@ Safari). C'est tout.
 - Votre arbre est enregistré **dans votre navigateur**, sur cet ordinateur uniquement.
 - Si vous videz les données de navigation ou changez d'ordinateur, il n'y sera plus :
   **exportez une sauvegarde de temps en temps** et gardez le fichier en lieu sûr.
+- Pour le retrouver partout et ne jamais le perdre, reliez-le à un dépôt GitHub gratuit :
+  suivez le guide [Garder son arbre sur GitHub](docs/guide-github.md).
 
 ### Version sur votre ordinateur : vos arbres et vos photos dans des fichiers
 

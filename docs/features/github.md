@@ -2,6 +2,8 @@
 
 [← Documentation technique](../DEVELOPMENT.md)
 
+Pas à pas pour les utilisateurs : [Garder son arbre sur GitHub](../guide-github.md).
+
 « Importer » ouvre aussi un dépôt GitHub, avec un seul bouton « Connecter le dépôt ». Il ouvre dans un nouvel arbre, sans toucher à l'arbre ouvert, la sauvegarde d'un dépôt contenant une sauvegarde `.json` et ses photos, disposées
 comme dans `data/arbres/` (`principal.json` et `principal/photos/`) ou à côté du fichier (`photos/`). Les
 photos sont intégrées à l'arbre, en data URL. Un dépôt public se lit sans rien de plus. Un dépôt privé demande un
