@@ -55,6 +55,31 @@ test('gallery: a refused file is reported, the others are added', async () => {
   assert.equal(S.edit.media[0].photo, 'data:image/jpeg;base64,IMG');
 });
 
+test('gallery: once saved, the viewer opens on the new images to identify the people', async () => {
+  const { closeMedia } = await import('../js/ui/media.js');
+  document.getElementById('mediaDlg').hidden = true;
+  /** The form's name fields, as the page would hold them. */
+  const named = () => {
+    document.getElementById('f-given').value = 'Anne';
+    document.getElementById('f-surname').value = 'Roux';
+  };
+  await A.addDraftMedia([png('noce.png'), png('bapteme.png')]);
+  named();
+  await A.submitEdit();
+  assert.equal(document.getElementById('mediaDlg').hidden, false, 'the viewer opens');
+  const card = document.getElementById('mediaCard').innerHTML;
+  assert.match(card, /<img src="data:image\/jpeg;base64,IMG"/);
+  assert.match(card, /<span class="n">1 \/ 2<\/span>/, 'only the new images');
+  assert.match(card, /cliquez sur son visage/, 'ready to identify');
+  closeMedia();
+  // Saved again with no new image: the viewer stays closed
+  A.startEdit('a');
+  named();
+  await A.submitEdit();
+  assert.equal(S.edit, null, 'saved');
+  assert.equal(document.getElementById('mediaDlg').hidden, true);
+});
+
 test('gallery: nothing is added once the form was closed or reopened during the load', async () => {
   let release;
   fakeImages(() => new Promise((r) => { release = r; }));
