@@ -52,7 +52,11 @@ lignee/
 │   ├── state.js                État partagé, préférences d'affichage
 │   ├── events.js               Écoute des clics (attribut data-act) et saisies
 │   ├── i18n.js                 Textes en français et en anglais, bouton FR / EN
-│   ├── actions.js              Actions : naviguer, ajouter, modifier, supprimer
+│   ├── actions.js              Actions, regroupées ci-dessous
+│   ├── actions/
+│   │   ├── view.js             Personne centrale, onglets, générations, zoom, thème, annuler
+│   │   ├── edit.js             Formulaire, enregistrement, suppression, famille d'exemple
+│   │   └── analysis.js         Parenté, frise, doublons, lieux, décès INSEE
 │   ├── utils/
 │   │   ├── dom.js              Sélection, échappement HTML
 │   │   ├── helpers.js          Identifiants, recherche sans accents, file d'attente
