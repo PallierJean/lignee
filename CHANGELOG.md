@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.14](https://github.com/PallierJean/lignee/compare/v1.20.13...v1.20.14) (2026-11-09)
+
+### Bug Fixes
+
+* Write English cousin degrees with the right ordinal ([7ad4c75](https://github.com/PallierJean/lignee/commit/7ad4c75f35cfb51cc4df3d8226f4d5c30d84020e))
+
+---
+
+### Corrections
+
+* Écrire en anglais le degré des cousins avec le bon ordinal ([7ad4c75](https://github.com/PallierJean/lignee/commit/7ad4c75f35cfb51cc4df3d8226f4d5c30d84020e))
+
 ## [1.20.13](https://github.com/PallierJean/lignee/compare/v1.20.12...v1.20.13) (2026-11-09)
 
 ### Code Refactoring
