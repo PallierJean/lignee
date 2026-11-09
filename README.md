@@ -18,7 +18,7 @@ une famille d'exemple vous attend.
 - **Prêt en une minute.** Ouvrez la page et commencez à saisir. Pas d'inscription, rien à
   configurer.
 - **Compatible avec tout.** Importez et exportez en GEDCOM, le format standard des logiciels de
-  généalogie, ou en CSV pour un tableur.
+  généalogie, et exportez la liste des personnes en CSV pour un tableur.
 - **Une sauvegarde en un seul fichier.** Le fichier `.json` garde tout votre arbre : fiches,
   unions, sources et photos. Sans photos, il est très léger : moins de 10 Ko pour la famille
   d'exemple (16 personnes), quelques centaines de Ko pour un arbre de plusieurs centaines de
