@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.23.0](https://github.com/PallierJean/lignee/compare/v1.22.0...v1.23.0) (2026-11-09)
+
+### Features
+
+* List the death certificates to request, grouped by town ([8ee0da8](https://github.com/PallierJean/lignee/commit/8ee0da8f522b6ab9de67424d59cdaca3f1eed1d7))
+
+---
+
+### Nouveautés
+
+* Liste des actes de décès à demander, regroupés par commune ([8ee0da8](https://github.com/PallierJean/lignee/commit/8ee0da8f522b6ab9de67424d59cdaca3f1eed1d7))
+
 ## [1.22.0](https://github.com/PallierJean/lignee/compare/v1.21.2...v1.22.0) (2026-11-09)
 
 ### Features
