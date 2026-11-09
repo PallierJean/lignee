@@ -129,9 +129,9 @@ describe('photos', () => {
   test('keepPhotos garde une photo retirée (Annuler) ; le balayage efface ce qui n’est plus cité', async () => {
     const post = async () => (await (await api('t9/photos', { method: 'POST', body: JSON.stringify({ label: 'A', data: PNG }) })).json()).photo;
     const [kept, document, dropped] = [await post(), await post(), await post()];
-    const [inGallery, itsBack] = [await post(), await post()];
-    await put('t9', backup('X', [{ id: 'p', photo: kept, sources: [{ id: 's', photo: document }], media: [{ id: 'm', photo: inGallery, back: itsBack }] }, { id: 'q', photo: dropped }]));
-    const res = await api('t9?keepPhotos=1', { method: 'PUT', body: backup('X', [{ id: 'p', photo: kept, sources: [{ id: 's', photo: document }], media: [{ id: 'm', photo: inGallery, back: itsBack }] }]) });
+    const [inGallery, itsBack, docBack] = [await post(), await post(), await post()];
+    await put('t9', backup('X', [{ id: 'p', photo: kept, sources: [{ id: 's', photo: document, back: docBack }], media: [{ id: 'm', photo: inGallery, back: itsBack }] }, { id: 'q', photo: dropped }]));
+    const res = await api('t9?keepPhotos=1', { method: 'PUT', body: backup('X', [{ id: 'p', photo: kept, sources: [{ id: 's', photo: document, back: docBack }], media: [{ id: 'm', photo: inGallery, back: itsBack }] }]) });
     assert.equal(res.status, 204);
     assert.ok(await exists(path.join(dataDir, 't9', dropped)), 'gardée pour Annuler');
     assert.equal((await api('t9/photos/sweep', { method: 'POST' })).status, 204);
@@ -140,6 +140,7 @@ describe('photos', () => {
     assert.ok(await exists(path.join(dataDir, 't9', document)), 'document d’une source conservé');
     assert.ok(await exists(path.join(dataDir, 't9', inGallery)), 'image de la galerie conservée');
     assert.ok(await exists(path.join(dataDir, 't9', itsBack)), 'et son verso');
+    assert.ok(await exists(path.join(dataDir, 't9', docBack)), 'verso du document d’une source');
   });
 
   test('suppression de l’arbre : ses photos aussi', async () => {

@@ -219,6 +219,13 @@ function sourceRows(e) {
           ${x.photo ? `<button class="link" type="button" data-act="src-photo-remove" data-i="${i}">${t('f.photoRemove')}</button>` : ''}
         </div>
       </div>
+      ${x.photo ? `<div class="photofld src-back">
+        ${x.back ? `<img class="photo" src="${esc(photoSrc(x.back))}" alt="${t('f.medBack')}">` : ''}
+        <div class="photobtns">
+          <label class="btn small"><input type="file" accept="image/*" class="sr" data-src-back="${i}">${t(x.back ? 'f.medBackChange' : 'f.medBackAdd')}</label>
+          ${x.back ? `<button class="link" type="button" data-act="src-back-remove" data-i="${i}">${t('f.medBackRemove')}</button>` : ''}
+        </div>
+      </div>` : ''}
       <button class="link" type="button" data-act="src-remove" data-i="${i}">${t('f.srcRemove')}</button>
     </div>`)).join('');
 }

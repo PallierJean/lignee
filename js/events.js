@@ -246,6 +246,7 @@ const CLICK_ACTIONS = {
   'src-add': () => A.addDraftSource(),
   'med-remove': (el) => A.removeDraftMedia(+el.dataset.i),
   'med-back-remove': (el) => A.removeDraftMediaBack(+el.dataset.i),
+  'src-back-remove': (el) => A.removeDraftSourceBack(+el.dataset.i),
   'src-remove': (el) => A.removeDraftSource(+el.dataset.i),
   'src-photo-remove': (el) => A.removeDraftSourcePhoto(+el.dataset.i),
 
@@ -416,6 +417,7 @@ export function bindEvents() {
     if (el.id === 'f-photo' && el.files[0]) A.setDraftPhoto(el.files[0]);
     if (el.matches('[data-src-photo]') && el.files[0]) A.setDraftSourcePhoto(+el.dataset.srcPhoto, el.files[0]);
     if (el.matches('[data-med-back]') && el.files[0]) A.setDraftMediaBack(+el.dataset.medBack, el.files[0]);
+    if (el.matches('[data-src-back]') && el.files[0]) A.setDraftSourceBack(+el.dataset.srcBack, el.files[0]);
     if (el.matches('[id^="ev-type-"]')) A.refreshDraft();
     if (el.id === 'f-media' && el.files.length) A.addDraftMedia([...el.files]);
     if (el.id === 'tagPerson' && el.value) addTag(el.value);

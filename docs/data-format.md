@@ -190,6 +190,7 @@ décès. Une inhumation marque tout de même la personne comme décédée. Le ch
 | `ref` | `string` | | Cote, numéro d'acte | `PAGE` |
 | `note` | `string` | | Note | `NOTE` |
 | `photo` | `Image` | | Document, 1400 pixels de côté au plus | non exporté |
+| `back` | `Image` | | Verso du document (second côté d'un contrat de mariage, d'un acte) ; seulement avec `photo` | non exporté |
 
 `kind` : `birth`, `baptism`, `marriage`, `death`, `burial`, `census`, `military`, `notary`,
 `family`, `book`, `web`, `other`.
