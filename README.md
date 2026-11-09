@@ -58,16 +58,74 @@ une famille d'exemple vous attend.
 
 ## Démarrer
 
-**En ligne** : ouvrez <https://pallierjean.github.io/lignee/>. Votre arbre est gardé dans votre
-navigateur : pensez à exporter une sauvegarde de temps en temps.
+Lignée s'utilise de deux façons. Choisissez celle qui vous convient : vous pourrez passer de
+l'une à l'autre plus tard grâce à l'export et à l'import d'une sauvegarde.
 
-**Sur votre ordinateur**, pour garder vos arbres et vos photos dans des fichiers (Node.js 26 ou plus) :
+### Version en ligne : rien à installer
+
+Ouvrez <https://pallierjean.github.io/lignee/> dans votre navigateur (Firefox, Chrome, Edge ou
+Safari). C'est tout.
+
+- Votre arbre est enregistré **dans votre navigateur**, sur cet ordinateur uniquement.
+- Si vous videz les données de navigation ou changez d'ordinateur, il n'y sera plus :
+  **exportez une sauvegarde de temps en temps** et gardez le fichier en lieu sûr.
+
+### Version sur votre ordinateur : vos arbres et vos photos dans des fichiers
+
+Lignée tourne alors sur votre machine, et vos arbres et vos photos sont rangés dans le dossier
+`data/` de Lignée, comme des fichiers ordinaires que vous pouvez copier et sauvegarder.
+Cela demande une petite installation, à faire une seule fois.
+
+#### 1. Installer Node.js (version 26 ou plus)
+
+Node.js est le programme qui fait tourner Lignée sur votre ordinateur. Il installe aussi
+`npm`, la commande qui lance Lignée.
+
+- **Windows et macOS** : allez sur <https://nodejs.org/fr/download>, téléchargez l'installateur
+  de la version **26** (ou plus récente), ouvrez-le et cliquez sur « Suivant » jusqu'au bout
+  en gardant les choix proposés.
+- **Linux** : les versions fournies par les distributions sont souvent trop anciennes.
+  Suivez la méthode « nvm » indiquée sur <https://nodejs.org/fr/download>, puis tapez
+  `nvm install 26`.
+
+Pour vérifier, ouvrez un terminal :
+
+- Windows : touche Windows, tapez `powershell`, puis Entrée ;
+- macOS : Cmd + Espace, tapez `Terminal`, puis Entrée ;
+- Linux : Ctrl + Alt + T.
+
+Tapez ensuite ces deux commandes, chacune suivie d'Entrée :
+
+```bash
+node --version
+npm --version
+```
+
+La première doit afficher `v26` ou un nombre plus grand (par exemple `v26.1.0`), la seconde un
+numéro de version quelconque. Si le terminal répond « commande introuvable », fermez-le,
+rouvrez-le et réessayez ; au besoin, redémarrez l'ordinateur.
+
+#### 2. Télécharger Lignée
+
+Sur <https://github.com/PallierJean/lignee>, cliquez sur le bouton vert **Code**, puis sur
+**Download ZIP**. Décompressez le fichier téléchargé (clic droit, « Extraire tout » sous
+Windows ; double-clic sous macOS), puis placez le dossier obtenu où vous voulez, par exemple
+dans vos Documents.
+
+#### 3. Lancer Lignée
+
+Dans le terminal, placez-vous dans le dossier de Lignée. Le plus simple : tapez `cd` suivi
+d'une espace, faites glisser le dossier dans la fenêtre du terminal, puis appuyez sur Entrée.
+Tapez ensuite :
 
 ```bash
 npm start
 ```
 
-Puis ouvrez <http://localhost:8000>.
+Ouvrez enfin <http://localhost:8000> dans votre navigateur. Laissez le terminal ouvert tant que
+vous utilisez Lignée ; pour l'arrêter, revenez dans le terminal et appuyez sur Ctrl + C.
+
+Les fois suivantes, il suffit de refaire l'étape 3.
 
 ## Pour les développeurs
 
