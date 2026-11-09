@@ -310,8 +310,7 @@ function appearanceMenu() {
 
 const DIALOGS = () => [
   { id: 'leaveDlg', close: () => A.leaveEdit(false) },
-  // Doesn't block the shortcuts yet (as before this list existed)
-  { id: 'cropDlg', close: () => closeCrop(false), isOpen: cropOpen, menu: true },
+  { id: 'cropDlg', close: () => closeCrop(false), isOpen: cropOpen },
   appearanceMenu(),
   { id: 'photoZoom', close: closePhotoZoom },
   { id: 'mediaDlg', close: closeMedia, backdrop: true },
