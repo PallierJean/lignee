@@ -7,7 +7,7 @@ import { $, esc } from '../utils/dom.js';
 import { openTree, createTree, renameTree, deleteTree } from '../services/storage.js';
 import { afterData } from './render.js';
 import { renderHeader } from './header.js';
-import { toast } from './toast.js';
+import { toast, reportError } from './toast.js';
 import { t } from '../i18n.js';
 
 
@@ -124,6 +124,7 @@ export async function newTree(name) {
   try {
     id = await createTree(name);
   } catch (e) {
+    reportError(e);
     return null;
   }
   await switchTree(id);
@@ -146,7 +147,7 @@ export async function submitRename(id, name) {
   try {
     await renameTree(id, name);
   } catch (e) {
-    /* message already shown */
+    reportError(e);
   }
   S.treeEdit = null;
   renderTrees();
@@ -163,6 +164,7 @@ export async function confirmDeleteTree(id) {
   try {
     await deleteTree(id);
   } catch (e) {
+    reportError(e);
     renderTrees();
     return;
   }

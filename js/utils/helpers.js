@@ -21,3 +21,9 @@ export async function pool(items, limit, worker) {
   });
   await Promise.all(runners);
 }
+
+/** Marks an error whose message was already shown, so it isn't reported twice. Returns it. */
+export function markReported(e) {
+  if (e && typeof e === 'object') e.reported = true;
+  return e;
+}

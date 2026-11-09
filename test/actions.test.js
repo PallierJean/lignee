@@ -264,6 +264,34 @@ describe('formulaire', () => {
     assert.equal(S.people.size, ex.people.length + 1);
   });
 
+  test('failed save: a bug gets a message, a storage error is not reported twice', async () => {
+    const quiet = console.error;
+    console.error = () => {};
+    const set = localStorage.setItem;
+    try {
+      S.mode = 'local';
+      // A bug while saving (here, storage throwing a plain error): generic message
+      A.startNew();
+      fill({ 'f-given': 'Lou', 'f-surname': 'Noir' });
+      S.people.set = () => { throw new TypeError('boom'); };
+      await A.submitEdit();
+      delete S.people.set;
+      assert.match(el('toast').textContent, /erreur inattendue/);
+      assert.equal(S.busy, false);
+      // The browser is full: only the storage's own message
+      localStorage.setItem = () => { throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' }); };
+      fill({ 'f-given': 'Lou', 'f-surname': 'Noir' });
+      await A.submitEdit();
+      assert.match(el('toast').textContent, /plus de place/);
+      assert.ok(S.edit, 'the form stays open, nothing was saved');
+      assert.equal([...S.people.values()].some((p) => p.given === 'Lou'), false);
+    } finally {
+      localStorage.setItem = set;
+      console.error = quiet;
+      S.edit = null;
+    }
+  });
+
   test('dates en toutes lettres dans le formulaire ; la saisie d’origine reste si le jour ne change pas', async () => {
     loadTree([person('a', { given: 'Ana', surname: 'Roux', birthDate: '01/01/1900', deathDate: '1970' })]);
     S.focus = 'a';

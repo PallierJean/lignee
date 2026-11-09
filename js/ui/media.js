@@ -9,7 +9,7 @@ import { P, given, surname, maiden, fullName, lifeYears, mediaList, photoSrc, pe
 import { opUpdate, beginAction, commitAction } from '../services/storage.js';
 import { afterData } from './render.js';
 import { personOptions } from './form.js';
-import { toast } from './toast.js';
+import { toast, reportError } from './toast.js';
 
 let current = null;  // { owner, id }: photo shown
 let pin = null;      // { x, y }: marker waiting for a person
@@ -133,6 +133,8 @@ export async function saveCaption() {
   beginAction('hist.caption');
   try {
     await opUpdate('people', current.owner, { media: mediaList(owner).map((x) => (x.id === current.id ? { ...x, ...patch } : x)) });
+  } catch (e) {
+    reportError(e);
   } finally {
     commitAction();
     afterData();
@@ -175,6 +177,8 @@ async function saveTags(tags) {
   beginAction('hist.tag');
   try {
     await opUpdate('people', current.owner, { media: mediaList(owner).map((m) => (m.id === current.id ? { ...m, tags } : m)) });
+  } catch (e) {
+    reportError(e);
   } finally {
     commitAction();
     afterData();
