@@ -276,6 +276,13 @@ describe('pluie du thème Matrix', () => {
 });
 
 describe('animations des thèmes fêtes et saisons', () => {
+  test('every animated theme has its scene, loaded on demand', async () => {
+    const { SCENES } = await import('../js/ui/ambient/scenes.js');
+    const src = (await import('node:fs')).readFileSync(new URL('../js/ui/ambient.js', import.meta.url), 'utf8');
+    const animated = JSON.parse(/const ANIMATED = (\[[^\]]*\])/.exec(src)[1].replace(/'/g, '"'));
+    assert.deepEqual(animated.sort(), Object.keys(SCENES).sort());
+  });
+
   test('chaque thème a sa scène ; une seule animation à la fois ; arrêtée hors de ces thèmes', async () => {
     const { setAmbient, ambientState } = await import('../js/ui/ambient.js');
     const calls = [];
@@ -302,25 +309,25 @@ describe('animations des thèmes fêtes et saisons', () => {
     Object.assign(document, { createElement: make, getElementById: (id) => (id === 'canvas' ? box : saved.byId(id)) });
     const random = Math.random;
     try {
-      const drawn = (theme) => {
+      const drawn = async (theme) => {
         calls.length = 0;
-        setAmbient(theme);
+        await setAmbient(theme);
         return new Set(calls.map((c) => c[0]));
       };
       // Noël : flocons et guirlande
-      const noel = drawn('noel');
+      const noel = await drawn('noel');
       assert.ok(noel.has('arc') && noel.has('quadraticCurveTo') && noel.has('ellipse'));
-      setAmbient('noel'); // même thème : une seule animation
+      await setAmbient('noel'); // même thème : une seule animation
       assert.equal(box.children.length, 1);
       assert.equal(box.children[0].className, 'ambient');
       // Printemps : pétales (courbes) ; automne : arbres (branches) et feuilles ; été : la mer et ses vagues
-      assert.ok(drawn('printemps').has('bezierCurveTo'));
-      const automne = drawn('automne');
+      assert.ok((await drawn('printemps')).has('bezierCurveTo'));
+      const automne = await drawn('automne');
       assert.ok(automne.has('bezierCurveTo') && automne.has('lineTo'));
-      const ete = drawn('ete');
+      const ete = await drawn('ete');
       assert.ok(ete.has('lineTo') && ete.has('closePath') && ete.has('arc'), 'mer, rivage et baigneurs');
       // Grand Line : ciel, mer, navire (coque, voile, pavillon) et nuages
-      const sea = drawn('grandline');
+      const sea = await drawn('grandline');
       assert.ok(sea.has('fillRect') && sea.has('quadraticCurveTo') && sea.has('arc') && sea.has('ellipse'), 'ciel, mer et navire');
       assert.ok(calls.some((c) => c[0] === 'fillText' && c[1] === 'MARINE'), 'la marine le poursuit');
       // Le navire pirate au milieu de la toile : la marine tire, le vent emporte le chapeau
@@ -328,8 +335,8 @@ describe('animations des thèmes fêtes et saisons', () => {
       const from = now();
       Date.now = () => 650 / 0.035 + now() - from; // (instant × vitesse) modulo la traversée : x = 450
       try {
-        setAmbient('auto');
-        drawn('grandline');
+        await setAmbient('auto');
+        await drawn('grandline');
         const state = ambientState();
         Object.assign(state, { nextShot: 0, nextBlow: 0 });
         await new Promise((r) => setTimeout(r, 200));
@@ -342,10 +349,15 @@ describe('animations des thèmes fêtes et saisons', () => {
       }
       // Halloween : chauves-souris et fantômes lâchés au hasard (ici, à coup sûr)
       Math.random = () => 0.001;
-      assert.ok(drawn('halloween').has('quadraticCurveTo'));
+      assert.ok((await drawn('halloween')).has('quadraticCurveTo'));
       Math.random = random;
       assert.equal(box.children.length, 1, 'toujours un seul calque');
-      setAmbient('auto');
+      await setAmbient('auto');
+      assert.equal(box.children.length, 0);
+      // Another theme chosen while the first one loads: only the last one runs
+      const late = setAmbient('noel');
+      await setAmbient('auto');
+      await late;
       assert.equal(box.children.length, 0);
     } finally {
       Math.random = random;
