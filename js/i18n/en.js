@@ -2,6 +2,7 @@
 import { sEn, g, kinEn } from './grammar.js';
 
 export const EN = {
+  'foot.copyright': '© 2026 Jean Pallier · Free software under the <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">GNU AGPL 3.0</a> · <a href="https://github.com/PallierJean/lignee" target="_blank" rel="noopener noreferrer">Source code</a>',
   'lang.switch': 'FR',
   'lang.switchTitle': 'Passer en français',
   'locale': 'en-GB',
