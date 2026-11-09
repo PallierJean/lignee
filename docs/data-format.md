@@ -202,6 +202,7 @@ Les sources d'un mariage sont gardées sur la fiche d'un conjoint et exportées 
 | --- | --- | --- | --- |
 | `id` | `Id` | ✅ | Identifiant, unique sur la fiche |
 | `photo` | `Image` | ✅ | L'image |
+| `back` | `Image` | | Verso de l'image (second côté d'un contrat, dos d'une photo annoté) ; les personnes s'identifient sur le recto |
 | `title` | `string` | | Titre |
 | `date` | `Date` | | Date |
 | `note` | `string` | | Légende |

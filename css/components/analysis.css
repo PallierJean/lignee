@@ -653,6 +653,26 @@
   border-color: var(--accent);
 }
 
+/* Thumbnail with a back: R/V in the top corner */
+.med-rv {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  padding: 0 4px;
+  font-family: var(--f-mono);
+  font-size: .625rem;
+  line-height: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+/* Viewer: front / back of a two-sided image */
+.media-sides {
+  margin: 0 0 8px;
+}
+
 /* Thumbnail: number of people identified, in the corner */
 .med-n {
   position: absolute;

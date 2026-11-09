@@ -15,7 +15,7 @@ import {
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
-  openMedia, closeMedia, stepMedia, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption,
+  openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption,
 } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
@@ -198,6 +198,7 @@ const CLICK_ACTIONS = {
   // Gallery
   'media-open': (el) => openMedia(el.dataset.owner, el.dataset.id, el.dataset.group),
   'media-step': (el) => stepMedia(Number(el.dataset.d)),
+  'media-side': (el) => showMediaSide(el.dataset.back === '1'),
   'media-close': () => closeMedia(),
   'media-person': (el) => {
     closeMedia();
@@ -244,6 +245,7 @@ const CLICK_ACTIONS = {
   'ev-remove': (el) => A.removeDraftEvent(+el.dataset.i),
   'src-add': () => A.addDraftSource(),
   'med-remove': (el) => A.removeDraftMedia(+el.dataset.i),
+  'med-back-remove': (el) => A.removeDraftMediaBack(+el.dataset.i),
   'src-remove': (el) => A.removeDraftSource(+el.dataset.i),
   'src-photo-remove': (el) => A.removeDraftSourcePhoto(+el.dataset.i),
 
@@ -413,6 +415,7 @@ export function bindEvents() {
     if (el.closest('#printDlg')) updatePrintInfo();
     if (el.id === 'f-photo' && el.files[0]) A.setDraftPhoto(el.files[0]);
     if (el.matches('[data-src-photo]') && el.files[0]) A.setDraftSourcePhoto(+el.dataset.srcPhoto, el.files[0]);
+    if (el.matches('[data-med-back]') && el.files[0]) A.setDraftMediaBack(+el.dataset.medBack, el.files[0]);
     if (el.matches('[id^="ev-type-"]')) A.refreshDraft();
     if (el.id === 'f-media' && el.files.length) A.addDraftMedia([...el.files]);
     if (el.id === 'tagPerson' && el.value) addTag(el.value);

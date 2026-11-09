@@ -121,7 +121,7 @@ export function safeName(s, fallback) {
   return t || fallback;
 }
 
-/** Photo files cited by a tree's records: portraits, source documents, gallery. */
+/** Photo files cited by a tree's records: portraits, source documents, gallery (backs included). */
 function photoRefs(o) {
   const refs = new Set();
   const add = (photo) => {
@@ -131,7 +131,11 @@ function photoRefs(o) {
   for (const p of (o && Array.isArray(o.people) ? o.people : [])) {
     if (!p) continue;
     add(p.photo);
-    for (const s of [...(Array.isArray(p.sources) ? p.sources : []), ...(Array.isArray(p.media) ? p.media : [])]) if (s) add(s.photo);
+    for (const s of [...(Array.isArray(p.sources) ? p.sources : []), ...(Array.isArray(p.media) ? p.media : [])]) {
+      if (!s) continue;
+      add(s.photo);
+      add(s.back); // back of a gallery image
+    }
   }
   return refs;
 }

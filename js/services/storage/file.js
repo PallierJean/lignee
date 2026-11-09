@@ -116,21 +116,33 @@ export async function storePhoto(photo, p) {
   }
 }
 
+/** Images attached to a record besides its portrait: source documents, gallery images and their backs. */
+const attached = (p) => [...sourcesOf(p), ...mediaList(p)].flatMap((x) => [x.photo, x.back]).filter(Boolean);
 /** True if the record contains a photo or a document still embedded. */
-const attached = (p) => [...sourcesOf(p), ...mediaList(p)];
-const hasPhotoData = (p) => isPhotoData(p.photo) || attached(p).some((x) => isPhotoData(x.photo));
+const hasPhotoData = (p) => isPhotoData(p.photo) || attached(p).some(isPhotoData);
 
-/** Record whose photo and source documents have gone through `convert`. */
+/** Record whose photo, source documents and gallery images (backs included) have gone through `convert`. */
 export async function convertPhotos(p, convert) {
   const out = Object.assign({}, p);
   if (p.photo) out.photo = await convert(p.photo);
   for (const [key, list] of [['sources', sourcesOf(p)], ['media', mediaList(p)]]) {
     if (!list.length) continue;
     out[key] = [];
-    for (const x of list) out[key].push(x.photo ? { ...x, photo: await convert(x.photo) } : x);
+    for (const x of list) {
+      const y = x.photo ? { ...x, photo: await convert(x.photo) } : { ...x };
+      if (x.back) y.back = await convert(x.back); // back of a gallery image
+      out[key].push(y);
+    }
   }
   return out;
 }
+
+/** Gallery images still readable: an image not found goes, a back not found leaves its front alone. */
+export const keptMedia = (list) => list.filter((m) => m.photo).map((m) => {
+  if (m.back) return m;
+  const { back, ...front } = m;
+  return front;
+});
 
 /** Moves the open tree's embedded photos out to files. Returns the number of records changed. */
 export async function storePhotos() {
@@ -167,12 +179,12 @@ async function photoData(photo) {
 export async function buildPortableBackup() {
   if (S.mode !== 'file') return buildBackup();
   const people = new Map(S.people);
-  const hasFile = (p) => isPhotoFile(p.photo) || attached(p).some((x) => isPhotoFile(x.photo));
+  const hasFile = (p) => isPhotoFile(p.photo) || attached(p).some(isPhotoFile);
   await pool([...people].filter(([, p]) => hasFile(p)), 4, async ([id, p]) => {
     // File not found: the record goes without this photo
     const portable = await convertPhotos(p, (photo) => (isPhotoFile(photo) ? photoData(photo).catch(() => '') : photo));
     if (!portable.photo) delete portable.photo;
-    if (portable.media) portable.media = portable.media.filter((m) => m.photo); // image not found
+    if (portable.media) portable.media = keptMedia(portable.media); // image not found
     people.set(id, portable);
   });
   return buildBackup({ name: treeName(), createdAt: (S.trees.get(S.tree) || {}).createdAt, people, unions: S.unions });

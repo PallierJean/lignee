@@ -93,7 +93,10 @@ async function recordData(e, id, previous) {
   const media = [];
   for (const { removed, ...x } of e.media) {
     if (removed) continue;
-    media.push({ ...x, title: x.title.trim(), date: x.date.trim(), note: x.note.trim(), photo: await storePhoto(x.photo, data) });
+    const m = { ...x, title: x.title.trim(), date: x.date.trim(), note: x.note.trim(), photo: await storePhoto(x.photo, data) };
+    if (x.back) m.back = await storePhoto(x.back, data); // back: a contract's second side, a photo's annotated back
+    else delete m.back;
+    media.push(m);
   }
   if (media.length) data.media = media;
   return data;

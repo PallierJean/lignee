@@ -22,7 +22,8 @@ export function mediaGrid(items, group = '') {
   const cells = shown.map(({ owner, m }) => `<button class="med" type="button" data-act="media-open" data-owner="${esc(owner)}" data-id="${esc(m.id)}"`
     + `${group ? ` data-group="${esc(group)}"` : ''} title="${esc(m.title || '')}">`
     + `<img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">`
-    + (count(m) ? `<span class="med-n" title="${esc(t('med.taggedN', count(m)))}">${count(m)}</span>` : '') + '</button>');
+    + (count(m) ? `<span class="med-n" title="${esc(t('med.taggedN', count(m)))}">${count(m)}</span>` : '')
+    + (photoSrc(m.back) ? `<span class="med-rv" title="${t('med.hasBack')}">${t('med.rv')}</span>` : '') + '</button>');
   return cells.length ? `<div class="meds">${cells.join('')}</div>` : '';
 }
 
