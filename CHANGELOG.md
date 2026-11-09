@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.25.0](https://github.com/PallierJean/lignee/compare/v1.24.0...v1.25.0) (2026-11-09)
+
+### Features
+
+* Link each town hall without an e-mail to its contact form ([ca6baae](https://github.com/PallierJean/lignee/commit/ca6baae2957ced01cada9a62101005cbf0cc6aa3))
+* Prepare every town hall request with a single click ([d1b9b26](https://github.com/PallierJean/lignee/commit/d1b9b2657d871a59f9d354cc7aba6c7e81cbfd63))
+* Copy the user's address on the prefilled e-mails to town halls ([43aa31c](https://github.com/PallierJean/lignee/commit/43aa31ca1c4438a9e254e83b7a4546f0ec26ab7c))
+* Find each town hall and write to it with a prefilled e-mail ([78beed7](https://github.com/PallierJean/lignee/commit/78beed7dcfd24212c69d809eb564ef81e559485b))
+
+### Bug Fixes
+
+* Show the town hall messages as hints and explain a failed lookup ([cf7c2ad](https://github.com/PallierJean/lignee/commit/cf7c2ad6a9bdc15a18c16187a86fc638ef242f34))
+* Show the merged communes note of a town hall as a hint ([4658c4e](https://github.com/PallierJean/lignee/commit/4658c4e1e1a6dccb60291ba1d2d80eecf6861f95))
+
+---
+
+### Nouveautés
+
+* Chaque mairie sans adresse e-mail renvoie vers son formulaire de contact ([ca6baae](https://github.com/PallierJean/lignee/commit/ca6baae2957ced01cada9a62101005cbf0cc6aa3))
+* Préparer toutes les demandes aux mairies d'un seul clic ([d1b9b26](https://github.com/PallierJean/lignee/commit/d1b9b2657d871a59f9d354cc7aba6c7e81cbfd63))
+* Votre adresse e-mail mise en copie des e-mails préremplis aux mairies ([43aa31c](https://github.com/PallierJean/lignee/commit/43aa31ca1c4438a9e254e83b7a4546f0ec26ab7c))
+* Trouver chaque mairie dans l'annuaire de service-public.fr et lui écrire un e-mail prérempli ([78beed7](https://github.com/PallierJean/lignee/commit/78beed7dcfd24212c69d809eb564ef81e559485b))
+
+### Corrections
+
+* Messages de la recherche de mairie en petit, et piste quand l'annuaire ne peut pas être joint ([cf7c2ad](https://github.com/PallierJean/lignee/commit/cf7c2ad6a9bdc15a18c16187a86fc638ef242f34))
+* La mention des communes regroupées par une mairie s'affiche en petit, comme les autres indications ([4658c4e](https://github.com/PallierJean/lignee/commit/4658c4e1e1a6dccb60291ba1d2d80eecf6861f95))
+
 ## [1.24.0](https://github.com/PallierJean/lignee/compare/v1.23.1...v1.24.0) (2026-11-09)
 
 ### Features
