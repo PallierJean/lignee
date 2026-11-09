@@ -11,7 +11,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
 import {
-  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv,
+  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc,
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
@@ -185,6 +185,8 @@ const CLICK_ACTIONS = {
   'insee-check': () => startInsee(),
   'acts-copy': (el) => copyActs(el.dataset.i === undefined ? undefined : Number(el.dataset.i)),
   'acts-csv': () => exportActsCsv(),
+  'acts-hall': (el) => findActsHall(Number(el.dataset.i)),
+  'acts-halls': () => findAllActsHalls(),
   'insee-register': () => inseeSendCode(),
   'insee-auth': () => inseeSendAuth(),
   'insee-restart-login': () => inseeOtherEmail(),
@@ -393,6 +395,7 @@ export function bindEvents() {
     }
     if (el.id === 'fanKids' && el.value) A.setFocus(el.value);
     if (el.id === 'themeSel') A.setTheme(el.value);
+    if (el.id === 'actsCc') setActsCc(el.value);
     if (el.id === 'textSel') A.setTextSize(el.value);
     if (el.name === 'f-sex') updateNames(false);
     if (el.id === 'f-father' || el.id === 'f-mother') updateNames(true);

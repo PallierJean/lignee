@@ -7,7 +7,8 @@ import {
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv } from '../js/ui/analysis.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc } from '../js/ui/analysis.js';
+import { findTownHall, resetTownHalls } from '../js/services/town-hall.js';
 import { setLang } from '../js/i18n.js';
 import { loadCommuneChanges, currentCommune } from '../js/model/communes.js';
 import { loadTree, person, resetApp, html } from './helpers.js';
@@ -417,6 +418,114 @@ describe('actes de décès à demander, par commune', () => {
     assert.equal(groups[0].place, 'Cherbourg-en-Cotentin (50)');
     assert.deepEqual(groups[0].former, ['Cherbourg-Octeville (50)', 'Octeville (50)']);
     assert.deepEqual(groups[0].rows.map((r) => r.former).sort(), ['', 'Cherbourg-Octeville (50)', 'Octeville (50)']);
+  });
+
+  test('trouver la mairie dans l’annuaire de service-public.fr, puis lui écrire', async () => {
+    resetTownHalls();
+    resetActsHalls();
+    S.mode = 'file';
+    loadTree([lucien()]);
+    const asked = [];
+    let directory = async () => ({ ok: true, json: async () => ({ results: [{
+      nom: 'Mairie - Limoges', adresse_courriel: 'etat-civil@limoges.fr',
+      telephone: '[{"valeur": "05 55 45 60 00"}]', site_internet: '[{"valeur": "javascript:alert(1)"}]', formulaire_contact: 'https://www.limoges.fr/contact',
+    }] }) });
+    globalThis.fetch = async (url) => {
+      if (url.startsWith('api/insee')) return { ok: true, json: async () => [act()] };
+      asked.push(url);
+      return directory(url);
+    };
+    await checkInsee(inseePending(), () => {});
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    assert.match(html('paneAnalysis'), /data-act="acts-hall" data-i="0">Trouver la mairie/);
+
+    await findActsHall(0);
+    const q = new URL(asked[0]).searchParams;
+    assert.equal(q.get('where'), 'nom = "Mairie - Limoges" and startswith(code_insee_commune, "87")', 'seuls la commune et son département partent');
+    let out = html('paneAnalysis');
+    assert.match(out, /Mairie - Limoges : etat-civil@limoges\.fr · 05 55 45 60 00 · <a href="https:\/\/www\.limoges\.fr\/contact"/);
+    assert.doesNotMatch(out, /javascript:/, 'lien douteux de l’annuaire écarté');
+    assert.doesNotMatch(out, /Trouver la mairie/, 'bouton remplacé par le résultat');
+    const mail = decodeURIComponent(out.match(/href="(mailto:[^"]+)"/)[1].replace(/&amp;/g, '&'));
+    assert.match(mail, /^mailto:etat-civil@limoges\.fr\?subject=Demande de copies intégrales d’actes de décès&body=Madame, Monsieur,/);
+    assert.match(mail, /conservés par la mairie de Limoges \(87\) :\r\n\r\n- Bertrand Lucien Marcel, né\(e\) le 12 Mars 1920, décédé\(e\) le 04 Juillet 1995, acte n° 412/);
+    assert.doesNotMatch(mail, /cc=/, 'pas de copie sans adresse');
+
+    // Votre adresse en copie : retenue dans ce navigateur, refusée si elle n'en est pas une
+    const mailOf = () => decodeURIComponent(html('paneAnalysis').match(/href="(mailto:[^"]+)"/)[1].replace(/&amp;/g, '&'));
+    assert.match(out, /id="actsCc"[^>]*value=""/);
+    setActsCc(' moi@exemple.fr ');
+    assert.equal(localStorage.getItem('lignee.cc.v1'), 'moi@exemple.fr');
+    assert.match(mailOf(), /\?subject=Demande de copies intégrales d’actes de décès&cc=moi@exemple\.fr&body=/);
+    assert.match(html('paneAnalysis'), /id="actsCc"[^>]*value="moi@exemple\.fr"/);
+    setActsCc('pas une adresse');
+    assert.match(document.getElementById('toast').textContent, /Adresse e-mail non reconnue/);
+    assert.equal(localStorage.getItem('lignee.cc.v1'), 'moi@exemple.fr', 'l’ancienne adresse reste');
+    setActsCc('');
+    assert.equal(localStorage.getItem('lignee.cc.v1'), null);
+    assert.doesNotMatch(mailOf(), /cc=/);
+    await findTownHall('Limoges', '87');
+    assert.equal(asked.length, 1, 'réponse gardée en mémoire');
+
+    // Introuvable, puis annuaire en panne : lien vers la recherche de service-public.fr
+    resetTownHalls();
+    resetActsHalls();
+    directory = async () => ({ ok: true, json: async () => ({ results: [] }) });
+    await findActsHall(0);
+    out = html('paneAnalysis');
+    assert.match(out, /Mairie introuvable dans l’annuaire\. <a href="https:\/\/lannuaire\.service-public\.fr\/recherche\?whoWhat=Mairie&amp;where=Limoges"/);
+    resetTownHalls();
+    resetActsHalls();
+    directory = async () => ({ ok: false, status: 503 });
+    await findActsHall(0);
+    assert.match(html('paneAnalysis'), /n’a pas pu être joint/);
+    resetTownHalls();
+    resetActsHalls();
+    directory = async () => ({ ok: true, json: async () => ({ results: [{ nom: 'Mairie - Limoges', adresse_courriel: 'pas une adresse' }] }) });
+    await findActsHall(0);
+    assert.match(html('paneAnalysis'), /Pas d’adresse e-mail dans l’annuaire/);
+    await findActsHall(5); // mairie disparue entre-temps : rien
+    assert.equal(await findTownHall('Liège', 'BE'), null, 'hors de France : rien à chercher');
+  });
+
+  test('un seul clic pour toutes les demandes : toutes les mairies cherchées, un lien par mairie', async () => {
+    resetTownHalls();
+    resetActsHalls();
+    S.mode = 'file';
+    loadTree([
+      lucien(),
+      person('r', { given: 'Anne', surname: 'Roche', sex: 'F', birthDate: '05/01/1930', deceased: true }),
+    ]);
+    const acts = {
+      Bertrand: [act()],
+      Roche: [act({ first: ['Anne'], last: 'ROCHE', sex: 'F', birthDate: '19300105', deathDate: '20010203', death: { city: 'Tulle', dept: '19', country: 'France' }, certificate: '7' })],
+    };
+    const asked = [];
+    globalThis.fetch = async (url) => {
+      if (url.startsWith('api/insee')) return { ok: true, json: async () => acts[Object.keys(acts).find((k) => url.includes(k))] };
+      asked.push(url);
+      const limoges = url.includes('Limoges');
+      return { ok: true, json: async () => ({ results: [limoges ? { nom: 'Mairie - Limoges', adresse_courriel: 'etat-civil@limoges.fr' } : { nom: 'Mairie - Tulle', formulaire_contact: 'https://www.tulle.fr/contact' }] }) };
+    };
+    await checkInsee(inseePending(), () => {});
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    assert.match(html('paneAnalysis'), /data-act="acts-halls">Préparer toutes les demandes/);
+    const run = findAllActsHalls();
+    await new Promise((r) => setTimeout(r, 0));
+    assert.match(html('paneAnalysis'), /Recherche des mairies dans l’annuaire de service-public\.fr : \d \/ 2/);
+    await findAllActsHalls(); // déjà en cours : rien de plus
+    await run;
+    assert.equal(asked.length, 2, 'une recherche par mairie');
+    const out = html('paneAnalysis');
+    assert.match(out, /Demandes prêtes <span class="n">1<\/span>/);
+    assert.match(out, /<a href="mailto:etat-civil@limoges\.fr\?[^"]+">Écrire à la mairie de Limoges \(87\)<\/a> <small>1 acte<\/small>/);
+    assert.match(out, /Sans adresse e-mail dans l’annuaire/);
+    assert.match(out, /<li>Tulle \(19\) : <a href="https:\/\/www\.tulle\.fr\/contact" [^>]*>formulaire de contact<\/a> <small>1 acte<\/small><\/li>/);
+    assert.doesNotMatch(out, /Préparer toutes les demandes/, 'plus rien à chercher');
+    await findAllActsHalls(); // plus rien à chercher
+    assert.equal(asked.length, 2);
   });
 
   test('vue Actes : sans vérification, ou en ligne', () => {

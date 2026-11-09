@@ -51,6 +51,22 @@
   l'état civil, naissance, décès, numéro) ; « Exporter en CSV » télécharge tous les actes pour un
   tableur. Le fichier de l'INSEE ne donne que le numéro de l'acte de décès, pas celui de l'acte de
   naissance (`deathActsByCommune` dans `model/insee.js`).
+  « Trouver la mairie » cherche la mairie dans l'annuaire officiel de service-public.fr (données
+  ouvertes ; seuls le nom de la commune et son département partent, `services/town-hall.js`) et
+  affiche son adresse e-mail, son téléphone et son formulaire de contact, avec « Écrire un e-mail
+  prérempli » : un lien `mailto:` qui ouvre la messagerie avec l'objet et la demande, liste des actes
+  comprise. Le champ « Votre adresse e-mail » (gardé dans ce navigateur, clé `lignee.cc.v1`) la met
+  en copie, pour garder une trace de chaque demande. Rien n'est envoyé sans que l'utilisateur relise
+  et envoie lui-même. Une mairie
+  introuvable (Paris, par exemple, nommée autrement) renvoie vers la recherche de l'annuaire.
+  « Préparer toutes les demandes » fait la même recherche pour toutes les mairies d'un clic (l'une
+  après l'autre, une pause de 300 ms entre deux), puis affiche « Demandes prêtes » : un lien
+  « Écrire à la mairie de … » par mairie qui a une adresse e-mail, et la liste de celles à contacter
+  à la main, chacune avec le lien de son formulaire de contact (ou de son site, ou de la recherche de
+  l'annuaire). Les grandes villes (Bordeaux, Limoges, Albi…) ne publient pas d'adresse e-mail dans
+  l'annuaire et passent par leur formulaire ; Paris a une mairie par arrondissement, que le fichier de
+  l'INSEE tel que Lignée le garde ne précise pas. Un navigateur n'ouvre qu'un e-mail par clic : on les
+  envoie l'un après l'autre.
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).
