@@ -373,7 +373,11 @@ describe('animations des thèmes fêtes et saisons', () => {
       sky.cruiser.born = Date.now() - 10 ** 6; // far gone to the left
       await new Promise((r) => setTimeout(r, 80));
       assert.equal(sky.cruiser, null);
-      // On the ice: the tow cable trips the walker, which blows up, then a new one comes
+      // On the ice: the walker fires bursts of heavy green bolts at the speeders
+      Object.assign(sky, { nextBurst: 0, burst: null, iceBolts: [] });
+      await new Promise((r) => setTimeout(r, 120));
+      assert.ok(sky.iceBolts.some((b) => b.heavy && b.color === '#7CFF6B'), 'the walker fires');
+      // The tow cable trips the walker, which blows up, then a new one comes
       sky.cableBorn = Date.now() - 7100;
       await new Promise((r) => setTimeout(r, 80));
       assert.ok(sky.fall, 'the walker trips');
