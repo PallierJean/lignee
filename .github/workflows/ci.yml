@@ -23,9 +23,17 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+      # The release notes are in English then French: a fix, feat, perf or refactor needs its "Fr:" trailer
+      - name: Check the French text of the new commits
+        env:
+          FROM: ${{ github.event.pull_request.base.sha || github.event.before }}
+          TO: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/check-french.mjs "$FROM" "$TO"
       - name: Run the tests with coverage
         run: npm run test:coverage
 

@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateNotes, parseCommit, repoHttpUrl, capitalize } from '../scripts/release-notes.mjs';
+import { execFileSync } from 'node:child_process';
+
+const execGit = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
 
 const REPO = 'https://github.com/PallierJean/lignee';
 const context = (messages) => ({
@@ -75,4 +78,29 @@ test('release notes: helpers', () => {
   assert.equal(repoHttpUrl('git@github.com:o/r.git'), 'https://github.com/o/r');
   assert.equal(repoHttpUrl('git+https://x-access-token:t@github.com/o/r.git'), 'https://github.com/o/r');
   assert.equal(repoHttpUrl('ssh://git@github.com/o/r.git'), 'https://github.com/o/r');
+});
+
+test('French check: commits listed in the notes need an Fr trailer', async () => {
+  const { missingFrench } = await import('../scripts/check-french.mjs');
+  assert.deepEqual(missingFrench([
+    'fix: keep the order\n\nFr: garder l\'ordre',
+    'feat(gedcom): read the notes\n\nCo-Authored-By: X <x@y>',
+    'refactor: split a module',
+    'perf: cache the check\n\nfr: garder la vérification',
+    'docs: explain',
+    'chore(release): 1.2.3 [skip ci]',
+    'Merge fix/x',
+  ]), ['feat(gedcom): read the notes', 'refactor: split a module']);
+});
+
+test('French check: reads the commits of a range, or the last one without a known start', async () => {
+  const { commitMessages } = await import('../scripts/check-french.mjs');
+  const last = commitMessages('0000000000000000000000000000000000000000', 'HEAD');
+  assert.equal(last.length, 1);
+  assert.deepEqual(commitMessages('', 'HEAD'), last);
+  assert.deepEqual(commitMessages('ffffffffffffffffffffffffffffffffffffffff', 'HEAD'), last);
+  assert.deepEqual(commitMessages('HEAD', 'HEAD'), last); // not a hash: treated as unknown
+  const from = execGit('rev-parse', 'HEAD~3');
+  const count = Number(execGit('rev-list', '--count', '--no-merges', `${from}..HEAD`));
+  assert.equal(commitMessages(from, 'HEAD').length, count);
 });
