@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.23.1](https://github.com/PallierJean/lignee/compare/v1.23.0...v1.23.1) (2026-11-09)
+
+### Bug Fixes
+
+* Keep the tree toolbar on one line when the side panel is open ([0495e29](https://github.com/PallierJean/lignee/commit/0495e296657a1c4e1b9b8e3293d5bcc2459e3153))
+
+---
+
+### Corrections
+
+* La barre de l'arbre reste sur une ligne quand la fiche est ouverte sur le côté ([0495e29](https://github.com/PallierJean/lignee/commit/0495e296657a1c4e1b9b8e3293d5bcc2459e3153))
+
 ## [1.23.0](https://github.com/PallierJean/lignee/compare/v1.22.0...v1.23.0) (2026-11-09)
 
 ### Features
