@@ -8,15 +8,15 @@ import { loadTree, person } from './helpers.js';
 /** Trois générations au-dessus de « moi », plus une tante et un enfant. */
 function family() {
   loadTree([
-    person('ffa', { sex: 'M', surname: 'Tellier', birthDate: '1850', deathDate: '1910' }),
-    person('ff', { sex: 'M', surname: 'Tellier', fatherId: 'ffa', birthDate: '1885',
+    person('ffa', { sex: 'M', surname: 'Garnier', birthDate: '1850', deathDate: '1910' }),
+    person('ff', { sex: 'M', surname: 'Garnier', fatherId: 'ffa', birthDate: '1885',
       media: [{ id: 'm1', photo: 'data:image/jpeg;base64,AA==', title: 'Mariage', tags: [] }] }),
-    person('fm', { sex: 'F', surname: 'Tellier', maidenName: 'Planchon', birthDate: '1892' }),
-    person('mf', { sex: 'M', surname: 'Bourrel', birthDate: '1897' }),
-    person('f', { sex: 'M', surname: 'Tellier', fatherId: 'ff', motherId: 'fm', birthDate: '1920' }),
-    person('m', { sex: 'F', surname: 'Tellier', maidenName: 'Bourrel', fatherId: 'mf', birthDate: '1926' }),
-    person('me', { sex: 'M', surname: 'Tellier', fatherId: 'f', motherId: 'm', birthDate: '1956' }),
-    person('aunt', { sex: 'F', surname: 'Tellier', fatherId: 'ff', motherId: 'fm', birthDate: '1922' }),
+    person('fm', { sex: 'F', surname: 'Garnier', maidenName: 'Vidal', birthDate: '1892' }),
+    person('mf', { sex: 'M', surname: 'Mercier', birthDate: '1897' }),
+    person('f', { sex: 'M', surname: 'Garnier', fatherId: 'ff', motherId: 'fm', birthDate: '1920' }),
+    person('m', { sex: 'F', surname: 'Garnier', maidenName: 'Mercier', fatherId: 'mf', birthDate: '1926' }),
+    person('me', { sex: 'M', surname: 'Garnier', fatherId: 'f', motherId: 'm', birthDate: '1956' }),
+    person('aunt', { sex: 'F', surname: 'Garnier', fatherId: 'ff', motherId: 'fm', birthDate: '1922' }),
     person('kid', { fatherId: 'me', birthDate: '1990' }),
   ], [{ a: 'ff', b: 'fm', date: '1919' }]);
   S.focus = 'me';
@@ -42,7 +42,7 @@ describe('livre de famille complet', () => {
     family();
     const chapters = bookChapters('me');
     assert.deepEqual(chapters.map((c) => c.title),
-      ['La personne centrale et ses proches', 'Branche TELLIER', 'Branche PLANCHON', 'Branche BOURREL', 'Les autres personnes de l’arbre']);
+      ['La personne centrale et ses proches', 'Branche GARNIER', 'Branche VIDAL', 'Branche MERCIER', 'Les autres personnes de l’arbre']);
     assert.deepEqual(chapters.map((c) => c.people.map((x) => x.id)), [['me', 'f', 'm', 'kid'], ['ffa', 'ff'], ['fm'], ['mf'], ['aunt']]);
     assert.match(chapters[1].sub, /côté paternel, père du père · 1850 – 1885/);
     assert.equal(chapters[1].album.length, 1);
@@ -68,7 +68,7 @@ describe('livre de famille complet', () => {
 
   test('chaque bloc de frise et d’album est un seul élément, pour être mesuré', async () => {
     family();
-    const out = await fullBookHTML('Famille TELLIER');
+    const out = await fullBookHTML('Famille GARNIER');
     for (const cls of ['bk-timeline', 'bk-album']) {
       assert.match(out, new RegExp(`<div class="bk-block">(<h3 class="bk-sub">[^<]*</h3>)?<(table|div) class="${cls}"`));
     }
@@ -76,9 +76,9 @@ describe('livre de famille complet', () => {
 
   test('pages : couverture, sommaire des branches, frise et album', async () => {
     family();
-    const out = await fullBookHTML('Famille TELLIER');
+    const out = await fullBookHTML('Famille GARNIER');
     assert.match(out, /Livre de famille/);
-    assert.match(out, /<ol class="bk-toc">.*Branche TELLIER.*Branche BOURREL/s);
+    assert.match(out, /<ol class="bk-toc">.*Branche GARNIER.*Branche MERCIER/s);
     assert.match(out, /class="bk-timeline"/);
     assert.match(out, /class="bk-album".*Mariage/s);
   });

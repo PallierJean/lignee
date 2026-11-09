@@ -15,17 +15,17 @@ describe('galerie', () => {
 
   test('personnes nommées dans une légende : prénom et nom proches, dans l’ordre du texte', () => {
     loadTree([
-      person('g', { given: 'Geneviève', surname: 'Lamborre', sex: 'F' }),
-      person('v', { given: 'Véronique', surname: 'Freyssinet', sex: 'F' }),
-      person('j', { given: 'Jeanne-Paule', surname: 'Lamborre', maidenName: 'Dumas', sex: 'F' }),
-      person('s', { given: 'Simonne Marie Césarie', surname: 'Tellier', maidenName: 'Bourrel', sex: 'F' }),
-      person('jf', { given: 'Jeanne', surname: 'Freyssinet', sex: 'F' }), // « Freyssinet, Jeanne-Paule » : pas elle
-      person('ml', { given: 'Marie', surname: 'Lamborre', sex: 'F' }), // « Marie » et « Lamborre » éloignés : pas elle
-      person('jl', { given: 'Jeanne', surname: 'Roux', maidenName: 'Lamborre', sex: 'F' }), // « Paule » n'est pas son prénom
+      person('g', { given: 'Geneviève', surname: 'Lemaire', sex: 'F' }),
+      person('v', { given: 'Véronique', surname: 'Chevalier', sex: 'F' }),
+      person('j', { given: 'Jeanne-Paule', surname: 'Lemaire', maidenName: 'Dumas', sex: 'F' }),
+      person('s', { given: 'Odette Marie Louise', surname: 'Garnier', maidenName: 'Mercier', sex: 'F' }),
+      person('jf', { given: 'Jeanne', surname: 'Chevalier', sex: 'F' }), // « Chevalier, Jeanne-Paule » : pas elle
+      person('ml', { given: 'Marie', surname: 'Lemaire', sex: 'F' }), // « Marie » et « Lemaire » éloignés : pas elle
+      person('jl', { given: 'Jeanne', surname: 'Roux', maidenName: 'Lemaire', sex: 'F' }), // « Paule » n'est pas son prénom
     ]);
-    const caption = 'Geneviève Lamborre (en haut), de gauche à droite : Veronique Freyssinet, Jeanne-Paule Lamborre - Simonne Marie Césarie Bourrel';
+    const caption = 'Geneviève Lemaire (en haut), de gauche à droite : Veronique Chevalier, Jeanne-Paule Lemaire - Odette Marie Louise Mercier';
     assert.deepEqual(peopleNamedIn(caption), ['g', 'v', 'j', 's']);
-    assert.deepEqual(peopleNamedIn('LAMBORRE Geneviève'), ['g'], 'le nom avant le prénom');
+    assert.deepEqual(peopleNamedIn('LEMAIRE Geneviève'), ['g'], 'le nom avant le prénom');
     assert.deepEqual(peopleNamedIn(''), []);
   });
 });

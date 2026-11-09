@@ -132,19 +132,19 @@ describe('vérification de cohérence', () => {
       person('h', { sex: 'M', surname: 'Roux', deceased: true }),
       person('e', { sex: 'F', surname: 'Petit', fatherId: 'f' }),
       // Double nom : celui du père et celui de naissance de la mère, dans un sens ou dans l'autre
-      person('m', { sex: 'F', surname: 'Durand', maidenName: 'Vittoz', deceased: true }),
-      person('g', { sex: 'M', surname: 'Durand Vittoz', fatherId: 'f', motherId: 'm' }),
-      person('i', { sex: 'M', surname: 'Vittoz-Durand', fatherId: 'f', motherId: 'm' }),
-      person('j', { sex: 'M', surname: 'Durand--Vittoz', fatherId: 'f', motherId: 'm' }),
+      person('m', { sex: 'F', surname: 'Durand', maidenName: 'Moreau', deceased: true }),
+      person('g', { sex: 'M', surname: 'Durand Moreau', fatherId: 'f', motherId: 'm' }),
+      person('i', { sex: 'M', surname: 'Moreau-Durand', fatherId: 'f', motherId: 'm' }),
+      person('j', { sex: 'M', surname: 'Durand--Moreau', fatherId: 'f', motherId: 'm' }),
       person('k', { sex: 'M', surname: 'Durand Martin', fatherId: 'f', motherId: 'm' }),
-      person('l', { sex: 'M', surname: 'Durand Vittoz', fatherId: 'f' }), // mère inconnue : rien ne justifie le double nom
+      person('l', { sex: 'M', surname: 'Durand Moreau', fatherId: 'f' }), // mère inconnue : rien ne justifie le double nom
       // Mère mariée sans nom de jeune fille saisi : son nom de naissance est celui de son père
       person('gp', { sex: 'M', surname: 'Blanc', deceased: true }),
       person('m2', { sex: 'F', surname: 'Durand', fatherId: 'gp', deceased: true }),
       person('n', { sex: 'M', surname: 'Durand Blanc', fatherId: 'f', motherId: 'm2' }),
     ], [{ a: 'd', b: 'h' }, { a: 'f', b: 'm' }, { a: 'f', b: 'm2' }]);
     const found = findIssues(NOW).filter((x) => x.code === 'nameNotFather').map((x) => [x.ids[0], x.n]);
-    assert.deepEqual(found, [['a', 'Martin'], ['e', 'Petit'], ['k', 'Durand Martin'], ['l', 'Durand Vittoz']]);
+    assert.deepEqual(found, [['a', 'Martin'], ['e', 'Petit'], ['k', 'Durand Martin'], ['l', 'Durand Moreau']]);
   });
 
   test('unions et événements', () => {

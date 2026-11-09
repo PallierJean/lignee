@@ -163,7 +163,7 @@ export function unionEndText(u) {
   return [t('ue.' + u.end), longDate(u.endDate)].filter(Boolean).join(', ');
 }
 
-/** "after the death of Marc TELLIER", or empty if it isn't a remarriage with a known cause. */
+/** "after the death of Marc GARNIER", or empty if it isn't a remarriage with a known cause. */
 export function unionCauseText(u) {
   if (!u || u.type !== 'remarried' || !REMARRIAGE_CAUSES.includes(u.cause)) return '';
   const former = u.cause === 'widowed' && P(u.formerId);
@@ -229,7 +229,7 @@ export function peopleNamedIn(text) {
       for (const g of first.length ? starts(first) : []) {
         const after = g + first.length;
         const near = names.some((name) => starts(name).some((n) =>
-          // The surname after the first name, separated only by their other given names; or just before ("LAMBORRE Geneviève")
+          // The surname after the first name, separated only by their other given names; or just before ("LEMAIRE Geneviève")
           (n >= after && words.slice(after, n).every((w) => givens.includes(w))) || n + name.length === g));
         if (near && pos < 0) pos = part * 1000 + g;
       }
@@ -280,7 +280,7 @@ export function longName(p) {
 }
 
 export const isPhotoData = (s) => /^data:image\/(jpeg|png|webp|gif);base64,/.test(String(s || ''));
-/** Start of a photo's file name: "TELLIER-Jean", "photo" for a record with no name. */
+/** Start of a photo's file name: "GARNIER-Paul", "photo" for a record with no name. */
 export function photoLabel(p) {
   const name = [surname(p) || String(p.maidenName || '').trim().toUpperCase(), given(p)].join(' ').normalize('NFC');
   return name.replace(/[^\p{L}\p{M}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'photo';
