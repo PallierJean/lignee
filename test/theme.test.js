@@ -432,8 +432,23 @@ describe('Star Wars theme: a laser sword under each card', () => {
     assert.deepEqual([...new Set(swords.map((x) => x.hilt))].sort(), ['0', '1', '2', '3', '4', '5']);
     assert.deepEqual(saberOf('p42'), saberOf('p42'));
     const css = readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8');
-    assert.equal(css.match(/#B266FF/g).length, 1, 'one purple, for the focus person');
-    assert.match(css, /\.card\.is-focus \{\s+--saber: #B266FF;/);
+    assert.equal(css.match(/#B266FF/g).length, 1, 'one purple');
+    assert.match(css, /\.card\[data-saber="purple"\] \{\s+--saber: #B266FF;/);
     for (let k = 0; k < 6; k++) assert.match(css, new RegExp(`\\.card\\[data-hilt="${k}"\\] \\{\\s+--hilt-w`));
+  });
+
+  test('the purple sword: one shown person drawn at random, kept while shown, drawn again otherwise', async () => {
+    const { pickPurple } = await import('../js/tree/render.js');
+    const random = Math.random;
+    try {
+      Math.random = () => 0.5;
+      assert.equal(pickPurple(['a', 'b', 'c']), 'b');
+      Math.random = () => 0;
+      assert.equal(pickPurple(['b', 'd']), 'b', 'still shown: kept');
+      assert.equal(pickPurple(['d', 'e']), 'd', 'no longer shown: another one');
+      assert.equal(pickPurple([]), null);
+    } finally {
+      Math.random = random;
+    }
   });
 });
