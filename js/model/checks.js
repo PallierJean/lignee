@@ -9,10 +9,10 @@
 import { S } from '../state.js';
 import { dateBounds, isImpossibleDate, yearsBetween } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
-import { P, eventsOf, isDead, partnersOf, childrenOf, birthSurname } from './people.js';
+import { P, eventsOf, isDead, partnersOf, childrenOf, birthSurname, dataVersion } from './people.js';
 import { placeUses, parsePlace } from './places.js';
-import { placeDepartmentIssue, departmentsText } from './communes.js';
-import { t } from '../i18n.js';
+import { placeDepartmentIssue, departmentsText, communesLoaded } from './communes.js';
+import { t, getLang } from '../i18n.js';
 
 const MIN_PARENT = 12;   // minimum age of a parent or at a union
 const MAX_MOTHER = 55;   // age at a child's birth
@@ -61,6 +61,19 @@ export function findCycles() {
   };
   for (const id of S.people.keys()) walk(id, [], new Set());
   return cycles;
+}
+
+// Last result of findIssues(), with what it depends on: the page asks for it on every render
+let cached = { key: [], issues: [] };
+
+/**
+ * Issues of the open tree, as findIssues(), kept until the data, the day, the language or the
+ * commune list change: the panel's badge needs it on every render (a click, a zoom…).
+ */
+export function currentIssues(now = new Date()) {
+  const key = [S.people, S.unions, dataVersion(), now.toDateString(), getLang(), communesLoaded()];
+  if (key.length !== cached.key.length || key.some((k, i) => k !== cached.key[i])) cached = { key, issues: findIssues(now) };
+  return cached.issues;
 }
 
 export function findIssues(now = new Date()) {

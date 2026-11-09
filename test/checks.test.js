@@ -164,3 +164,27 @@ describe('vérification de cohérence', () => {
     assert.equal(found.filter((c) => c === 'burialBeforeDeath').length, 1);
   });
 });
+
+describe('checks kept in memory', () => {
+  test('computed again only when the data, the day or the language change', async () => {
+    const { currentIssues } = await import('../js/model/checks.js');
+    const { opUpdate } = await import('../js/services/storage.js');
+    const { setLang, getLang } = await import('../js/i18n.js');
+    const { S } = await import('../js/state.js');
+    loadTree([person('a', { given: 'Ana', birthDate: '1900', deathDate: '1850' })], []);
+    S.mode = 'local';
+    const first = currentIssues();
+    assert.ok(first.length);
+    assert.equal(currentIssues(), first, 'same result, not computed again');
+    await opUpdate('people', 'a', { deathDate: '1950' });
+    const second = currentIssues();
+    assert.notEqual(second, first);
+    assert.equal(second.length, 0);
+    assert.notEqual(currentIssues(new Date(2000, 0, 2)), second, 'another day');
+    const lang = getLang();
+    const before = currentIssues();
+    setLang(lang === 'fr' ? 'en' : 'fr');
+    assert.notEqual(currentIssues(), before, 'another language');
+    setLang(lang);
+  });
+});
