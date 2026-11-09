@@ -39,6 +39,15 @@ export function kinFr(da, db, sex, half) {
   return g(sex, 'cousin', 'cousine', 'cousin(e)') + ` au ${da + db}e degré`;
 }
 
+const ORDINALS_EN = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+
+/** 1 → first … 10 → tenth, then 11th, 21st, 22nd, 23rd, 111th. */
+export function ordinalEn(n) {
+  if (ORDINALS_EN[n - 1]) return ORDINALS_EN[n - 1];
+  const teen = n % 100 >= 11 && n % 100 <= 13;
+  return n + (teen ? 'th' : { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th');
+}
+
 export function kinEn(da, db, sex, half) {
   const again = (n) => 'great-'.repeat(Math.max(0, n));
   if (da === 0) return db === 1 ? g(sex, 'father', 'mother', 'parent') : again(db - 2) + g(sex, 'grandfather', 'grandmother', 'grandparent');
@@ -48,6 +57,5 @@ export function kinEn(da, db, sex, half) {
   if (db === 1) return again(da - 2) + g(sex, 'nephew', 'niece', 'nephew or niece');
   const degree = Math.min(da, db) - 1;
   const removed = Math.abs(da - db);
-  const ord = ['first', 'second', 'third'][degree - 1] || degree + 'th';
-  return `${ord} cousin` + (removed ? ` ${removed === 1 ? 'once' : removed === 2 ? 'twice' : removed + ' times'} removed` : '');
+  return `${ordinalEn(degree)} cousin` + (removed ? ` ${removed === 1 ? 'once' : removed === 2 ? 'twice' : removed + ' times'} removed` : '');
 }
