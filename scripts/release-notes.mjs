@@ -28,7 +28,7 @@ export function repoHttpUrl(url = '') {
     .replace(/\.git$/, '');
 }
 
-/** Commit message → { type, scope, en, fr, breaking } or null when it is not a conventional commit. */
+/** Commit message → { type, scope, en, fr, translated, breaking } or null when it is not a conventional commit. */
 export function parseCommit(message) {
   const [header, ...rest] = message.trim().split('\n');
   const match = HEADER.exec(header);
@@ -42,6 +42,7 @@ export function parseCommit(message) {
     scope,
     en: subject.trim(),
     fr: fr || subject.trim(),
+    translated: Boolean(fr),
     breaking: note || (bang ? subject.trim() : null),
   };
 }

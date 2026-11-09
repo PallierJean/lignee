@@ -20,6 +20,7 @@ lignee/
 ├── .releaserc.json             Réglages du calcul des versions
 ├── scripts/build-site.sh       Prépare le site GitHub Pages
 ├── scripts/release-notes.mjs   Notes de version, en anglais puis en français
+├── scripts/check-french.mjs    Vérifie que chaque commit des notes a son texte français
 ├── renovate.json               Mises à jour automatiques proposées par Renovate
 ├── CHANGELOG.md                Historique des versions (généré)
 ├── server.js                   Serveur local : sert l'application, écrit data/arbres/
@@ -545,6 +546,7 @@ des commits ([Conventional Commits](https://www.conventionalcommits.org/fr/)), a
 `semantic-release` met à jour `package.json` et `CHANGELOG.md`, crée le tag `vX.Y.Z` et la Release GitHub.
 Les notes de version donnent la liste en anglais (sujet du commit), puis en français : ajoutez au corps
 d'un `fix`, `feat`, `perf` ou `refactor` un pied `Fr: …` avec la traduction, sinon la ligne anglaise est reprise.
+La CI refuse un tel commit sans pied `Fr:` (`scripts/check-french.mjs`).
 Ces outils tournent seulement dans GitHub Actions : le projet reste sans dépendance. Le commit de version
 est ajouté par GitHub : faites `git pull` avant de repartir de `main`. La version s'affiche à côté du nom.
 
