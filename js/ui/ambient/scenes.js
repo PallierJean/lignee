@@ -2619,6 +2619,158 @@ function snowspeeder(ctx, x, y, s, dir, now) {
   ctx.restore();
 }
 
+/* ---------- Faraway galaxy: the front line on the ice ---------- */
+
+/** Snow thrown up by a blast: a flash, then a plume of snow falling back, and smoke. */
+function snowBlast(ctx, b, now, scale) {
+  const t = (now - b.born) / 1600;
+  if (t > 1) return false;
+  if (t < 0.15) glow(ctx, b.x, b.y, (4 + t * 40) * scale, '#FFF6D8', `rgba(255, 170, 70, ${0.8 - t * 4})`);
+  for (const p of b.bits) {
+    const age = t * 1.6;
+    const x = b.x + p.dx * age * 40 * scale;
+    const y = b.y - (p.up * age - age * age * 0.9) * 60 * scale;
+    if (y > b.y + 2) continue;
+    ctx.globalAlpha = Math.max(0, 1 - t) * 0.9;
+    ctx.fillStyle = '#F4F8FC';
+    ctx.beginPath();
+    ctx.arc(x, y, p.r * scale, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = Math.max(0, 0.4 - t * 0.4);
+  ctx.fillStyle = '#4A5160';
+  ctx.beginPath();
+  ctx.arc(b.x + t * 10 * scale, b.y - t * 70 * scale, (6 + t * 22) * scale, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  return true;
+}
+
+/** Defence turret on its base: the barrel turns towards `aim` (an angle); `flash` when it fires. */
+function turret(ctx, x, y, s, aim, flash) {
+  ctx.fillStyle = '#6E7787';
+  ctx.beginPath();
+  ctx.moveTo(x - 9 * s, y);
+  ctx.lineTo(x - 6 * s, y - 7 * s);
+  ctx.lineTo(x + 6 * s, y - 7 * s);
+  ctx.lineTo(x + 9 * s, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#2F3540';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  const mx = x + Math.cos(aim) * 16 * s;
+  const my = y - 9 * s + Math.sin(aim) * 16 * s;
+  ctx.strokeStyle = '#3B4250';
+  ctx.lineWidth = 3 * s;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x, y - 9 * s);
+  ctx.lineTo(mx, my);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y - 9 * s, 4.5 * s, 0, TAU);
+  ctx.fillStyle = '#9AA1AD';
+  ctx.fill();
+  ctx.stroke();
+  if (flash > 0) glow(ctx, mx, my, 3 * s * flash, '#FFF1D6', `rgba(255, 150, 60, ${0.8 * flash})`);
+  return [mx, my];
+}
+
+/** A soldier in the trench: helmet, pale coat, rifle; `run` (-1, 0, 1) makes it run along the trench. */
+function soldier(ctx, x, y, s, now, phase, run) {
+  const bob = run ? Math.abs(Math.sin(now / 90 + phase)) * 1.5 * s : Math.sin(now / 700 + phase) * 0.5 * s;
+  ctx.fillStyle = '#C9CFD8';
+  ctx.fillRect(x - 1.6 * s, y - 8 * s - bob, 3.2 * s, 6 * s);
+  ctx.beginPath();
+  ctx.arc(x, y - 9.5 * s - bob, 1.9 * s, 0, TAU);
+  ctx.fillStyle = '#E8ECF1';
+  ctx.fill();
+  ctx.strokeStyle = '#2F3540';
+  ctx.lineWidth = 0.9 * s;
+  ctx.beginPath();
+  ctx.moveTo(x - 1 * s, y - 6 * s - bob);
+  ctx.lineTo(x - 5 * s, y - 8.5 * s - bob);
+  ctx.stroke();
+}
+
+/**
+ * The front line: far walkers advancing on the ridge in the haze, a trench on the right with its
+ * snow bank, turrets turning to fire at the walkers, soldiers holding the line, blasts of snow.
+ * `main` is the big walker in the foreground (its x, or null when it is down), a target too.
+ */
+function iceFront(ctx, s, now, w, h, ground, scale, main) {
+  const f = s.front;
+  const ridge = ground - 12 * scale;
+  // Far walkers, small and pale in the haze; they fire at the trench now and then
+  const far = f.walkers.map((m) => {
+    const sc = scale * m.size;
+    const speed = (34 * sc) / (2600 * 0.75);
+    const span = w + 300 * sc;
+    const x = (((now - m.start) * speed) % span) - 150 * sc;
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    const parts = walker(ctx, x, ridge, sc, now + m.start);
+    ctx.restore();
+    return { x, y: ridge - 110 * sc, gun: parts.guns[0] };
+  });
+  // Haze over the far walkers
+  const haze = ctx.createLinearGradient(0, ridge - 140 * scale, 0, ridge);
+  haze.addColorStop(0, 'rgba(160, 185, 215, 0)');
+  haze.addColorStop(1, 'rgba(160, 185, 215, .28)');
+  ctx.fillStyle = haze;
+  ctx.fillRect(0, ridge - 140 * scale, w, 140 * scale);
+  // The trench, from 62 % of the width to the edge: dug ground, snow bank in front
+  const left = w * 0.62;
+  const trenchY = ground - 4 * scale;
+  ctx.fillStyle = '#5D6E88';
+  ctx.fillRect(left, trenchY - 2 * scale, w - left, 7 * scale);
+  ctx.beginPath();
+  ctx.moveTo(left - 10 * scale, trenchY + 5 * scale);
+  for (let x = left - 10 * scale; x <= w; x += 14 * scale) ctx.lineTo(x, trenchY - 3 * scale - Math.sin(x / 23) * 2 * scale);
+  ctx.lineTo(w, trenchY + 5 * scale);
+  ctx.closePath();
+  ctx.fillStyle = '#EEF4FA';
+  ctx.fill();
+  // Soldiers: most hold the line, one runs along the trench now and then
+  for (const p of f.soldiers) {
+    let x = p.at * w;
+    if (p.run) {
+      const t = (now - p.run.born) / 3000;
+      if (t > 1) {
+        p.at = Math.min(0.98, Math.max(0.64, p.at + p.run.dir * 0.12));
+        p.run = null;
+      } else x = (p.at + p.run.dir * 0.12 * t) * w;
+    } else if (Math.random() < 0.0015) p.run = { born: now, dir: pick([-1, 1]) };
+    soldier(ctx, x, trenchY, scale * 1.35, now, p.phase, p.run ? p.run.dir : 0);
+  }
+  // Turrets: each aims at the nearest walker on screen and fires a short burst of orange bolts
+  const targets = [...far, ...(main === null ? [] : [{ x: main, y: ground - 120 * scale }])].filter((t) => t.x > -40 && t.x < left);
+  f.turrets.forEach((tu) => {
+    const tx = tu.at * w;
+    const target = targets.sort((a, b) => Math.abs(a.x - tx) - Math.abs(b.x - tx))[0];
+    const aim = target ? Math.atan2(target.y - (trenchY - 9 * scale), target.x - tx) : Math.PI + 0.3;
+    tu.aim += (aim - tu.aim) * 0.08;
+    const flash = Math.max(0, 1 - (now - tu.fired) / 150);
+    const [mx, my] = turret(ctx, tx, trenchY - 3 * scale, scale, tu.aim, flash);
+    if (target && now > tu.next) {
+      s.iceBolts.push({ x: mx, y: my, dx: Math.cos(tu.aim) * 10, dy: Math.sin(tu.aim) * 10, color: '#FF9A3D', life: 40 });
+      tu.fired = now;
+      tu.shots = (tu.shots || 0) + 1;
+      tu.next = now + (tu.shots % 3 ? 180 : rand(1600, 3000));
+    }
+  });
+  // The far walkers shell the line: a bolt, then a blast of snow where it lands
+  if (Math.random() < 0.012 && far.length) {
+    const { gun } = pick(far);
+    const x = rand(left - 60 * scale, w * 0.98);
+    const d = Math.hypot(x - gun[0], trenchY - gun[1]) || 1;
+    s.iceBolts.push({ x: gun[0], y: gun[1], dx: ((x - gun[0]) / d) * 9, dy: ((trenchY - gun[1]) / d) * 9, color: '#7CFF6B', life: d / 9, blast: true });
+  }
+  if (Math.random() < 0.006) f.blasts.push({ x: rand(0.05, 0.6) * w, y: ground + rand(4, 20) * scale, born: now, bits: Array.from({ length: 10 }, () => ({ dx: rand(-1, 1), up: rand(1, 2.2), r: rand(1, 2.4) })) });
+  f.blasts = f.blasts.filter((b) => snowBlast(ctx, b, now, scale));
+}
+
 /**
  * The battle on the ice: the walker crosses the bottom of the canvas; snowspeeders circle it,
  * passing behind then in front, fire red bolts, and one now and then trails a tow cable that wraps
@@ -2651,6 +2803,7 @@ function iceBattle(ctx, s, now, w, h) {
       depth, dir: -Math.sin(a) > 0 ? 1 : -1, size: scale * (0.95 + depth * 0.25),
     };
   };
+  iceFront(ctx, s, now, w, h, ground, scale, s.fall && fall >= 1.6 ? null : x);
   for (const p of s.speeders) if (p.down && now - p.down > 9000) p.down = 0; // a new speeder joins
   const ships = s.speeders.filter((p) => !p.down).map((p) => ({ p, o: orbit(p) }));
   // Tow cable: one speeder throws it when the walker is well in sight, then holds it until the fall
@@ -2756,6 +2909,10 @@ function iceBattle(ctx, s, now, w, h) {
     b.x += b.dx;
     b.y += b.dy;
     bolt(ctx, b);
+    if (b.blast && b.life <= 1) {
+      s.front.blasts.push({ x: b.x, y: b.y, born: now, bits: Array.from({ length: 12 }, () => ({ dx: rand(-1, 1), up: rand(1, 2.4), r: rand(1, 2.6) })) });
+      return false;
+    }
     // A green bolt that reaches a speeder brings it down
     const hit = b.color === '#7CFF6B' && ships.find(({ p, o }) => !p.down && (!s.tow || p !== s.tow.p) && Math.hypot(o.x - b.x, o.y - b.y) < 12 * scale);
     if (hit) {
@@ -3143,6 +3300,12 @@ export const SCENES = {
       speeders: [{ a: 0, speed: 0.0011, rx: 150 }, { a: 2.4, speed: 0.0008, rx: 190 }, { a: 4.2, speed: 0.00095, rx: 120 }],
       iceBolts: [], tow: null, nextTow: Date.now() + 8000, walkStart: Date.now() - 4000, fall: null,
       burst: null, nextBurst: Date.now() + 1500, gunFired: 0,
+      front: {
+        walkers: [{ start: Date.now() - 9000, size: 0.42 }, { start: Date.now() - 30000, size: 0.34 }],
+        turrets: [0.7, 0.82, 0.94].map((at) => ({ at, aim: Math.PI + 0.3, next: Date.now() + rand(500, 2500), fired: 0 })),
+        soldiers: [0.66, 0.68, 0.74, 0.77, 0.79, 0.86, 0.88, 0.91, 0.97].map((at) => ({ at, phase: rand(0, TAU), run: null })),
+        blasts: [],
+      },
     }),
     draw: (ctx, s, now, w, h) => galaxy(ctx, s, now, w, h),
   },

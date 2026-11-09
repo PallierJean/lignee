@@ -161,7 +161,8 @@ chacun leur taille, leur vitesse et leur balancement, tirés au hasard) :
   et sa lune, soleils jumeaux ; le cargo en soucoupe ou le chasseur à ailes en X poursuivis par des
   chasseurs à panneaux hexagonaux, tirs laser et explosions ; saut en hyperespace, puis un croiseur
   en forme de dague à tourelles ; en bas, sur la glace, un marcheur quadrupède entouré d'airspeeders
-  qui l'enroulent d'un câble jusqu'à ce qu'il tombe et explose ; « Il y a bien longtemps, dans une
+  qui l'enroulent d'un câble jusqu'à ce qu'il tombe et explose, d'autres marcheurs au loin dans la
+  brume, une tranchée tenue par des soldats et des tourelles qui ripostent, gerbes de neige ; « Il y a bien longtemps, dans une
   famille lointaine, très lointaine… » au démarrage ; fiches en hologrammes, la personne au centre
   allume un sabre laser, la lignée directe brille en vert).
 
