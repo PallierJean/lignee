@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.11](https://github.com/PallierJean/lignee/compare/v1.20.10...v1.20.11) (2026-11-09)
+
+### Code Refactoring
+
+* Compute generations in the model, not in the tree layout ([2a1e5e5](https://github.com/PallierJean/lignee/commit/2a1e5e5888556dde5bdb5f224dbecd92dbf6def9))
+
+---
+
+### Refontes
+
+* Calculer les générations dans le modèle, pas dans le dessin de l'arbre ([2a1e5e5](https://github.com/PallierJean/lignee/commit/2a1e5e5888556dde5bdb5f224dbecd92dbf6def9))
+
 ## [1.20.10](https://github.com/PallierJean/lignee/compare/v1.20.9...v1.20.10) (2026-11-09)
 
 ### Code Refactoring
