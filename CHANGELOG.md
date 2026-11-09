@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.3](https://github.com/PallierJean/lignee/compare/v1.20.2...v1.20.3) (2026-11-09)
+
+### Bug Fixes
+
+* Report a failed browser save instead of claiming it was saved ([2066dbb](https://github.com/PallierJean/lignee/commit/2066dbb4d41e20fe6a9356023eaa6249db275bde))
+
+---
+
+### Corrections
+
+* Signaler l'échec d'un enregistrement dans le navigateur au lieu d'annoncer « Enregistré » ([2066dbb](https://github.com/PallierJean/lignee/commit/2066dbb4d41e20fe6a9356023eaa6249db275bde))
+
 ## [1.20.2](https://github.com/PallierJean/lignee/compare/v1.20.1...v1.20.2) (2026-11-09)
 
 ### Bug Fixes
