@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.21.1](https://github.com/PallierJean/lignee/compare/v1.21.0...v1.21.1) (2026-11-09)
+
+### Bug Fixes
+
+* Show clearer icons for the Matrix and Star Wars themes ([b303d6c](https://github.com/PallierJean/lignee/commit/b303d6cbe7059cee3070bd5ea2ec49ac2006f3a8))
+
+---
+
+### Corrections
+
+* Afficher des icônes plus parlantes pour les thèmes Matrix et Star Wars ([b303d6c](https://github.com/PallierJean/lignee/commit/b303d6cbe7059cee3070bd5ea2ec49ac2006f3a8))
+
 ## [1.21.0](https://github.com/PallierJean/lignee/compare/v1.20.14...v1.21.0) (2026-11-09)
 
 ### Features
