@@ -5,10 +5,11 @@
 import { ZOOMS, narrow } from './config.js';
 import { S, savePrefs } from './state.js';
 import { $ } from './utils/dom.js';
-import { rid, pool } from './utils/helpers.js';
-import { isImpossibleDate } from './utils/dates.js';
-import { P, photoOf, photoSrc, partnersOf, childrenOf, unionBetween, unionIdBetween, unionDeathEnd, currentSituation, reindex, birthSurname, eventsOf, sourcesOf, mediaList, unionType, isDead, DATED_SITUATIONS } from './model/people.js';
-import { opSet, opUpdate, opDelete, storePhoto, beginAction, commitAction, undoAction, redoAction } from './services/storage.js';
+import { rid } from './utils/helpers.js';
+import { P, photoOf, photoSrc, partnersOf, childrenOf, unionDeathEnd, currentSituation, reindex, birthSurname, eventsOf, sourcesOf, mediaList, unionType, isDead } from './model/people.js';
+import { opSet, opUpdate, opDelete, inBatch, beginAction, commitAction, undoAction, redoAction } from './services/storage.js';
+import { savePerson, closeUnionsAtDeath } from './services/person-save.js';
+import { draftError } from './model/draft.js';
 import { relationship } from './model/kinship.js';
 import { mergedData } from './model/duplicates.js';
 import { renamePatches } from './model/places.js';
@@ -27,12 +28,6 @@ import { renderPersonDlg } from './ui/person-dlg.js';
 import { photoFromFile, DOCUMENT_SIDE } from './utils/image.js';
 import { cropPhoto } from './ui/crop.js';
 import { askLeave, closeLeave } from './ui/leave-dlg.js';
-
-/** Situations shared with the current spouse. */
-const COUPLE_SITUATIONS = new Set(['married', 'remarried', 'pacs', 'cohabiting']);
-
-/** Situation of a single person -> end of their last union. */
-const ENDING_SITUATIONS = { widowed: 'death', divorced: 'divorce', separated: 'separation' };
 
 /** On a phone, opens the side panel over the tree; the Back button closes it. */
 function showSide() {
@@ -297,36 +292,6 @@ function draftUnion(other) {
   return { uid: null, other, type: '', date: '', place: '', end: '', endDate: '', cause: '', formerId: '', removed: false };
 }
 
-/** Saved fields of a union row: the cause only applies to a remarriage. */
-function unionFields(u) {
-  const cause = u.type === 'remarried' ? u.cause : '';
-  return {
-    type: u.type, date: u.date.trim(), place: u.place.trim(), end: u.end, endDate: u.endDate.trim(),
-    cause, formerId: cause === 'widowed' ? u.formerId : '',
-  };
-}
-
-/** The person's unions: with no other end given, they stop at the death of the first spouse. */
-async function closeUnionsAtDeath(id) {
-  for (const x of partnersOf(id)) {
-    const date = x.uid ? unionDeathEnd(P(id), P(x.id)) : null;
-    if (date === null) continue;
-    const u = S.unions.get(x.uid);
-    if (!u.end) await opUpdate('unions', x.uid, { end: 'death', endDate: date });
-    else if (u.end === 'death' && !u.endDate && date) await opUpdate('unions', x.uid, { endDate: date });
-  }
-}
-
-/** A remarriage's cause gives the end of the previous union, if it has none. */
-async function endFormerUnion(id, row) {
-  const { cause, formerId } = unionFields(row);
-  if (row.removed || !cause) return;
-  const uid = cause === 'widowed'
-    ? unionIdBetween(id, formerId) || unionIdBetween(row.other, formerId)
-    : (partnersOf(id).filter((x) => x.uid && x.id !== row.other).pop() || {}).uid;
-  if (uid && !S.unions.get(uid).end) await opUpdate('unions', uid, { end: cause === 'widowed' ? 'death' : 'divorce' });
-}
-
 export function startNew() {
   if (!S.canWrite) return;
   if (S.edit) {
@@ -545,29 +510,11 @@ export async function submitEdit() {
   if (S.busy || !S.edit) return;
   captureDraft();
   const e = S.edit;
-  const d = e.draft;
-
-  if (!d.given.trim() && !d.surname.trim() && !(d.sex === 'F' && d.maidenName.trim())) {
-    e.error = 'f.errName';
+  const error = draftError(e);
+  if (error) {
+    e.error = error;
     renderSide(true);
-    focusFirstField();
-    return;
-  }
-  if (e.rel === 'sibling' && !d.fatherId && !d.motherId) {
-    e.error = 'f.errSibling';
-    renderSide(true);
-    return;
-  }
-  if (d.fatherId && d.fatherId === d.motherId) {
-    e.error = 'f.errParents';
-    renderSide(true);
-    return;
-  }
-  const dates = [d.birthDate, d.deathDate, DATED_SITUATIONS.has(d.situation) ? d.situationDate : '',
-    ...e.unions.filter((u) => !u.removed).flatMap((u) => [u.date, u.endDate]), ...e.events.filter((x) => !x.removed).map((x) => x.date)];
-  if (dates.some(isImpossibleDate)) {
-    e.error = 'f.errDate';
-    renderSide(true);
+    if (error === 'f.errName') focusFirstField();
     return;
   }
 
@@ -580,155 +527,7 @@ export async function submitEdit() {
 
   beginAction(e.id ? 'hist.edit' : 'hist.add');
   try {
-    const id = e.id || rid('p');
-    const previous = e.id ? P(e.id) : null;
-    const data = {
-      given: d.given.trim(),
-      surname: d.surname.trim(),
-      maidenName: d.sex === 'F' ? d.maidenName.trim() : '',
-      sex: d.sex || 'U',
-      birthDate: d.birthDate.trim(),
-      birthPlace: d.birthPlace.trim(),
-      deathDate: d.deathDate.trim(),
-      deathPlace: d.deathPlace.trim(),
-      deceased: !!(d.deceased || d.deathDate.trim() || d.deathPlace.trim()),
-      occupation: d.occupation.trim(),
-      situation: d.situation || '',
-      situationDate: DATED_SITUATIONS.has(d.situation) ? d.situationDate.trim() : '',
-      notes: d.notes.trim(),
-      fatherId: d.fatherId || null,
-      motherId: d.motherId || null,
-      createdAt: (previous && previous.createdAt) || Date.now(),
-      updatedAt: Date.now(),
-    };
-    if (d.photo) data.photo = await storePhoto(d.photo, data);
-    if (previous && previous.example) data.example = true;
-
-    const events = e.events.filter((x) => !x.removed).map(({ removed, ...x }) => ({
-      ...x, date: x.date.trim(), place: x.place.trim(), note: x.note.trim(),
-    }));
-    if (events.length) data.events = events;
-    const facts = new Set(events.map((x) => x.id));
-    const sources = [];
-    for (const { removed, ...x } of e.sources) {
-      const s = { ...x, title: x.title.trim(), place: x.place.trim(), ref: x.ref.trim(), note: x.note.trim() };
-      if (removed || !(s.title || s.place || s.ref || s.note || s.photo)) continue;
-      // Fact removed from the form: the source stays, for the record in general
-      if (/^e_/.test(s.fact) && !facts.has(s.fact)) s.fact = '';
-      if (s.photo) s.photo = await storePhoto(s.photo, data);
-      else delete s.photo;
-      sources.push(s);
-    }
-    if (sources.length) data.sources = sources;
-    const media = [];
-    for (const { removed, ...x } of e.media) {
-      if (removed) continue;
-      media.push({ ...x, title: x.title.trim(), date: x.date.trim(), note: x.note.trim(), photo: await storePhoto(x.photo, data) });
-    }
-    if (media.length) data.media = media;
-    await opSet('people', id, data);
-
-    // New parent: linked to the child, and the union with the other parent is created if known
-    if ((e.rel === 'father' || e.rel === 'mother') && S.people.has(e.of)) {
-      const field = e.rel === 'father' ? 'fatherId' : 'motherId';
-      await opUpdate('people', e.of, { [field]: id });
-      const child = P(e.of);
-      const other = e.rel === 'father' ? child.motherId : child.fatherId;
-      if (other && S.people.has(other) && !unionBetween(id, other)) {
-        await opSet('unions', rid('u'), { a: other, b: id, date: '', place: '', createdAt: Date.now() });
-      }
-    }
-
-    // Unions changed, removed or added in the form
-    for (const u of e.unions) {
-      if (u.uid) {
-        if (u.removed) await opDelete('unions', u.uid);
-        else if (Object.entries(unionFields(u)).some(([k, v]) => v !== u.orig[k])) await opUpdate('unions', u.uid, unionFields(u));
-      } else if (!u.removed && S.people.has(u.other) && !unionBetween(id, u.other)) {
-        await opSet('unions', rid('u'), { a: u.other, b: id, ...unionFields(u), createdAt: Date.now() });
-      }
-    }
-    reindex();
-    await closeUnionsAtDeath(id);
-    for (const u of e.unions) await endFormerUnion(id, u);
-
-    // Last union changed, situation unchanged: the union sets the situation
-    const latest = partnersOf(id).pop();
-    const row = latest && e.unions.find((u) => !u.removed && u.other === latest.id);
-    if (row && (!row.uid || row.type !== row.orig.type || row.end !== row.orig.end)
-      && data.situation === ((previous && previous.situation) || '')) {
-      const code = currentSituation(id);
-      const now = code === 'married' && row.type === 'remarried' ? 'remarried' : code;
-      if (now !== data.situation) {
-        data.situation = now;
-        data.situationDate = DATED_SITUATIONS.has(now) ? row.date.trim() : '';
-        await opUpdate('people', id, { situation: now, situationDate: data.situationDate });
-      }
-    }
-
-    // Married, in a civil partnership or cohabiting: the date (marriage or partnership) is that of
-    // the most recent union (previous unions keep theirs), and the current
-    // spouse takes the same situation
-    // Widowed, divorced or separated: it's the end of the last union, if it doesn't already have one
-    if (ENDING_SITUATIONS[data.situation]) {
-      reindex();
-      const last = partnersOf(id).pop();
-      if (last && last.uid && !S.unions.get(last.uid).end) await opUpdate('unions', last.uid, { end: ENDING_SITUATIONS[data.situation] });
-    }
-    if (COUPLE_SITUATIONS.has(data.situation)) {
-      reindex();
-      const current = partnersOf(id).pop();
-      // The spouse hasn't necessarily remarried: for them, "remarried" means "married"
-      const shared = data.situation === 'remarried' ? 'married' : data.situation;
-      // Union of unspecified type or status changed: the situation gives the type (same codes)
-      if (current && current.uid) {
-        const { type } = S.unions.get(current.uid);
-        const changed = !previous || previous.situation !== data.situation;
-        const same = type === data.situation || (type === 'religious' && shared === 'married')
-          || (type === 'remarried' && data.situation === 'married');
-        if (!type || (changed && !same)) await opUpdate('unions', current.uid, { type: data.situation });
-      }
-      let date = data.situationDate;
-      if (DATED_SITUATIONS.has(data.situation)) {
-        const u = current && current.uid && S.unions.get(current.uid);
-        // A situation date changed in the form prevails; otherwise, the union's
-        const typed = date && date !== ((previous && previous.situationDate) || '');
-        const unionDate = u ? String(u.date || '').trim() : '';
-        if (u && date && (typed || !unionDate) && date !== unionDate) await opUpdate('unions', current.uid, { date });
-        else if (unionDate) date = unionDate;
-        if (date !== data.situationDate) await opUpdate('people', id, { situationDate: date });
-      }
-
-      // Only if the person is also the spouse's last union
-      const spouse = current && P(current.id);
-      const spouseCurrent = spouse && partnersOf(current.id).pop();
-      if (spouseCurrent && spouseCurrent.id === id && !(current.uid && S.unions.get(current.uid).end)
-        && (spouse.situation !== shared || (spouse.situationDate || '') !== date)
-        && !(spouse.situation === 'remarried' && shared === 'married')) {
-        await opUpdate('people', current.id, { situation: shared, situationDate: date, updatedAt: Date.now() });
-      }
-    } else if (!data.situation || data.situation === 'single') {
-      // With no couple status: the person takes that of the current union
-      reindex();
-      const current = partnersOf(id).pop();
-      const u = current && current.uid && S.unions.get(current.uid);
-      const type = u && !u.end && !isDead(P(current.id)) && partnersOf(current.id).pop().id === id ? unionType(u) : '';
-      const shared = type === 'religious' ? 'married' : type;
-      if (COUPLE_SITUATIONS.has(shared)) {
-        if (!u.type) await opUpdate('unions', current.uid, { type: shared });
-        await opUpdate('people', id, { situation: shared, situationDate: DATED_SITUATIONS.has(shared) ? String(u.date || '').trim() : '' });
-      }
-    }
-
-    // Union ended: the spouse whose last union it is is also widowed, divorced or separated
-    reindex();
-    const ended = partnersOf(id).pop();
-    if (ended && ended.uid && S.unions.get(ended.uid).end && partnersOf(ended.id).pop().id === id) {
-      const code = currentSituation(ended.id);
-      if (ENDING_SITUATIONS[code] && P(ended.id).situation !== code) {
-        await opUpdate('people', ended.id, { situation: code, situationDate: '', updatedAt: Date.now() });
-      }
-    }
+    const id = await inBatch(() => savePerson(e));
 
     S.focus = e.rel && S.people.has(e.of) ? e.of : id;
     commitAction();
@@ -773,18 +572,20 @@ export async function doDelete(id) {
 
   beginAction('hist.delete');
   try {
-    for (const k of kids) {
+    await inBatch(async () => {
+      for (const k of kids) {
       const c = P(k);
       if (!c) continue;
       const patch = {};
       if (c.fatherId === id) patch.fatherId = null;
       if (c.motherId === id) patch.motherId = null;
-      await opUpdate('people', k, patch);
-    }
-    for (const [uid, u] of [...S.unions]) {
-      if (u.a === id || u.b === id) await opDelete('unions', uid);
-    }
-    await opDelete('people', id);
+        await opUpdate('people', k, patch);
+      }
+      for (const [uid, u] of [...S.unions]) {
+        if (u.a === id || u.b === id) await opDelete('unions', uid);
+      }
+      await opDelete('people', id);
+    });
     S.confirmDel = false;
     if (S.focus === id) S.focus = next; // another record deleted: the focus person stays
     commitAction();
@@ -818,48 +619,50 @@ export async function mergePeople(keep, drop) {
   S.busy = true;
   beginAction('hist.merge');
   try {
-    const unionIds = new Map();
-    for (const [uid, u] of [...S.unions]) {
-      if (u.a !== drop && u.b !== drop) continue;
-      const other = u.a === drop ? u.b : u.a;
-      const twin = [...S.unions].find(([k, x]) => k !== uid && ((x.a === keep && x.b === other) || (x.a === other && x.b === keep)));
-      if (other === keep) await opDelete('unions', uid);
-      else if (twin) {
-        const [tid, tu] = twin;
-        unionIds.set(uid, tid);
-        await opUpdate('unions', tid, {
-          type: tu.type || u.type || '', date: tu.date || u.date || '', place: tu.place || u.place || '',
-          end: tu.end || u.end || '', endDate: tu.endDate || u.endDate || '',
-          cause: tu.cause || u.cause || '', formerId: tu.formerId || u.formerId || '',
-        });
-        await opDelete('unions', uid);
-      } else await opUpdate('unions', uid, u.a === drop ? { a: keep } : { b: keep });
-    }
-    for (const [uid, u] of [...S.unions]) {
-      if (u.formerId === drop) await opUpdate('unions', uid, { formerId: keep });
-    }
-    for (const [id, p] of [...S.people]) {
-      if (id === drop || id === keep) continue;
-      const patch = {};
-      if (p.fatherId === drop) patch.fatherId = keep;
-      if (p.motherId === drop) patch.motherId = keep;
-      // Identifications on photos: they follow the person kept
-      const tagged = (m) => (Array.isArray(m.tags) ? m.tags : []);
-      if (mediaList(p).some((m) => tagged(m).some((x) => x.id === drop))) {
-        patch.media = mediaList(p).map((m) => ({ ...m, tags: tagged(m).map((x) => (x.id === drop ? { ...x, id: keep } : x)) }));
+    await inBatch(async () => {
+      const unionIds = new Map();
+      for (const [uid, u] of [...S.unions]) {
+        if (u.a !== drop && u.b !== drop) continue;
+        const other = u.a === drop ? u.b : u.a;
+        const twin = [...S.unions].find(([k, x]) => k !== uid && ((x.a === keep && x.b === other) || (x.a === other && x.b === keep)));
+        if (other === keep) await opDelete('unions', uid);
+        else if (twin) {
+          const [tid, tu] = twin;
+          unionIds.set(uid, tid);
+          await opUpdate('unions', tid, {
+            type: tu.type || u.type || '', date: tu.date || u.date || '', place: tu.place || u.place || '',
+            end: tu.end || u.end || '', endDate: tu.endDate || u.endDate || '',
+            cause: tu.cause || u.cause || '', formerId: tu.formerId || u.formerId || '',
+          });
+          await opDelete('unions', uid);
+        } else await opUpdate('unions', uid, u.a === drop ? { a: keep } : { b: keep });
       }
-      // Marriage sources carried by a spouse: they follow the union kept
-      const moved = (s) => String(s.fact || '').startsWith('union:') && unionIds.has(s.fact.slice(6));
-      if (sourcesOf(p).some(moved)) {
-        patch.sources = sourcesOf(p).map((s) => (moved(s) ? { ...s, fact: 'union:' + unionIds.get(s.fact.slice(6)) } : s));
+      for (const [uid, u] of [...S.unions]) {
+        if (u.formerId === drop) await opUpdate('unions', uid, { formerId: keep });
       }
-      if (Object.keys(patch).length) await opUpdate('people', id, patch);
-    }
-    const merged = mergedData(P(keep), P(drop), unionIds);
-    merged.updatedAt = Date.now();
-    for (const key of ['fatherId', 'motherId']) if (merged[key] === keep || merged[key] === drop) merged[key] = null;
-    await opSet('people', keep, merged);
-    await opDelete('people', drop);
+      for (const [id, p] of [...S.people]) {
+        if (id === drop || id === keep) continue;
+        const patch = {};
+        if (p.fatherId === drop) patch.fatherId = keep;
+        if (p.motherId === drop) patch.motherId = keep;
+        // Identifications on photos: they follow the person kept
+        const tagged = (m) => (Array.isArray(m.tags) ? m.tags : []);
+        if (mediaList(p).some((m) => tagged(m).some((x) => x.id === drop))) {
+          patch.media = mediaList(p).map((m) => ({ ...m, tags: tagged(m).map((x) => (x.id === drop ? { ...x, id: keep } : x)) }));
+        }
+        // Marriage sources carried by a spouse: they follow the union kept
+        const moved = (s) => String(s.fact || '').startsWith('union:') && unionIds.has(s.fact.slice(6));
+        if (sourcesOf(p).some(moved)) {
+          patch.sources = sourcesOf(p).map((s) => (moved(s) ? { ...s, fact: 'union:' + unionIds.get(s.fact.slice(6)) } : s));
+        }
+        if (Object.keys(patch).length) await opUpdate('people', id, patch);
+      }
+      const merged = mergedData(P(keep), P(drop), unionIds);
+      merged.updatedAt = Date.now();
+      for (const key of ['fatherId', 'motherId']) if (merged[key] === keep || merged[key] === drop) merged[key] = null;
+      await opSet('people', keep, merged);
+      await opDelete('people', drop);
+    });
     if (S.focus === drop) S.focus = keep;
     commitAction();
     S.busy = false;
@@ -899,7 +702,9 @@ export async function renamePlace(from, to) {
   S.busy = true;
   beginAction('hist.place');
   try {
-    for (const x of patches) await opUpdate(x.collection, x.id, x.patch);
+    await inBatch(async () => {
+      for (const x of patches) await opUpdate(x.collection, x.id, x.patch);
+    });
   } catch (e) {
     reportError(e);
     return;
@@ -934,8 +739,10 @@ export async function applyInsee(id, i) {
   S.busy = true;
   beginAction('hist.insee');
   try {
-    await opUpdate('people', id, patch);
-    if (dies || patch.deathDate) await closeUnionsAtDeath(id);
+    await inBatch(async () => {
+      await opUpdate('people', id, patch);
+      if (dies || patch.deathDate) await closeUnionsAtDeath(id);
+    });
   } catch (e) {
     reportError(e);
     return;
@@ -984,14 +791,16 @@ export async function removeExamples() {
 
   beginAction('hist.examples');
   try {
-    await pool(linkedPeople, 3, async ([k, p]) => {
-      const patch = {};
-      if (examples.has(p.fatherId)) patch.fatherId = null;
-      if (examples.has(p.motherId)) patch.motherId = null;
-      await opUpdate('people', k, patch);
+    await inBatch(async () => {
+      for (const [k, p] of linkedPeople) {
+        const patch = {};
+        if (examples.has(p.fatherId)) patch.fatherId = null;
+        if (examples.has(p.motherId)) patch.motherId = null;
+        await opUpdate('people', k, patch);
+      }
+      for (const uid of unionIds) await opDelete('unions', uid);
+      for (const id of examples) await opDelete('people', id);
     });
-    await pool(unionIds, 3, (uid) => opDelete('unions', uid));
-    await pool([...examples], 3, (id) => opDelete('people', id));
     S.focus = null;
     commitAction();
     afterData();

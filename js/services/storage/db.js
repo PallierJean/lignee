@@ -89,6 +89,19 @@ export function refreshDb() {
   S.unions = pick(docs.unions);
 }
 
+// While a batch of writes is running (storage.js inBatch), received snapshots wait:
+// they would replace the documents the batch has changed in memory but not yet written
+let held = false;
+let missed = false;
+
+export function holdSync(on) {
+  held = on;
+  if (on || !missed) return;
+  missed = false;
+  refreshDb();
+  afterData();
+}
+
 export function subscribe() {
   const loaded = { people: 'loadedP', unions: 'loadedU', trees: 'loadedT' };
   const listen = (collection) => services.db.collection(collection).onSnapshot(
@@ -97,6 +110,10 @@ export function subscribe() {
       for (const doc of snap.docs) map.set(doc.id, doc.data());
       docs[collection] = map;
       S[loaded[collection]] = true;
+      if (held) {
+        missed = true;
+        return;
+      }
       refreshDb();
       afterData();
     },
