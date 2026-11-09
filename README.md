@@ -136,7 +136,7 @@ Le menu « Aa » de l'en-tête (`ui/theme.js`) change les couleurs : automatique
 le système), clair, sombre, ou un thème illustré, animé sur un calque sous l'arbre (les objets ont
 chacun leur taille, leur vitesse et leur balancement, tirés au hasard) :
 
-- **Fêtes et saisons** (`ui/ambient.js`) : 🎄 Noël (neige, guirlande tout autour de la toile),
+- **Fêtes et saisons** (`ui/ambient.js`, scènes dans `ui/ambient/scenes.js`, chargées seulement quand un de ces thèmes est affiché) : 🎄 Noël (neige, guirlande tout autour de la toile),
   🎃 Halloween (lune et nuages, citrouilles à la bougie vacillante, brume, araignée, chauves-souris
   et leurs nuées, fantômes), 🌸 Printemps (branches de cerisier en fleur, prairie de tulipes et de
   pâquerettes, pétales, papillons, hirondelles), ☀️ Été (plage : vagues, écume, baigneurs flous,
