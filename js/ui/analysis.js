@@ -4,7 +4,7 @@ import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
 import { P, fullName, lifeYears, eventLabel, allMedia } from '../model/people.js';
 import { relationship } from '../model/kinship.js';
-import { findIssues } from '../model/checks.js';
+import { currentIssues } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
 import { datesOfDay, datesOfMonth } from '../model/ephemerides.js';
 import { findDuplicates } from '../model/duplicates.js';
@@ -80,7 +80,7 @@ function issueHTML(x) {
 }
 
 function checksView() {
-  const issues = findIssues();
+  const issues = currentIssues();
   if (!issues.length) return `<p class="okmsg an-ok">✓ ${t('chk.none')}</p><p class="hint an-hint">${t('chk.scope')}</p>`;
   const part = (level, sym) => {
     const list = issues.filter((x) => x.level === level);
@@ -394,7 +394,7 @@ function galleryView() {
 export const startLocate = () => locateMissing(renderAnalysis);
 
 export function renderAnalysis() {
-  const count = S.people.size ? findIssues().length : 0;
+  const count = S.people.size ? currentIssues().length : 0;
   $('#anCount').textContent = count ? String(count) : '';
   if (S.tab !== 'analysis') return;
   if (!S.people.size) {

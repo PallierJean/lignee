@@ -454,7 +454,13 @@ export function descendantRows(id) {
 export const descendantDepth = (id) => descendantRows(id).length;
 
 /** Recomputes the children and spouses indexes from the people and unions. */
+// Changes each time the data may have changed: computations kept in memory (checks.js) start over
+let version = 0;
+export const dataVersion = () => version;
+export const dataChanged = () => { version++; };
+
 export function reindex() {
+  version++;
   idx.children = new Map();
   idx.partners = new Map();
 

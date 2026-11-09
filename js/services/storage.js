@@ -14,6 +14,7 @@
 import { S } from '../state.js';
 import { rid, pool, markReported } from '../utils/helpers.js';
 import { failure } from './notify.js';
+import { dataChanged } from '../model/people.js';
 import { loadLocalTree, saveBrowserTree, deleteBrowserTree, saveTreesList } from './storage/local.js';
 import { loadFileTree, saveFile, createFileTree, renameFileTree, deleteFileTree } from './storage/file.js';
 import { dbSet, dbUpdate, dbDelete, refreshDb, setDbTree, deleteDbTree, holdSync } from './storage/db.js';
@@ -41,6 +42,7 @@ let batch = null;
 
 /** Puts each document of `entries` back to its state before the batch. */
 function restore(entries) {
+  dataChanged();
   for (const c of entries) {
     const map = mapOf(c.collection);
     if (c.before) map.set(c.id, c.before);
@@ -105,6 +107,7 @@ export async function inBatch(fn) {
  * goes back to its previous state: what is shown stays what is stored.
  */
 async function writeDoc(collection, id, next, write, patch) {
+  dataChanged();
   const map = mapOf(collection);
   const before = map.get(id);
   track(collection, id);
@@ -122,6 +125,7 @@ async function writeDoc(collection, id, next, write, patch) {
   try {
     await write();
   } catch (e) {
+    dataChanged();
     if (map.get(id) === next) {
       if (before) map.set(id, before);
       else map.delete(id);
@@ -150,6 +154,7 @@ export function opDelete(collection, id) {
 
 /** Puts each document back in the action's `side` state ('before' or 'after'). */
 async function applyAction(action, side) {
+  dataChanged();
   for (const c of action.changes) {
     const data = c[side];
     if (data) mapOf(c.collection).set(c.id, data);
