@@ -14,8 +14,9 @@ dépendance, aucune étape de compilation : Node.js 26 suffit pour la lancer et 
 
 - [Architecture](architecture.md) : arborescence, circulation des données, langues, annuler / rétablir.
 - [Stockage des données](storage.md) : plusieurs arbres, fichiers, navigateur ou base en ligne, photos.
-- [Format des données](data-format.md) : personnes, unions, dates, lieux, sources, galerie, correspondance GEDCOM.
-- [Sécurité](security.md) : serveur local, politique de sécurité, sorties vers Internet.
+- [Format des données](data-format.md) : référence des objets (sauvegarde, personne, union, événement, source, galerie), types, correspondance GEDCOM.
+- [API du serveur local](api.md) : routes REST, requêtes, réponses et codes d'erreur.
+- [Sécurité](security.md) : menaces, serveur local, politique de sécurité, sorties vers Internet, secrets.
 
 ## Fonctionnalités
 
@@ -23,8 +24,9 @@ dépendance, aucune étape de compilation : Node.js 26 suffit pour la lancer et 
 - [Impression](features/print.md) : PDF vectoriel, découpage en feuilles, livrets.
 - [Onglet Analyse](features/analysis.md) : parenté, cohérence, doublons, INSEE, lieux, carte.
 - [Thèmes](features/themes.md) : clair et sombre, fêtes et saisons, univers, accessibilité.
-- [GitHub](features/github.md) : ouvrir et sauvegarder un arbre dans un dépôt.
+- [GitHub](features/github.md) : ouvrir et sauvegarder un arbre dans un dépôt ; pas à pas pour les utilisateurs : [Garder son arbre sur GitHub](guide-github.md).
 
 ## Livrer
 
-- [Tests et publication](release.md) : tests, intégration continue, versions, mises à jour, site GitHub Pages.
+- [Tests et publication](release.md) : tests, intégration continue, versions, site GitHub Pages.
+- [Mises à jour](updates.md) : mettre à jour sa copie de Lignée, mises à jour automatiques des outils.
