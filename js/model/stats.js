@@ -3,7 +3,7 @@ import { S } from '../state.js';
 import { dateParts, fullDate } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
 import { P, surname, maiden, isDead, childrenOf, eventsOf } from './people.js';
-import { generationMap } from '../tree/full-layout.js';
+import { generationMap } from './generations.js';
 
 const TOP = 10;           // rows in the rankings
 const MAX_GENS = 30;      // generations of ancestors walked (bounds looping trees)
