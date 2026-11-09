@@ -80,6 +80,31 @@ test('gallery: once saved, the viewer opens on the new images to identify the pe
   assert.equal(document.getElementById('mediaDlg').hidden, true);
 });
 
+test('gallery: the back of an image is added, changed, saved and removed', async () => {
+  await A.addDraftMedia([png('contrat.png')]);
+  assert.match(document.getElementById('paneRecord').innerHTML, /data-med-back="0">Ajouter le verso/);
+  await A.setDraftMediaBack(0, text);
+  assert.equal(S.edit.media[0].back, '', 'not an image: refused');
+  assert.match(toastText(), /image/i);
+  await A.setDraftMediaBack(0, png('verso.png'));
+  assert.equal(S.edit.media[0].back, 'data:image/jpeg;base64,IMG');
+  assert.match(document.getElementById('paneRecord').innerHTML, /Changer le verso.*Retirer le verso/s);
+  await A.setDraftMediaBack(5, png()); // no such image: nothing
+  document.getElementById('f-given').value = 'Anne';
+  document.getElementById('f-surname').value = 'Roux';
+  await A.submitEdit();
+  assert.equal(S.people.get('a').media[0].back, 'data:image/jpeg;base64,IMG', 'saved with its front');
+  A.startEdit('a');
+  assert.equal(S.edit.media[0].back, 'data:image/jpeg;base64,IMG', 'back in the form again');
+  A.removeDraftMediaBack(0);
+  assert.equal(S.edit.media[0].back, '');
+  document.getElementById('f-given').value = 'Anne';
+  document.getElementById('f-surname').value = 'Roux';
+  await A.submitEdit();
+  assert.equal('back' in S.people.get('a').media[0], false, 'removed');
+  A.removeDraftMediaBack(0); // no form: nothing
+});
+
 test('gallery: nothing is added once the form was closed or reopened during the load', async () => {
   let release;
   fakeImages(() => new Promise((r) => { release = r; }));

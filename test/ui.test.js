@@ -6,7 +6,7 @@ import { renderHeader } from '../js/ui/header.js';
 import { renderAll, afterData, renderRecord } from '../js/ui/render.js';
 import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
 import {
-  openMedia, closeMedia, stepMedia, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption,
+  openMedia, closeMedia, stepMedia, showMediaSide, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption,
 } from '../js/ui/media.js';
 import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind } from '../js/ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from '../js/ui/spouse-pick.js';
@@ -424,6 +424,40 @@ describe('fiche : événements, sources, galerie', () => {
     assert.doesNotMatch(html('mediaCard'), /media-step/);
     assert.equal(stepMedia(1), false);
     closeMedia();
+  });
+
+  test('recto et verso : badge sur la vignette, deux faces dans la visionneuse, identification sur le recto', () => {
+    loadTree([
+      person('a', { given: 'Anne', surname: 'Roux', sex: 'F', media: [
+        { id: 'm1', photo: 'data:image/jpeg;base64,RECTO', back: 'data:image/jpeg;base64,VERSO', title: 'Contrat', tags: [{ id: 'a', x: 10, y: 10 }] },
+        { id: 'm2', photo: 'data:image/jpeg;base64,SEUL', title: 'Portrait' },
+      ] }),
+    ]);
+    S.focus = 'a';
+    S.tab = 'record';
+    renderAll();
+    assert.match(html('paneRecord'), /data-id="m1"[^>]*>.*<span class="med-rv" title="Recto et verso">R\/V<\/span>/s);
+    openMedia('a', 'm1', 'person:a');
+    let card = html('mediaCard');
+    assert.match(card, /data-act="media-side" data-back="0" aria-pressed="true">Recto/);
+    assert.match(card, /src="data:image\/jpeg;base64,RECTO"/);
+    assert.match(card, /tag-pin/, 'les personnes sur le recto');
+    showMediaSide(true);
+    card = html('mediaCard');
+    assert.match(card, /src="data:image\/jpeg;base64,VERSO" alt="Contrat \(Verso\)"/);
+    assert.doesNotMatch(card, /tag-pin|can-tag/, 'pas d’identification sur le verso');
+    assert.match(card, /Les personnes s’identifient sur le recto/);
+    const pic = { querySelector: () => ({ getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }) }) };
+    placePin(pic, { target: { closest: () => null }, clientX: 10, clientY: 10 });
+    assert.doesNotMatch(html('mediaCard'), /tag-pick/, 'aucun repère posé sur le verso');
+    stepMedia(1); // image suivante : de nouveau le recto
+    card = html('mediaCard');
+    assert.match(card, /SEUL/);
+    assert.doesNotMatch(card, /media-sides/, 'une seule face : pas de bascule');
+    stepMedia(1);
+    assert.match(html('mediaCard'), /RECTO/);
+    closeMedia();
+    showMediaSide(true); // visionneuse fermée : rien
   });
 
   test('image supprimée : la visionneuse se ferme', () => {

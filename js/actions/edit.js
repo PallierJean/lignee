@@ -137,7 +137,7 @@ export function startEdit(id) {
     photo: photoSrc(x.photo) ? x.photo : '', removed: false,
   }));
   const media = mediaList(p).filter((x) => photoSrc(x.photo))
-    .map((x) => ({ tags: [], ...x, ...texts(x, ['title', 'date', 'note']), removed: false }));
+    .map((x) => ({ tags: [], ...x, ...texts(x, ['title', 'date', 'note']), back: photoSrc(x.back) ? x.back : '', removed: false }));
   openEdit({ id, rel: null, of: null, draft: d, unions, events, sources, media });
 }
 
@@ -167,7 +167,7 @@ export async function addDraftMedia(files) {
   const added = [];
   for (const file of files) {
     try {
-      added.push({ id: rid('m'), photo: await photoFromFile(file, DOCUMENT_SIDE), title: file.name.replace(/\.[^.]+$/, ''), date: '', note: '', tags: [], removed: false });
+      added.push({ id: rid('m'), photo: await photoFromFile(file, DOCUMENT_SIDE), back: '', title: file.name.replace(/\.[^.]+$/, ''), date: '', note: '', tags: [], removed: false });
     } catch (err) {
       toast(err.message, true);
     }
@@ -175,6 +175,30 @@ export async function addDraftMedia(files) {
   if (!S.edit || S.edit.token !== token) return;
   captureDraft();
   S.edit.media.push(...added);
+  renderSide(true);
+}
+
+/** Back of gallery image `i` in the form: a contract's second side, a photo's annotated back. */
+export async function setDraftMediaBack(i, file) {
+  if (!S.edit || !S.edit.media[i]) return;
+  const token = S.edit.token;
+  let back;
+  try {
+    back = await photoFromFile(file, DOCUMENT_SIDE);
+  } catch (err) {
+    toast(err.message, true);
+    return;
+  }
+  if (!S.edit || S.edit.token !== token || !S.edit.media[i]) return;
+  captureDraft();
+  S.edit.media[i].back = back;
+  renderSide(true);
+}
+
+export function removeDraftMediaBack(i) {
+  if (!S.edit || !S.edit.media[i]) return;
+  captureDraft();
+  S.edit.media[i].back = '';
   renderSide(true);
 }
 

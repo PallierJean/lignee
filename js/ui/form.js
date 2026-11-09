@@ -187,6 +187,13 @@ function mediaRows(e) {
         </div>
       </div>
       <label class="fld"><span>${t('f.eventNote')}</span><input id="med-note-${i}" value="${esc(x.note)}"></label>
+      <div class="photofld med-back">
+        ${x.back ? `<img class="photo" src="${esc(photoSrc(x.back))}" alt="${t('f.medBack')}">` : ''}
+        <div class="photobtns">
+          <label class="btn small"><input type="file" accept="image/*" class="sr" data-med-back="${i}">${t(x.back ? 'f.medBackChange' : 'f.medBackAdd')}</label>
+          ${x.back ? `<button class="link" type="button" data-act="med-back-remove" data-i="${i}">${t('f.medBackRemove')}</button>` : `<span class="hint">${t('f.medBackHint')}</span>`}
+        </div>
+      </div>
       <button class="link" type="button" data-act="med-remove" data-i="${i}">${t('f.medRemove')}</button>
     </div>`)).join('');
 }

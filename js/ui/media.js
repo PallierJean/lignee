@@ -19,6 +19,7 @@ let current = null;  // { owner, id }: photo shown
 let pin = null;      // { x, y }: marker waiting for a person
 let editing = false; // caption being edited
 let sequence = [];    // [{ owner, id }]: the images of the grid it was opened from, in order
+let back = false;     // the back of the image is shown (contract, annotated photo)
 
 const item = () => current && mediaList(P(current.owner)).find((m) => m.id === current.id);
 
@@ -44,7 +45,8 @@ export function renderMedia() {
     closeMedia();
     return;
   }
-  const tags = tagsOf(m);
+  if (!photoSrc(m.back)) back = false;
+  const tags = back ? [] : tagsOf(m); // people are identified on the front
   // Invisible markers on faces: they light up on hover, of the face or of the name in the list (highlightTag)
   const shown = tags.filter((x) => P(x.id));
   const marks = shown.map((x) => `<button class="tag-pin${pinSide(x)}" type="button" data-tag="${tags.indexOf(x)}" data-style="left:${x.x}%;top:${x.y}%"`
@@ -64,7 +66,14 @@ export function renderMedia() {
       + `<button class="btn small" type="button" data-act="tag-cancel">${t('cancel')}</button></div>`
     : '';
   // The instruction above the image: that's where you click
-  const hint = S.canWrite && !pin ? `<p class="hint tag-hint">${t('med.hint')}</p>` : '';
+  const hint = back ? `<p class="hint tag-hint">${t('med.backHint')}</p>`
+    : S.canWrite && !pin ? `<p class="hint tag-hint">${t('med.hint')}</p>` : '';
+  // Front and back: two sides of the same document
+  const sides = photoSrc(m.back)
+    ? `<div class="seg media-sides" role="group" aria-label="${t('med.sides')}">`
+      + `<button type="button" data-act="media-side" data-back="0" aria-pressed="${!back}">${t('med.front')}</button>`
+      + `<button type="button" data-act="media-side" data-back="1" aria-pressed="${back}">${t('med.back')}</button></div>`
+    : '';
   // From one image to the next: buttons, and the arrow keys (ui/events.js)
   const at = sequence.findIndex((x) => x.owner === current.owner && x.id === current.id);
   const nav = sequence.length > 1 && at >= 0
@@ -74,8 +83,8 @@ export function renderMedia() {
     : '';
   setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(m.title || t('med.untitled'))}</h2>${nav}`
     + `<button class="icon-btn" type="button" data-act="media-close" aria-label="${t('close')}">×</button></div>`
-    + hint
-    + `<div class="media-pic${S.canWrite ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">${marks}`
+    + sides + hint
+    + `<div class="media-pic${S.canWrite && !back ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(back ? m.back : m.photo))}" alt="${esc(m.title || '')}${back ? ' (' + t('med.back') + ')' : ''}">${marks}`
     + (pin ? `<span class="tag-pin new" data-style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
     + caption(m)
     + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker);
@@ -156,6 +165,7 @@ export async function saveCaption() {
 export function openMedia(owner, id, group = '') {
   current = { owner, id };
   sequence = (mediaGroups.get(group) || []).filter((x) => P(x.owner));
+  back = false;
   pin = null;
   editing = false;
   $('#mediaDlg').hidden = false;
@@ -171,8 +181,17 @@ export function stepMedia(d) {
   const at = sequence.findIndex((x) => x.owner === current.owner && x.id === current.id);
   if (at < 0) return false;
   current = { ...sequence[(at + d + sequence.length) % sequence.length] };
+  back = false;
   renderMedia();
   return true;
+}
+
+/** Shows the back (true) or the front of the image; a marker waiting for its person is dropped. */
+export function showMediaSide(onBack) {
+  if (!current) return;
+  back = Boolean(onBack);
+  pin = null;
+  renderMedia();
 }
 
 export function closeMedia() {
@@ -185,7 +204,7 @@ export function closeMedia() {
 /** Click on the image: marker position, as a percentage of the image. */
 export function placePin(el, ev) {
   // While typing the caption, a click on the image must not redraw (and clear) the fields
-  if (!S.canWrite || editing || !item() || ev.target.closest('.tag-pin')) return;
+  if (!S.canWrite || editing || back || !item() || ev.target.closest('.tag-pin')) return;
   const box = el.querySelector('img').getBoundingClientRect();
   pin = {
     x: Math.round(((ev.clientX - box.left) / box.width) * 1000) / 10,

@@ -5,7 +5,7 @@
  * With an authorised token, the tree and its photos go back to the repository in a single commit.
  * The token is never stored; it is only sent to api.github.com.
  */
-import { convertPhotos } from './storage.js';
+import { convertPhotos, keptMedia } from './storage.js';
 import { parseBackup } from './backup.js';
 import { isPhotoFile, isPhotoData, photoLabel } from '../model/people.js';
 import { pool, sleep } from '../utils/helpers.js';
@@ -165,7 +165,7 @@ export async function attachPhotos(repo, backup) {
   await pool(backup.people, 4, async (x) => {
     const p = await convertPhotos(x.data, load);
     if (!p.photo) delete p.photo;
-    if (p.media) p.media = p.media.filter((m) => m.photo);
+    if (p.media) p.media = keptMedia(p.media);
     x.data = p;
   });
   return count;

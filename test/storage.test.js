@@ -418,3 +418,13 @@ describe('famille d’exemple à la première visite', () => {
     assert.equal(S.people.size, 0);
   });
 });
+
+test('gallery backs follow their front: converted, kept, or dropped alone when not found', async () => {
+  const { convertPhotos, keptMedia } = await import('../js/services/storage.js');
+  const p = { photo: 'photos/a.jpg', media: [{ id: 'm', photo: 'photos/front.jpg', back: 'photos/back.jpg' }, { id: 'n', photo: 'photos/only.jpg' }] };
+  const out = await convertPhotos(p, async (x) => x.replace('photos/', 'data:'));
+  assert.deepEqual(out.media, [{ id: 'm', photo: 'data:front.jpg', back: 'data:back.jpg' }, { id: 'n', photo: 'data:only.jpg' }]);
+  assert.equal(p.media[0].back, 'photos/back.jpg', 'the record itself is untouched');
+  assert.deepEqual(keptMedia([{ id: 'm', photo: 'x', back: '' }, { id: 'n', photo: '', back: 'y' }, { id: 'o', photo: 'z', back: 'w' }]),
+    [{ id: 'm', photo: 'x' }, { id: 'o', photo: 'z', back: 'w' }]);
+});

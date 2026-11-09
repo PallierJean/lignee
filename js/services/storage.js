@@ -21,7 +21,7 @@ import { dbSet, dbUpdate, dbDelete, refreshDb, setDbTree, deleteDbTree, holdSync
 import { track, resetHistory, takeUndo, takeRedo, pushDone, pushUndone } from './history.js';
 
 export { loadLocal, seedExample } from './storage/local.js';
-export { loadFile, storePhoto, storePhotos, convertPhotos, buildPortableBackup } from './storage/file.js';
+export { loadFile, storePhoto, storePhotos, convertPhotos, keptMedia, buildPortableBackup } from './storage/file.js';
 export { dbSet, withRetry, subscribe } from './storage/db.js';
 export { beginAction, commitAction, track, canUndo, canRedo } from './history.js';
 
