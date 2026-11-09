@@ -6,7 +6,7 @@ import path from 'node:path';
 import { S, services, loadPrefs, savePrefs, treeName } from '../js/state.js';
 import { createServer } from '../server.js';
 import {
-  loadFile, loadLocal, seedExample, saveLocal, opSet, opUpdate, opDelete, openTree, createTree, renameTree, deleteTree, storePhoto, storePhotos,
+  loadFile, loadLocal, seedExample, saveLocal, inBatch, opSet, opUpdate, opDelete, openTree, createTree, renameTree, deleteTree, storePhoto, storePhotos,
   buildPortableBackup, withRetry, subscribe, beginAction, commitAction, undoAction,
 } from '../js/services/storage.js';
 import { PREF_KEY, TREES_KEY, TREE_KEY } from '../js/config.js';
@@ -200,6 +200,49 @@ describe('mode navigateur', () => {
     assert.equal(S.people.has('lost'), false);
   });
 
+  test('batch: one save, all or nothing', async () => {
+    S.mode = 'local';
+    loadLocal();
+    await opSet('people', 'a', { given: 'Ana' });
+    const set = localStorage.setItem;
+    let saves = 0;
+    localStorage.setItem = function (k, v) {
+      if (k.startsWith(TREE_KEY)) saves++;
+      return set.call(this, k, v);
+    };
+    try {
+      const out = await inBatch(async () => {
+        await opSet('people', 'b', { given: 'Bob' });
+        await opUpdate('people', 'a', { surname: 'Roux' });
+        await opSet('unions', 'u', { a: 'a', b: 'b' });
+        assert.equal(S.people.get('a').surname, 'Roux', 'later rules read the earlier writes');
+        return 'done';
+      });
+      assert.equal(out, 'done');
+      assert.equal(saves, 1);
+      // A failure in the middle: nothing stays, in memory or stored
+      await assert.rejects(inBatch(async () => {
+        await opDelete('people', 'b');
+        await opUpdate('people', 'a', { given: 'Changed' });
+        throw new Error('bug');
+      }), /bug/);
+      assert.equal(saves, 1);
+      assert.equal(S.people.get('a').given, 'Ana');
+      assert.ok(S.people.has('b'));
+      // The save fails: everything goes back too
+      localStorage.setItem = () => { throw new Error('refused'); };
+      await assert.rejects(inBatch(async () => {
+        await opSet('people', 'c', { given: 'Cy' });
+        await opDelete('unions', 'u');
+      }));
+      assert.ok(!S.people.has('c') && S.unions.has('u'));
+    } finally {
+      localStorage.setItem = set;
+    }
+    loadLocalTree();
+    assert.deepEqual([...S.people.keys()].sort(), ['a', 'b']);
+  });
+
   test('browser nearly full: one warning', async () => {
     S.mode = 'local';
     loadLocal();
@@ -258,6 +301,41 @@ describe('base en ligne', () => {
     assert.ok(!services.db.data.people.has('b'));
     await opDelete('people', 'a');
     assert.equal(S.people.size, 0);
+  });
+
+  test('batch: patches keep others\' fields, snapshots wait, a failure is undone', async () => {
+    await opSet('people', 'a', { given: 'Ana', notes: 'old' });
+    await opSet('people', 'b', { given: 'Bob' });
+    // Someone else changes the notes: the batch's patch doesn't bring the old ones back
+    services.db.data.people.set('a', { ...services.db.data.people.get('a'), notes: 'theirs' });
+    let seen;
+    await inBatch(async () => {
+      await opUpdate('people', 'a', { surname: 'Roux' });
+      await opSet('people', 'c', { given: 'Cy' });
+      services.db.emit('people'); // a snapshot during the batch
+      seen = S.people.has('c');
+    });
+    assert.equal(seen, true, 'the snapshot didn\'t wipe the batch\'s writes');
+    assert.equal(services.db.data.people.get('a').notes, 'theirs');
+    assert.equal(services.db.data.people.get('a').surname, 'Roux');
+    assert.ok(S.people.has('c'));
+    // The second write fails: the first one is put back
+    const real = services.db.collection;
+    services.db.collection = (c) => {
+      const col = real(c);
+      return { ...col, doc: (id) => (id === 'b' ? { ...col.doc(id), update: async () => { throw Object.assign(new Error('x'), { code: 'internal' }); } } : col.doc(id)) };
+    };
+    try {
+      await assert.rejects(inBatch(async () => {
+        await opUpdate('people', 'a', { surname: 'Noir' });
+        await opUpdate('people', 'b', { surname: 'Noir' });
+      }));
+    } finally {
+      services.db.collection = real;
+    }
+    assert.equal(services.db.data.people.get('a').surname, 'Roux');
+    assert.equal(S.people.get('a').surname, 'Roux');
+    assert.equal(S.people.get('b').surname, undefined);
   });
 
   test('annuler réécrit les documents touchés', async () => {

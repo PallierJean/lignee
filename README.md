@@ -73,7 +73,8 @@ lignee/
 │   │   ├── countries.js        Pays (français, anglais) du champ Pays des lieux
 │   │   ├── insee.js            Rapprochement avec le fichier des décès de l'INSEE
 │   │   ├── narrative.js        Récit du livret de famille de l'arbre
-│   │   └── family-book.js      Livret de famille d'une personne
+│   │   ├── family-book.js      Livret de famille d'une personne
+│   │   └── draft.js            Vérification du formulaire avant l'enregistrement
 │   ├── services/
 │   │   ├── storage.js          Enregistrement et collection d'arbres : choisit le mode ci-dessous
 │   │   ├── storage/
@@ -86,6 +87,7 @@ lignee/
 │   │   ├── backup.js           Sauvegarde complète au format JSON
 │   │   ├── csv.js              Export du registre en CSV
 │   │   ├── history.js          Historique annuler / rétablir
+│   │   ├── person-save.js      Enregistrement d'une fiche : unions et situations tenues à jour
 │   │   ├── geocode.js          Coordonnées des lieux (OpenStreetMap, sur demande)
 │   │   └── insee.js            Vérification des fiches chez matchID, résultats gardés
 │   ├── tree/
@@ -345,6 +347,10 @@ reste du texte libre, affiché tel quel et ignoré par les calculs. L'export GED
   qui renvoie à une fonction de `actions.js`.
 - Les actions modifient `S` (dans `state.js`) et enregistrent via `services/storage.js`,
   puis `afterData()` recalcule les liens de parenté et redessine la page.
+- Une action qui touche plusieurs fiches (enregistrer, supprimer, fusionner, renommer un lieu…)
+  passe par `inBatch()` : ses changements s'appliquent tout de suite en mémoire, mais sont
+  enregistrés ensemble à la fin, en une seule écriture hors base en ligne. Si l'enregistrement
+  échoue, tout revient en arrière : l'action est enregistrée entière ou pas du tout.
 - « Supprimer » une fiche se trouve sur la fiche de la personne centrale, dans la fenêtre d'une
   personne (clic sur sa carte) et dans le formulaire d'une fiche existante (pour une personne créée
   au mauvais endroit). Une confirmation est demandée ; ses liens sont retirés, « Annuler » rétablit tout.
