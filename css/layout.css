@@ -18,7 +18,8 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 390px);
+  /* The side panel follows the screen: narrower on a laptop, the tree keeps its room */
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 26vw, 390px);
   gap: 12px;
 }
 
