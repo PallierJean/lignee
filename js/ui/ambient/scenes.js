@@ -2216,7 +2216,7 @@ function bolt(ctx, b) {
   ctx.strokeStyle = b.color;
   ctx.shadowColor = b.color;
   ctx.shadowBlur = 8;
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = b.heavy ? 3.4 : 2.2;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(b.x, b.y);
@@ -2373,31 +2373,6 @@ function knee(hx, hy, fx, fy, len) {
   return [mx + ux * up, my + uy * up];
 }
 
-/** One leg: armoured thigh and shin, knee joint, wide foot pad. */
-function walkerLeg(ctx, hip, foot, len, s, far) {
-  const [kx, ky] = knee(hip[0], hip[1], foot[0], foot[1], len);
-  ctx.lineCap = 'round';
-  for (const [from, to, width] of [[hip, [kx, ky], 10], [[kx, ky], foot, 8]]) {
-    ctx.strokeStyle = far ? '#4E5666' : '#2F3540';
-    ctx.lineWidth = (width + 2) * s;
-    ctx.beginPath();
-    ctx.moveTo(...from);
-    ctx.lineTo(...to);
-    ctx.stroke();
-    ctx.strokeStyle = far ? '#7A8394' : '#A7B0BE';
-    ctx.lineWidth = width * s;
-    ctx.stroke();
-  }
-  ctx.beginPath();
-  ctx.arc(kx, ky, 6 * s, 0, TAU);
-  ctx.fillStyle = far ? '#6A7383' : '#8E97A6';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(foot[0], foot[1] - 2 * s, 11 * s, 4.5 * s, 0, 0, TAU);
-  ctx.fillStyle = far ? '#5D6575' : '#7C8595';
-  ctx.fill();
-}
-
 /** Where a foot is: planted (it slides back as the body moves on), or lifted and swung forward. */
 function footAt(u, hipX, stride, ground, s) {
   if (u < 0.75) return [hipX + stride * (0.5 - u / 0.75), ground];
@@ -2405,11 +2380,68 @@ function footAt(u, hipX, stride, ground, s) {
   return [hipX + stride * (-0.5 + v), ground - Math.sin(v * Math.PI) * 16 * s];
 }
 
+/** One leg: armoured hip plate, thigh and shin with a hydraulic ram, knee joint, clawed foot pad. */
+function walkerLeg(ctx, hip, foot, len, s, far) {
+  const [kx, ky] = knee(hip[0], hip[1], foot[0], foot[1], len);
+  const dark = far ? '#4E5666' : '#2F3540';
+  const light = far ? '#7A8394' : '#A7B0BE';
+  ctx.lineCap = 'round';
+  for (const [from, to, width] of [[hip, [kx, ky], 10], [[kx, ky], foot, 8]]) {
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = (width + 2) * s;
+    ctx.beginPath();
+    ctx.moveTo(...from);
+    ctx.lineTo(...to);
+    ctx.stroke();
+    ctx.strokeStyle = light;
+    ctx.lineWidth = width * s;
+    ctx.stroke();
+    // Armour bands across the segment
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (const k of [0.3, 0.6]) {
+      const mx = from[0] + (to[0] - from[0]) * k;
+      const my = from[1] + (to[1] - from[1]) * k;
+      ctx.moveTo(mx - width * 0.45 * s, my);
+      ctx.lineTo(mx + width * 0.45 * s, my);
+    }
+    ctx.stroke();
+  }
+  // Hydraulic ram along the shin, behind it
+  ctx.strokeStyle = far ? '#9AA1AD' : '#D5DBE3';
+  ctx.lineWidth = 1.6 * s;
+  ctx.beginPath();
+  ctx.moveTo(kx - 6 * s, ky + 4 * s);
+  ctx.lineTo(foot[0] - 5 * s, foot[1] - 12 * s);
+  ctx.stroke();
+  // Hip plate and knee joint
+  ctx.fillStyle = far ? '#6A7383' : '#8E97A6';
+  ctx.beginPath();
+  ctx.arc(hip[0], hip[1], 8 * s, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(kx, ky, 6 * s, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = dark;
+  ctx.beginPath();
+  ctx.arc(kx, ky, 2.2 * s, 0, TAU);
+  ctx.fill();
+  // Foot: a round pad and its claws
+  ctx.beginPath();
+  ctx.ellipse(foot[0], foot[1] - 3 * s, 12 * s, 5 * s, 0, 0, TAU);
+  ctx.fillStyle = far ? '#5D6575' : '#7C8595';
+  ctx.fill();
+  ctx.fillStyle = dark;
+  for (const dx of [-10, -3, 4, 11]) ctx.fillRect(foot[0] + (dx - 1.5) * s, foot[1] - 1.5 * s, 3 * s, 1.5 * s);
+}
+
 /**
- * Four-legged armoured walker, walking to the right on the ice: boxy body that sways with
- * each step, neck and head with its chin guns, far legs in the shade, snow kicked up by the feet.
+ * Four-legged armoured walker, walking to the right on the ice: plated body with rivets, hatches
+ * and vents, swaying with each step; ringed neck; head with cheek plates, lit viewport, chin guns and
+ * side guns; far legs in the shade; snow kicked up by the feet. `flash` lights the guns as they fire.
  */
-function walker(ctx, x, ground, s, now) {
+function walker(ctx, x, ground, s, now, flash = 0) {
   const cycle = (now % 2600) / 2600;
   const len = 52 * s;
   const stride = 34 * s;
@@ -2421,11 +2453,12 @@ function walker(ctx, x, ground, s, now) {
     return { far, u, hip: [x + dx * s, bodyY - 4 * s], foot: footAt(u, x + dx * s, stride, ground, s) };
   });
   for (const l of placed) if (l.far) walkerLeg(ctx, l.hip, l.foot, len, s, true);
-  // Body: an armoured box, lighter on top, side plates and vents
+  // Body: an armoured box, lighter on top
   const top = bodyY - 40 * s;
   const body = ctx.createLinearGradient(0, top, 0, bodyY);
-  body.addColorStop(0, '#C9D0DA');
-  body.addColorStop(1, '#6E7787');
+  body.addColorStop(0, '#D3D9E2');
+  body.addColorStop(0.45, '#A3ACBA');
+  body.addColorStop(1, '#5D6575');
   ctx.beginPath();
   ctx.moveTo(x - 58 * s, bodyY - 8 * s);
   ctx.lineTo(x - 50 * s, top);
@@ -2439,7 +2472,11 @@ function walker(ctx, x, ground, s, now) {
   ctx.strokeStyle = '#2F3540';
   ctx.lineWidth = 1.2;
   ctx.stroke();
-  ctx.strokeStyle = 'rgba(47, 53, 64, .55)';
+  // Light on the back
+  ctx.fillStyle = 'rgba(255, 255, 255, .35)';
+  ctx.fillRect(x - 48 * s, top + 1, 92 * s, 2 * s);
+  // Plates, each with its rivets
+  ctx.strokeStyle = 'rgba(47, 53, 64, .6)';
   ctx.lineWidth = 0.8;
   ctx.beginPath();
   for (const k of [-30, -8, 14, 34]) {
@@ -2448,17 +2485,37 @@ function walker(ctx, x, ground, s, now) {
   }
   ctx.moveTo(x - 52 * s, top + 14 * s);
   ctx.lineTo(x + 50 * s, top + 14 * s);
+  ctx.moveTo(x - 54 * s, bodyY - 9 * s);
+  ctx.lineTo(x + 52 * s, bodyY - 9 * s);
   ctx.stroke();
   ctx.fillStyle = '#4E5666';
-  for (let k = 0; k < 5; k++) ctx.fillRect(x + (-40 + k * 6) * s, top + 20 * s, 3 * s, 10 * s);
-  // Neck and head, nodding a little
+  for (const k of [-30, -8, 14, 34]) for (const v of [5, 18, 27]) ctx.fillRect(x + (k + 2) * s, top + v * s, 1.2 * s, 1.2 * s);
+  // Side hatch, vents and a warning light
+  ctx.fillStyle = '#6E7787';
+  ctx.fillRect(x - 4 * s, top + 17 * s, 14 * s, 12 * s);
+  ctx.strokeStyle = '#2F3540';
+  ctx.strokeRect(x - 4 * s, top + 17 * s, 14 * s, 12 * s);
+  ctx.fillStyle = '#4E5666';
+  for (let k = 0; k < 5; k++) ctx.fillRect(x + (-42 + k * 6) * s, top + 18 * s, 3 * s, 10 * s);
+  for (let k = 0; k < 3; k++) ctx.fillRect(x + (20 + k * 6) * s, top + 20 * s, 3 * s, 7 * s);
+  ctx.fillStyle = Math.sin(now / 350) > 0 ? '#FF5C5C' : 'rgba(255, 92, 92, .3)';
+  ctx.fillRect(x - 46 * s, top + 4 * s, 2 * s, 2 * s);
+  // Ringed neck, then the head, nodding a little
   const nod = Math.sin(cycle * TAU * 2 + 1) * 1.2 * s;
   const hx = x + 70 * s;
   const hy = top + 12 * s + nod;
   ctx.fillStyle = '#7C8595';
   ctx.fillRect(x + 50 * s, top + 10 * s, 14 * s, 12 * s);
+  ctx.strokeStyle = '#4E5666';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (const k of [53, 57, 61]) {
+    ctx.moveTo(x + k * s, top + 10 * s);
+    ctx.lineTo(x + k * s, top + 22 * s);
+  }
+  ctx.stroke();
   const head = ctx.createLinearGradient(0, hy - 12 * s, 0, hy + 14 * s);
-  head.addColorStop(0, '#CDD4DE');
+  head.addColorStop(0, '#D3D9E2');
   head.addColorStop(1, '#6E7787');
   ctx.beginPath();
   ctx.moveTo(hx - 8 * s, hy - 12 * s);
@@ -2472,14 +2529,39 @@ function walker(ctx, x, ground, s, now) {
   ctx.strokeStyle = '#2F3540';
   ctx.lineWidth = 1.2;
   ctx.stroke();
+  // Cheek plate, seams and rivets
+  ctx.beginPath();
+  ctx.moveTo(hx - 4 * s, hy + 1 * s);
+  ctx.lineTo(hx + 8 * s, hy + 3 * s);
+  ctx.lineTo(hx + 6 * s, hy + 12 * s);
+  ctx.lineTo(hx - 4 * s, hy + 12 * s);
+  ctx.closePath();
+  ctx.fillStyle = '#8E97A6';
+  ctx.fill();
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  ctx.fillStyle = '#4E5666';
+  for (const [rx, ry] of [[-6, -9], [4, -9], [14, -8], [-6, 10], [16, 10]]) ctx.fillRect(hx + rx * s, hy + ry * s, 1.2 * s, 1.2 * s);
   ctx.fillStyle = '#FFB547'; // lit viewport
   ctx.fillRect(hx + 10 * s, hy - 4 * s, 12 * s, 2.2 * s);
+  // Guns: two under the chin, one on the side of the head
   ctx.strokeStyle = '#2F3540';
-  ctx.lineWidth = 2.2 * s;
-  ctx.beginPath(); // chin guns
-  ctx.moveTo(hx + 18 * s, hy + 11 * s);
-  ctx.lineTo(hx + 32 * s, hy + 11 * s);
+  ctx.lineWidth = 2.4 * s;
+  ctx.beginPath();
+  ctx.moveTo(hx + 16 * s, hy + 10 * s);
+  ctx.lineTo(hx + 32 * s, hy + 10 * s);
+  ctx.moveTo(hx + 14 * s, hy + 13 * s);
+  ctx.lineTo(hx + 28 * s, hy + 13 * s);
   ctx.stroke();
+  ctx.lineWidth = 1.6 * s;
+  ctx.beginPath();
+  ctx.moveTo(hx + 2 * s, hy - 6 * s);
+  ctx.lineTo(hx + 22 * s, hy - 7 * s);
+  ctx.stroke();
+  ctx.fillStyle = '#5D6575';
+  ctx.fillRect(hx, hy - 9 * s, 6 * s, 5 * s);
+  const guns = [[hx + 32 * s, hy + 10 * s], [hx + 28 * s, hy + 13 * s], [hx + 22 * s, hy - 7 * s]];
+  if (flash > 0) for (const [gx, gy] of guns) glow(ctx, gx + 2 * s, gy, 2.5 * s * flash, '#EFFFE8', `rgba(124, 255, 107, ${0.7 * flash})`);
   for (const l of placed) if (!l.far) walkerLeg(ctx, l.hip, l.foot, len, s, false);
   // Snow kicked up when a foot comes down
   for (const l of placed) {
@@ -2491,7 +2573,7 @@ function walker(ctx, x, ground, s, now) {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
-  return { gun: [hx + 32 * s, hy + 11 * s], legs: placed.map((l) => knee(l.hip[0], l.hip[1], l.foot[0], l.foot[1], len)) };
+  return { guns, legs: placed.map((l) => knee(l.hip[0], l.hip[1], l.foot[0], l.foot[1], len)) };
 }
 
 /** Small two-seat airspeeder seen from the side, nose towards `dir`: wedge hull, canopy, orange stripes, split flaps. */
@@ -2580,7 +2662,8 @@ function iceBattle(ctx, s, now, w, h) {
       ctx.rotate(Math.min(1, fall / 1.6) ** 2 * 1.25);
       ctx.translate(-pivot, -ground);
     }
-    parts = walker(ctx, x, ground, scale, s.fall ? s.fall.born : now);
+    const flash = s.fall ? 0 : Math.max(0, 1 - (now - s.gunFired) / 160);
+    parts = walker(ctx, x, ground, scale, s.fall ? s.fall.born : now, flash);
     ctx.restore();
   }
   if (s.fall && fall >= 1.6 && !s.fall.boom) {
@@ -2629,11 +2712,26 @@ function iceBattle(ctx, s, now, w, h) {
     const d = Math.hypot(x - o.x, ground - 110 * scale - o.y) || 1;
     s.iceBolts.push({ x: o.x, y: o.y, dx: ((x - o.x) / d) * 8, dy: ((ground - 110 * scale - o.y) / d) * 8, color: '#FF5C5C', life: Math.min(40, d / 8) });
   }
-  if (ships.length && parts && Math.random() < 0.02) {
-    const { o } = pick(ships);
-    const [gx, gy] = parts.gun;
-    const d = Math.hypot(o.x - gx, o.y - gy) || 1;
-    s.iceBolts.push({ x: gx, y: gy, dx: ((o.x - gx) / d) * 9, dy: ((o.y - gy) / d) * 9 - 1.5, color: '#7CFF6B', life: 30 });
+  // The walker fires bursts of three at a speeder, aiming where it is going
+  if (ships.length && parts && !s.fall) {
+    if (!s.burst && now > s.nextBurst) s.burst = { target: pick(ships).p, left: 3, next: now };
+    if (s.burst && now >= s.burst.next) {
+      const ship = ships.find((x) => x.p === s.burst.target);
+      if (ship) {
+        const [gx, gy] = parts.guns[s.burst.left % parts.guns.length];
+        const ahead = orbit({ ...ship.p, a: ship.p.a + 120 * ship.p.speed }); // where it will be soon
+        const d = Math.hypot(ahead.x - gx, ahead.y - gy) || 1;
+        const v = 11;
+        s.iceBolts.push({ x: gx, y: gy, dx: ((ahead.x - gx) / d) * v, dy: ((ahead.y - gy) / d) * v, color: '#7CFF6B', life: Math.min(45, d / v + 8), heavy: true });
+        s.gunFired = now;
+      }
+      s.burst.left--;
+      s.burst.next = now + 140;
+      if (s.burst.left <= 0 || !ship) {
+        s.burst = null;
+        s.nextBurst = now + rand(1500, 3200);
+      }
+    }
   }
   s.iceBolts = s.iceBolts.filter((b) => {
     b.x += b.dx;
@@ -3025,6 +3123,7 @@ export const SCENES = {
       cruiser: { born: Date.now() - 2500, plates: hullPlates(), shots: [] }, meteors: [], booms: [],
       speeders: [{ a: 0, speed: 0.0011, rx: 150 }, { a: 2.4, speed: 0.0008, rx: 190 }, { a: 4.2, speed: 0.00095, rx: 120 }],
       iceBolts: [], cableBorn: Date.now() + 8000, walkStart: Date.now() - 4000, fall: null,
+      burst: null, nextBurst: Date.now() + 1500, gunFired: 0,
     }),
     draw: (ctx, s, now, w, h) => galaxy(ctx, s, now, w, h),
   },
