@@ -238,6 +238,26 @@ export function matchDeath(id, acts) {
 
 /** A certificate's place, written like the tree's: "Tulle (19)", "Fribourg, Allemagne". */
 export const actPlace = (l) => formatPlace({ city: l.city, dept: isFrance(l.country) ? l.dept : '', country: l.country });
+
+/**
+ * Death certificates to request, grouped by town of death: [{ place, rows: [{ id, act }] }].
+ * `rows` lists [{ id, act }] with a certificate number. Towns sorted by department then name,
+ * abroad then an unknown town last; within a town, by date of death.
+ */
+export function deathActsByCommune(rows) {
+  const groups = new Map();
+  for (const row of rows) {
+    if (!row.act.certificate) continue;
+    const death = row.act.death || {};
+    const place = death.city ? actPlace(death) : '';
+    if (!groups.has(place)) groups.set(place, { place, abroad: !isFrance(death.country), dept: death.dept || '', city: death.city || '', rows: [] });
+    groups.get(place).rows.push(row);
+  }
+  return [...groups.values()]
+    .sort((a, b) => (!a.place) - (!b.place) || a.abroad - b.abroad
+      || a.dept.localeCompare(b.dept, 'fr', { numeric: true }) || a.city.localeCompare(b.city, 'fr'))
+    .map(({ place, rows: list }) => ({ place, rows: list.sort((a, b) => a.act.deathDate.localeCompare(b.act.deathDate)) }));
+}
 const placeText = actPlace;
 
 /**

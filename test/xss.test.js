@@ -60,7 +60,7 @@ describe('aucune injection de HTML', () => {
   test('chaque vue de l’onglet Analyse', () => {
     S.tab = 'analysis';
     Object.assign(S, { kinA: 'a', kinB: 'c', kinShow: true });
-    for (const view of ['kin', 'checks', 'places', 'dups', 'insee', 'stats', 'cal', 'time', 'map', 'gallery']) {
+    for (const view of ['kin', 'checks', 'places', 'dups', 'insee', 'acts', 'stats', 'cal', 'time', 'map', 'gallery']) {
       S.analysis = view;
       renderAll();
       assert.ok(!injected(html('paneAnalysis')), view);

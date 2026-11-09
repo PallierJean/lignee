@@ -17,12 +17,12 @@ import { loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText } f
 import { mediaGrid } from './record.js';
 import { toast } from './toast.js';
 import { longDate } from '../utils/dates.js';
-import { inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace } from '../model/insee.js';
+import { inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune } from '../model/insee.js';
 import {
   inseeAvailable, inseePending, inseeResults, inseeMatch, checkInsee, forgetInsee, inseeStatus, inseeRegister, inseeAuth,
 } from '../services/insee.js';
 
-const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['insee', 'an.insee'], ['stats', 'an.stats'],
+const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['insee', 'an.insee'], ['acts', 'an.acts'], ['stats', 'an.stats'],
   ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery']];
 
 const name = (id) => esc(fullName(P(id)));
@@ -151,13 +151,13 @@ function inseeRow(id, m, diffs) {
     + `<div class="row-btns">${confirm}${all}<button class="btn small quiet" type="button" data-act="insee-ignore" data-id="${esc(id)}">${t('ins.ignore')}</button></div></li>`;
 }
 
+/** Feature of the local version: matchID refuses calls coming from a web page. */
+const inseeLocal = () => `<section class="rel ins-local"><h3>${t('ins.localTitle')}</h3><p>${t('ins.localWhat')}</p>`
+  + `<ol class="ins-steps">${t('ins.localSteps').map((x) => `<li>${x}</li>`).join('')}</ol>`
+  + `<p class="hint an-hint">${t('ins.localWhy')}</p></section>`;
+
 function inseeView() {
-  // Feature of the local version: matchID refuses calls coming from a web page
-  if (!inseeAvailable()) {
-    return `<section class="rel ins-local"><h3>${t('ins.localTitle')}</h3><p>${t('ins.localWhat')}</p>`
-      + `<ol class="ins-steps">${t('ins.localSteps').map((x) => `<li>${x}</li>`).join('')}</ol>`
-      + `<p class="hint an-hint">${t('ins.localWhy')}</p></section>`;
-  }
+  if (!inseeAvailable()) return inseeLocal();
   const pending = inseePending();
   const results = inseeResults();
   const groups = { fix: [], add: [], leads: [] };
@@ -185,6 +185,50 @@ function inseeView() {
     html += `<div class="row-btns reg-tools"><button class="btn small quiet" type="button" data-act="insee-forget">${t('ins.forget')}</button></div>`;
   }
   return html;
+}
+
+/* ---------- Death certificates to request ---------- */
+
+/** Records verified by INSEE (sure, likely or confirmed) with a certificate number, grouped by town of death. */
+function actGroups() {
+  const results = inseeResults();
+  const rows = [];
+  for (const id of S.people.keys()) {
+    const entry = results[id];
+    if (!entry || entry.ignored || entry.sig !== inseeSignature(inseeQuery(id))) continue;
+    const m = inseeMatch(id);
+    if (m && m.level !== 'lead' && m.act.certificate) rows.push({ id, act: m.act });
+  }
+  return deathActsByCommune(rows);
+}
+
+/** A certificate in plain text, as written in a request to the town hall. */
+const actRequestLine = (a) => t('acts.line', a.last, a.first.join(' '), longDate(actDateText(a.birthDate)), longDate(actDateText(a.deathDate)), a.certificate);
+
+function actsView() {
+  if (!inseeAvailable()) return inseeLocal();
+  const groups = actGroups();
+  if (!groups.length) return `<p class="nofocus">${t('acts.none')}</p>`;
+  const total = groups.reduce((n, g) => n + g.rows.length, 0);
+  return `<p class="hint an-hint">${t('acts.hint', total, groups.length)}</p>` + groups.map((g, i) => {
+    const rows = g.rows.map(({ id, act }) => `<li>${personLink(id)} <small>${t('acts.row', actDay(act.deathDate), esc(act.certificate))}</small></li>`).join('');
+    return `<section class="rel acts-town"><h3>${esc(g.place || t('acts.unknown'))} <span class="n">${g.rows.length}</span></h3>`
+      + `<ul class="ins-diffs">${rows}</ul>`
+      + `<div class="row-btns"><button class="btn small" type="button" data-act="acts-copy" data-i="${i}">${t('acts.copy')}</button></div></section>`;
+  }).join('');
+}
+
+/** Copies the list of town `i`, ready to paste into a request to its town hall. */
+export async function copyActs(i) {
+  const g = actGroups()[i];
+  if (!g) return;
+  const text = [g.place || t('acts.unknown'), ...g.rows.map(({ act }) => '- ' + actRequestLine(act))].join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(t('acts.copied', g.place || t('acts.unknown')));
+  } catch (e) {
+    toast(t('acts.copyFailed'), true);
+  }
 }
 
 /** Checks new or modified records, then redraws the view. */
@@ -404,7 +448,7 @@ export function renderAnalysis() {
   if (!S.kinA && P(S.focus)) S.kinA = S.focus;
   const seg = VIEWS.map(([view, label]) => `<button type="button" data-act="analysis-view" data-view="${view}" aria-pressed="${S.analysis === view}">${t(label)}</button>`).join('');
   const body = {
-    kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
+    kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, acts: actsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
   }[S.analysis]();
   setHTML($('#paneAnalysis'), `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`);
 }

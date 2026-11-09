@@ -40,6 +40,14 @@
   est gardé par server.js dans `data/matchid.json` (ignoré par git, jamais servi aux pages) et
   renouvelé la veille de son expiration ; les fiches déjà vérifiées restent acquises.
   Routes du serveur local qui relaient ces appels : [Relais vers le fichier des décès](../insee.md).
+- **Actes** (avec `npm start` seulement, comme la vue INSEE) : les actes de décès à demander aux
+  mairies. Reprend les fiches vérifiées par l'INSEE (acte certain, probable ou confirmé) qui ont un
+  numéro d'acte, regroupées par commune de décès (rangées par département, l'étranger puis les
+  communes inconnues à la fin), et pour chacune la date du décès et le numéro de l'acte. « Copier la
+  liste » met dans le presse-papiers le nom de la commune puis une ligne par acte (nom et prénoms
+  de l'état civil, naissance, décès, numéro), à coller dans la demande à la mairie. Le fichier de
+  l'INSEE ne donne que le numéro de l'acte de décès, pas celui de l'acte de naissance
+  (`deathActsByCommune` dans `model/insee.js`).
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).
