@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.5](https://github.com/PallierJean/lignee/compare/v1.20.4...v1.20.5) (2026-11-09)
+
+### Code Refactoring
+
+* Save each action whole or not at all, in a single write ([0cb1733](https://github.com/PallierJean/lignee/commit/0cb1733b0b07278c65c3ff9e2e52b3e750cb9d76))
+
+---
+
+### Refontes
+
+* Enregistrer chaque action en entier ou pas du tout, en une seule écriture ([0cb1733](https://github.com/PallierJean/lignee/commit/0cb1733b0b07278c65c3ff9e2e52b3e750cb9d76))
+
 ## [1.20.4](https://github.com/PallierJean/lignee/compare/v1.20.3...v1.20.4) (2026-11-09)
 
 ### Bug Fixes
