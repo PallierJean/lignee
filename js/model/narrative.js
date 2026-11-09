@@ -6,7 +6,7 @@ import {
   P, given, fullName, longName, lifeYears, byBirth, isDead, ageInfo, partnersOf, childrenOf, eventsOf, eventLabel, sourcesOf, SOURCE_KINDS, unionTypeLabel, unionEndText,
 } from './people.js';
 import { occupationLabel } from './occupations.js';
-import { generationMap } from '../tree/full-layout.js';
+import { generationMap } from './generations.js';
 
 const clean = (x) => String(x || '').trim();
 
