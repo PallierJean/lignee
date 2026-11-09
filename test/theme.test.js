@@ -377,6 +377,12 @@ describe('animations des thèmes fêtes et saisons', () => {
       Object.assign(sky, { nextBurst: 0, burst: null, iceBolts: [] });
       await new Promise((r) => setTimeout(r, 120));
       assert.ok(sky.iceBolts.some((b) => b.heavy && b.color === '#7CFF6B'), 'the walker fires');
+      // The front line: the turrets fire orange bolts at the walkers, blasts throw up snow
+      for (const tu of sky.front.turrets) tu.next = 0;
+      sky.front.blasts.push({ x: 100, y: 450, born: Date.now(), bits: [{ dx: 0.5, up: 2, r: 2 }] });
+      await new Promise((r) => setTimeout(r, 120));
+      assert.ok(sky.iceBolts.some((b) => b.color === '#FF9A3D'), 'the turrets fire');
+      assert.ok(sky.front.blasts.length > 0, 'a blast of snow');
       // The tow cable trips the walker, which blows up, then a new one comes
       Object.assign(sky.speeders[0], { down: 0 });
       sky.tow = { p: sky.speeders[0], born: Date.now() - 7100 };
