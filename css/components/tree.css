@@ -2,10 +2,18 @@
    Tree: toolbar, dotted canvas, lines, cards
    ========================================================== */
 
-/* Toolbar above the tree */
+/* Toolbar above the tree: always one line. When the tree is narrow (side panel open), labels
+   become arrows and some buttons icons; if that is still too wide, the bar scrolls sideways */
+.stage {
+  container: stage / inline-size;
+}
+
 .stage-bar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
   align-items: center;
   gap: 10px 18px;
   padding: 9px 12px;
@@ -16,6 +24,50 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.stage-bar > *,
+.stage-bar .btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Short form of a label or button: hidden while there is room for the text */
+.stage-bar .ico {
+  display: none;
+}
+
+.stage-bar .has-ico svg.ico {
+  vertical-align: -3px;
+}
+
+@container stage (max-width: 1300px) {
+  .stage-bar {
+    gap: 10px 12px;
+  }
+
+  .stage-bar .ctl {
+    gap: 6px;
+  }
+
+  .stage-bar .ico {
+    display: inline-block;
+  }
+
+  /* The text stays for screen readers; the title gives it on hover */
+  .stage-bar .lbl .txt,
+  .stage-bar .has-ico .txt {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .stage-bar .lbl .ico {
+    font-size: .9375rem;
+  }
 }
 
 .lbl {
@@ -358,7 +410,6 @@
 
 /* Phone: toolbar and legend on a single row, swiped sideways */
 @media (max-width: 600px) {
-  .stage-bar,
   .legend {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -367,17 +418,11 @@
   }
 
   .stage-bar {
-    gap: 14px;
     padding: 6px 10px;
   }
 
-  .stage-bar > *,
   .legend > * {
     flex: none;
-  }
-
-  .stage-bar .btn {
-    white-space: nowrap;
   }
 
 
