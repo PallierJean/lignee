@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.1](https://github.com/PallierJean/lignee/compare/v1.20.0...v1.20.1) (2026-11-09)
+
+### Bug Fixes
+
+* ask what to do with a record being edited when switching person ([adab77a](https://github.com/PallierJean/lignee/commit/adab77ab3bc34b29799ac6ae3b0596b47360971c))
+* let the side panel scroll on phones ([c98f225](https://github.com/PallierJean/lignee/commit/c98f22564accd73218fd7976c4b2ce0e3f9825e2))
+
 ## [1.20.0](https://github.com/PallierJean/lignee/compare/v1.19.1...v1.20.0) (2026-11-06)
 
 ### Features
