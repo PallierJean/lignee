@@ -3,7 +3,7 @@ import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import {
-  inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace, estimatedBirth, deathActsByCommune,
+  inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace, estimatedBirth, deathActsByCommune, recordDeathAct,
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
@@ -526,6 +526,43 @@ describe('actes de décès à demander, par commune', () => {
     assert.doesNotMatch(out, /Préparer toutes les demandes/, 'plus rien à chercher');
     await findAllActsHalls(); // plus rien à chercher
     assert.equal(asked.length, 2);
+  });
+
+  test('décès d’avant 1970, d’après les fiches : même mairie, sans numéro', async () => {
+    // Quelles fiches : décès daté avant 1970, en France, dans une commune connue
+    const rec = (fields) => recordDeathAct({ given: 'Marie Jeanne', surname: 'Durand', maidenName: 'Faure', sex: 'F', birthDate: '1880', ...fields }, () => '87');
+    assert.deepEqual(rec({ deathDate: '12/03/1950', deathPlace: 'Limoges' }), {
+      first: ['Marie', 'Jeanne'], last: 'Faure', married: 'Durand', sex: 'F', birthDate: '18800000', deathDate: '19500312',
+      birthText: '1880', deathText: '12/03/1950', death: { city: 'Limoges', dept: '87', country: '' }, certificate: '', record: true,
+    });
+    assert.equal(rec({ deathDate: '1975', deathPlace: 'Limoges (87)' }), null, 'depuis 1970 : l’INSEE');
+    assert.equal(rec({ deathDate: 'vers 1950', deathPlace: 'Limoges (87)' }), null, 'date incertaine');
+    assert.equal(rec({ deathDate: '1950', deathPlace: '' }), null, 'sans lieu');
+    assert.equal(rec({ deathDate: '1950', deathPlace: 'Liège, Belgique' }), null, 'à l’étranger');
+    assert.equal(rec({ deathDate: '1950', deathPlace: 'Tulle (19)' }).death.dept, '19', 'département du lieu d’abord');
+
+    S.mode = 'file';
+    loadTree([
+      lucien(),
+      person('g', { given: 'Louis', surname: 'Bertrand', sex: 'M', birthDate: '03/02/1870', deathDate: '05/06/1940', deathPlace: 'Limoges (87)', deceased: true }),
+      person('h', { given: 'Rose', surname: 'Petit', sex: 'F', deathDate: '1930', deathPlace: 'Octeville (50)', deceased: true }),
+    ]);
+    globalThis.fetch = async (url) => ({ ok: true, json: async () => (url.includes('Bertrand&firstName=Lucien') ? [act()] : []) });
+    await checkInsee(inseePending(), () => {});
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    await loadCommuneChanges();
+    renderAnalysis();
+    const out = html('paneAnalysis');
+    assert.match(out, /Dont 2 décès d’avant 1970/);
+    assert.match(out, /décès le 05 Juin 1940, sans numéro \(avant 1970\)/);
+    assert.match(out, /Cherbourg-en-Cotentin \(50\)/, 'commune fusionnée depuis');
+    assert.match(out, /décès en 1930 à Octeville \(50\), sans numéro/);
+    let copied = null;
+    Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: async (x) => { copied = x; } } }, configurable: true });
+    await copyActs();
+    assert.match(copied, /Mairie de Limoges \(87\)\n- Bertrand Louis, né\(e\) le 03 Février 1870, décédé\(e\) le 05 Juin 1940 \(numéro d’acte inconnu\)\n- Bertrand Lucien Marcel, né\(e\) le 12 Mars 1920, décédé\(e\) le 04 Juillet 1995, acte n° 412/);
+    assert.match(copied, /- Petit Rose, décédé\(e\) en 1930 à Octeville \(50\) \(numéro d’acte inconnu\)/);
   });
 
   test('vue Actes : sans vérification, ou en ligne', () => {
