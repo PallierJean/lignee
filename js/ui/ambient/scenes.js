@@ -2653,13 +2653,18 @@ function iceBattle(ctx, s, now, w, h) {
   const ships = s.speeders.filter((p) => !p.down).map((p) => ({ p, o: orbit(p) }));
   for (const { o } of ships) if (o.depth < 0) snowspeeder(ctx, o.x, o.y, o.size, o.dir, now);
   let parts = null;
+  // It tips forward over its front feet: `tipped` places a point of the walker as it falls
+  const pivot = x + 40 * scale;
+  const tilt = s.fall ? Math.min(1, fall / 1.6) ** 2 * 1.25 : 0;
+  const tipped = ([px, py]) => [
+    pivot + (px - pivot) * Math.cos(tilt) - (py - ground) * Math.sin(tilt),
+    ground + (px - pivot) * Math.sin(tilt) + (py - ground) * Math.cos(tilt),
+  ];
   if (!s.fall || fall < 1.6) {
     ctx.save();
     if (s.fall) {
-      // It tips forward over its front feet
-      const pivot = x + 40 * scale;
       ctx.translate(pivot, ground);
-      ctx.rotate(Math.min(1, fall / 1.6) ** 2 * 1.25);
+      ctx.rotate(tilt);
       ctx.translate(-pivot, -ground);
     }
     const flash = s.fall ? 0 : Math.max(0, 1 - (now - s.gunFired) / 160);
@@ -2688,21 +2693,24 @@ function iceBattle(ctx, s, now, w, h) {
     }
     ctx.globalAlpha = 1;
   }
-  // Tow cable: a few loops across the legs at knee height, then a line to the speeder; four loops and it trips
+  // Tow cable: a few loops across the legs at knee height, then a line to the speeder; four loops and
+  // it trips. The cable stays wound round the legs, and held by the speeder, until the walker hits the snow.
   const towing = ships[0];
-  if (parts && towing && !s.fall && now > s.cableBorn) {
-    const loops = Math.min(4, Math.floor((now - s.cableBorn) / 1500));
-    if (now - s.cableBorn > 7000) s.fall = { born: now, x };
-    ctx.strokeStyle = 'rgba(40, 40, 46, .85)';
-    ctx.lineWidth = 1;
+  if (parts && (s.fall || (towing && now > s.cableBorn))) {
+    const loops = s.fall ? 4 : Math.min(4, Math.floor((now - s.cableBorn) / 1500));
+    if (!s.fall && now - s.cableBorn > 7000) s.fall = { born: now, x };
+    ctx.strokeStyle = 'rgba(225, 230, 238, .9)'; // pale: it shows against the snow and the night
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
     const ks = parts.legs;
     for (let k = 0; k < loops; k++) {
-      ctx.moveTo(ks[0][0], ks[0][1] + k * 4 * scale);
-      ctx.lineTo(ks[3][0], ks[3][1] + k * 4 * scale + 3);
+      ctx.moveTo(...tipped([ks[0][0], ks[0][1] + k * 4 * scale]));
+      ctx.lineTo(...tipped([ks[3][0], ks[3][1] + k * 4 * scale + 3]));
     }
-    ctx.moveTo(ks[3][0], ks[3][1]);
-    ctx.lineTo(towing.o.x, towing.o.y);
+    if (towing) {
+      ctx.moveTo(...tipped(ks[3]));
+      ctx.lineTo(towing.o.x, towing.o.y);
+    }
     ctx.stroke();
   }
   for (const { o } of ships) if (o.depth >= 0) snowspeeder(ctx, o.x, o.y, o.size, o.dir, now);

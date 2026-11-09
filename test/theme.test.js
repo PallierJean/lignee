@@ -381,6 +381,10 @@ describe('animations des thèmes fêtes et saisons', () => {
       sky.cableBorn = Date.now() - 7100;
       await new Promise((r) => setTimeout(r, 80));
       assert.ok(sky.fall, 'the walker trips');
+      // Halfway down: still falling, not blown up yet
+      sky.fall.born = Date.now() - 800;
+      await new Promise((r) => setTimeout(r, 80));
+      assert.ok(sky.fall && !sky.fall.boom, 'it falls');
       sky.fall.born = Date.now() - 1700;
       await new Promise((r) => setTimeout(r, 80));
       assert.ok(sky.fall.boom && sky.booms.length >= 5, 'it blows up');
