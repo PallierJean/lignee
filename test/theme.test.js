@@ -383,6 +383,12 @@ describe('animations des thèmes fêtes et saisons', () => {
       await new Promise((r) => setTimeout(r, 120));
       assert.ok(sky.iceBolts.some((b) => b.color === '#FF9A3D'), 'the turrets fire');
       assert.ok(sky.front.blasts.length > 0, 'a blast of snow');
+      // The soldiers aim at the walkers, not at the sky: their bolts go left, and not steeply up
+      for (const p of sky.front.soldiers) Object.assign(p, { next: 0, run: null });
+      await new Promise((r) => setTimeout(r, 80));
+      const shots = sky.iceBolts.filter((b) => b.color === '#FF7A45');
+      assert.ok(shots.length > 0, 'the soldiers fire');
+      assert.ok(shots.every((b) => b.dx < 0 && Math.abs(b.dy) < Math.abs(b.dx) * 2 && b.impact), 'at the walkers, ending on them');
       // The tow cable trips the walker, which blows up, then a new one comes
       Object.assign(sky.speeders[0], { down: 0 });
       sky.tow = { p: sky.speeders[0], born: Date.now() - 7100 };

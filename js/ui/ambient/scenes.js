@@ -2677,8 +2677,12 @@ function turret(ctx, x, y, s, aim, flash) {
   return [mx, my];
 }
 
-/** A soldier in the trench: helmet, pale coat, rifle; `run` (-1, 0, 1) makes it run along the trench. */
-function soldier(ctx, x, y, s, now, phase, run) {
+/**
+ * A soldier in the trench: helmet, pale coat, rifle held at the shoulder and pointed along `aim`
+ * (an angle: towards the walkers); `run` (-1, 0, 1) makes it run along the trench, rifle down.
+ * Returns the muzzle.
+ */
+function soldier(ctx, x, y, s, now, phase, run, aim = Math.PI) {
   const bob = run ? Math.abs(Math.sin(now / 90 + phase)) * 1.5 * s : Math.sin(now / 700 + phase) * 0.5 * s;
   ctx.fillStyle = '#C9CFD8';
   ctx.fillRect(x - 1.6 * s, y - 8 * s - bob, 3.2 * s, 6 * s);
@@ -2686,12 +2690,16 @@ function soldier(ctx, x, y, s, now, phase, run) {
   ctx.arc(x, y - 9.5 * s - bob, 1.9 * s, 0, TAU);
   ctx.fillStyle = '#E8ECF1';
   ctx.fill();
+  const shoulder = [x - 1 * s, y - 7 * s - bob];
+  const angle = run ? Math.PI * 0.75 : aim; // running: rifle carried across the chest
+  const muzzle = [shoulder[0] + Math.cos(angle) * 6 * s, shoulder[1] + Math.sin(angle) * 6 * s];
   ctx.strokeStyle = '#2F3540';
   ctx.lineWidth = 0.9 * s;
   ctx.beginPath();
-  ctx.moveTo(x - 1 * s, y - 6 * s - bob);
-  ctx.lineTo(x - 5 * s, y - 8.5 * s - bob);
+  ctx.moveTo(shoulder[0] - Math.cos(angle) * 1.5 * s, shoulder[1] - Math.sin(angle) * 1.5 * s);
+  ctx.lineTo(...muzzle);
   ctx.stroke();
+  return muzzle;
 }
 
 /**
@@ -2732,7 +2740,10 @@ function iceFront(ctx, s, now, w, h, ground, scale, main) {
   ctx.closePath();
   ctx.fillStyle = '#EEF4FA';
   ctx.fill();
-  // Soldiers: most hold the line, one runs along the trench now and then
+  // Walkers on screen, in front of the trench: what the line fires at
+  const targets = [...far, ...(main === null ? [] : [{ x: main, y: ground - 120 * scale }])].filter((t) => t.x > -40 && t.x < left);
+  const nearest = (tx) => targets.slice().sort((a, b) => Math.abs(a.x - tx) - Math.abs(b.x - tx))[0];
+  // Soldiers: they aim at the nearest walker and fire now and then; one runs along the trench now and then
   for (const p of f.soldiers) {
     let x = p.at * w;
     if (p.run) {
@@ -2742,19 +2753,27 @@ function iceFront(ctx, s, now, w, h, ground, scale, main) {
         p.run = null;
       } else x = (p.at + p.run.dir * 0.12 * t) * w;
     } else if (Math.random() < 0.0015) p.run = { born: now, dir: pick([-1, 1]) };
-    soldier(ctx, x, trenchY, scale * 1.35, now, p.phase, p.run ? p.run.dir : 0);
+    const target = nearest(x);
+    const aim = target ? Math.atan2(target.y - (trenchY - 9 * scale), target.x - x) : Math.PI;
+    const muzzle = soldier(ctx, x, trenchY, scale * 1.35, now, p.phase, p.run ? p.run.dir : 0, aim);
+    if (target && !p.run && now > p.next) {
+      const d = Math.hypot(target.x - muzzle[0], target.y - muzzle[1]);
+      s.iceBolts.push({ x: muzzle[0], y: muzzle[1], dx: ((target.x - muzzle[0]) / d) * 9, dy: ((target.y - muzzle[1]) / d) * 9, color: '#FF7A45', life: d / 9, impact: true });
+      p.next = now + rand(1200, 4000);
+    }
   }
-  // Turrets: each aims at the nearest walker on screen and fires a short burst of orange bolts
-  const targets = [...far, ...(main === null ? [] : [{ x: main, y: ground - 120 * scale }])].filter((t) => t.x > -40 && t.x < left);
+  // Turrets: each aims at the nearest walker on screen and fires a short burst of orange bolts;
+  // with no walker in sight, the barrel comes back level
   f.turrets.forEach((tu) => {
     const tx = tu.at * w;
-    const target = targets.sort((a, b) => Math.abs(a.x - tx) - Math.abs(b.x - tx))[0];
-    const aim = target ? Math.atan2(target.y - (trenchY - 9 * scale), target.x - tx) : Math.PI + 0.3;
+    const target = nearest(tx);
+    const aim = target ? Math.atan2(target.y - (trenchY - 9 * scale), target.x - tx) : Math.PI;
     tu.aim += (aim - tu.aim) * 0.08;
     const flash = Math.max(0, 1 - (now - tu.fired) / 150);
     const [mx, my] = turret(ctx, tx, trenchY - 3 * scale, scale, tu.aim, flash);
     if (target && now > tu.next) {
-      s.iceBolts.push({ x: mx, y: my, dx: Math.cos(tu.aim) * 10, dy: Math.sin(tu.aim) * 10, color: '#FF9A3D', life: 40 });
+      const d = Math.hypot(target.x - mx, target.y - my) || 1;
+      s.iceBolts.push({ x: mx, y: my, dx: ((target.x - mx) / d) * 10, dy: ((target.y - my) / d) * 10, color: '#FF9A3D', life: d / 10, impact: true });
       tu.fired = now;
       tu.shots = (tu.shots || 0) + 1;
       tu.next = now + (tu.shots % 3 ? 180 : rand(1600, 3000));
@@ -2881,7 +2900,7 @@ function iceBattle(ctx, s, now, w, h) {
   if (ships.length && parts && Math.random() < 0.03) {
     const { o } = pick(ships);
     const d = Math.hypot(x - o.x, ground - 110 * scale - o.y) || 1;
-    s.iceBolts.push({ x: o.x, y: o.y, dx: ((x - o.x) / d) * 8, dy: ((ground - 110 * scale - o.y) / d) * 8, color: '#FF5C5C', life: Math.min(40, d / 8) });
+    s.iceBolts.push({ x: o.x, y: o.y, dx: ((x - o.x) / d) * 8, dy: ((ground - 110 * scale - o.y) / d) * 8, color: '#FF5C5C', life: d / 8, impact: true });
   }
   // The walker fires bursts of three at a speeder, aiming where it is going
   if (ships.length && parts && !s.fall) {
@@ -2909,6 +2928,11 @@ function iceBattle(ctx, s, now, w, h) {
     b.x += b.dx;
     b.y += b.dy;
     bolt(ctx, b);
+    if (b.impact && b.life <= 1) {
+      // It hits the walker's hull: a spark and a few sparks flying off
+      s.booms.push({ x: b.x, y: b.y, r: 5 * scale, born: now, sparks: Array.from({ length: 6 }, () => rand(0, TAU)) });
+      return false;
+    }
     if (b.blast && b.life <= 1) {
       s.front.blasts.push({ x: b.x, y: b.y, born: now, bits: Array.from({ length: 12 }, () => ({ dx: rand(-1, 1), up: rand(1, 2.4), r: rand(1, 2.6) })) });
       return false;
@@ -3302,8 +3326,8 @@ export const SCENES = {
       burst: null, nextBurst: Date.now() + 1500, gunFired: 0,
       front: {
         walkers: [{ start: Date.now() - 9000, size: 0.42 }, { start: Date.now() - 30000, size: 0.34 }],
-        turrets: [0.7, 0.82, 0.94].map((at) => ({ at, aim: Math.PI + 0.3, next: Date.now() + rand(500, 2500), fired: 0 })),
-        soldiers: [0.66, 0.68, 0.74, 0.77, 0.79, 0.86, 0.88, 0.91, 0.97].map((at) => ({ at, phase: rand(0, TAU), run: null })),
+        turrets: [0.7, 0.82, 0.94].map((at) => ({ at, aim: Math.PI, next: Date.now() + rand(500, 2500), fired: 0 })),
+        soldiers: [0.66, 0.68, 0.74, 0.77, 0.79, 0.86, 0.88, 0.91, 0.97].map((at) => ({ at, phase: rand(0, TAU), run: null, next: Date.now() + rand(800, 4000) })),
         blasts: [],
       },
     }),
