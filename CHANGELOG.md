@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.21.0](https://github.com/PallierJean/lignee/compare/v1.20.14...v1.21.0) (2026-11-09)
+
+### Features
+
+* Give every person a laser sword of their own ([9b4f11d](https://github.com/PallierJean/lignee/commit/9b4f11deb5ea46d04358ed69f196ea3a8ec6dda9))
+* Open a front line on the ice ([6d11ad8](https://github.com/PallierJean/lignee/commit/6d11ad87a5c34af6ddc5e2213cd351058a9c34b6))
+* Detail the walker and let it fire at the airspeeders ([8e32b52](https://github.com/PallierJean/lignee/commit/8e32b529eb873740f0bca4f08c0cb459bdc34b93))
+* Bring the Star Wars theme to life ([01f7391](https://github.com/PallierJean/lignee/commit/01f73914638557524d3b39e304ac8d2ad9cc27b3))
+* Add the faraway galaxy theme ([a044d01](https://github.com/PallierJean/lignee/commit/a044d0183e72e9070e385c2ac8d8d72290a7ee18))
+
+### Bug Fixes
+
+* Give the purple sword to a person drawn at random ([a9684cd](https://github.com/PallierJean/lignee/commit/a9684cdad49f172c209884ac8eb522fd4d31b011))
+* Aim the line's fire at the walkers and make it hit them ([fd3dd21](https://github.com/PallierJean/lignee/commit/fd3dd213e51870b54b9c2ff98f85fe9c70abd547))
+* Wind the tow cable steadily round the walker ([a6243e9](https://github.com/PallierJean/lignee/commit/a6243e95c028210fb872c31b78e4a49c546c6862))
+* Keep the tow cable on the walker while it falls ([dae01fd](https://github.com/PallierJean/lignee/commit/dae01fde6d07836665b3ef69a54a39bcece4242e))
+
+---
+
+### Nouveautés
+
+* Donner à chaque personne son propre sabre laser ([9b4f11d](https://github.com/PallierJean/lignee/commit/9b4f11deb5ea46d04358ed69f196ea3a8ec6dda9))
+* Ouvrir un front d'attaque sur la glace ([6d11ad8](https://github.com/PallierJean/lignee/commit/6d11ad87a5c34af6ddc5e2213cd351058a9c34b6))
+* Détailler le marcheur et le faire tirer sur les airspeeders ([8e32b52](https://github.com/PallierJean/lignee/commit/8e32b529eb873740f0bca4f08c0cb459bdc34b93))
+* Donner vie au thème Star Wars ([01f7391](https://github.com/PallierJean/lignee/commit/01f73914638557524d3b39e304ac8d2ad9cc27b3))
+* Ajouter le thème Galaxie lointaine ([a044d01](https://github.com/PallierJean/lignee/commit/a044d0183e72e9070e385c2ac8d8d72290a7ee18))
+
+### Corrections
+
+* Donner le sabre violet à une personne tirée au hasard ([a9684cd](https://github.com/PallierJean/lignee/commit/a9684cdad49f172c209884ac8eb522fd4d31b011))
+* Viser les marcheurs avec les tirs du front et les toucher ([fd3dd21](https://github.com/PallierJean/lignee/commit/fd3dd213e51870b54b9c2ff98f85fe9c70abd547))
+* Enrouler le câble régulièrement autour du marcheur ([a6243e9](https://github.com/PallierJean/lignee/commit/a6243e95c028210fb872c31b78e4a49c546c6862))
+* Garder le câble sur le marcheur pendant sa chute ([dae01fd](https://github.com/PallierJean/lignee/commit/dae01fde6d07836665b3ef69a54a39bcece4242e))
+
 ## [1.20.14](https://github.com/PallierJean/lignee/compare/v1.20.13...v1.20.14) (2026-11-09)
 
 ### Bug Fixes
