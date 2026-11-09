@@ -22,7 +22,7 @@ import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hove
 import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
 import { closeCrop, cropZoomInput, cropWheel, cropDrag, cropOpen } from './ui/crop.js';
 import { pinch } from './ui/pinch.js';
-import { leaveOpen } from './ui/leave-dlg.js';
+import { defineDialogs, dialogOpen, closeTopDialog, closeOnBackdrop } from './ui/dialogs.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo } from './ui/repo-link.js';
@@ -294,7 +294,36 @@ const CLICK_ACTIONS = {
   'import-new': once(() => importGo(true)),
 };
 
+/** Dialogs from the topmost to the lowest (ui/dialogs.js): Escape closes the first open one. */
+function appearanceMenu() {
+  const look = document.getElementById('appearance');
+  return {
+    id: 'appearance',
+    menu: true,
+    isOpen: () => look.open,
+    close: () => {
+      look.open = false;
+      look.querySelector('summary').focus();
+    },
+  };
+}
+
+const DIALOGS = () => [
+  { id: 'leaveDlg', close: () => A.leaveEdit(false) },
+  // Doesn't block the shortcuts yet (as before this list existed)
+  { id: 'cropDlg', close: () => closeCrop(false), isOpen: cropOpen, menu: true },
+  appearanceMenu(),
+  { id: 'photoZoom', close: closePhotoZoom },
+  { id: 'mediaDlg', close: closeMedia, backdrop: true },
+  { id: 'personDlg', close: closePersonDlg, backdrop: true },
+  { id: 'transfer', close: closeTransfer, backdrop: true },
+  { id: 'printDlg', close: closePrint, backdrop: true },
+  // Escape first leaves the rename or delete in progress; the backdrop closes the dialog
+  { id: 'treesDlg', close: () => (S.treeEdit ? cancelTreeEdit() : closeTrees()), backdrop: closeTrees },
+];
+
 export function bindEvents() {
+  defineDialogs(DIALOGS());
   // A click in the suggestions must not take the cursor out of the search field
   document.getElementById('findList').addEventListener('mousedown', (ev) => ev.preventDefault());
   document.getElementById('find').addEventListener('focus', onFindInput);
@@ -347,27 +376,7 @@ export function bindEvents() {
       closePhotoZoom();
       return;
     }
-    // Click on a dialog's backdrop: it closes
-    if (ev.target.id === 'transfer') {
-      closeTransfer();
-      return;
-    }
-    if (ev.target.id === 'printDlg') {
-      closePrint();
-      return;
-    }
-    if (ev.target.id === 'treesDlg') {
-      closeTrees();
-      return;
-    }
-    if (ev.target.id === 'personDlg') {
-      closePersonDlg();
-      return;
-    }
-    if (ev.target.id === 'mediaDlg') {
-      closeMedia();
-      return;
-    }
+    if (closeOnBackdrop(ev.target)) return;
     const el = ev.target.closest('[data-act]');
     if (!el) return;
     const action = CLICK_ACTIONS[el.dataset.act];
@@ -454,16 +463,16 @@ export function bindEvents() {
     }
     // Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y: in a field, it's the input's own undo
     const key = String(ev.key || '').toLowerCase(); // no key on an autofill
-    const dialogOpen = ['transfer', 'printDlg', 'treesDlg', 'personDlg', 'mediaDlg', 'photoZoom', 'leaveDlg'].some((id) => !document.getElementById(id).hidden);
+    const blocked = dialogOpen();
     if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && (key === 'z' || key === 'y') && !typing(ev.target)
-      && S.canWrite && !S.edit && !dialogOpen) {
+      && S.canWrite && !S.edit && !blocked) {
       ev.preventDefault();
       if (key === 'y' || ev.shiftKey) A.redo();
       else A.undo();
       return;
     }
     // Ctrl+B (Cmd+B on Mac): panel, like the VS Code side bar
-    if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && key === 'b' && !typing(ev.target) && !dialogOpen) {
+    if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && key === 'b' && !typing(ev.target) && !blocked) {
       ev.preventDefault();
       A.togglePanel();
       return;
@@ -471,7 +480,7 @@ export function bindEvents() {
     // Shortcuts: "/" or Ctrl+K (Cmd+K on Mac) to search
     const shortcut = (ev.key === '/' && !typing(ev.target) && !ev.ctrlKey && !ev.metaKey && !ev.altKey)
       || (key === 'k' && (ev.ctrlKey || ev.metaKey));
-    if (shortcut && !dialogOpen) {
+    if (shortcut && !blocked) {
       ev.preventDefault();
       const find = document.getElementById('find');
       find.focus();
@@ -479,45 +488,7 @@ export function bindEvents() {
       return;
     }
     if (ev.key !== 'Escape') return;
-    if (leaveOpen()) {
-      A.leaveEdit(false);
-      return;
-    }
-    if (cropOpen()) {
-      closeCrop(false);
-      return;
-    }
-    const look = document.getElementById('appearance');
-    if (look.open) {
-      look.open = false;
-      look.querySelector('summary').focus();
-      return;
-    }
-    if (!document.getElementById('photoZoom').hidden) {
-      closePhotoZoom();
-      return;
-    }
-    if (!document.getElementById('mediaDlg').hidden) {
-      closeMedia();
-      return;
-    }
-    if (!document.getElementById('personDlg').hidden) {
-      closePersonDlg();
-      return;
-    }
-    if (!document.getElementById('transfer').hidden) {
-      closeTransfer();
-      return;
-    }
-    if (!document.getElementById('printDlg').hidden) {
-      closePrint();
-      return;
-    }
-    if (!document.getElementById('treesDlg').hidden) {
-      if (S.treeEdit) cancelTreeEdit();
-      else closeTrees();
-      return;
-    }
+    if (closeTopDialog()) return;
     if (S.edit && !S.busy) A.cancelEdit();
     else if (S.sheet) A.closeSheet();
   });

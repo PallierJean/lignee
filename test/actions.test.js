@@ -673,7 +673,7 @@ describe('événements de la page', () => {
     openExample();
     if (!bound) bindEvents();
     bound = true;
-    for (const id of ['transfer', 'printDlg', 'treesDlg', 'personDlg', 'mediaDlg', 'photoZoom']) el(id).hidden = true;
+    for (const id of ['transfer', 'printDlg', 'treesDlg', 'personDlg', 'mediaDlg', 'photoZoom', 'leaveDlg', 'cropDlg']) el(id).hidden = true;
     Object.assign(el('prFormat'), { value: 'A3' });
     Object.assign(el('prOrient'), { value: 'auto' });
     Object.assign(el('prContent'), { value: 'tree' });
