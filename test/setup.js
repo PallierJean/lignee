@@ -118,3 +118,7 @@ globalThis.setTimeout = (fn, ms, ...args) => {
   if (ms >= 1000) timer.unref();
   return timer;
 };
+
+// The services' messages reach the page as in main.js
+const { connectServices } = await import('../js/ui/connect.js');
+connectServices();

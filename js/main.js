@@ -13,6 +13,7 @@ import { renderAll, afterData } from './ui/render.js';
 import { loadCommunes } from './model/communes.js';
 import { loadLocal, seedExample, loadFile, subscribe } from './services/storage.js';
 import { applyTheme } from './ui/theme.js';
+import { connectServices } from './ui/connect.js';
 
 /** Service provided by claude.ai, or null outside claude.ai. */
 async function useService(name) {
@@ -34,6 +35,7 @@ async function showVersion() {
 }
 
 async function init() {
+  connectServices();
   loadPrefs();
   showVersion();
   applyStatic();

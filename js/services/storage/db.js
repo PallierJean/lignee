@@ -7,8 +7,7 @@ import { S, services } from '../../state.js';
 import { DEFAULT_TREE } from '../../config.js';
 import { t } from '../../i18n.js';
 import { sleep, pool, markReported } from '../../utils/helpers.js';
-import { toast } from '../../ui/toast.js';
-import { renderAll, afterData } from '../../ui/render.js';
+import { emit, say } from '../notify.js';
 import { ensureTree, sortTrees } from './trees.js';
 
 /**
@@ -32,15 +31,15 @@ export async function withRetry(fn) {
       if (code === 'invalid_argument' && !S.writeKnown) {
         S.canWrite = false;
         S.edit = null;
-        renderAll(true);
-        toast(t('st.readonly'), true);
+        emit('access', true);
+        say('st.readonly', true);
       } else if (code === 'quota_exceeded') {
-        toast(t('st.full'), true);
+        say('st.full', true);
       } else if (code === 'revoked' || code === 'not_granted') {
         S.canWrite = false;
-        renderAll(true);
+        emit('access', true);
       } else {
-        toast(t('st.failed'), true);
+        say('st.failed', true);
       }
       throw markReported(e);
     }
@@ -99,7 +98,7 @@ export function holdSync(on) {
   if (on || !missed) return;
   missed = false;
   refreshDb();
-  afterData();
+  emit('data');
 }
 
 export function subscribe() {
@@ -115,14 +114,14 @@ export function subscribe() {
         return;
       }
       refreshDb();
-      afterData();
+      emit('data');
     },
     (err) => {
       const code = err && err.code;
       if (code === 'unavailable') setTimeout(() => listen(collection), 1500 + Math.random() * 1500);
       else if (code === 'revoked') {
         S.canWrite = false;
-        renderAll();
+        emit('access', false);
       }
     },
   );

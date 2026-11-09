@@ -5,10 +5,13 @@
 import { S, savePrefs, treeName } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { openTree, createTree, renameTree, deleteTree } from '../services/storage.js';
-import { afterData } from './render.js';
+import { emit } from '../services/notify.js';
 import { renderHeader } from './header.js';
 import { toast, reportError } from './toast.js';
 import { t } from '../i18n.js';
+
+/** Data changed: indexes and page follow (ui/render.js afterData, see ui/connect.js). */
+const afterData = () => emit('data');
 
 
 /** Number of people in a tree (up to date for the open tree). */

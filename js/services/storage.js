@@ -12,9 +12,8 @@
  * This module picks the right mode for each write and each tree operation.
  */
 import { S } from '../state.js';
-import { t } from '../i18n.js';
 import { rid, pool, markReported } from '../utils/helpers.js';
-import { toast } from '../ui/toast.js';
+import { failure } from './notify.js';
 import { loadLocalTree, saveBrowserTree, deleteBrowserTree, saveTreesList } from './storage/local.js';
 import { loadFileTree, saveFile, createFileTree, renameFileTree, deleteFileTree } from './storage/file.js';
 import { dbSet, dbUpdate, dbDelete, refreshDb, setDbTree, deleteDbTree, holdSync } from './storage/db.js';
@@ -230,7 +229,7 @@ export async function renameTree(id, name) {
     else saveTreesList();
   } catch (e) {
     tree.name = before;
-    if (S.mode === 'file' && !(e && e.reported)) toast(t('st.renameFailed'), true);
+    if (S.mode === 'file' && !(e && e.reported)) throw failure('st.renameFailed', e);
     throw markReported(e);
   }
 }

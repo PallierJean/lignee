@@ -5,8 +5,7 @@
 import { S } from '../../state.js';
 import { TREES_KEY, TREE_KEY, DEFAULT_TREE, EXAMPLE_FILE } from '../../config.js';
 import { t } from '../../i18n.js';
-import { markReported } from '../../utils/helpers.js';
-import { toast } from '../../ui/toast.js';
+import { say, failure } from '../notify.js';
 import { parseBackup } from '../backup.js';
 import { ensureTree, sortTrees } from './trees.js';
 
@@ -90,12 +89,11 @@ export function saveBrowserTree() {
     localStorage.setItem(TREE_KEY + S.tree, json);
     writeLocalTrees();
   } catch (e) {
-    toast(t(isQuotaError(e) ? 'st.browserFull' : 'st.browserRefused'), true);
-    throw markReported(e);
+    throw failure(isQuotaError(e) ? 'st.browserFull' : 'st.browserRefused', e);
   }
   if (json.length > NEARLY_FULL && !warnedFull) {
     warnedFull = true;
-    toast(t('st.browserNearlyFull'), true);
+    say('st.browserNearlyFull', true);
   }
 }
 
@@ -111,6 +109,6 @@ export function saveTreesList() {
   try {
     writeLocalTrees();
   } catch (e) {
-    toast(t('st.browserRefused'), true);
+    say('st.browserRefused', true);
   }
 }

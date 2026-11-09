@@ -87,6 +87,7 @@ lignee/
 │   │   ├── backup.js           Sauvegarde complète au format JSON
 │   │   ├── csv.js              Export du registre en CSV
 │   │   ├── history.js          Historique annuler / rétablir
+│   │   ├── notify.js           Messages des services vers l'interface, sans dépendre d'elle
 │   │   ├── person-save.js      Enregistrement d'une fiche : unions et situations tenues à jour
 │   │   ├── geocode.js          Coordonnées des lieux (OpenStreetMap, sur demande)
 │   │   └── insee.js            Vérification des fiches chez matchID, résultats gardés
@@ -98,6 +99,7 @@ lignee/
 │   │   └── render.js           Dessin des fiches et des traits
 │   └── ui/
 │       ├── render.js           Rendu général
+│       ├── connect.js          Branche les messages des services (notify.js) sur la page
 │       ├── header.js           En-tête, bandeau, barre d'outils
 │       ├── record.js           Fiche détaillée d'une personne
 │       ├── person-dlg.js       Fiche d'une personne en fenêtre, au clic dans l'arbre

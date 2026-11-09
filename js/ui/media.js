@@ -7,9 +7,12 @@ import { $, esc, setHTML } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { P, given, surname, maiden, fullName, lifeYears, mediaList, photoSrc, peopleNamedIn } from '../model/people.js';
 import { opUpdate, beginAction, commitAction } from '../services/storage.js';
-import { afterData } from './render.js';
+import { emit } from '../services/notify.js';
 import { personOptions } from './form.js';
 import { toast, reportError } from './toast.js';
+
+/** Data changed: indexes and page follow (ui/render.js afterData, see ui/connect.js). */
+const afterData = () => emit('data');
 
 let current = null;  // { owner, id }: photo shown
 let pin = null;      // { x, y }: marker waiting for a person
