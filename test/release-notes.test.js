@@ -14,7 +14,7 @@ test('release notes: English first, then French, each line capitalized', () => {
   const notes = generateNotes({}, context([
     'fix: let the side panel scroll on phones\n\nBody.\n\nFr: le panneau latéral défile sur téléphone\nCo-Authored-By: X <x@y>',
     'feat(gedcom): read the notes\n\nFr: lire les notes',
-    'refactor: move code\n\nFr: déplacer du code',
+    'docs: move text\n\nFr: déplacer du texte',
     'Merge fix/something',
   ]));
   const date = new Date().toISOString().slice(0, 10);
@@ -40,6 +40,12 @@ test('release notes: English first, then French, each line capitalized', () => {
     `* Le panneau latéral défile sur téléphone ([0abcdef](${REPO}/commit/0abcdef0123456789))`,
     '',
   ].join('\n'));
+});
+
+test('release notes: refactorings get their own section', () => {
+  const notes = generateNotes({}, context(['refactor: split a module\n\nFr: découper un module']));
+  assert.match(notes, /### Code Refactoring\n\n\* Split a module /);
+  assert.match(notes, /### Refontes\n\n\* Découper un module /);
 });
 
 test('release notes: without an Fr trailer the English text is reused', () => {

@@ -2,7 +2,10 @@
   "branches": ["main"],
   "tagFormat": "v${version}",
   "plugins": [
-    ["@semantic-release/commit-analyzer", { "preset": "conventionalcommits" }],
+    ["@semantic-release/commit-analyzer", {
+      "preset": "conventionalcommits",
+      "releaseRules": [{ "type": "refactor", "release": "patch" }]
+    }],
     "./scripts/release-notes.mjs",
     ["@semantic-release/changelog", { "changelogTitle": "# Changelog" }],
     ["@semantic-release/npm", { "npmPublish": false }],
