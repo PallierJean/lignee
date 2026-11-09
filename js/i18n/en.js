@@ -37,7 +37,7 @@ export const EN = {
   'theme.porcelaine': '🏺 Limoges porcelain',
   'theme.matrix': '💊 Matrix',
   'theme.grandline': '🏴‍☠️ Grand Line',
-  'theme.galaxie': '⚔️ Faraway Galaxy',
+  'theme.galaxie': '⚔️ Star Wars',
   'sky.caption': (date, time) => `Sky over Bordeaux · ${date} · ${time}`,
   'sky.fast': ' · sped up, from the real time',
   'galaxy.intro': 'A long time ago, in a family far,\nfar away…',

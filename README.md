@@ -156,12 +156,14 @@ chacun leur taille, leur vitesse et leur balancement, tirés au hasard) :
   `ui/rain.js`), 🏴‍☠️ Grand Line (une planche de manga : trait d'encre, trame,
   cadre de case ; navire pirate à tête de mouton qui vogue, îles, mouettes, chapeau de paille emporté
   par le vent, monstre marin qui surgit avec lignes de vitesse et « ドン!! », « ザザーン » des vagues ;
-  fiches en avis de recherche, la personne au centre est « WANTED »), ⚔️ Galaxie lointaine (espace
-  profond : étoiles qui défilent sur trois profondeurs, nébuleuses, planète à anneaux et sa lune,
-  soleils jumeaux ; poursuites de chasseurs avec tirs laser, sauts en hyperespace suivis de
-  l'arrivée d'un croiseur en forme de dague ; « Il y a bien longtemps, dans une famille lointaine,
-  très lointaine… » au démarrage ; fiches en hologrammes, la personne au centre allume un sabre
-  laser, la lignée directe brille en vert).
+  fiches en avis de recherche, la personne au centre est « WANTED »), ⚔️ Star Wars (espace profond :
+  étoiles qui défilent sur trois profondeurs, nébuleuses, planète à anneaux qui tourne avec sa tempête
+  et sa lune, soleils jumeaux ; le cargo en soucoupe ou le chasseur à ailes en X poursuivis par des
+  chasseurs à panneaux hexagonaux, tirs laser et explosions ; saut en hyperespace, puis un croiseur
+  en forme de dague à tourelles ; en bas, sur la glace, un marcheur quadrupède entouré d'airspeeders
+  qui l'enroulent d'un câble jusqu'à ce qu'il tombe et explose ; « Il y a bien longtemps, dans une
+  famille lointaine, très lointaine… » au démarrage ; fiches en hologrammes, la personne au centre
+  allume un sabre laser, la lignée directe brille en vert).
 
 Palettes et motifs des thèmes « Univers » sont générés par `scripts/build-themes.py` dans
 `css/themes.css`. Si le système demande moins d'animations, les animations s'arrêtent et le motif

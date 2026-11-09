@@ -39,7 +39,7 @@ export const FR = {
   'theme.porcelaine': '🏺 Porcelaine de Limoges',
   'theme.matrix': '💊 Matrix',
   'theme.grandline': '🏴‍☠️ Grand Line',
-  'theme.galaxie': '⚔️ Galaxie lointaine',
+  'theme.galaxie': '⚔️ Star Wars',
   'sky.caption': (date, time) => `Ciel de Bordeaux · ${date} · ${time}`,
   'sky.fast': ' · en accéléré, depuis l’heure réelle',
   'galaxy.intro': 'Il y a bien longtemps, dans une famille lointaine,\ntrès lointaine…',
