@@ -78,7 +78,8 @@ lignee/
 │   │   ├── insee.js            Rapprochement avec le fichier des décès de l'INSEE
 │   │   ├── narrative.js        Récit du livret de famille de l'arbre
 │   │   ├── family-book.js      Livret de famille d'une personne
-│   │   └── draft.js            Vérification du formulaire avant l'enregistrement
+│   │   ├── draft.js            Vérification du formulaire avant l'enregistrement
+│   │   └── generations.js      Génération de chaque personne (arbre complet, statistiques)
 │   ├── services/
 │   │   ├── storage.js          Enregistrement et collection d'arbres : choisit le mode ci-dessous
 │   │   ├── storage/
