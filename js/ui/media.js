@@ -10,6 +10,7 @@ import { opUpdate, beginAction, commitAction } from '../services/storage.js';
 import { emit } from '../services/notify.js';
 import { personOptions } from './form.js';
 import { toast, reportError } from './toast.js';
+import { mediaGroups } from './record.js';
 
 /** Data changed: indexes and page follow (ui/render.js afterData, see ui/connect.js). */
 const afterData = () => emit('data');
@@ -17,6 +18,7 @@ const afterData = () => emit('data');
 let current = null;  // { owner, id }: photo shown
 let pin = null;      // { x, y }: marker waiting for a person
 let editing = false; // caption being edited
+let sequence = [];    // [{ owner, id }]: the images of the grid it was opened from, in order
 
 const item = () => current && mediaList(P(current.owner)).find((m) => m.id === current.id);
 
@@ -63,7 +65,14 @@ export function renderMedia() {
     : '';
   // The instruction above the image: that's where you click
   const hint = S.canWrite && !pin ? `<p class="hint tag-hint">${t('med.hint')}</p>` : '';
-  setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(m.title || t('med.untitled'))}</h2>`
+  // From one image to the next: buttons, and the arrow keys (ui/events.js)
+  const at = sequence.findIndex((x) => x.owner === current.owner && x.id === current.id);
+  const nav = sequence.length > 1 && at >= 0
+    ? `<div class="media-nav"><button class="icon-btn" type="button" data-act="media-step" data-d="-1" aria-label="${t('med.prev')}" title="${t('med.prev')}">‹</button>`
+      + `<span class="n">${t('med.position', at + 1, sequence.length)}</span>`
+      + `<button class="icon-btn" type="button" data-act="media-step" data-d="1" aria-label="${t('med.next')}" title="${t('med.next')}">›</button></div>`
+    : '';
+  setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(m.title || t('med.untitled'))}</h2>${nav}`
     + `<button class="icon-btn" type="button" data-act="media-close" aria-label="${t('close')}">×</button></div>`
     + hint
     + `<div class="media-pic${S.canWrite ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">${marks}`
@@ -144,16 +153,31 @@ export async function saveCaption() {
   }
 }
 
-export function openMedia(owner, id) {
+export function openMedia(owner, id, group = '') {
   current = { owner, id };
+  sequence = (mediaGroups.get(group) || []).filter((x) => P(x.owner));
   pin = null;
   editing = false;
   $('#mediaDlg').hidden = false;
   renderMedia();
 }
 
+/**
+ * Next (d = 1) or previous (d = -1) image of the grid, going round; not while a marker waits for
+ * its person or the caption is being edited.
+ */
+export function stepMedia(d) {
+  if (!current || pin || editing || sequence.length < 2) return false;
+  const at = sequence.findIndex((x) => x.owner === current.owner && x.id === current.id);
+  if (at < 0) return false;
+  current = { ...sequence[(at + d + sequence.length) % sequence.length] };
+  renderMedia();
+  return true;
+}
+
 export function closeMedia() {
   current = null;
+  sequence = [];
   pin = null;
   $('#mediaDlg').hidden = true;
 }

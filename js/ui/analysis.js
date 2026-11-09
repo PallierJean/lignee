@@ -601,7 +601,7 @@ function timeView() {
 
 function galleryView() {
   const items = allMedia();
-  return items.length ? mediaGrid(items) : `<p class="nofocus">${t('med.empty')}</p>`;
+  return items.length ? mediaGrid(items, 'all') : `<p class="nofocus">${t('med.empty')}</p>`;
 }
 
 /* ---------- Rendering ---------- */

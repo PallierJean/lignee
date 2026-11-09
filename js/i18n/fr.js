@@ -773,6 +773,9 @@ export const FR = {
   'med.taggedN': (n) => `${n} personne${s(n)} identifiée${s(n)}`,
   'med.galleryHint': 'Ouvrez une photo pour identifier les personnes qui y figurent : elle s’ajoutera à leur galerie.',
   'med.who': 'Qui est-ce ?',
+  'med.prev': 'Image précédente (←)',
+  'med.next': 'Image suivante (→)',
+  'med.position': (i, n) => `${i} / ${n}`,
   'med.untag': 'retirer',
 
   // Printing: contents

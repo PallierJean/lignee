@@ -741,6 +741,9 @@ export const EN = {
   'med.taggedN': (n) => `${n} person${n > 1 ? 's' : ''} tagged`,
   'med.galleryHint': 'Open a photo to tag the people in it: it will be added to their gallery.',
   'med.who': 'Who is this?',
+  'med.prev': 'Previous image (←)',
+  'med.next': 'Next image (→)',
+  'med.position': (i, n) => `${i} / ${n}`,
   'med.untag': 'remove',
 
   'pr.content': 'Content',

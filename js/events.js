@@ -15,7 +15,7 @@ import {
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
-  openMedia, closeMedia, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption,
+  openMedia, closeMedia, stepMedia, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption,
 } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
@@ -196,7 +196,8 @@ const CLICK_ACTIONS = {
   'insee-confirm': (el) => A.confirmInseeOf(el.dataset.id),
 
   // Gallery
-  'media-open': (el) => openMedia(el.dataset.owner, el.dataset.id),
+  'media-open': (el) => openMedia(el.dataset.owner, el.dataset.id, el.dataset.group),
+  'media-step': (el) => stepMedia(Number(el.dataset.d)),
   'media-close': () => closeMedia(),
   'media-person': (el) => {
     closeMedia();
@@ -489,6 +490,12 @@ export function bindEvents() {
       const find = document.getElementById('find');
       find.focus();
       find.select();
+      return;
+    }
+    // Gallery viewer: the arrow keys go from one image to the next
+    if ((ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') && !typing(ev.target)
+      && !document.getElementById('mediaDlg').hidden && stepMedia(ev.key === 'ArrowLeft' ? -1 : 1)) {
+      ev.preventDefault();
       return;
     }
     if (ev.key !== 'Escape') return;
