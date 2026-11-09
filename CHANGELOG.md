@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.10](https://github.com/PallierJean/lignee/compare/v1.20.9...v1.20.10) (2026-11-09)
+
+### Code Refactoring
+
+* Split actions.js by area ([b9a1f39](https://github.com/PallierJean/lignee/commit/b9a1f391ac1a1fdc33108a7943d54b2b0b5e0d9b))
+
+---
+
+### Refontes
+
+* Découper actions.js par domaine ([b9a1f39](https://github.com/PallierJean/lignee/commit/b9a1f391ac1a1fdc33108a7943d54b2b0b5e0d9b))
+
 ## [1.20.9](https://github.com/PallierJean/lignee/compare/v1.20.8...v1.20.9) (2026-11-09)
 
 ### Performance Improvements
