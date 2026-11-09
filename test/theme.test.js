@@ -378,7 +378,8 @@ describe('animations des thèmes fêtes et saisons', () => {
       await new Promise((r) => setTimeout(r, 120));
       assert.ok(sky.iceBolts.some((b) => b.heavy && b.color === '#7CFF6B'), 'the walker fires');
       // The tow cable trips the walker, which blows up, then a new one comes
-      sky.cableBorn = Date.now() - 7100;
+      Object.assign(sky.speeders[0], { down: 0 });
+      sky.tow = { p: sky.speeders[0], born: Date.now() - 7100 };
       await new Promise((r) => setTimeout(r, 80));
       assert.ok(sky.fall, 'the walker trips');
       // Halfway down: still falling, not blown up yet
