@@ -8,7 +8,7 @@ import { buildGedcom, parseGedcom } from '../services/gedcom.js';
 import { parseBackup } from '../services/backup.js';
 import { openRepo, attachPhotos } from '../services/github.js';
 import { afterData } from './render.js';
-import { toast } from './toast.js';
+import { toast, reportError } from './toast.js';
 import { newTree } from './trees.js';
 import { linkRepo, connectTree, holdsTree, savedRepo } from './repo-link.js';
 import { markExported } from '../services/exported.js';
@@ -353,6 +353,7 @@ export async function importGo(asNew) {
     toast(t('tr.done'));
     if (asNew) closeTransfer();
   } catch (e) {
+    reportError(e);
     if (S.mode !== 'db') await Promise.resolve(saveLocal()).catch(() => {}); // message already shown
     commitAction();
     info.innerHTML = `<p class="err">${t('tr.stopped', done, total)}</p>`

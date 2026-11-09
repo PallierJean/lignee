@@ -19,7 +19,7 @@ import { renderTree, scrollToFocus, scrollToPerson, treeMargins } from './tree/r
 import { renderAll, renderSide, renderRecord, afterData } from './ui/render.js';
 import { renderHeader, renderControls } from './ui/header.js';
 import { blankDraft, captureDraft, focusFirstField } from './ui/form.js';
-import { toast } from './ui/toast.js';
+import { toast, reportError } from './ui/toast.js';
 import { t, getLang, setLang } from './i18n.js';
 import { updatePrintInfo } from './ui/print.js';
 import { applyTheme } from './ui/theme.js';
@@ -207,7 +207,7 @@ async function runHistory(run, doneKey) {
   try {
     action = await run();
   } catch (e) {
-    /* message already shown by the save */
+    reportError(e);
   }
   S.busy = false;
   if (action) {
@@ -739,6 +739,7 @@ export async function submitEdit() {
     afterData();
     toast(t(e.id ? 'f.saved' : 'f.added'));
   } catch (err) {
+    reportError(err);
     commitAction();
     S.busy = false;
     const b = $('#f-submit');
@@ -792,6 +793,7 @@ export async function doDelete(id) {
     afterData();
     toast(t('deleted'));
   } catch (e) {
+    reportError(e);
     commitAction();
     S.confirmDel = false;
     afterData();
@@ -866,6 +868,7 @@ export async function mergePeople(keep, drop) {
     afterData();
     toast(t('dup.merged'));
   } catch (e) {
+    reportError(e);
     commitAction();
     S.busy = false;
     afterData();
@@ -897,6 +900,9 @@ export async function renamePlace(from, to) {
   beginAction('hist.place');
   try {
     for (const x of patches) await opUpdate(x.collection, x.id, x.patch);
+  } catch (e) {
+    reportError(e);
+    return;
   } finally {
     commitAction();
     S.busy = false;
@@ -930,6 +936,9 @@ export async function applyInsee(id, i) {
   try {
     await opUpdate('people', id, patch);
     if (dies || patch.deathDate) await closeUnionsAtDeath(id);
+  } catch (e) {
+    reportError(e);
+    return;
   } finally {
     commitAction();
     S.busy = false;
@@ -988,6 +997,7 @@ export async function removeExamples() {
     afterData();
     toast(t('ex.removed'));
   } catch (e) {
+    reportError(e);
     commitAction();
     afterData();
   }

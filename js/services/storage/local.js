@@ -5,6 +5,7 @@
 import { S } from '../../state.js';
 import { TREES_KEY, TREE_KEY, DEFAULT_TREE, EXAMPLE_FILE } from '../../config.js';
 import { t } from '../../i18n.js';
+import { markReported } from '../../utils/helpers.js';
 import { toast } from '../../ui/toast.js';
 import { parseBackup } from '../backup.js';
 import { ensureTree, sortTrees } from './trees.js';
@@ -90,7 +91,7 @@ export function saveBrowserTree() {
     writeLocalTrees();
   } catch (e) {
     toast(t(isQuotaError(e) ? 'st.browserFull' : 'st.browserRefused'), true);
-    throw e;
+    throw markReported(e);
   }
   if (json.length > NEARLY_FULL && !warnedFull) {
     warnedFull = true;

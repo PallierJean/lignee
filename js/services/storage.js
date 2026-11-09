@@ -13,7 +13,7 @@
  */
 import { S } from '../state.js';
 import { t } from '../i18n.js';
-import { rid, pool } from '../utils/helpers.js';
+import { rid, pool, markReported } from '../utils/helpers.js';
 import { toast } from '../ui/toast.js';
 import { loadLocalTree, saveBrowserTree, deleteBrowserTree, saveTreesList } from './storage/local.js';
 import { loadFileTree, saveFile, createFileTree, renameFileTree, deleteFileTree } from './storage/file.js';
@@ -158,8 +158,8 @@ export async function renameTree(id, name) {
     else saveTreesList();
   } catch (e) {
     tree.name = before;
-    if (S.mode === 'file') toast(t('st.renameFailed'), true);
-    throw e;
+    if (S.mode === 'file' && !(e && e.reported)) toast(t('st.renameFailed'), true);
+    throw markReported(e);
   }
 }
 

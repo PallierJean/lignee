@@ -7,7 +7,7 @@ import { S, treeName } from '../../state.js';
 import { t } from '../../i18n.js';
 import { buildBackup, parseBackup } from '../backup.js';
 import { sourcesOf, mediaList, isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
-import { pool } from '../../utils/helpers.js';
+import { pool, markReported } from '../../utils/helpers.js';
 import { toast } from '../../ui/toast.js';
 import { ensureTree, sortTrees } from './trees.js';
 import { readLocalTrees, readLocalData } from './local.js';
@@ -114,7 +114,7 @@ export async function storePhoto(photo, p) {
     return (await res.json()).photo;
   } catch (e) {
     toast(t('st.photoFailed'), true);
-    throw e;
+    throw markReported(e);
   }
 }
 
@@ -195,7 +195,7 @@ export function saveFile() {
       version = await putFileTree(id, body, true, version);
     } catch (e) {
       toast(t(e.status === 409 ? 'st.conflict' : 'st.fileFailed'), true);
-      throw e;
+      throw markReported(e);
     }
   });
   fileQueue = run.catch(() => {}); // a failure doesn't block the following saves
@@ -207,7 +207,7 @@ export async function createFileTree(id, tree) {
     await putFileTree(id, emptyBackup(tree.name, tree.createdAt));
   } catch (e) {
     toast(t('st.createFailed'), true);
-    throw e;
+    throw markReported(e);
   }
 }
 
@@ -226,6 +226,6 @@ export async function deleteFileTree(id) {
     if (!res.ok) throw new Error(String(res.status));
   } catch (e) {
     toast(t('st.deleteFailed'), true);
-    throw e;
+    throw markReported(e);
   }
 }

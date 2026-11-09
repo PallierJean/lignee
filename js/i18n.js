@@ -489,6 +489,7 @@ const FR = {
   'st.createFailed': 'La création de l’arbre a échoué. Le serveur local est-il toujours lancé ?',
   'st.renameFailed': 'Le changement de nom a échoué. Le serveur local est-il toujours lancé ?',
   'st.deleteFailed': 'La suppression a échoué. Le serveur local est-il toujours lancé ?',
+  'err.unexpected': 'Une erreur inattendue a interrompu l’action. Rechargez la page, puis vérifiez la fiche avant de recommencer.',
   'st.conflict': 'Non enregistré : l’arbre a été modifié ailleurs (autre onglet ?). Rechargez la page. Votre dernière saisie sera à refaire.',
 
   // Undo / redo
@@ -1258,6 +1259,7 @@ const EN = {
   'st.createFailed': 'Creating the tree failed. Is the local server still running?',
   'st.renameFailed': 'Renaming failed. Is the local server still running?',
   'st.deleteFailed': 'Deleting failed. Is the local server still running?',
+  'err.unexpected': 'An unexpected error stopped the action. Reload the page, then check the record before trying again.',
   'st.conflict': 'Not saved: the tree was changed elsewhere (another tab?). Reload the page. Your last change will need redoing.',
 
   'ctl.undo': 'Undo',

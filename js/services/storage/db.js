@@ -6,7 +6,7 @@
 import { S, services } from '../../state.js';
 import { DEFAULT_TREE } from '../../config.js';
 import { t } from '../../i18n.js';
-import { sleep, pool } from '../../utils/helpers.js';
+import { sleep, pool, markReported } from '../../utils/helpers.js';
 import { toast } from '../../ui/toast.js';
 import { renderAll, afterData } from '../../ui/render.js';
 import { ensureTree, sortTrees } from './trees.js';
@@ -42,7 +42,7 @@ export async function withRetry(fn) {
       } else {
         toast(t('st.failed'), true);
       }
-      throw e;
+      throw markReported(e);
     }
   }
 }
