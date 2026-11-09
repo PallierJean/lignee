@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.4](https://github.com/PallierJean/lignee/compare/v1.20.3...v1.20.4) (2026-11-09)
+
+### Bug Fixes
+
+* Show a message when an action fails for an unexpected reason ([647a9e7](https://github.com/PallierJean/lignee/commit/647a9e772a179088f6c0404627e978200ca2bc8e))
+
+---
+
+### Corrections
+
+* Afficher un message quand une action échoue pour une raison inattendue ([647a9e7](https://github.com/PallierJean/lignee/commit/647a9e772a179088f6c0404627e978200ca2bc8e))
+
 ## [1.20.3](https://github.com/PallierJean/lignee/compare/v1.20.2...v1.20.3) (2026-11-09)
 
 ### Bug Fixes
