@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.7](https://github.com/PallierJean/lignee/compare/v1.20.6...v1.20.7) (2026-11-09)
+
+### Code Refactoring
+
+* Keep the list of dialogs in one place ([fb84e80](https://github.com/PallierJean/lignee/commit/fb84e805cd0446c4ab66e4b971ab7c930502be5f))
+
+---
+
+### Refontes
+
+* Garder la liste des fenêtres à un seul endroit ([fb84e80](https://github.com/PallierJean/lignee/commit/fb84e805cd0446c4ab66e4b971ab7c930502be5f))
+
 ## [1.20.6](https://github.com/PallierJean/lignee/compare/v1.20.5...v1.20.6) (2026-11-09)
 
 ### Code Refactoring
