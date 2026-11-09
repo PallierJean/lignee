@@ -87,6 +87,8 @@ async function recordData(e, id, previous) {
     if (/^e_/.test(s.fact) && !facts.has(s.fact)) s.fact = '';
     if (s.photo) s.photo = await storePhoto(s.photo, data);
     else delete s.photo;
+    if (s.photo && s.back) s.back = await storePhoto(s.back, data); // back of the document
+    else delete s.back;
     sources.push(s);
   }
   if (sources.length) data.sources = sources;

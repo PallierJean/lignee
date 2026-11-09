@@ -105,6 +105,35 @@ test('gallery: the back of an image is added, changed, saved and removed', async
   A.removeDraftMediaBack(0); // no form: nothing
 });
 
+test('source document: a back, like the second side of a marriage contract', async () => {
+  const { sourcesHTML } = await import('../js/ui/record.js');
+  A.addDraftSource();
+  assert.doesNotMatch(document.getElementById('paneRecord').innerHTML, /data-src-back/, 'no back without a front');
+  await A.setDraftSourcePhoto(0, png('contrat-recto.png'));
+  assert.match(document.getElementById('paneRecord').innerHTML, /data-src-back="0">Ajouter le verso/);
+  await A.setDraftSourceBack(0, text);
+  assert.equal(S.edit.sources[0].back, undefined, 'not an image: refused');
+  await A.setDraftSourceBack(0, png('contrat-verso.png'));
+  assert.equal(S.edit.sources[0].back, 'data:image/jpeg;base64,IMG');
+  await A.setDraftSourceBack(7, png()); // no such source: nothing
+  for (const [id, v] of [['f-given', 'Anne'], ['f-surname', 'Roux'], ['src-title-0', 'Contrat de mariage']]) document.getElementById(id).value = v;
+  await A.submitEdit();
+  const saved = S.people.get('a').sources[0];
+  assert.equal(saved.back, 'data:image/jpeg;base64,IMG', 'saved with its front');
+  const shown = sourcesHTML('a');
+  assert.equal((shown.match(/class="src-doc zoomable"/g) || []).length, 2, 'front and back side by side');
+  assert.match(shown, /alt="[^"]* \(Verso\)"/);
+  // Removing the front takes the back with it
+  A.startEdit('a');
+  assert.equal(S.edit.sources[0].back, 'data:image/jpeg;base64,IMG');
+  A.removeDraftSourceBack(0);
+  assert.equal(S.edit.sources[0].back, '');
+  await A.setDraftSourceBack(0, png());
+  A.removeDraftSourcePhoto(0);
+  assert.equal(S.edit.sources[0].back, '', 'no back without its front');
+  A.removeDraftSourceBack(3); // no such source: nothing
+});
+
 test('gallery: nothing is added once the form was closed or reopened during the load', async () => {
   let release;
   fakeImages(() => new Promise((r) => { release = r; }));

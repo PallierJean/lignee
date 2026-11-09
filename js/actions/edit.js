@@ -134,7 +134,7 @@ export function startEdit(id) {
   const events = eventsOf(p).map((x) => ({ ...x, ...texts(x, ['date', 'place', 'note']), removed: false }));
   const sources = sourcesOf(p).map((x) => ({
     ...x, kind: 'other', ...texts(x, ['fact', 'title', 'place', 'ref', 'note']), ...(x.kind ? { kind: String(x.kind) } : {}),
-    photo: photoSrc(x.photo) ? x.photo : '', removed: false,
+    photo: photoSrc(x.photo) ? x.photo : '', back: photoSrc(x.photo) && photoSrc(x.back) ? x.back : '', removed: false,
   }));
   const media = mediaList(p).filter((x) => photoSrc(x.photo))
     .map((x) => ({ tags: [], ...x, ...texts(x, ['title', 'date', 'note']), back: photoSrc(x.back) ? x.back : '', removed: false }));
@@ -261,6 +261,31 @@ export function removeDraftSourcePhoto(i) {
   if (!S.edit) return;
   captureDraft();
   S.edit.sources[i].photo = '';
+  S.edit.sources[i].back = ''; // a back alone means nothing
+  renderSide(true);
+}
+
+/** Back of source `i`'s document: the second side of a marriage contract or of a certificate. */
+export async function setDraftSourceBack(i, file) {
+  if (!S.edit || !S.edit.sources[i] || !file) return;
+  const token = S.edit.token;
+  let back;
+  try {
+    back = await photoFromFile(file, DOCUMENT_SIDE);
+  } catch (err) {
+    toast(err.message, true);
+    return;
+  }
+  if (!S.edit || S.edit.token !== token || !S.edit.sources[i]) return;
+  captureDraft();
+  S.edit.sources[i].back = back;
+  renderSide(true);
+}
+
+export function removeDraftSourceBack(i) {
+  if (!S.edit || !S.edit.sources[i]) return;
+  captureDraft();
+  S.edit.sources[i].back = '';
   renderSide(true);
 }
 
