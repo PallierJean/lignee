@@ -59,6 +59,10 @@
   en copie, pour garder une trace de chaque demande. Rien n'est envoyé sans que l'utilisateur relise
   et envoie lui-même. Une mairie
   introuvable (Paris, par exemple, nommée autrement) renvoie vers la recherche de l'annuaire.
+  « Préparer toutes les demandes » fait la même recherche pour toutes les mairies d'un clic (l'une
+  après l'autre, une pause de 300 ms entre deux), puis affiche « Demandes prêtes » : un lien
+  « Écrire à la mairie de … » par mairie qui a une adresse e-mail, et la liste de celles à contacter
+  à la main. Un navigateur n'ouvre qu'un e-mail par clic : on les envoie l'un après l'autre.
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).

@@ -7,7 +7,7 @@ import {
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, resetActsHalls, setActsCc } from '../js/ui/analysis.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc } from '../js/ui/analysis.js';
 import { findTownHall, resetTownHalls } from '../js/services/town-hall.js';
 import { setLang } from '../js/i18n.js';
 import { loadCommuneChanges, currentCommune } from '../js/model/communes.js';
@@ -487,6 +487,44 @@ describe('actes de décès à demander, par commune', () => {
     assert.match(html('paneAnalysis'), /Pas d’adresse e-mail dans l’annuaire/);
     await findActsHall(5); // mairie disparue entre-temps : rien
     assert.equal(await findTownHall('Liège', 'BE'), null, 'hors de France : rien à chercher');
+  });
+
+  test('un seul clic pour toutes les demandes : toutes les mairies cherchées, un lien par mairie', async () => {
+    resetTownHalls();
+    resetActsHalls();
+    S.mode = 'file';
+    loadTree([
+      lucien(),
+      person('r', { given: 'Anne', surname: 'Roche', sex: 'F', birthDate: '05/01/1930', deceased: true }),
+    ]);
+    const acts = {
+      Bertrand: [act()],
+      Roche: [act({ first: ['Anne'], last: 'ROCHE', sex: 'F', birthDate: '19300105', deathDate: '20010203', death: { city: 'Tulle', dept: '19', country: 'France' }, certificate: '7' })],
+    };
+    const asked = [];
+    globalThis.fetch = async (url) => {
+      if (url.startsWith('api/insee')) return { ok: true, json: async () => acts[Object.keys(acts).find((k) => url.includes(k))] };
+      asked.push(url);
+      const limoges = url.includes('Limoges');
+      return { ok: true, json: async () => ({ results: [{ nom: limoges ? 'Mairie - Limoges' : 'Mairie - Tulle', adresse_courriel: limoges ? 'etat-civil@limoges.fr' : '' }] }) };
+    };
+    await checkInsee(inseePending(), () => {});
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    assert.match(html('paneAnalysis'), /data-act="acts-halls">Préparer toutes les demandes/);
+    const run = findAllActsHalls();
+    await new Promise((r) => setTimeout(r, 0));
+    assert.match(html('paneAnalysis'), /Recherche des mairies dans l’annuaire de service-public\.fr : \d \/ 2/);
+    await findAllActsHalls(); // déjà en cours : rien de plus
+    await run;
+    assert.equal(asked.length, 2, 'une recherche par mairie');
+    const out = html('paneAnalysis');
+    assert.match(out, /Demandes prêtes <span class="n">1<\/span>/);
+    assert.match(out, /<a href="mailto:etat-civil@limoges\.fr\?[^"]+">Écrire à la mairie de Limoges \(87\)<\/a> <small>1 acte<\/small>/);
+    assert.match(out, /À faire à la main \(pas d’adresse e-mail dans l’annuaire\) : Tulle \(19\)/);
+    assert.doesNotMatch(out, /Préparer toutes les demandes/, 'plus rien à chercher');
+    await findAllActsHalls(); // plus rien à chercher
+    assert.equal(asked.length, 2);
   });
 
   test('vue Actes : sans vérification, ou en ligne', () => {

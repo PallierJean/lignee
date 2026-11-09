@@ -23,6 +23,7 @@ import { downloadBlob, fileBase } from './transfer.js';
 import { buildActsCsv } from '../services/csv.js';
 import { findTownHall, townHallSearchUrl } from '../services/town-hall.js';
 import { CC_KEY } from '../config.js';
+import { sleep } from '../utils/helpers.js';
 import { longDate } from '../utils/dates.js';
 import { inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune } from '../model/insee.js';
 import {
@@ -222,7 +223,10 @@ function actsView() {
     + `<label class="fld acts-cc"><span>${t('acts.cc')}</span><input type="email" id="actsCc" autocomplete="email" value="${esc(ccEmail())}" placeholder="${t('acts.ccPlaceholder')}"></label>`
     + `<p class="hint an-hint">${t('acts.ccHint')}</p>`
     + `<div class="row-btns reg-tools"><button class="btn small" type="button" data-act="acts-copy">${t('acts.copyAll')}</button>`
+    + (hallsToFind(groups).length && !hallsBusy ? `<button class="btn small primary" type="button" data-act="acts-halls">${t('acts.findAll')}</button>` : '')
     + `<button class="btn small" type="button" data-act="acts-csv">${t('acts.csv')}</button></div>`
+    + (hallsBusy ? `<p class="hint an-hint">${t('acts.hallsProgress', hallsBusy.done, hallsBusy.total)}</p>` : '')
+    + readyBlock(groups)
     + groups.map((g, i) => {
       const rows = g.rows.map(({ id, act, former }) => `<li>${personLink(id)} <small>${t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small></li>`).join('');
       return `<section class="rel acts-town"><h3>${esc(g.place || t('acts.unknown'))} <span class="n">${g.rows.length}</span></h3>`
@@ -236,6 +240,7 @@ function actsView() {
 
 /* Town halls looked up in the service-public.fr directory: place -> { busy } | { hall } | { none } | { error } */
 const halls = new Map();
+const HALL_PAUSE = 300; // ms between two directory searches, to stay a light user
 
 const EMAIL = /^[^\s@<>",;]+@[^\s@<>",;]+\.[^\s@<>",;]+$/;
 
@@ -291,25 +296,75 @@ function hallBlock(g) {
       : `<p class="hint an-hint">${t('acts.hallNoEmail')}</p>`);
 }
 
-/** Looks up the town hall of group `i` in the service-public.fr directory, then shows how to write to it. */
-export async function findActsHall(i) {
-  await Promise.all([loadCommunes(), loadCommuneChanges()]);
-  const g = actGroups()[i];
-  if (!g || !g.city || !g.dept) return;
+/** Looks group `g`'s town hall up in the service-public.fr directory and keeps what was found. */
+async function lookUpHall(g) {
   const city = officialCommune(g.city, g.dept);
-  halls.set(g.place, { busy: true });
-  renderAnalysis();
   try {
     const hall = await findTownHall(city, g.dept);
     halls.set(g.place, hall ? { hall } : { none: true, city });
   } catch (e) {
     halls.set(g.place, { error: true, city });
   }
+}
+
+/** Looks up the town hall of group `i` in the service-public.fr directory, then shows how to write to it. */
+export async function findActsHall(i) {
+  await Promise.all([loadCommunes(), loadCommuneChanges()]);
+  const g = actGroups()[i];
+  if (!g || !g.city || !g.dept) return;
+  halls.set(g.place, { busy: true });
+  renderAnalysis();
+  await lookUpHall(g);
   renderAnalysis();
 }
 
+let hallsBusy = null; // { done, total } while every town hall is being looked up
+
+/** Town halls still to look up: French towns not found yet, or whose search failed. */
+const hallsToFind = (groups) => groups.filter((g) => g.city && g.dept && (!halls.has(g.place) || halls.get(g.place).error));
+
+/** One click for every request: looks up all the town halls, one after the other. */
+export async function findAllActsHalls() {
+  if (hallsBusy) return;
+  await Promise.all([loadCommunes(), loadCommuneChanges()]);
+  const todo = hallsToFind(actGroups());
+  if (!todo.length) return;
+  hallsBusy = { done: 0, total: todo.length };
+  for (const g of todo) halls.set(g.place, { busy: true });
+  renderAnalysis();
+  for (const g of todo) {
+    await lookUpHall(g);
+    hallsBusy.done++;
+    renderAnalysis();
+    await sleep(HALL_PAUSE);
+  }
+  hallsBusy = null;
+  renderAnalysis();
+}
+
+/** Requests ready to send: one link per town hall found with an e-mail; the others to do by hand. */
+function readyBlock(groups) {
+  const ready = [];
+  const manual = [];
+  for (const g of groups) {
+    const found = halls.get(g.place);
+    if (!found || found.busy) continue;
+    if (found.hall && found.hall.email) {
+      ready.push(`<li><a href="${esc(mailTo(found.hall.email, g))}">${t('acts.writeTo', esc(g.place))}</a> <small>${t('acts.count', g.rows.length)}</small></li>`);
+    } else manual.push(esc(g.place));
+  }
+  if (!ready.length && !manual.length) return '';
+  return `<section class="rel acts-ready"><h3>${t('acts.ready')} <span class="n">${ready.length}</span></h3>`
+    + (ready.length ? `<p class="hint an-hint">${t('acts.readyHint')}</p><ul class="ins-diffs">${ready.join('')}</ul>` : '')
+    + (manual.length ? `<p class="hint an-hint">${t('acts.manual', manual.join(', '))}</p>` : '')
+    + '</section>';
+}
+
 /** Forgets the town halls found (tests). */
-export const resetActsHalls = () => halls.clear();
+export const resetActsHalls = () => {
+  halls.clear();
+  hallsBusy = null;
+};
 
 /** A town's list: its town hall, then one line per certificate. */
 const townText = (g) => [t('acts.townHall', g.place || t('acts.unknown')), ...g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former))].join('\n');

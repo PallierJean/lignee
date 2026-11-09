@@ -11,7 +11,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
 import {
-  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, setActsCc,
+  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc,
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
@@ -186,6 +186,7 @@ const CLICK_ACTIONS = {
   'acts-copy': (el) => copyActs(el.dataset.i === undefined ? undefined : Number(el.dataset.i)),
   'acts-csv': () => exportActsCsv(),
   'acts-hall': (el) => findActsHall(Number(el.dataset.i)),
+  'acts-halls': () => findAllActsHalls(),
   'insee-register': () => inseeSendCode(),
   'insee-auth': () => inseeSendAuth(),
   'insee-restart-login': () => inseeOtherEmail(),
