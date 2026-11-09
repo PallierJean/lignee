@@ -51,7 +51,11 @@ lignee/
 │   ├── config.js               Constantes (dimensions, zoom, mois, clés)
 │   ├── state.js                État partagé, préférences d'affichage
 │   ├── events.js               Écoute des clics (attribut data-act) et saisies
-│   ├── i18n.js                 Textes en français et en anglais, bouton FR / EN
+│   ├── i18n.js                 Langue de l'interface, t(), bouton FR / EN
+│   ├── i18n/
+│   │   ├── fr.js               Textes en français
+│   │   ├── en.js               Textes en anglais (une clé absente reprend le français)
+│   │   └── grammar.js          Pluriels, accords, élisions, termes de parenté
 │   ├── actions.js              Actions, regroupées ci-dessous
 │   ├── actions/
 │   │   ├── view.js             Personne centrale, onglets, générations, zoom, thème, annuler
