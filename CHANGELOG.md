@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.9](https://github.com/PallierJean/lignee/compare/v1.20.8...v1.20.9) (2026-11-09)
+
+### Performance Improvements
+
+* Keep the consistency check until the data changes ([c15272b](https://github.com/PallierJean/lignee/commit/c15272bdbc6ad3e5fc8efe0cc615aff0bbd04343))
+
+---
+
+### Performances
+
+* Garder la vérification de cohérence tant que les données ne changent pas ([c15272b](https://github.com/PallierJean/lignee/commit/c15272bdbc6ad3e5fc8efe0cc615aff0bbd04343))
+
 ## [1.20.8](https://github.com/PallierJean/lignee/compare/v1.20.7...v1.20.8) (2026-11-09)
 
 ### Bug Fixes
