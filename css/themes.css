@@ -341,7 +341,7 @@
 }
 
 /* Each person lights a laser sword under their card: green, blue or red, and a hilt of their own
-   (data-saber and data-hilt, from the id: js/tree/render.js). Only the focus person's is purple. */
+   (data-saber and data-hilt, from the id: js/tree/render.js). One shown person, drawn at random, has a purple one. */
 :root[data-theme="galaxie"] .card[data-saber="green"] {
   --saber: #4CFF6A;
   --saber-glow: rgba(76, 255, 106, .65);
@@ -357,7 +357,7 @@
   --saber-glow: rgba(255, 77, 77, .7);
 }
 
-:root[data-theme="galaxie"] .card.is-focus {
+:root[data-theme="galaxie"] .card[data-saber="purple"] {
   --saber: #B266FF;
   --saber-glow: rgba(178, 102, 255, .75);
 }
@@ -425,8 +425,8 @@
   animation: saber-on .45s ease-out;
 }
 
-/* The focus person's sword hums */
-:root[data-theme="galaxie"] .card.is-focus::after {
+/* The purple sword hums */
+:root[data-theme="galaxie"] .card[data-saber="purple"]::after {
   animation: saber-on .45s ease-out, saber-hum 1.6s ease-in-out .45s infinite;
 }
 

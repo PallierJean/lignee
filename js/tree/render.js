@@ -36,7 +36,7 @@ const SABERS = ['green', 'blue', 'red'];
 
 /**
  * Laser sword of a person, in the Star Wars theme (css/themes.css): its colour and its hilt, always
- * the same for the same person, drawn from the id. The focus person's one is purple, in CSS.
+ * the same for the same person, drawn from the id. One shown person, drawn at random, has a purple one.
  */
 export function saberOf(id) {
   let h = 0;
@@ -44,10 +44,19 @@ export function saberOf(id) {
   return { saber: SABERS[h % 3], hilt: String(Math.floor(h / 3) % 6) };
 }
 
+// The one purple sword: a person drawn at random among the shown cards, kept while their card is shown
+let purple = null;
+
+/** Draws the holder of the purple sword again if their card is no longer among `shown` (person ids). */
+export function pickPurple(shown) {
+  if (!shown.includes(purple)) purple = shown.length ? shown[Math.floor(Math.random() * shown.length)] : null;
+  return purple;
+}
+
 /** Highlighting a kinship link takes precedence over the line halo. */
 const lineShown = () => S.line && !S.kinShow;
 
-function fillCard(el, n) {
+function fillCard(el, n, purpleSword) {
   const p = P(n.id);
   const names = cardNames(p);
   el.className = 'card' + (p.sex === 'M' || p.sex === 'F' ? ' is-' + p.sex : '')
@@ -55,7 +64,7 @@ function fillCard(el, n) {
     + (lineShown() && n.sosa && !n.focus ? ' is-line' : '') + (names.maiden ? ' has-maiden' : '');
   el.dataset.act = 'person-open';
   el.dataset.id = n.id;
-  Object.assign(el.dataset, saberOf(n.id));
+  Object.assign(el.dataset, saberOf(n.id), purpleSword ? { saber: 'purple' } : {});
   delete el.dataset.rel;
   delete el.dataset.of;
   const dates = cardDates(p);
@@ -205,6 +214,8 @@ export function renderTree() {
   }
 
   // Cards: existing ones are reused
+  pickPurple(L.nodes.filter((n) => n.t === 'p').map((n) => n.id));
+  let purpleShown = false; // a person shown twice (pedigree collapse) has it only once
   const used = new Set();
   const count = new Map();
   for (const n of L.nodes) {
@@ -224,7 +235,9 @@ export function renderTree() {
     }
     el.style.left = n.x + 'px';
     el.style.top = n.y + 'px';
-    if (n.t === 'p') fillCard(el, n);
+    const purpleSword = n.t === 'p' && n.id === purple && !purpleShown;
+    if (purpleSword) purpleShown = true;
+    if (n.t === 'p') fillCard(el, n, purpleSword);
     else fillPlaceholder(el, n);
     if (isNew && !reduced && S.lastLayout) {
       el.classList.add('enter');
