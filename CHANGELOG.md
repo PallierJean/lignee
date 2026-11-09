@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.6](https://github.com/PallierJean/lignee/compare/v1.20.5...v1.20.6) (2026-11-09)
+
+### Code Refactoring
+
+* Let the storage notify the interface instead of importing it ([703a3f7](https://github.com/PallierJean/lignee/commit/703a3f76283d54007f07644b5e68f2d3a9098702))
+
+---
+
+### Refontes
+
+* Laisser le stockage prévenir l'interface au lieu de l'importer ([703a3f7](https://github.com/PallierJean/lignee/commit/703a3f76283d54007f07644b5e68f2d3a9098702))
+
 ## [1.20.5](https://github.com/PallierJean/lignee/compare/v1.20.4...v1.20.5) (2026-11-09)
 
 ### Code Refactoring
