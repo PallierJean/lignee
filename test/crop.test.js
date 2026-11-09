@@ -35,3 +35,75 @@ describe('recadrage d’une photo de fiche', () => {
     await assert.rejects(cropPhoto(null), /image/i);
   });
 });
+
+describe('crop dialog', () => {
+  const realCreate = document.createElement;
+  const realImage = globalThis.Image;
+
+  function fakeImage(width, height, decode = async () => {}) {
+    globalThis.URL.createObjectURL = () => 'blob:x';
+    globalThis.URL.revokeObjectURL = () => {};
+    globalThis.Image = class {
+      naturalWidth = width;
+      naturalHeight = height;
+      decode = decode;
+    };
+    document.createElement = (tag) => {
+      const el = realCreate(tag);
+      el.getContext = () => ({ fillRect() {}, drawImage() {} });
+      el.toDataURL = () => 'data:image/jpeg;base64,CROP';
+      return el;
+    };
+  }
+  const restore = () => {
+    document.createElement = realCreate;
+    globalThis.Image = realImage;
+  };
+  const stage = { closest: (sel) => (sel === '#cropStage' ? {} : null) };
+
+  test('open, zoom, drag, keep or cancel; shortcuts and Escape while it is open', async () => {
+    const { cropOpen, closeCrop, cropZoomInput, cropWheel, cropDrag } = await import('../js/ui/crop.js');
+    const { bindEvents } = await import('../js/events.js');
+    const { dialogOpen } = await import('../js/ui/dialogs.js');
+    const { fire } = await import('./setup.js');
+    bindEvents();
+    for (const id of ['transfer', 'printDlg', 'treesDlg', 'personDlg', 'mediaDlg', 'photoZoom', 'leaveDlg']) document.getElementById(id).hidden = true;
+    document.getElementById('cropStage').getBoundingClientRect = () => ({ left: 0, top: 0 });
+    fakeImage(400, 300);
+    try {
+      const kept = cropPhoto({ type: 'image/png' });
+      await new Promise((r) => setImmediate(r));
+      assert.equal(cropOpen(), true);
+      assert.equal(dialogOpen(), true);
+      // "/" doesn't jump to the search field under the crop dialog
+      const ev = { key: '/', target: { tagName: 'DIV' }, preventDefault() { ev.prevented = true; } };
+      fire('keydown', ev);
+      assert.notEqual(ev.prevented, true);
+      cropZoomInput('2');
+      let prevented = false;
+      cropWheel({ target: stage, deltaY: -1, clientX: 10, clientY: 10, preventDefault() { prevented = true; } });
+      assert.ok(prevented);
+      cropWheel({ target: { closest: () => null }, deltaY: 1 });
+      cropDrag({ type: 'pointerdown', target: stage, clientX: 0, clientY: 0 });
+      cropDrag({ type: 'pointermove', clientX: -20, clientY: -10 });
+      cropDrag({ type: 'pointerup' });
+      cropDrag({ type: 'pointermove', clientX: 5, clientY: 5 });
+      closeCrop(true);
+      assert.equal(await kept, 'data:image/jpeg;base64,CROP');
+      assert.equal(cropOpen(), false);
+
+      // Escape cancels
+      const cancelled = cropPhoto({ type: 'image/jpeg' });
+      await new Promise((r) => setImmediate(r));
+      fire('keydown', { key: 'Escape', target: { tagName: 'DIV' }, preventDefault() {} });
+      assert.equal(await cancelled, null);
+      closeCrop(false); // already closed: nothing happens
+
+      // Unreadable image
+      fakeImage(1, 1, async () => { throw new Error('bad'); });
+      await assert.rejects(cropPhoto({ type: 'image/png' }), /lue|read/i);
+    } finally {
+      restore();
+    }
+  });
+});
