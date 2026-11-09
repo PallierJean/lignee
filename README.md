@@ -152,11 +152,11 @@ chacun leur taille, leur vitesse et leur balancement, tirés au hasard) :
   empreintes rouges suivies du nom d'une personne de l'arbre, `ui/footprints.js`), ✨ Constellations
   (le vrai ciel de Bordeaux, 28 constellations placées par `model/sky.js` d'après le temps sidéral ;
   il part de l'heure réelle et tourne en accéléré, `ui/sky.js`), 🏺 Porcelaine de Limoges (décor de
-  faïence en bleu de four et or, fiches en plaques émaillées), 💊 Matrix (pluie de signes verts,
+  faïence en bleu de four et or, fiches en plaques émaillées), 🕶️ Matrix (pluie de signes verts,
   `ui/rain.js`), 🏴‍☠️ Grand Line (une planche de manga : trait d'encre, trame,
   cadre de case ; navire pirate à tête de mouton qui vogue, îles, mouettes, chapeau de paille emporté
   par le vent, monstre marin qui surgit avec lignes de vitesse et « ドン!! », « ザザーン » des vagues ;
-  fiches en avis de recherche, la personne au centre est « WANTED »), ⚔️ Star Wars (espace profond :
+  fiches en avis de recherche, la personne au centre est « WANTED »), 🌌 Star Wars (espace profond :
   étoiles qui défilent sur trois profondeurs, nébuleuses, planète à anneaux qui tourne avec sa tempête
   et sa lune, soleils jumeaux ; le cargo en soucoupe ou le chasseur à ailes en X poursuivis par des
   chasseurs à panneaux hexagonaux, tirs laser et explosions ; saut en hyperespace, puis un croiseur
