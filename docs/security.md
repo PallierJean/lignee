@@ -50,7 +50,7 @@ Envoyée par `server.js` dans un en-tête, et ajoutée dans la page du site GitH
 | --- | --- |
 | `default-src 'self'`, `script-src 'self'`, `style-src 'self'`, `font-src 'self'` | Seuls les fichiers de l'application se chargent : pas de script, de style ni de police d'un autre site |
 | `img-src 'self' data: blob:` | Images de l'application et photos intégrées à l'arbre |
-| `connect-src` | Seulement l'application, OpenStreetMap (Nominatim) et GitHub (`api.github.com`, `raw.githubusercontent.com`) |
+| `connect-src` | Seulement l'application, OpenStreetMap (Nominatim), l'annuaire de service-public.fr et GitHub (`api.github.com`, `raw.githubusercontent.com`) |
 | `object-src 'none'`, `base-uri 'none'`, `form-action 'none'` | Ni plugin, ni changement de l'adresse de base, ni envoi de formulaire |
 | `frame-ancestors 'none'` | Aucun site ne peut afficher Lignée dans un cadre (serveur local seulement) |
 
@@ -80,6 +80,7 @@ L'ouverture de l'application ne contacte aucun service tiers : les polices sont 
 | --- | --- | --- |
 | « Localiser », sur la carte | OpenStreetMap (Nominatim), une requête par seconde | Les noms de lieux, et eux seuls |
 | « Vérifier », vue INSEE (`npm start` seulement) | matchID, par le serveur local (`GET /api/insee`) | Nom de naissance, premier prénom, sexe, date de naissance ; l'adresse e-mail pour s'inscrire |
+| « Trouver la mairie », vue Actes | Annuaire de service-public.fr (`api-lannuaire.service-public.fr`) | Le nom de la commune et son numéro de département |
 | Import ou sauvegarde GitHub | `api.github.com`, `raw.githubusercontent.com` | Le jeton ; l'arbre et ses photos à la sauvegarde |
 
 ## Secrets

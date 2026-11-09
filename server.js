@@ -61,7 +61,7 @@ const TYPES = {
 // What the page may load: its own files (fonts included), the geocoding service;
 // frame-ancestors: no other site can show it in a frame
 const CSP = "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; "
-  + "img-src 'self' data: blob:; connect-src 'self' https://nominatim.openstreetmap.org https://api.github.com https://raw.githubusercontent.com; "
+  + "img-src 'self' data: blob:; connect-src 'self' https://nominatim.openstreetmap.org https://api-lannuaire.service-public.fr https://api.github.com https://raw.githubusercontent.com; "
   + "object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 function send(res, status, body, type = 'text/plain; charset=utf-8', headers = {}) {

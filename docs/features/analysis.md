@@ -51,6 +51,12 @@
   l'état civil, naissance, décès, numéro) ; « Exporter en CSV » télécharge tous les actes pour un
   tableur. Le fichier de l'INSEE ne donne que le numéro de l'acte de décès, pas celui de l'acte de
   naissance (`deathActsByCommune` dans `model/insee.js`).
+  « Trouver la mairie » cherche la mairie dans l'annuaire officiel de service-public.fr (données
+  ouvertes ; seuls le nom de la commune et son département partent, `services/town-hall.js`) et
+  affiche son adresse e-mail, son téléphone et son formulaire de contact, avec « Écrire un e-mail
+  prérempli » : un lien `mailto:` qui ouvre la messagerie avec l'objet et la demande, liste des actes
+  comprise. Rien n'est envoyé sans que l'utilisateur relise et envoie lui-même. Une mairie
+  introuvable (Paris, par exemple, nommée autrement) renvoie vers la recherche de l'annuaire.
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).

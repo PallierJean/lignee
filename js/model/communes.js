@@ -7,6 +7,7 @@ import { parsePlace, formatPlace } from './places.js';
 import { departmentCode, departmentName } from './departments.js';
 
 let index = null;   // normalised commune name -> department numbers
+let official = null; // "dept|normalised name" -> name as INSEE writes it
 let loading = null;
 
 /** Name for comparison: no case or accents, "St" for "Saint", hyphens and apostrophes as spaces. */
@@ -18,20 +19,26 @@ export function loadCommunes() {
   if (!loading) {
     loading = import('../data/communes.js').then(({ COMMUNES }) => {
       const map = new Map();
-      for (const [dept, names] of Object.entries(COMMUNES)) {
-        for (const name of names.split('|')) {
+      const names = new Map();
+      for (const [dept, list] of Object.entries(COMMUNES)) {
+        for (const name of list.split('|')) {
           const k = key(name);
+          names.set(dept + '|' + k, name);
           if (!map.has(k)) map.set(k, []);
           if (!map.get(k).includes(dept)) map.get(k).push(dept);
         }
       }
       index = map;
+      official = names;
     });
   }
   return loading;
 }
 
 export const communesLoaded = () => index !== null;
+
+/** The commune's name as INSEE writes it ("SAINT ETIENNE", 42 -> "Saint-Étienne"), or `city` as given. */
+export const officialCommune = (city, dept) => (official && official.get(dept + '|' + key(city))) || city;
 
 let changes = null;      // department -> normalised former name -> { city, dept } of today's commune
 let loadingChanges = null;

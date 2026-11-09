@@ -15,11 +15,13 @@ import { mapView, locateMissing } from './places.js';
 import { placesByDepartment, parsePlace } from '../model/places.js';
 import {
   loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText, loadCommuneChanges, communeChangesLoaded, currentCommune,
+  officialCommune,
 } from '../model/communes.js';
 import { mediaGrid } from './record.js';
 import { toast } from './toast.js';
 import { downloadBlob, fileBase } from './transfer.js';
 import { buildActsCsv } from '../services/csv.js';
+import { findTownHall, townHallSearchUrl } from '../services/town-hall.js';
 import { longDate } from '../utils/dates.js';
 import { inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune } from '../model/insee.js';
 import {
@@ -223,9 +225,59 @@ function actsView() {
       return `<section class="rel acts-town"><h3>${esc(g.place || t('acts.unknown'))} <span class="n">${g.rows.length}</span></h3>`
         + (g.former.length ? `<p class="hint">${t('acts.former', esc(g.former.join(', ')))}</p>` : '')
         + `<ul class="ins-diffs">${rows}</ul>`
-        + `<div class="row-btns"><button class="btn small" type="button" data-act="acts-copy" data-i="${i}">${t('acts.copy')}</button></div></section>`;
+        + `<div class="row-btns"><button class="btn small" type="button" data-act="acts-copy" data-i="${i}">${t('acts.copy')}</button>`
+        + (g.city && g.dept && !halls.has(g.place) ? `<button class="btn small" type="button" data-act="acts-hall" data-i="${i}">${t('acts.findHall')}</button>` : '')
+        + `</div>${hallBlock(g)}</section>`;
     }).join('');
 }
+
+/* Town halls looked up in the service-public.fr directory: place -> { busy } | { hall } | { none } | { error } */
+const halls = new Map();
+
+/** Prefilled e-mail asking town hall `g` for its certificates. */
+function mailTo(email, g) {
+  const lines = g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former)).join('\n');
+  const body = t('acts.mailBody', g.place, lines).replace(/\n/g, '\r\n');
+  return `mailto:${email}?subject=${encodeURIComponent(t('acts.mailSubject'))}&body=${encodeURIComponent(body)}`;
+}
+
+/** What was found for the town hall of group `g`: contact details and prefilled e-mail. */
+function hallBlock(g) {
+  const found = halls.get(g.place);
+  if (!found) return '';
+  if (found.busy) return `<p class="hint">${t('acts.hallBusy')}</p>`;
+  const search = `<a href="${esc(townHallSearchUrl(found.city || g.city))}" target="_blank" rel="noopener noreferrer">${t('acts.hallSearch')}</a>`;
+  if (found.error) return `<p class="hint">${t('acts.hallError')} ${search}</p>`;
+  if (found.none) return `<p class="hint">${t('acts.hallNone')} ${search}</p>`;
+  const { hall } = found;
+  const link = (url, label) => `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+  const details = [
+    hall.email && esc(hall.email), hall.phone && esc(hall.phone), hall.form && link(hall.form, t('acts.hallForm')), hall.site && link(hall.site, t('acts.hallSite')),
+  ].filter(Boolean).join(' · ');
+  return `<p class="hint">${esc(hall.name)}${details ? ' : ' + details : ''} <small>(${t('acts.hallSource')})</small></p>`
+    + (hall.email ? `<div class="row-btns"><a class="btn small primary" href="${esc(mailTo(hall.email, g))}">${t('acts.mail')}</a></div>`
+      : `<p class="hint">${t('acts.hallNoEmail')}</p>`);
+}
+
+/** Looks up the town hall of group `i` in the service-public.fr directory, then shows how to write to it. */
+export async function findActsHall(i) {
+  await Promise.all([loadCommunes(), loadCommuneChanges()]);
+  const g = actGroups()[i];
+  if (!g || !g.city || !g.dept) return;
+  const city = officialCommune(g.city, g.dept);
+  halls.set(g.place, { busy: true });
+  renderAnalysis();
+  try {
+    const hall = await findTownHall(city, g.dept);
+    halls.set(g.place, hall ? { hall } : { none: true, city });
+  } catch (e) {
+    halls.set(g.place, { error: true, city });
+  }
+  renderAnalysis();
+}
+
+/** Forgets the town halls found (tests). */
+export const resetActsHalls = () => halls.clear();
 
 /** A town's list: its town hall, then one line per certificate. */
 const townText = (g) => [t('acts.townHall', g.place || t('acts.unknown')), ...g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former))].join('\n');

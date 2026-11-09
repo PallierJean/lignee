@@ -241,7 +241,7 @@ export const actPlace = (l) => formatPlace({ city: l.city, dept: isFrance(l.coun
 
 /**
  * Death certificates to request, grouped by the town hall that holds them today:
- * [{ place, former: [places], rows: [{ id, act, former }] }]. `rows` lists [{ id, act }]; those
+ * [{ place, city, dept, former: [places], rows: [{ id, act, former }] }] (dept empty abroad). `rows` lists [{ id, act }]; those
  * without a certificate number are left out. `today(death)` gives today's commune { city, dept }
  * of a former one (merged, renamed), or null: its deaths go with today's commune, and `former`
  * keeps where they occurred. Towns sorted by department then name, abroad then an unknown town
@@ -266,8 +266,8 @@ export function deathActsByCommune(rows, today = () => null) {
   return [...groups.values()]
     .sort((a, b) => (!a.place) - (!b.place) || a.abroad - b.abroad
       || a.dept.localeCompare(b.dept, 'fr', { numeric: true }) || a.city.localeCompare(b.city, 'fr'))
-    .map(({ place, former, rows: list }) => ({
-      place, former: [...former].sort(), rows: list.sort((a, b) => a.act.deathDate.localeCompare(b.act.deathDate)),
+    .map(({ place, abroad, dept, city, former, rows: list }) => ({
+      place, city, dept: abroad ? '' : dept, former: [...former].sort(), rows: list.sort((a, b) => a.act.deathDate.localeCompare(b.act.deathDate)),
     }));
 }
 const placeText = actPlace;
