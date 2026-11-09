@@ -664,7 +664,7 @@ export const FR = {
   'acts.readyHint': 'Un clic ouvre l’e-mail prérempli de la mairie dans votre messagerie : relisez-le, envoyez-le, puis passez au suivant.',
   'acts.writeTo': (town) => `Écrire à la mairie de ${town}`,
   'acts.count': (n) => `${n} acte${s(n)}`,
-  'acts.manual': (list) => `À faire à la main (pas d’adresse e-mail dans l’annuaire) : ${list}. Voyez le détail sous chaque mairie.`,
+  'acts.manual': 'Sans adresse e-mail dans l’annuaire, souvent les grandes villes : faites la demande sur leur formulaire en ligne (copiez d’abord la liste de la mairie).',
   'acts.copy': 'Copier la liste',
   'acts.copied': (town) => `Liste de ${town} copiée.`,
   'acts.copyFailed': 'Copie impossible : sélectionnez la liste à la main.',

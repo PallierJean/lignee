@@ -636,7 +636,7 @@ export const EN = {
   'acts.readyHint': 'Each click opens the town hall’s prefilled e-mail in your mail app: read it, send it, then go on to the next.',
   'acts.writeTo': (town) => `Write to the town hall of ${town}`,
   'acts.count': (n) => `${n} certificate${sEn(n)}`,
-  'acts.manual': (list) => `To do by hand (no e-mail address in the directory): ${list}. See the details under each town hall.`,
+  'acts.manual': 'No e-mail address in the directory, often the big cities: make the request on their online form (copy the town hall’s list first).',
   'acts.copy': 'Copy the list',
   'acts.copied': (town) => `List for ${town} copied.`,
   'acts.copyFailed': 'Copy failed: select the list by hand.',

@@ -351,12 +351,18 @@ function readyBlock(groups) {
     if (!found || found.busy) continue;
     if (found.hall && found.hall.email) {
       ready.push(`<li><a href="${esc(mailTo(found.hall.email, g))}">${t('acts.writeTo', esc(g.place))}</a> <small>${t('acts.count', g.rows.length)}</small></li>`);
-    } else manual.push(esc(g.place));
+    } else {
+      // No e-mail: the town's contact form, its website, or else a search of the directory
+      const hall = found.hall || {};
+      const [url, label] = hall.form ? [hall.form, t('acts.hallForm')] : hall.site ? [hall.site, t('acts.hallSite')]
+        : [townHallSearchUrl(found.city || g.city), t('acts.hallSearch')];
+      manual.push(`<li>${esc(g.place)} : <a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${label}</a> <small>${t('acts.count', g.rows.length)}</small></li>`);
+    }
   }
   if (!ready.length && !manual.length) return '';
   return `<section class="rel acts-ready"><h3>${t('acts.ready')} <span class="n">${ready.length}</span></h3>`
     + (ready.length ? `<p class="hint an-hint">${t('acts.readyHint')}</p><ul class="ins-diffs">${ready.join('')}</ul>` : '')
-    + (manual.length ? `<p class="hint an-hint">${t('acts.manual', manual.join(', '))}</p>` : '')
+    + (manual.length ? `<p class="hint an-hint">${t('acts.manual')}</p><ul class="ins-diffs">${manual.join('')}</ul>` : '')
     + '</section>';
 }
 

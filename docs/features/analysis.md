@@ -62,7 +62,11 @@
   « Préparer toutes les demandes » fait la même recherche pour toutes les mairies d'un clic (l'une
   après l'autre, une pause de 300 ms entre deux), puis affiche « Demandes prêtes » : un lien
   « Écrire à la mairie de … » par mairie qui a une adresse e-mail, et la liste de celles à contacter
-  à la main. Un navigateur n'ouvre qu'un e-mail par clic : on les envoie l'un après l'autre.
+  à la main, chacune avec le lien de son formulaire de contact (ou de son site, ou de la recherche de
+  l'annuaire). Les grandes villes (Bordeaux, Limoges, Albi…) ne publient pas d'adresse e-mail dans
+  l'annuaire et passent par leur formulaire ; Paris a une mairie par arrondissement, que le fichier de
+  l'INSEE tel que Lignée le garde ne précise pas. Un navigateur n'ouvre qu'un e-mail par clic : on les
+  envoie l'un après l'autre.
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).

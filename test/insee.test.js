@@ -506,7 +506,7 @@ describe('actes de décès à demander, par commune', () => {
       if (url.startsWith('api/insee')) return { ok: true, json: async () => acts[Object.keys(acts).find((k) => url.includes(k))] };
       asked.push(url);
       const limoges = url.includes('Limoges');
-      return { ok: true, json: async () => ({ results: [{ nom: limoges ? 'Mairie - Limoges' : 'Mairie - Tulle', adresse_courriel: limoges ? 'etat-civil@limoges.fr' : '' }] }) };
+      return { ok: true, json: async () => ({ results: [limoges ? { nom: 'Mairie - Limoges', adresse_courriel: 'etat-civil@limoges.fr' } : { nom: 'Mairie - Tulle', formulaire_contact: 'https://www.tulle.fr/contact' }] }) };
     };
     await checkInsee(inseePending(), () => {});
     A.setTab('analysis');
@@ -521,7 +521,8 @@ describe('actes de décès à demander, par commune', () => {
     const out = html('paneAnalysis');
     assert.match(out, /Demandes prêtes <span class="n">1<\/span>/);
     assert.match(out, /<a href="mailto:etat-civil@limoges\.fr\?[^"]+">Écrire à la mairie de Limoges \(87\)<\/a> <small>1 acte<\/small>/);
-    assert.match(out, /À faire à la main \(pas d’adresse e-mail dans l’annuaire\) : Tulle \(19\)/);
+    assert.match(out, /Sans adresse e-mail dans l’annuaire/);
+    assert.match(out, /<li>Tulle \(19\) : <a href="https:\/\/www\.tulle\.fr\/contact" [^>]*>formulaire de contact<\/a> <small>1 acte<\/small><\/li>/);
     assert.doesNotMatch(out, /Préparer toutes les demandes/, 'plus rien à chercher');
     await findAllActsHalls(); // plus rien à chercher
     assert.equal(asked.length, 2);
