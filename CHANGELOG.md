@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.24.0](https://github.com/PallierJean/lignee/compare/v1.23.1...v1.24.0) (2026-11-09)
+
+### Features
+
+* Export the whole certificate list, grouped by today's town hall ([8140315](https://github.com/PallierJean/lignee/commit/8140315ce74709367af7132eea7138552efd2971))
+
+---
+
+### Nouveautés
+
+* Export de toute la liste des actes, regroupés par mairie d'aujourd'hui (communes fusionnées comprises) ([8140315](https://github.com/PallierJean/lignee/commit/8140315ce74709367af7132eea7138552efd2971))
+
 ## [1.23.1](https://github.com/PallierJean/lignee/compare/v1.23.0...v1.23.1) (2026-11-09)
 
 ### Bug Fixes
