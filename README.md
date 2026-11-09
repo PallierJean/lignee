@@ -44,7 +44,8 @@ une famille d'exemple vous attend.
 ### Vérifier et enrichir
 - Un contrôle de cohérence qui repère les dates impossibles et les liens suspects.
 - La détection des doublons et leur fusion en un clic.
-- Le rapprochement avec le fichier des décès de l'INSEE, pour compléter les fiches.
+- Le rapprochement avec le fichier des décès de l'INSEE, pour compléter les fiches, et la liste
+  des actes de décès à demander, commune par commune, prête à envoyer à chaque mairie.
 - Une carte des lieux et des migrations, une frise historique, des statistiques et les
   anniversaires du jour.
 

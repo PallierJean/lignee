@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
-import { inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace, estimatedBirth } from '../js/model/insee.js';
+import {
+  inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace, estimatedBirth, deathActsByCommune,
+} from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth } from '../js/ui/analysis.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs } from '../js/ui/analysis.js';
+import { setLang } from '../js/i18n.js';
 import { loadTree, person, resetApp, html } from './helpers.js';
 
 /** Acte de décès fictif, au format renvoyé par server.js. */
@@ -319,5 +322,78 @@ describe('INSEE : vérification et vue', () => {
     A.setAnalysisView('insee');
     assert.match(html('paneAnalysis'), /npm start/);
     ignoreInsee('absent'); // sans résultat : rien à faire
+  });
+});
+
+describe('actes de décès à demander, par commune', () => {
+  test('regroupement : département puis commune, étranger et inconnue à la fin, décès dans l’ordre', () => {
+    const row = (id, death, deathDate, certificate = '1') => ({ id, act: act({ death, deathDate, certificate }) });
+    const groups = deathActsByCommune([
+      row('a', { city: 'Tulle', dept: '19', country: 'France' }, '19900101'),
+      row('b', { city: 'Limoges', dept: '87', country: 'France' }, '19800101'),
+      row('c', { city: 'Brive-la-Gaillarde', dept: '19', country: 'France' }, '19700101'),
+      row('d', { city: 'Tulle', dept: '19', country: 'France' }, '19750101'),
+      row('e', { city: '', dept: '', country: '' }, '19750101'),
+      row('f', { city: 'Liège', dept: '', country: 'Belgique' }, '19750101'),
+      row('g', { city: 'Tulle', dept: '19', country: 'France' }, '19750101', ''),
+    ]);
+    assert.deepEqual(groups.map((x) => [x.place, x.rows.map((r) => r.id)]), [
+      ['Brive-la-Gaillarde (19)', ['c']],
+      ['Tulle (19)', ['d', 'a']],
+      ['Limoges (87)', ['b']],
+      ['Liège, Belgique', ['f']],
+      ['', ['e']],
+    ]);
+  });
+
+  test('vue Actes : fiches vérifiées avec un numéro, par commune de décès, liste copiée', async () => {
+    S.mode = 'file';
+    loadTree([
+      lucien(),
+      person('r', { given: 'Anne', surname: 'Roche', sex: 'F', birthDate: '05/01/1930', deceased: true }),
+      person('p', { given: 'Paul', surname: 'Petit', sex: 'M', birthDate: '09/09/1915', deceased: true }),
+    ]);
+    const acts = {
+      Bertrand: [act()],
+      Roche: [act({ first: ['Anne'], last: 'ROCHE', sex: 'F', birthDate: '19300105', deathDate: '20010203', death: { city: 'Tulle', dept: '19', country: 'France' }, certificate: '7' })],
+      Petit: [act({ first: ['Paul'], last: 'PETIT', birthDate: '19150909', certificate: '' })],
+    };
+    globalThis.fetch = async (url) => ({ ok: true, json: async () => acts[Object.keys(acts).find((k) => url.includes(k))] });
+    await checkInsee(inseePending(), () => {});
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    const out = html('paneAnalysis');
+    assert.match(out, /2 actes de décès à demander/);
+    assert.match(out, /dans 2 communes/);
+    assert.ok(out.indexOf('Tulle (19)') < out.indexOf('Limoges (87)'), 'par département');
+    assert.match(out, /décès le 03 Février 2001, acte n° 7/);
+    assert.match(out, /décès le 04 Juillet 1995, acte n° 412/);
+    assert.doesNotMatch(out, /Petit/, 'sans numéro d’acte : rien à demander');
+
+    let copied = null;
+    Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: async (x) => { copied = x; } } }, configurable: true });
+    await copyActs(1);
+    assert.equal(copied, 'Limoges (87)\n- Bertrand Lucien Marcel, né(e) le 12 Mars 1920, décédé(e) le 04 Juillet 1995, acte n° 412');
+    assert.match(document.getElementById('toast').textContent, /Liste de Limoges \(87\) copiée/);
+    navigator.clipboard.writeText = async () => { throw new Error('refusé'); };
+    await copyActs(0);
+    assert.match(document.getElementById('toast').textContent, /Copie impossible/);
+    await copyActs(9); // commune disparue entre-temps : rien
+
+    setLang('en');
+    renderAnalysis();
+    assert.match(html('paneAnalysis'), /2 death certificates to request/);
+    setLang('fr');
+  });
+
+  test('vue Actes : sans vérification, ou en ligne', () => {
+    S.mode = 'file';
+    loadTree([lucien()]);
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    assert.match(html('paneAnalysis'), /Aucune fiche vérifiée avec un numéro d’acte/);
+    S.mode = 'local';
+    renderAnalysis();
+    assert.match(html('paneAnalysis'), /Fonctionnalité de la version locale/);
   });
 });
