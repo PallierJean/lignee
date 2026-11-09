@@ -2,7 +2,7 @@
 
 [← Documentation technique](DEVELOPMENT.md)
 
-Référence des objets qu'échangent l'application, le [serveur local](api.md), les sauvegardes
+Référence des objets qu'échangent l'application, le serveur local, les sauvegardes
 `.json` et les dépôts GitHub. Où ces données sont rangées : [Stockage](storage.md).
 
 Conventions des tableaux :
