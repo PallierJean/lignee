@@ -6,6 +6,7 @@ const SECTIONS = [
   { type: 'feat', en: 'Features', fr: 'Nouveautés' },
   { type: 'fix', en: 'Bug Fixes', fr: 'Corrections' },
   { type: 'perf', en: 'Performance Improvements', fr: 'Performances' },
+  { type: 'refactor', en: 'Code Refactoring', fr: 'Refontes' },
   { type: 'revert', en: 'Reverts', fr: 'Annulations' },
 ];
 const BREAKING = { en: '⚠ BREAKING CHANGES', fr: '⚠ Changements incompatibles' };

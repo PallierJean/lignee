@@ -520,12 +520,13 @@ des commits ([Conventional Commits](https://www.conventionalcommits.org/fr/)), a
 | --- | --- | --- |
 | `fix: …` | correctif | 1.2.3 → 1.2.4 |
 | `feat: …` | nouvelle fonction | 1.2.3 → 1.3.0 |
+| `refactor: …` | refonte, sans changement visible | 1.2.3 → 1.2.4 |
 | `feat!: …` ou pied `BREAKING CHANGE:` | changement incompatible | 1.2.3 → 2.0.0 |
-| `docs`, `ci`, `chore`, `test`, `refactor`… | pas de nouvelle version | |
+| `docs`, `ci`, `chore`, `test`… | pas de nouvelle version | |
 
 `semantic-release` met à jour `package.json` et `CHANGELOG.md`, crée le tag `vX.Y.Z` et la Release GitHub.
 Les notes de version donnent la liste en anglais (sujet du commit), puis en français : ajoutez au corps
-d'un `fix` ou d'un `feat` un pied `Fr: …` avec la traduction, sinon la ligne anglaise est reprise.
+d'un `fix`, `feat`, `perf` ou `refactor` un pied `Fr: …` avec la traduction, sinon la ligne anglaise est reprise.
 Ces outils tournent seulement dans GitHub Actions : le projet reste sans dépendance. Le commit de version
 est ajouté par GitHub : faites `git pull` avant de repartir de `main`. La version s'affiche à côté du nom.
 
