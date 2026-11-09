@@ -4,11 +4,10 @@
  * photos are separate files, in data/arbres/<tree id>/photos/.
  */
 import { S, treeName } from '../../state.js';
-import { t } from '../../i18n.js';
 import { buildBackup, parseBackup } from '../backup.js';
 import { sourcesOf, mediaList, isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
-import { pool, markReported } from '../../utils/helpers.js';
-import { toast } from '../../ui/toast.js';
+import { pool } from '../../utils/helpers.js';
+import { say, failure } from '../notify.js';
 import { ensureTree, sortTrees } from './trees.js';
 import { readLocalTrees, readLocalData } from './local.js';
 
@@ -83,7 +82,7 @@ export async function loadFileTree() {
     version = res.headers.get('ETag');
     text = await res.text();
   } catch (e) {
-    toast(t('st.readFailed'), true);
+    say('st.readFailed', true);
     return;
   }
   const data = parseBackup(text);
@@ -113,8 +112,7 @@ export async function storePhoto(photo, p) {
     if (!res.ok) throw new Error(res.status + ' ' + (await res.text()));
     return (await res.json()).photo;
   } catch (e) {
-    toast(t('st.photoFailed'), true);
-    throw markReported(e);
+    throw failure('st.photoFailed', e);
   }
 }
 
@@ -194,8 +192,7 @@ export function saveFile() {
       // Removed photos stay on disk: Undo may still need them
       version = await putFileTree(id, body, true, version);
     } catch (e) {
-      toast(t(e.status === 409 ? 'st.conflict' : 'st.fileFailed'), true);
-      throw markReported(e);
+      throw failure(e.status === 409 ? 'st.conflict' : 'st.fileFailed', e);
     }
   });
   fileQueue = run.catch(() => {}); // a failure doesn't block the following saves
@@ -206,8 +203,7 @@ export async function createFileTree(id, tree) {
   try {
     await putFileTree(id, emptyBackup(tree.name, tree.createdAt));
   } catch (e) {
-    toast(t('st.createFailed'), true);
-    throw markReported(e);
+    throw failure('st.createFailed', e);
   }
 }
 
@@ -225,7 +221,6 @@ export async function deleteFileTree(id) {
     const res = await fetch(API + encodeURIComponent(id), { method: 'DELETE' });
     if (!res.ok) throw new Error(String(res.status));
   } catch (e) {
-    toast(t('st.deleteFailed'), true);
-    throw markReported(e);
+    throw failure('st.deleteFailed', e);
   }
 }
