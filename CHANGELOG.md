@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.22.0](https://github.com/PallierJean/lignee/compare/v1.21.2...v1.22.0) (2026-11-09)
+
+### Features
+
+* Show the copyright, licence and source code link under the page ([a743e3f](https://github.com/PallierJean/lignee/commit/a743e3fa1eace8d369196e54f99e6d0c156f5421))
+
+---
+
+### Nouveautés
+
+* Copyright, licence et lien vers le code source en bas de la page ([a743e3f](https://github.com/PallierJean/lignee/commit/a743e3fa1eace8d369196e54f99e6d0c156f5421))
+
 ## [1.21.2](https://github.com/PallierJean/lignee/compare/v1.21.1...v1.21.2) (2026-11-09)
 
 ### Bug Fixes
