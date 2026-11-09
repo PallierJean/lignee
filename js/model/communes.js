@@ -33,6 +33,40 @@ export function loadCommunes() {
 
 export const communesLoaded = () => index !== null;
 
+let changes = null;      // department -> normalised former name -> { city, dept } of today's commune
+let loadingChanges = null;
+
+/** Loads the former communes (js/data/commune-changes.js, about 190 KB), only once. */
+export function loadCommuneChanges() {
+  if (!loadingChanges) {
+    loadingChanges = import('../data/commune-changes.js').then(({ COMMUNE_CHANGES }) => {
+      const map = new Map();
+      for (const [dept, list] of Object.entries(COMMUNE_CHANGES)) {
+        const byName = new Map();
+        for (const pair of list.split('|')) {
+          const [from, to] = pair.split('>');
+          const m = /^(.*) \((\w+)\)$/.exec(to);
+          byName.set(key(from), m ? { city: m[1], dept: m[2] } : { city: to, dept });
+        }
+        map.set(dept, byName);
+      }
+      changes = map;
+    });
+  }
+  return loadingChanges;
+}
+
+export const communeChangesLoaded = () => changes !== null;
+
+/**
+ * Today's commune for a former one (merged, become a delegated commune, renamed): { city, dept },
+ * or null if the commune hasn't changed, is unknown, or the list isn't loaded yet.
+ */
+export function currentCommune(city, dept) {
+  const byName = changes && changes.get(String(dept || ''));
+  return (byName && byName.get(key(city))) || null;
+}
+
 /** Departments with a commune of this name: [] if unknown, or if the list isn't loaded yet. */
 export const cityDepartments = (city) => (index && index.get(key(city))) || [];
 

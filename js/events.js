@@ -11,7 +11,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
 import {
-  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs,
+  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv,
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
@@ -183,7 +183,8 @@ const CLICK_ACTIONS = {
   'map-point': (el) => mapPick(el.dataset.name),
   'place-rename': (el) => A.renamePlace(el.dataset.from, placeRowValue(+el.dataset.i)),
   'insee-check': () => startInsee(),
-  'acts-copy': (el) => copyActs(Number(el.dataset.i)),
+  'acts-copy': (el) => copyActs(el.dataset.i === undefined ? undefined : Number(el.dataset.i)),
+  'acts-csv': () => exportActsCsv(),
   'insee-register': () => inseeSendCode(),
   'insee-auth': () => inseeSendAuth(),
   'insee-restart-login': () => inseeOtherEmail(),

@@ -44,6 +44,7 @@ lignee/
 │       └── toast.css           Messages de confirmation
 ├── js/
 │   ├── main.js                 Point d'entrée : choix du stockage, démarrage
+│   ├── data/                   Données générées : communes, anciennes communes, constellations
 │   ├── config.js               Constantes (dimensions, zoom, mois, clés)
 │   ├── state.js                État partagé, préférences d'affichage
 │   ├── events.js               Écoute des clics (attribut data-act) et saisies

@@ -7,8 +7,9 @@ import {
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs } from '../js/ui/analysis.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv } from '../js/ui/analysis.js';
 import { setLang } from '../js/i18n.js';
+import { loadCommuneChanges, currentCommune } from '../js/model/communes.js';
 import { loadTree, person, resetApp, html } from './helpers.js';
 
 /** Acte de décès fictif, au format renvoyé par server.js. */
@@ -364,7 +365,7 @@ describe('actes de décès à demander, par commune', () => {
     A.setAnalysisView('acts');
     const out = html('paneAnalysis');
     assert.match(out, /2 actes de décès à demander/);
-    assert.match(out, /dans 2 communes/);
+    assert.match(out, /à 2 mairies/);
     assert.ok(out.indexOf('Tulle (19)') < out.indexOf('Limoges (87)'), 'par département');
     assert.match(out, /décès le 03 Février 2001, acte n° 7/);
     assert.match(out, /décès le 04 Juillet 1995, acte n° 412/);
@@ -373,17 +374,49 @@ describe('actes de décès à demander, par commune', () => {
     let copied = null;
     Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: async (x) => { copied = x; } } }, configurable: true });
     await copyActs(1);
-    assert.equal(copied, 'Limoges (87)\n- Bertrand Lucien Marcel, né(e) le 12 Mars 1920, décédé(e) le 04 Juillet 1995, acte n° 412');
+    assert.equal(copied, 'Mairie de Limoges (87)\n- Bertrand Lucien Marcel, né(e) le 12 Mars 1920, décédé(e) le 04 Juillet 1995, acte n° 412');
     assert.match(document.getElementById('toast').textContent, /Liste de Limoges \(87\) copiée/);
     navigator.clipboard.writeText = async () => { throw new Error('refusé'); };
     await copyActs(0);
     assert.match(document.getElementById('toast').textContent, /Copie impossible/);
     await copyActs(9); // commune disparue entre-temps : rien
 
+    // Toute la liste : copiée d'un coup, ou exportée en CSV
+    assert.match(out, /data-act="acts-copy">Copier toute la liste/);
+    navigator.clipboard.writeText = async (x) => { copied = x; };
+    await copyActs();
+    assert.equal(copied, 'Mairie de Tulle (19)\n- ROCHE Anne, né(e) le 05 Janvier 1930, décédé(e) le 03 Février 2001, acte n° 7'
+      + '\n\nMairie de Limoges (87)\n- Bertrand Lucien Marcel, né(e) le 12 Mars 1920, décédé(e) le 04 Juillet 1995, acte n° 412');
+    assert.match(document.getElementById('toast').textContent, /Listes des 2 mairies copiées/);
+    let file = null;
+    globalThis.URL.createObjectURL = (blob) => { file = blob; return 'blob:x'; };
+    globalThis.URL.revokeObjectURL = () => {};
+    await exportActsCsv();
+    const csv = new TextDecoder('utf-8', { ignoreBOM: true }).decode(await file.arrayBuffer()); // BOM gardé : Excel lit les accents
+    assert.equal(csv, '﻿Mairie à contacter;Commune du décès;Nom;Prénoms;Naissance;Décès;N° d’acte;Fiche\r\n'
+      + 'Tulle (19);Tulle (19);ROCHE;Anne;05 Janvier 1930;03 Février 2001;7;Anne ROCHE\r\n'
+      + 'Limoges (87);Limoges (87);Bertrand;Lucien Marcel;12 Mars 1920;04 Juillet 1995;412;Lucien BERTRAND\r\n');
+    assert.match(document.getElementById('toast').textContent, /lignee-.*-actes-deces\.csv/);
+
     setLang('en');
     renderAnalysis();
     assert.match(html('paneAnalysis'), /2 death certificates to request/);
     setLang('fr');
+  });
+
+  test('commune fusionnée depuis le décès : rangée sous la mairie d’aujourd’hui', async () => {
+    await loadCommuneChanges();
+    const today = (d) => currentCommune(d.city, d.dept);
+    assert.deepEqual(currentCommune('Octeville', '50'), { city: 'Cherbourg-en-Cotentin', dept: '50' });
+    assert.deepEqual(currentCommune('CHERBOURG OCTEVILLE', '50'), { city: 'Cherbourg-en-Cotentin', dept: '50' }, 'sans accents ni tirets');
+    assert.equal(currentCommune('Limoges', '87'), null, 'commune inchangée');
+    assert.equal(currentCommune('Octeville', '14'), null, 'autre département');
+    const row = (id, city, dept) => ({ id, act: act({ death: { city, dept, country: 'France' } }) });
+    const groups = deathActsByCommune([row('a', 'Octeville', '50'), row('b', 'Cherbourg-en-Cotentin', '50'), row('c', 'Cherbourg-Octeville', '50')], today);
+    assert.equal(groups.length, 1);
+    assert.equal(groups[0].place, 'Cherbourg-en-Cotentin (50)');
+    assert.deepEqual(groups[0].former, ['Cherbourg-Octeville (50)', 'Octeville (50)']);
+    assert.deepEqual(groups[0].rows.map((r) => r.former).sort(), ['', 'Cherbourg-Octeville (50)', 'Octeville (50)']);
   });
 
   test('vue Actes : sans vérification, ou en ligne', () => {

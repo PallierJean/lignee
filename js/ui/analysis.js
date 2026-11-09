@@ -13,9 +13,13 @@ import { timelineOf } from '../model/timeline.js';
 import { personOptions, placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
 import { placesByDepartment, parsePlace } from '../model/places.js';
-import { loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText } from '../model/communes.js';
+import {
+  loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText, loadCommuneChanges, communeChangesLoaded, currentCommune,
+} from '../model/communes.js';
 import { mediaGrid } from './record.js';
 import { toast } from './toast.js';
+import { downloadBlob, fileBase } from './transfer.js';
+import { buildActsCsv } from '../services/csv.js';
 import { longDate } from '../utils/dates.js';
 import { inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune } from '../model/insee.js';
 import {
@@ -199,36 +203,58 @@ function actGroups() {
     const m = inseeMatch(id);
     if (m && m.level !== 'lead' && m.act.certificate) rows.push({ id, act: m.act });
   }
-  return deathActsByCommune(rows);
+  return deathActsByCommune(rows, (death) => currentCommune(death.city, death.dept));
 }
 
-/** A certificate in plain text, as written in a request to the town hall. */
-const actRequestLine = (a) => t('acts.line', a.last, a.first.join(' '), longDate(actDateText(a.birthDate)), longDate(actDateText(a.deathDate)), a.certificate);
+/** A certificate in plain text, as written in a request to the town hall; `former`: town of death if since merged. */
+const actRequestLine = (a, former) => t('acts.line', a.last, a.first.join(' '), longDate(actDateText(a.birthDate)), longDate(actDateText(a.deathDate)), a.certificate, former);
 
 function actsView() {
   if (!inseeAvailable()) return inseeLocal();
+  if (!communeChangesLoaded()) loadCommuneChanges().then(renderAnalysis); // today's communes, then redraw
   const groups = actGroups();
   if (!groups.length) return `<p class="nofocus">${t('acts.none')}</p>`;
   const total = groups.reduce((n, g) => n + g.rows.length, 0);
-  return `<p class="hint an-hint">${t('acts.hint', total, groups.length)}</p>` + groups.map((g, i) => {
-    const rows = g.rows.map(({ id, act }) => `<li>${personLink(id)} <small>${t('acts.row', actDay(act.deathDate), esc(act.certificate))}</small></li>`).join('');
-    return `<section class="rel acts-town"><h3>${esc(g.place || t('acts.unknown'))} <span class="n">${g.rows.length}</span></h3>`
-      + `<ul class="ins-diffs">${rows}</ul>`
-      + `<div class="row-btns"><button class="btn small" type="button" data-act="acts-copy" data-i="${i}">${t('acts.copy')}</button></div></section>`;
-  }).join('');
+  return `<p class="hint an-hint">${t('acts.hint', total, groups.length)}</p>`
+    + `<div class="row-btns reg-tools"><button class="btn small" type="button" data-act="acts-copy">${t('acts.copyAll')}</button>`
+    + `<button class="btn small" type="button" data-act="acts-csv">${t('acts.csv')}</button></div>`
+    + groups.map((g, i) => {
+      const rows = g.rows.map(({ id, act, former }) => `<li>${personLink(id)} <small>${t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small></li>`).join('');
+      return `<section class="rel acts-town"><h3>${esc(g.place || t('acts.unknown'))} <span class="n">${g.rows.length}</span></h3>`
+        + (g.former.length ? `<p class="hint">${t('acts.former', esc(g.former.join(', ')))}</p>` : '')
+        + `<ul class="ins-diffs">${rows}</ul>`
+        + `<div class="row-btns"><button class="btn small" type="button" data-act="acts-copy" data-i="${i}">${t('acts.copy')}</button></div></section>`;
+    }).join('');
 }
 
-/** Copies the list of town `i`, ready to paste into a request to its town hall. */
+/** A town's list: its town hall, then one line per certificate. */
+const townText = (g) => [t('acts.townHall', g.place || t('acts.unknown')), ...g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former))].join('\n');
+
+/**
+ * Copies the list of town `i`, ready to paste into a request to its town hall; without `i`,
+ * the lists of every town, one after the other.
+ */
 export async function copyActs(i) {
-  const g = actGroups()[i];
-  if (!g) return;
-  const text = [g.place || t('acts.unknown'), ...g.rows.map(({ act }) => '- ' + actRequestLine(act))].join('\n');
+  await loadCommuneChanges();
+  const groups = actGroups();
+  const chosen = i === undefined ? groups : groups.slice(i, i + 1);
+  if (!chosen.length) return;
   try {
-    await navigator.clipboard.writeText(text);
-    toast(t('acts.copied', g.place || t('acts.unknown')));
+    await navigator.clipboard.writeText(chosen.map(townText).join('\n\n'));
+    toast(i === undefined ? t('acts.copiedAll', groups.length) : t('acts.copied', chosen[0].place || t('acts.unknown')));
   } catch (e) {
     toast(t('acts.copyFailed'), true);
   }
+}
+
+/** Downloads every certificate to request as a CSV file, for a spreadsheet. */
+export async function exportActsCsv() {
+  await loadCommuneChanges();
+  const groups = actGroups();
+  if (!groups.length) return;
+  const name = `${fileBase()}-${t('acts.fileSuffix')}.csv`;
+  downloadBlob(name, buildActsCsv(groups, (d) => longDate(actDateText(d))), 'text/csv;charset=utf-8');
+  toast(t('acts.saved', name));
 }
 
 /** Checks new or modified records, then redraws the view. */

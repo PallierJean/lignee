@@ -267,5 +267,7 @@ quittant le champ ; la cohérence et la vue Lieux signalent un département cont
 la vue Lieux propose le lieu corrigé. La liste des communes (actuelles, déléguées et associées, avec
 leur département) est `js/data/communes.js`, chargée après l'ouverture et sans rien envoyer en ligne.
 Elle se régénère depuis le Code officiel géographique de l'INSEE (licence ouverte) :
-`node scripts/build-communes.mjs v_commune_<année>.csv` ;
+`node scripts/build-communes.mjs v_commune_<année>.csv v_mvt_commune_<année>.csv`. Le second
+fichier (événements depuis 1943) produit aussi `js/data/commune-changes.js` : chaque ancienne commune
+(fusionnée, devenue déléguée, renommée) et la commune qui garde ses registres aujourd'hui ;
 le GEDCOM, la carte et la recherche le lisent tel quel.

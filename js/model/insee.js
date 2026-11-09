@@ -240,23 +240,35 @@ export function matchDeath(id, acts) {
 export const actPlace = (l) => formatPlace({ city: l.city, dept: isFrance(l.country) ? l.dept : '', country: l.country });
 
 /**
- * Death certificates to request, grouped by town of death: [{ place, rows: [{ id, act }] }].
- * `rows` lists [{ id, act }] with a certificate number. Towns sorted by department then name,
- * abroad then an unknown town last; within a town, by date of death.
+ * Death certificates to request, grouped by the town hall that holds them today:
+ * [{ place, former: [places], rows: [{ id, act, former }] }]. `rows` lists [{ id, act }]; those
+ * without a certificate number are left out. `today(death)` gives today's commune { city, dept }
+ * of a former one (merged, renamed), or null: its deaths go with today's commune, and `former`
+ * keeps where they occurred. Towns sorted by department then name, abroad then an unknown town
+ * last; within a town, by date of death.
  */
-export function deathActsByCommune(rows) {
+export function deathActsByCommune(rows, today = () => null) {
   const groups = new Map();
   for (const row of rows) {
     if (!row.act.certificate) continue;
     const death = row.act.death || {};
-    const place = death.city ? actPlace(death) : '';
-    if (!groups.has(place)) groups.set(place, { place, abroad: !isFrance(death.country), dept: death.dept || '', city: death.city || '', rows: [] });
-    groups.get(place).rows.push(row);
+    const now = death.city && isFrance(death.country) ? today(death) : null;
+    const where = now ? { ...death, ...now } : death;
+    const place = where.city ? actPlace(where) : '';
+    if (!groups.has(place)) {
+      groups.set(place, { place, abroad: !isFrance(where.country), dept: where.dept || '', city: where.city || '', former: new Set(), rows: [] });
+    }
+    const g = groups.get(place);
+    const former = now ? actPlace(death) : '';
+    if (former) g.former.add(former);
+    g.rows.push({ ...row, former });
   }
   return [...groups.values()]
     .sort((a, b) => (!a.place) - (!b.place) || a.abroad - b.abroad
       || a.dept.localeCompare(b.dept, 'fr', { numeric: true }) || a.city.localeCompare(b.city, 'fr'))
-    .map(({ place, rows: list }) => ({ place, rows: list.sort((a, b) => a.act.deathDate.localeCompare(b.act.deathDate)) }));
+    .map(({ place, former, rows: list }) => ({
+      place, former: [...former].sort(), rows: list.sort((a, b) => a.act.deathDate.localeCompare(b.act.deathDate)),
+    }));
 }
 const placeText = actPlace;
 

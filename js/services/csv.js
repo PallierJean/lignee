@@ -1,4 +1,4 @@
-/** Register export as CSV, readable by Excel and LibreOffice. */
+/** Exports as CSV (register, death certificates to request), readable by Excel and LibreOffice. */
 import { S } from '../state.js';
 import { t } from '../i18n.js';
 import { P, fullName, given, surname, maiden, cmpName, partnersOf, childrenOf, situationLabel, currentSituation } from '../model/people.js';
@@ -7,7 +7,7 @@ import { P, fullName, given, surname, maiden, cmpName, partnersOf, childrenOf, s
  * CSV cell: quoted if needed. Text starting with = + - or @ would be taken as a formula
  * by the spreadsheet (an imported record could contain one): it gets an apostrophe prefix.
  */
-function cell(value, sep) {
+export function cell(value, sep) {
   let s = String(value ?? '');
   if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   return s.includes(sep) || /["\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -31,4 +31,22 @@ export function buildRegisterCsv() {
   }
   // The BOM tells Excel the file is UTF-8; otherwise it mangles accents
   return '﻿' + rows.map((r) => r.map((v) => cell(v, sep)).join(sep)).join('\r\n') + '\r\n';
+}
+
+/**
+ * Death certificates to request as CSV, one row per certificate: groups from deathActsByCommune.
+ * `date` turns a certificate date (yyyymmdd) into text.
+ */
+export function buildActsCsv(groups, date) {
+  const sep = t('csv.sep');
+  const rows = [[
+    t('acts.cTownHall'), t('acts.cTown'), t('acts.cLast'), t('acts.cFirst'), t('acts.cBorn'), t('acts.cDied'), t('acts.cNumber'), t('acts.cRecord'),
+  ]];
+  for (const g of groups) {
+    const hall = g.place || t('acts.unknown');
+    for (const { id, act, former } of g.rows) {
+      rows.push([hall, former || hall, act.last, act.first.join(' '), date(act.birthDate), date(act.deathDate), act.certificate, P(id) ? fullName(P(id)) : '']);
+    }
+  }
+  return '\ufeff' + rows.map((r) => r.map((v) => cell(v, sep)).join(sep)).join('\r\n') + '\r\n';
 }
