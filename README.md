@@ -100,6 +100,7 @@ lignee/
 │   └── ui/
 │       ├── render.js           Rendu général
 │       ├── connect.js          Branche les messages des services (notify.js) sur la page
+│       ├── dialogs.js          Fenêtres ouvertes : Échap, clic sur le fond, raccourcis bloqués
 │       ├── header.js           En-tête, bandeau, barre d'outils
 │       ├── record.js           Fiche détaillée d'une personne
 │       ├── person-dlg.js       Fiche d'une personne en fenêtre, au clic dans l'arbre
