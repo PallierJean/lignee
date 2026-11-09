@@ -51,7 +51,11 @@ lignee/
 │   ├── config.js               Constantes (dimensions, zoom, mois, clés)
 │   ├── state.js                État partagé, préférences d'affichage
 │   ├── events.js               Écoute des clics (attribut data-act) et saisies
-│   ├── i18n.js                 Textes en français et en anglais, bouton FR / EN
+│   ├── i18n.js                 Langue de l'interface, t(), bouton FR / EN
+│   ├── i18n/
+│   │   ├── fr.js               Textes en français
+│   │   ├── en.js               Textes en anglais (une clé absente reprend le français)
+│   │   └── grammar.js          Pluriels, accords, élisions, termes de parenté
 │   ├── actions.js              Actions, regroupées ci-dessous
 │   ├── actions/
 │   │   ├── view.js             Personne centrale, onglets, générations, zoom, thème, annuler
@@ -173,7 +177,7 @@ les siennes.
 ## Langue
 
 Le bouton FR / EN de l'en-tête passe toute l'interface en français ou en anglais ;
-le choix est mémorisé dans le navigateur. Les textes sont dans `js/i18n.js` : `t('clé')`
+le choix est mémorisé dans le navigateur. Les textes sont dans `js/i18n/fr.js` et `js/i18n/en.js` : `t('clé')`
 dans le code, attributs `data-i18n`, `data-i18n-html` et `data-i18n-attr` dans `index.html`.
 Les dates se saisissent dans les deux langues (« vers 1850 » ou « about 1850 ») et
 s'affichent dans la langue choisie. Les données saisies (noms, lieux, notes) ne sont pas traduites,
