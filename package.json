@@ -1,6 +1,8 @@
 {
   "name": "lignee",
   "version": "1.21.0",
+  "license": "AGPL-3.0-or-later",
+  "author": "Jean Pallier",
   "private": true,
   "type": "module",
   "description": "Family tree web application: records, unions, Sosa numbers, register, GEDCOM import/export.",
