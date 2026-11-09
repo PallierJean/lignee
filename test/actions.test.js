@@ -883,4 +883,93 @@ describe('événements de la page', () => {
     await settle();
     assert.ok([...S.people.values()].some((p) => p.given === 'Ida'));
   });
+
+  test('every other click, submit and key reaches its action', async () => {
+    const realTimeout = globalThis.setTimeout;
+    globalThis.setTimeout = (fn) => { fn(); return 0; };
+    try {
+      // Form: delete confirmation shown and hidden without redrawing the form
+      click({ act: 'edit' });
+      const delBtn = el('f-del-btn');
+      fire('click', { target: Object.assign(target({ act: 'form-delete-ask' }), { hidden: false }) });
+      assert.equal(el('f-delconfirm').hidden, false);
+      click({ act: 'form-delete-no' });
+      assert.equal(el('f-delconfirm').hidden, true);
+      assert.ok(delBtn);
+      click({ act: 'cancel-edit' });
+      // Register export, repository link and reconnect: the transfer dialog opens on the right field
+      click({ act: 'register-csv' });
+      assert.equal(el('transfer').hidden, false);
+      click({ act: 'repo-link-open' });
+      assert.equal(document.activeElement, el('repoUrl'));
+      click({ act: 'repo-reconnect' });
+      assert.equal(document.activeElement, el('repoToken'));
+      key('Escape');
+      assert.equal(el('transfer').hidden, true);
+      // Person dialog: centre on the person
+      const other = ex.people.find((p) => p.given !== 'Camille').id;
+      click({ act: 'person-open', id: other });
+      click({ act: 'person-center', id: other });
+      assert.equal(S.focus, other);
+      assert.equal(el('personDlg').hidden, true);
+      // Gallery viewer: open, go to a person, close
+      S.people.set(camille, { ...S.people.get(camille), media: [{ id: 'm1', photo: 'data:image/jpeg;base64,AA', title: 'Photo', tags: [] }] });
+      click({ act: 'media-open', owner: camille, id: 'm1' });
+      assert.equal(el('mediaDlg').hidden, false);
+      click({ act: 'media-person', id: camille });
+      assert.equal(el('mediaDlg').hidden, true);
+      assert.equal(el('personDlg').hidden, false);
+      key('Escape');
+      click({ act: 'media-open', owner: camille, id: 'm1' });
+      click({ act: 'media-close' });
+      assert.equal(el('mediaDlg').hidden, true);
+      // Fan chart: back with nobody to go back to
+      click({ act: 'fan-back' });
+      // Ctrl+B toggles the panel; not while a dialog is open
+      const panel = S.panel;
+      assert.ok(key('b', { ctrlKey: true }).prevented);
+      assert.equal(S.panel, !panel);
+      el('printDlg').hidden = false;
+      assert.ok(!key('b', { ctrlKey: true }).prevented);
+      el('printDlg').hidden = true;
+      key('b', { ctrlKey: true });
+      // Enter on a fan sector opens the person
+      const sector = Object.assign(target({ id: camille }), { closest: (sel) => (sel === '.fan-s' ? sector : null) });
+      fire('keydown', { key: 'Enter', target: sector, preventDefault() {} });
+      assert.equal(el('personDlg').hidden, false);
+      // Escape: the topmost dialog first (record being edited dialog over the person dialog)
+      el('leaveDlg').hidden = false;
+      key('Escape');
+      assert.equal(el('leaveDlg').hidden, true);
+      assert.equal(el('personDlg').hidden, false);
+      key('Escape');
+      assert.equal(el('personDlg').hidden, true);
+      // Search field and spouse field keys go to their own handlers
+      fire('keydown', { key: 'ArrowDown', target: target({}, 'find', 'input'), preventDefault() {} });
+      A.startNew();
+      fire('focusin', { target: target({}, 'f-spouse', 'input') });
+      fire('keydown', { key: 'x', target: target({}, 'f-spouse', 'input'), preventDefault() {} });
+      fire('focusout', { target: target({}, 'f-spouse', 'input') });
+      let kept = false;
+      fire('mousedown', { target: { closest: (sel) => (sel === '#f-spouseList' ? {} : null) }, preventDefault() { kept = true; } });
+      assert.ok(kept, 'a click in the spouse list keeps the cursor in the field');
+      fire('dblclick', { target: target() });
+      key('Escape');
+      assert.equal(S.edit, null);
+      // Trees: new tree and rename forms
+      const before = S.trees.size;
+      el('newTreeName').value = 'Second';
+      let prevented = false;
+      fire('submit', { target: target({}, 'newTreeForm', 'form'), preventDefault() { prevented = true; } });
+      await settle();
+      assert.ok(prevented);
+      assert.equal(S.trees.size, before + 1);
+      el('renameInput').value = 'Renamed';
+      fire('submit', { target: Object.assign(target({ id: S.tree }, 'renameForm', 'form')), preventDefault() {} });
+      await settle();
+      assert.equal(S.trees.get(S.tree).name, 'Renamed');
+    } finally {
+      globalThis.setTimeout = realTimeout;
+    }
+  });
 });
