@@ -37,30 +37,42 @@ export function saveLocal() {
 
 export const mapOf = (collection) => (collection === 'people' ? S.people : S.unions);
 
-/** Creates or replaces a document. */
-export async function opSet(collection, id, data) {
+/**
+ * Applies `next` (a document, or undefined to delete it) in memory, then runs `write`.
+ * If the write fails, the document goes back to its previous state: what is shown
+ * stays what is stored.
+ */
+async function writeDoc(collection, id, next, write) {
+  const map = mapOf(collection);
+  const before = map.get(id);
   track(collection, id);
-  mapOf(collection).set(id, data);
-  if (S.mode === 'db') await dbSet(collection, id, data);
-  else await saveLocal();
+  if (next) map.set(id, next);
+  else map.delete(id);
+  try {
+    await write();
+  } catch (e) {
+    if (map.get(id) === next) {
+      if (before) map.set(id, before);
+      else map.delete(id);
+    }
+    throw e;
+  }
+}
+
+/** Creates or replaces a document. */
+export function opSet(collection, id, data) {
+  return writeDoc(collection, id, data, () => (S.mode === 'db' ? dbSet(collection, id, data) : saveLocal()));
 }
 
 /** Changes some fields of an existing document. */
 export async function opUpdate(collection, id, patch) {
-  const map = mapOf(collection);
-  const current = map.get(id);
+  const current = mapOf(collection).get(id);
   if (!current) return;
-  track(collection, id);
-  map.set(id, Object.assign({}, current, patch));
-  if (S.mode === 'db') await dbUpdate(collection, id, patch);
-  else await saveLocal();
+  await writeDoc(collection, id, Object.assign({}, current, patch), () => (S.mode === 'db' ? dbUpdate(collection, id, patch) : saveLocal()));
 }
 
-export async function opDelete(collection, id) {
-  track(collection, id);
-  mapOf(collection).delete(id);
-  if (S.mode === 'db') await dbDelete(collection, id);
-  else await saveLocal();
+export function opDelete(collection, id) {
+  return writeDoc(collection, id, undefined, () => (S.mode === 'db' ? dbDelete(collection, id) : saveLocal()));
 }
 
 /* ---------- Undo / redo ---------- */
