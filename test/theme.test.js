@@ -358,6 +358,7 @@ describe('animations des thèmes fêtes et saisons', () => {
       await new Promise((r) => setTimeout(r, 120));
       Math.random = random;
       assert.ok(sky.chase, 'a chase starts');
+      assert.equal(sky.chase.lead, 'freighter', 'the freighter leads the first chase');
       assert.ok(sky.bolts.some((b) => b.color === '#7CFF6B'), 'green bolts');
       Object.assign(sky, { chase: null, bolts: [], nextChase: Infinity, nextJump: 0 });
       await new Promise((r) => setTimeout(r, 80));
@@ -372,6 +373,16 @@ describe('animations des thèmes fêtes et saisons', () => {
       sky.cruiser.born = Date.now() - 10 ** 6; // far gone to the left
       await new Promise((r) => setTimeout(r, 80));
       assert.equal(sky.cruiser, null);
+      // On the ice: the tow cable trips the walker, which blows up, then a new one comes
+      sky.cableBorn = Date.now() - 7100;
+      await new Promise((r) => setTimeout(r, 80));
+      assert.ok(sky.fall, 'the walker trips');
+      sky.fall.born = Date.now() - 1700;
+      await new Promise((r) => setTimeout(r, 80));
+      assert.ok(sky.fall.boom && sky.booms.length >= 5, 'it blows up');
+      sky.fall.born = Date.now() - 7100;
+      await new Promise((r) => setTimeout(r, 80));
+      assert.equal(sky.fall, null, 'a new walker');
       // Halloween : chauves-souris et fantômes lâchés au hasard (ici, à coup sûr)
       Math.random = () => 0.001;
       assert.ok((await drawn('halloween')).has('quadraticCurveTo'));

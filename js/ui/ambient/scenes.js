@@ -9,7 +9,8 @@
  * lines, screentone, sound effects) where a pirate ship sails, chased by the navy firing its
  * cannons, whose rubber-armed sailor catches his straw hat; islands, gulls and a
  * sea monster; in the faraway galaxy, drifting stars and nebulae, a ringed planet and twin
- * suns, starfighter chases with laser bolts, jumps to hyperspace and a dagger-shaped cruiser.
+ * suns, starfighter and freighter chases with laser bolts and explosions, jumps to hyperspace,
+ * a dagger-shaped cruiser, and on the ice a walker brought down by the tow cables of airspeeders.
  * Each object has its own size, speed and sway, drawn at random.
  */
 
@@ -1633,129 +1634,491 @@ function glow(ctx, x, y, r, core, halo) {
   ctx.fill();
 }
 
-/** Tilted rings: the back half before the globe, the front half after it. */
-function rings(ctx, r, a0, a1) {
-  for (const [k, color, width] of [[1.45, 'rgba(233, 207, 166, .6)', 5], [1.62, 'rgba(201, 165, 126, .4)', 8], [1.8, 'rgba(235, 217, 188, .28)', 3]]) {
+/** Rings: thin bands of ice and dust with a dark gap; the back half before the globe, the front half after it. */
+function rings(ctx, r, a0, a1, front) {
+  const tones = ['#E9D6B4', '#D8BE97', '#C6A47C', '#EFE2C8', '#B8946C', '#E3CCA6'];
+  for (let k = 1.3, i = 0; k < 1.98; k += 0.024, i++) {
+    if (k > 1.6 && k < 1.67) continue; // the dark division between the two main rings
     ctx.beginPath();
-    ctx.ellipse(0, 0, r * k, r * k * 0.28, 0, a0, a1);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
+    ctx.ellipse(0, 0, r * k, r * k * 0.26, 0, a0, a1);
+    ctx.strokeStyle = tones[i % tones.length];
+    ctx.globalAlpha = (front ? 0.55 : 0.4) * (k < 1.6 ? 1 : 0.7) * (0.7 + 0.3 * Math.sin(i * 1.7));
+    ctx.lineWidth = r * 0.022;
     ctx.stroke();
   }
+  ctx.globalAlpha = 1;
 }
 
-/** Ringed gas giant, half out of the frame, with its moon going round it. */
+/**
+ * Ringed gas giant, half out of the frame, lit from the upper right by the twin suns: banded
+ * globe with a storm, shaded night side, highlight, glowing rim, shadow of the rings; its moon goes round it.
+ */
 function ringedPlanet(ctx, x, y, r, now) {
+  const lx = 0.5; // light, towards the upper right
+  const ly = -0.5;
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(-0.32);
-  rings(ctx, r, Math.PI, TAU);
+  rings(ctx, r, Math.PI, TAU, false);
+  // Atmosphere: a blue haze around the globe
+  const haze = ctx.createRadialGradient(0, 0, r * 0.95, 0, 0, r * 1.2);
+  haze.addColorStop(0, 'rgba(120, 170, 255, .35)');
+  haze.addColorStop(1, 'rgba(120, 170, 255, 0)');
+  ctx.fillStyle = haze;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 1.07, 0, TAU);
-  ctx.fillStyle = 'rgba(127, 168, 255, .12)'; // atmosphere
+  ctx.arc(0, 0, r * 1.2, 0, TAU);
   ctx.fill();
-  const body = ctx.createRadialGradient(-r * 0.35, -r * 0.35, r * 0.1, 0, 0, r);
-  body.addColorStop(0, '#E8B98A');
-  body.addColorStop(0.6, '#B4704A');
-  body.addColorStop(1, '#4A2228');
+  const body = ctx.createRadialGradient(lx * r * 0.6, ly * r * 0.6, 0, 0, 0, r * 1.3);
+  body.addColorStop(0, '#F8DDB4');
+  body.addColorStop(0.35, '#DDA06A');
+  body.addColorStop(0.7, '#A25E3B');
+  body.addColorStop(1, '#3A1A22');
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, TAU);
   ctx.fillStyle = body;
   ctx.fill();
   ctx.save();
   ctx.clip();
-  // Cloud bands, drifting slowly
-  [[-0.62, 0.12, '#F3D3A6'], [-0.36, 0.2, '#8C4B33'], [-0.05, 0.09, '#F6E2C0'], [0.15, 0.24, '#A65E3C'], [0.5, 0.11, '#E8C090']].forEach(([at, size, color], i) => {
-    ctx.globalAlpha = 0.45;
+  // Cloud bands, slightly bent by the curve of the globe, drifting at their own speed
+  [[-0.7, 0.1, '#F6DDB6'], [-0.48, 0.16, '#8C4B33'], [-0.22, 0.08, '#F8E6C4'], [-0.05, 0.2, '#B0663F'], [0.24, 0.1, '#ECC49A'], [0.42, 0.18, '#7E3F2C'], [0.68, 0.12, '#E2B485']].forEach(([at, size, color], i) => {
+    ctx.globalAlpha = 0.5;
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.ellipse(Math.sin(now / 9000 + i) * r * 0.05, at * r, r * 1.2, size * r * 0.5, 0, 0, TAU);
+    ctx.ellipse(Math.sin(now / (5000 + i * 700) + i) * r * 0.12, at * r, r * 1.15, size * r * 0.5, 0, 0, TAU);
     ctx.fill();
+    // Eddies along the edge of the band
+    ctx.globalAlpha = 0.25;
+    for (let k = 0; k < 5; k++) {
+      ctx.beginPath();
+      ctx.ellipse(((k * 0.43 + i * 0.29 + now / (14000 + i * 2500)) % 2 - 1) * r, (at + size * 0.25) * r, r * 0.09, r * 0.025, 0, 0, TAU);
+      ctx.fill();
+    }
   });
-  ctx.globalAlpha = 1;
-  const night = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.75, 0, 0, r * 1.05);
-  night.addColorStop(0, 'rgba(0, 0, 0, 0)');
-  night.addColorStop(1, 'rgba(2, 3, 10, .6)');
+  // The great storm turns with the globe: it crosses the face, narrowing near the edge, swirling, lit by lightning
+  const lon = ((now / 26000) % 2) - 1;
+  const sx = lon * r * Math.sqrt(1 - 0.31 ** 2);
+  const narrow = Math.sqrt(Math.max(0, 1 - lon * lon));
+  if (narrow > 0.05) {
+    ctx.save();
+    ctx.translate(sx, r * 0.31);
+    ctx.scale(narrow, 1);
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.17, r * 0.075, 0, 0, TAU);
+    ctx.fillStyle = '#C8714A';
+    ctx.fill();
+    ctx.rotate(now / 3000);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.1, r * 0.04, 0, 0, TAU);
+    ctx.fillStyle = '#F1C49A';
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    if (Math.sin(now / 170) > 0.93) glow(ctx, rand(-0.08, 0.08) * r, rand(-0.03, 0.03) * r, r * 0.02, '#FFFFFF', 'rgba(190, 220, 255, .8)');
+    ctx.restore();
+  }
+  // Shadow of the rings, a little below them
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.14, r * 1.5, r * 0.39, 0, 0, Math.PI);
+  ctx.strokeStyle = 'rgba(10, 6, 12, .45)';
+  ctx.lineWidth = r * 0.13;
+  ctx.stroke();
+  // Night side and highlight
+  const night = ctx.createRadialGradient(lx * r * 0.5, ly * r * 0.5, r * 0.5, lx * r * 0.2, ly * r * 0.2, r * 1.35);
+  night.addColorStop(0, 'rgba(3, 4, 14, 0)');
+  night.addColorStop(1, 'rgba(3, 4, 14, .9)');
   ctx.fillStyle = night;
   ctx.fillRect(-r, -r, 2 * r, 2 * r);
+  const shine = ctx.createRadialGradient(lx * r * 0.6, ly * r * 0.6, 0, lx * r * 0.6, ly * r * 0.6, r * 0.45);
+  shine.addColorStop(0, 'rgba(255, 250, 235, .3)');
+  shine.addColorStop(1, 'rgba(255, 250, 235, 0)');
+  ctx.fillStyle = shine;
+  ctx.fillRect(-r, -r, 2 * r, 2 * r);
   ctx.restore();
-  rings(ctx, r, 0, Math.PI);
+  // Glowing rim on the lit side
+  ctx.save();
+  ctx.shadowColor = 'rgba(160, 205, 255, .9)';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = 'rgba(190, 220, 255, .7)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, -Math.PI * 0.95, Math.PI * 0.05);
+  ctx.stroke();
+  ctx.restore();
+  rings(ctx, r, 0, Math.PI, true);
   ctx.restore();
   // The moon: in front of the planet on half of its orbit, hidden behind it on the other half
   const a = now / 14000;
   if (Math.sin(a) > -0.2) {
+    const mr = r * 0.075;
     const mx = x + Math.cos(a) * r * 1.9;
     const my = y - r * 0.55 + Math.sin(a) * r * 0.35;
+    const moon = ctx.createRadialGradient(mx + mr * 0.4, my - mr * 0.4, 0, mx, my, mr);
+    moon.addColorStop(0, '#E4E9F0');
+    moon.addColorStop(0.6, '#9AA3B0');
+    moon.addColorStop(1, '#2A2F3A');
     ctx.beginPath();
-    ctx.arc(mx, my, r * 0.07, 0, TAU);
-    ctx.fillStyle = '#B9C2CF';
+    ctx.arc(mx, my, mr, 0, TAU);
+    ctx.fillStyle = moon;
     ctx.fill();
-    ctx.beginPath();
-    ctx.arc(mx + r * 0.025, my + r * 0.02, r * 0.065, 0, TAU);
-    ctx.fillStyle = 'rgba(2, 3, 10, .45)';
-    ctx.fill();
+    ctx.fillStyle = 'rgba(60, 66, 80, .45)'; // craters
+    for (const [cx, cy, cr] of [[-0.3, 0.1, 0.22], [0.25, 0.35, 0.15], [0.1, -0.35, 0.12]]) {
+      ctx.beginPath();
+      ctx.arc(mx + cx * mr, my + cy * mr, cr * mr, 0, TAU);
+      ctx.fill();
+    }
   }
 }
 
-/**
- * Dagger-shaped capital ship, nose at (x, y) pointing left: light upper face, dark lower
- * face, stepped superstructure, bridge tower with its two domes, blue engines at the stern.
- */
-function cruiser(ctx, x, y, L, now) {
-  const H = L * 0.22;
-  const top = (at) => -H * 0.5 * at;
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.strokeStyle = '#3B4250';
-  ctx.lineWidth = 1;
+/** Plating for a capital ship: small light and dark plates on each face, drawn once per ship. */
+function hullPlates() {
+  return Array.from({ length: 140 }, () => ({
+    u: rand(0.12, 0.98), v: rand(0.08, 0.92), w: rand(0.008, 0.03), h: rand(1.2, 3.2),
+    up: Math.random() < 0.55, tone: pick(['#C3CAD5', '#B0B8C4', '#7C8595', '#6A7383', '#D5DBE3']),
+  }));
+}
+
+/** A box seen slightly from above and from the right: front, top and side, so it stands out. */
+function box(ctx, x, y, w, h, depth) {
+  const front = ctx.createLinearGradient(0, y, 0, y + h);
+  front.addColorStop(0, '#AEB6C3');
+  front.addColorStop(1, '#717A8A');
+  ctx.fillStyle = front;
+  ctx.fillRect(x, y, w, h);
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(L, top(1));
-  ctx.lineTo(L, 0);
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w + depth, y - depth * 0.5);
+  ctx.lineTo(x + depth, y - depth * 0.5);
   ctx.closePath();
-  ctx.fillStyle = '#A3ACBA';
+  ctx.fillStyle = '#D3D9E2';
   ctx.fill();
-  ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(L, 0);
-  ctx.lineTo(L, H * 0.45);
+  ctx.moveTo(x + w, y);
+  ctx.lineTo(x + w + depth, y - depth * 0.5);
+  ctx.lineTo(x + w + depth, y + h - depth * 0.5);
+  ctx.lineTo(x + w, y + h);
   ctx.closePath();
   ctx.fillStyle = '#5D6575';
   ctx.fill();
-  ctx.stroke();
-  // Hull plates
+  ctx.strokeStyle = 'rgba(30, 34, 44, .7)';
+  ctx.lineWidth = 0.6;
+  ctx.strokeRect(x, y, w, h);
+}
+
+/** Domed sensor: a lit sphere. */
+function dome(ctx, x, y, r) {
+  const g = ctx.createRadialGradient(x + r * 0.35, y - r * 0.4, 0, x, y, r);
+  g.addColorStop(0, '#F1F4F8');
+  g.addColorStop(0.6, '#9AA3B0');
+  g.addColorStop(1, '#4A5160');
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.fillStyle = g;
+  ctx.fill();
+}
+
+/**
+ * Dagger-shaped capital ship, nose at (x, y) pointing left, lit from above: shaded upper and
+ * lower faces split by a bright ridge, plating, stepped superstructure in relief with lit windows,
+ * bridge tower and its two domes, blazing engines at the stern.
+ */
+function cruiser(ctx, c, x, y, L, now) {
+  const H = L * 0.24;
+  const up = (u) => -H * 0.5 * u;   // edge of the upper face, at fraction u of the length
+  const down = (u) => H * 0.45 * u; // edge of the lower face
+  ctx.save();
+  ctx.translate(x, y);
+  // Engine haze behind the stern
+  const haze = ctx.createRadialGradient(L, 0, 0, L, 0, H * 0.9);
+  haze.addColorStop(0, 'rgba(120, 200, 255, .35)');
+  haze.addColorStop(1, 'rgba(120, 200, 255, 0)');
+  ctx.fillStyle = haze;
+  ctx.fillRect(L - H, -H, H * 2, H * 2);
+  // Stern, seen at an angle: it gives the hull its thickness
+  const stern = H * 0.16;
+  ctx.beginPath();
+  ctx.moveTo(L, up(1));
+  ctx.lineTo(L + stern, up(1) + stern * 0.4);
+  ctx.lineTo(L + stern, down(1) - stern * 0.4);
+  ctx.lineTo(L, down(1));
+  ctx.closePath();
+  const back = ctx.createLinearGradient(L, 0, L + stern, 0);
+  back.addColorStop(0, '#4A5160');
+  back.addColorStop(1, '#2B313C');
+  ctx.fillStyle = back;
+  ctx.fill();
+  // Upper face
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(L, up(1));
+  ctx.lineTo(L, 0);
+  ctx.closePath();
+  const top = ctx.createLinearGradient(0, up(1), 0, 0);
+  top.addColorStop(0, '#9AA3B1');
+  top.addColorStop(1, '#DCE2EA');
+  ctx.fillStyle = top;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  for (const p of c.plates) if (p.up) {
+    ctx.fillStyle = p.tone;
+    ctx.fillRect(L * p.u, up(p.u) * p.v, L * p.w, p.h);
+  }
+  ctx.strokeStyle = 'rgba(40, 46, 58, .35)';
   ctx.lineWidth = 0.6;
   ctx.beginPath();
-  for (const k of [0.3, 0.45, 0.6, 0.75, 0.9]) {
-    ctx.moveTo(L * k, top(k) + 3);
-    ctx.lineTo(L * k, H * 0.45 * k - 3);
+  for (const k of [0.25, 0.5, 0.75]) { // seams running to the nose
+    ctx.moveTo(0, 0);
+    ctx.lineTo(L, up(k));
+  }
+  for (const k of [0.25, 0.4, 0.55, 0.7, 0.85]) {
+    ctx.moveTo(L * k, up(k));
+    ctx.lineTo(L * k, 0);
   }
   ctx.stroke();
-  // Superstructure, in steps up to the bridge tower
-  ctx.lineWidth = 0.8;
-  for (let i = 0; i < 4; i++) {
-    const at = 0.58 + i * 0.085;
-    const tall = H * (0.07 + i * 0.05);
-    ctx.fillStyle = '#858E9D';
-    ctx.fillRect(L * at, top(at) - tall, L * 0.13, tall + 4);
-    ctx.strokeRect(L * at, top(at) - tall, L * 0.13, tall + 4);
+  ctx.restore();
+  // Lower face, in the shade
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(L, 0);
+  ctx.lineTo(L, down(1));
+  ctx.closePath();
+  const under = ctx.createLinearGradient(0, 0, 0, down(1));
+  under.addColorStop(0, '#6E7787');
+  under.addColorStop(1, '#30363F');
+  ctx.fillStyle = under;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  for (const p of c.plates) if (!p.up) {
+    ctx.fillStyle = p.tone;
+    ctx.globalAlpha = 0.45;
+    ctx.fillRect(L * p.u, down(p.u) * p.v, L * p.w, p.h);
   }
-  ctx.fillStyle = '#8C95A4';
-  ctx.fillRect(L * 0.9, top(1) - H * 0.45, L * 0.045, H * 0.4);
-  ctx.fillStyle = '#A3ACBA';
-  ctx.fillRect(L * 0.86, top(1) - H * 0.52, L * 0.12, H * 0.09);
-  for (const at of [0.865, 0.975]) {
+  // Hangar bay under the hull, glowing
+  const bay = ctx.createLinearGradient(L * 0.45, 0, L * 0.6, 0);
+  bay.addColorStop(0, 'rgba(255, 210, 140, 0)');
+  bay.addColorStop(0.5, 'rgba(255, 210, 140, .55)');
+  bay.addColorStop(1, 'rgba(255, 210, 140, 0)');
+  ctx.fillStyle = bay;
+  ctx.fillRect(L * 0.45, down(0.5) * 0.55, L * 0.15, H * 0.05);
+  ctx.restore();
+  // Outline and the bright ridge between the two faces
+  ctx.strokeStyle = '#2B313C';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(L, up(1));
+  ctx.lineTo(0, 0);
+  ctx.lineTo(L, down(1));
+  ctx.stroke();
+  ctx.strokeStyle = '#F2F5F9';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(L, 0);
+  ctx.stroke();
+  // Windows along the ridge, some lit
+  for (let k = 0; k < 40; k++) {
+    const u = 0.15 + k * 0.021;
+    ctx.fillStyle = Math.sin(k * 12.9 + now / 900) > 0.2 ? '#FFE9A8' : 'rgba(255, 233, 168, .25)';
+    ctx.fillRect(L * u, 2, 1.3, 1.3);
+  }
+  // Superstructure: boxes stepping up to the bridge
+  const depth = H * 0.12;
+  for (let i = 0; i < 4; i++) {
+    const u = 0.56 + i * 0.085;
+    const tall = H * (0.08 + i * 0.055);
+    box(ctx, L * u, up(u) - tall, L * 0.12, tall + 2, depth);
+    ctx.fillStyle = '#FFE9A8';
+    for (let k = 0; k < 6; k++) if ((k + i) % 3) ctx.fillRect(L * u + 3 + k * L * 0.018, up(u) - tall * 0.5, 1.2, 1.2);
+  }
+  // Gun turrets along the upper edge; now and then one fires a green bolt
+  for (const u of [0.22, 0.32, 0.42, 0.5]) {
+    box(ctx, L * u, up(u) - H * 0.035, L * 0.018, H * 0.035, depth * 0.4);
+    ctx.strokeStyle = '#2B313C';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(L * at, top(1) - H * 0.55, H * 0.045, 0, TAU);
+    ctx.moveTo(L * u, up(u) - H * 0.025);
+    ctx.lineTo(L * u - L * 0.02, up(u) - H * 0.045);
+    ctx.stroke();
+    if (Math.random() < 0.004) c.shots.push({ x: x + L * u - L * 0.02, y: y + up(u) - H * 0.045, dx: -7, dy: rand(-2.5, 1), color: '#7CFF6B', life: 50 });
+  }
+  // Antennas on the tower
+  ctx.strokeStyle = '#8C95A4';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(L * 0.92, up(1) - H * 0.52);
+  ctx.lineTo(L * 0.92, up(1) - H * 0.72);
+  ctx.moveTo(L * 0.95, up(1) - H * 0.52);
+  ctx.lineTo(L * 0.95, up(1) - H * 0.64);
+  ctx.stroke();
+  ctx.fillStyle = Math.sin(now / 300) > 0 ? '#FF5C5C' : 'rgba(255, 92, 92, .3)';
+  ctx.fillRect(L * 0.92 - 1, up(1) - H * 0.74, 2, 2);
+  // Bridge tower: neck, bridge with its window band, two domes
+  box(ctx, L * 0.9, up(1) - H * 0.42, L * 0.045, H * 0.4, depth * 0.6);
+  box(ctx, L * 0.855, up(1) - H * 0.52, L * 0.13, H * 0.09, depth * 0.8);
+  ctx.fillStyle = '#FFE9A8';
+  ctx.fillRect(L * 0.86, up(1) - H * 0.48, L * 0.12, 1.2);
+  dome(ctx, L * 0.865, up(1) - H * 0.58, H * 0.05);
+  dome(ctx, L * 0.975, up(1) - H * 0.58, H * 0.05);
+  // Engines: dark nozzles, white-hot cores, flickering blue bloom
+  for (const [dy, size] of [[-0.3, 0.1], [-0.05, 0.12], [0.2, 0.1], [-0.42, 0.05], [0.33, 0.05]]) {
+    const ey = H * dy;
+    const er = H * size;
+    ctx.beginPath();
+    ctx.arc(L + stern * 0.6, ey, er * 1.2, 0, TAU);
+    ctx.fillStyle = '#2B313C';
+    ctx.fill();
+    glow(ctx, L + stern * 0.6, ey, er * (0.85 + Math.sin(now / 90 + dy * 20) * 0.08), '#F2FBFF', 'rgba(92, 200, 255, .6)');
+  }
+  ctx.restore();
+  c.shots = c.shots.filter((b) => {
+    b.x += b.dx;
+    b.y += b.dy;
+    bolt(ctx, b);
+    return --b.life > 0;
+  });
+}
+
+/**
+ * Saucer-shaped light freighter seen from above, nose towards `angle`: two forward prongs,
+ * cockpit tube on the right side, gun turret, plating, and the wide blue glow of its engines.
+ * `boost` (0 to 1) makes the engines blaze (jump to hyperspace).
+ */
+function freighter(ctx, x, y, R, angle, now, boost = 0) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  // Engines: a wide band of blue light along the back of the saucer
+  ctx.save();
+  ctx.shadowColor = '#5CC8FF';
+  ctx.shadowBlur = R * (0.6 + boost * 1.4);
+  ctx.strokeStyle = boost > 0.5 ? '#FFFFFF' : '#BDE6FF';
+  ctx.lineWidth = R * (0.16 + boost * 0.1) * (0.9 + Math.sin(now / 70) * 0.1);
+  ctx.beginPath();
+  ctx.arc(0, 0, R * 0.98, Math.PI * 0.72, Math.PI * 1.28);
+  ctx.stroke();
+  ctx.restore();
+  const hull = ctx.createRadialGradient(-R * 0.25, -R * 0.35, R * 0.1, 0, 0, R * 1.1);
+  hull.addColorStop(0, '#F4F5F7');
+  hull.addColorStop(0.6, '#C9CDD3');
+  hull.addColorStop(1, '#868C96');
+  ctx.strokeStyle = '#3B4250';
+  ctx.lineWidth = R * 0.04;
+  // The two prongs, ahead of the saucer, with the loading slot between them
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(R * 0.5, side * R * 0.12);
+    ctx.lineTo(R * 1.5, side * R * 0.12);
+    ctx.lineTo(R * 1.55, side * R * 0.28);
+    ctx.lineTo(R * 1.45, side * R * 0.46);
+    ctx.lineTo(R * 0.5, side * R * 0.6);
+    ctx.closePath();
+    ctx.fillStyle = hull;
     ctx.fill();
     ctx.stroke();
   }
-  // Running lights, blinking
-  ctx.fillStyle = Math.sin(now / 400) > 0 ? '#FFE9A8' : 'rgba(255, 233, 168, .3)';
-  for (const k of [0.2, 0.4, 0.55, 0.7]) ctx.fillRect(L * k, -1, 1.6, 1.6);
-  for (const dy of [-0.3, -0.05, 0.2]) glow(ctx, L + 2, H * dy, H * 0.08, '#E6F6FF', 'rgba(92, 200, 255, .55)');
+  ctx.beginPath();
+  ctx.arc(0, 0, R, 0, TAU);
+  ctx.fillStyle = hull;
+  ctx.fill();
+  ctx.stroke();
+  // Plating: an inner ring, spokes, a few dark hatches
+  ctx.strokeStyle = 'rgba(59, 66, 80, .5)';
+  ctx.lineWidth = R * 0.025;
+  ctx.beginPath();
+  ctx.arc(0, 0, R * 0.62, 0, TAU);
+  for (let k = 0; k < 10; k++) {
+    const a = (k * TAU) / 10 + 0.3;
+    ctx.moveTo(Math.cos(a) * R * 0.62, Math.sin(a) * R * 0.62);
+    ctx.lineTo(Math.cos(a) * R * 0.95, Math.sin(a) * R * 0.95);
+  }
+  ctx.stroke();
+  ctx.fillStyle = '#5D6575';
+  for (const [a, d, s] of [[2.2, 0.78, 0.14], [3.6, 0.8, 0.1], [4.3, 0.42, 0.12], [1.2, 0.4, 0.09], [5.4, 0.76, 0.12]]) {
+    ctx.fillRect(Math.cos(a) * R * d - R * s / 2, Math.sin(a) * R * d - R * s / 2, R * s, R * s * 0.7);
+  }
+  // Radar dish, on the left
+  ctx.beginPath();
+  ctx.arc(R * 0.1, -R * 0.55, R * 0.13, 0, TAU);
+  ctx.fillStyle = '#E4E7EC';
+  ctx.fill();
+  ctx.stroke();
+  // Gun turret in the middle
+  ctx.beginPath();
+  ctx.arc(0, 0, R * 0.2, 0, TAU);
+  ctx.fillStyle = '#9AA1AD';
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#2B313C';
+  ctx.fillRect(R * 0.05, -R * 0.06, R * 0.35, R * 0.04);
+  ctx.fillRect(R * 0.05, R * 0.02, R * 0.35, R * 0.04);
+  // Cockpit tube on the right side, its round canopy at the front
+  ctx.strokeStyle = '#3B4250';
+  ctx.lineWidth = R * 0.26;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(R * 0.15, R * 0.78);
+  ctx.lineTo(R * 0.85, R * 0.98);
+  ctx.stroke();
+  ctx.strokeStyle = '#D5D9DF';
+  ctx.lineWidth = R * 0.2;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(R * 0.92, R * 1.0, R * 0.15, 0, TAU);
+  ctx.fillStyle = '#C9CDD3';
+  ctx.fill();
+  ctx.strokeStyle = '#3B4250';
+  ctx.lineWidth = R * 0.03;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(R * 0.96, R * 1.0, R * 0.09, 0, TAU);
+  ctx.fillStyle = '#1E2A40';
+  ctx.fill();
   ctx.restore();
+}
+
+/** Explosion: a white flash, a fireball that swells and fades, sparks flying off. */
+function explosion(ctx, b, now) {
+  const t = (now - b.born) / 900;
+  if (t < 0) return true; // not yet: staggered blasts
+  if (t > 1) return false;
+  const r = b.r * (0.4 + t * 1.6);
+  const fire = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, r);
+  fire.addColorStop(0, `rgba(255, 255, 230, ${1 - t})`);
+  fire.addColorStop(0.35, `rgba(255, 190, 80, ${0.9 * (1 - t)})`);
+  fire.addColorStop(1, 'rgba(255, 80, 30, 0)');
+  ctx.fillStyle = fire;
+  ctx.beginPath();
+  ctx.arc(b.x, b.y, r, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = `rgba(255, 220, 150, ${1 - t})`;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (const a of b.sparks) {
+    ctx.moveTo(b.x + Math.cos(a) * r * 0.8, b.y + Math.sin(a) * r * 0.8);
+    ctx.lineTo(b.x + Math.cos(a) * r * 1.5, b.y + Math.sin(a) * r * 1.5);
+  }
+  ctx.stroke();
+  return true;
+}
+
+/** Shooting star: a bright head and a fading tail. */
+function meteor(ctx, m, now) {
+  const t = (now - m.born) / 1100;
+  if (t > 1) return false;
+  const x = m.x + m.dx * t;
+  const y = m.y + m.dy * t;
+  const tail = ctx.createLinearGradient(x, y, x - m.dx * 0.25, y - m.dy * 0.25);
+  tail.addColorStop(0, `rgba(255, 255, 255, ${1 - t})`);
+  tail.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.strokeStyle = tail;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - m.dx * 0.25, y - m.dy * 0.25);
+  ctx.stroke();
+  return true;
 }
 
 /** Starfighter with wings in an X, seen from above, nose towards `dir` (1: right). */
@@ -1863,51 +2226,68 @@ function bolt(ctx, b) {
 }
 
 /**
- * A chase: the X-wing fighter leads, two twin-panel fighters follow it and fire green
- * bolts that miss; now and then it answers with a red one over its shoulder.
+ * A chase: the freighter or the X-wing fighter leads, two twin-panel fighters follow it and fire
+ * green bolts that miss; the leader answers with red ones over its shoulder, and a hit
+ * fighter blows up.
  */
 function chase(ctx, s, now, w, h) {
   const c = s.chase;
+  const scale = Math.min(1.5, h / 420);
   const run = (now - c.born) * c.speed;
-  const lead = c.dir > 0 ? run - 80 : w + 80 - run;
+  const lead = c.dir > 0 ? run - 120 : w + 120 - run;
   const at = (back, lift) => {
-    const x = lead - c.dir * back;
+    const x = lead - c.dir * back * scale;
     return [x, c.y + Math.sin((x / w) * TAU * 1.3 + lift) * h * 0.06];
   };
-  const scale = Math.min(1.5, h / 420);
-  const hunters = [at(110 * scale, 0.5), at(175 * scale, 1)];
-  if (Math.random() < 0.06) {
-    const [x, y] = pick(hunters);
+  const hunters = c.hunters.map((k) => ({ k, pos: at(k.back, k.lift) }));
+  const alive = hunters.filter((x) => !x.k.down);
+  if (alive.length && Math.random() < 0.06) {
+    const [x, y] = pick(alive).pos;
     s.bolts.push({ x: x + c.dir * 14, y: y + rand(-4, 4), dx: c.dir * 9, dy: rand(-0.6, 0.6), color: '#7CFF6B', life: 70 });
   }
-  if (Math.random() < 0.012) {
-    const [x, y] = at(0, 0);
-    s.bolts.push({ x, y, dx: -c.dir * 7, dy: rand(-1.5, 1.5), color: '#FF5C5C', life: 40 });
+  const [x0, y0] = at(0, 0);
+  if (Math.random() < (c.lead === 'freighter' ? 0.035 : 0.015)) {
+    const [tx, ty] = (pick(alive) || hunters[0]).pos;
+    const d = Math.hypot(tx - x0, ty - y0) || 1;
+    s.bolts.push({ x: x0, y: y0, dx: ((tx - x0) / d) * 8, dy: ((ty - y0) / d) * 8 + rand(-0.8, 0.8), color: '#FF5C5C', life: 45, red: true });
   }
   s.bolts = s.bolts.filter((b) => {
     b.x += b.dx;
     b.y += b.dy;
     bolt(ctx, b);
+    // A red bolt that reaches a fighter destroys it
+    const hit = b.red && alive.find((x) => Math.hypot(x.pos[0] - b.x, x.pos[1] - b.y) < 13 * scale);
+    if (hit) {
+      hit.k.down = true;
+      s.booms.push({ x: hit.pos[0], y: hit.pos[1], r: 22 * scale, born: now, sparks: Array.from({ length: 9 }, () => rand(0, TAU)) });
+      return false;
+    }
     return --b.life > 0;
   });
   // The leader banks along its path: nose up when it climbs
-  const [x0, y0] = at(0, 0);
-  const behind = at(4, 0)[1];
-  ctx.save();
-  ctx.translate(x0, y0);
-  ctx.rotate(c.dir * Math.atan((y0 - behind) / 4) * 0.5);
-  xFighter(ctx, 0, 0, scale, c.dir, now);
-  ctx.restore();
-  for (const [x, y] of hunters) hexFighter(ctx, x, y, scale * 0.95);
-  const last = hunters[1][0];
+  const tilt = Math.atan((y0 - at(4, 0)[1]) / 4);
+  if (c.lead === 'freighter') {
+    freighter(ctx, x0, y0, 30 * scale, c.dir > 0 ? tilt : Math.PI - tilt, now);
+  } else {
+    ctx.save();
+    ctx.translate(x0, y0);
+    ctx.rotate(c.dir * tilt * 0.5);
+    xFighter(ctx, 0, 0, scale, c.dir, now);
+    ctx.restore();
+  }
+  for (const x of alive) hexFighter(ctx, x.pos[0], x.pos[1], scale * 0.95);
+  const last = hunters[hunters.length - 1].pos[0];
   if ((c.dir > 0 && last > w + 80) || (c.dir < 0 && last < -80)) {
     s.chase = null;
     s.bolts = [];
-    s.nextChase = now + rand(9000, 16000);
+    s.nextChase = now + rand(6000, 10000);
   }
 }
 
-/** Jump to hyperspace: the stars stretch into streaks from the centre, a white flash, then a new sky. */
+/**
+ * Jump to hyperspace: the freighter heads for the centre, engines blazing, the stars stretch
+ * into streaks, a white flash, then a new sky.
+ */
 function hyperspace(ctx, s, now, w, h) {
   const t = (now - s.jump.born) / 2600;
   const cx = w / 2;
@@ -1926,6 +2306,11 @@ function hyperspace(ctx, s, now, w, h) {
     ctx.stroke();
   }
   ctx.globalAlpha = 1;
+  if (t < 0.74) {
+    const p = t / 0.74;
+    const size = Math.min(1.5, h / 420) * 46 * (1 - p * 0.9);
+    freighter(ctx, cx, h * 0.95 - (h * 0.95 - cy) * p ** 1.5, size, -Math.PI / 2, now, p);
+  }
   if (t > 0.66 && t < 0.92) {
     ctx.globalAlpha = Math.max(0, 1 - Math.abs(t - 0.76) / 0.16) * 0.85;
     ctx.fillStyle = '#E6F4FF';
@@ -1936,11 +2321,11 @@ function hyperspace(ctx, s, now, w, h) {
   if (t >= 0.76 && !s.jump.arrived) {
     s.jump.arrived = true;
     s.stars = s.stars.map(() => spaceStar(w, h));
-    if (!s.cruiser) s.cruiser = { born: now };
+    if (!s.cruiser) s.cruiser = { born: now, plates: hullPlates(), shots: [] };
   }
   if (t > 1) {
     s.jump = null;
-    s.nextJump = now + rand(35000, 55000);
+    s.nextJump = now + rand(30000, 45000);
   }
 }
 
@@ -1957,6 +2342,314 @@ function intro(ctx, s, now, w, h) {
   ctx.restore();
 }
 
+/* ---------- Faraway galaxy: the ice plain, the walker and the snowspeeders ---------- */
+
+/** Ice plain along the bottom: a far ridge, then the snow, lit blue. */
+function icePlain(ctx, ground, w, h) {
+  ctx.beginPath();
+  ctx.moveTo(0, ground);
+  for (let x = 0; x <= w; x += 20) ctx.lineTo(x, ground - 14 - Math.sin(x / 90) * 8 - Math.sin(x / 37 + 1) * 4);
+  ctx.lineTo(w, ground);
+  ctx.closePath();
+  ctx.fillStyle = '#7F93B3';
+  ctx.fill();
+  const snow = ctx.createLinearGradient(0, ground, 0, h);
+  snow.addColorStop(0, '#E4EEF8');
+  snow.addColorStop(1, '#9FB3CC');
+  ctx.fillStyle = snow;
+  ctx.fillRect(0, ground, w, h - ground);
+  ctx.fillStyle = 'rgba(255, 255, 255, .55)';
+  ctx.fillRect(0, ground, w, 1.5);
+}
+
+/** Knee of a leg from hip to foot, with two segments of length `len`, bent forward. */
+function knee(hx, hy, fx, fy, len) {
+  const d = Math.min(Math.hypot(fx - hx, fy - hy), len * 2 - 0.01);
+  const mx = (hx + fx) / 2;
+  const my = (hy + fy) / 2;
+  const up = Math.sqrt(len * len - (d / 2) ** 2);
+  const ux = (fy - hy) / d; // perpendicular to hip→foot, towards the front
+  const uy = -(fx - hx) / d;
+  return [mx + ux * up, my + uy * up];
+}
+
+/** One leg: armoured thigh and shin, knee joint, wide foot pad. */
+function walkerLeg(ctx, hip, foot, len, s, far) {
+  const [kx, ky] = knee(hip[0], hip[1], foot[0], foot[1], len);
+  ctx.lineCap = 'round';
+  for (const [from, to, width] of [[hip, [kx, ky], 10], [[kx, ky], foot, 8]]) {
+    ctx.strokeStyle = far ? '#4E5666' : '#2F3540';
+    ctx.lineWidth = (width + 2) * s;
+    ctx.beginPath();
+    ctx.moveTo(...from);
+    ctx.lineTo(...to);
+    ctx.stroke();
+    ctx.strokeStyle = far ? '#7A8394' : '#A7B0BE';
+    ctx.lineWidth = width * s;
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(kx, ky, 6 * s, 0, TAU);
+  ctx.fillStyle = far ? '#6A7383' : '#8E97A6';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(foot[0], foot[1] - 2 * s, 11 * s, 4.5 * s, 0, 0, TAU);
+  ctx.fillStyle = far ? '#5D6575' : '#7C8595';
+  ctx.fill();
+}
+
+/** Where a foot is: planted (it slides back as the body moves on), or lifted and swung forward. */
+function footAt(u, hipX, stride, ground, s) {
+  if (u < 0.75) return [hipX + stride * (0.5 - u / 0.75), ground];
+  const v = (u - 0.75) / 0.25;
+  return [hipX + stride * (-0.5 + v), ground - Math.sin(v * Math.PI) * 16 * s];
+}
+
+/**
+ * Four-legged armoured walker, walking to the right on the ice: boxy body that sways with
+ * each step, neck and head with its chin guns, far legs in the shade, snow kicked up by the feet.
+ */
+function walker(ctx, x, ground, s, now) {
+  const cycle = (now % 2600) / 2600;
+  const len = 52 * s;
+  const stride = 34 * s;
+  const sway = Math.sin(cycle * TAU * 2) * 1.6 * s;
+  const bodyY = ground - 96 * s + sway; // bottom of the body
+  const legs = [[-38, 0, true], [24, 0.5, true], [-24, 0.25, false], [38, 0.75, false]];
+  const placed = legs.map(([dx, off, far]) => {
+    const u = (cycle + off) % 1;
+    return { far, u, hip: [x + dx * s, bodyY - 4 * s], foot: footAt(u, x + dx * s, stride, ground, s) };
+  });
+  for (const l of placed) if (l.far) walkerLeg(ctx, l.hip, l.foot, len, s, true);
+  // Body: an armoured box, lighter on top, side plates and vents
+  const top = bodyY - 40 * s;
+  const body = ctx.createLinearGradient(0, top, 0, bodyY);
+  body.addColorStop(0, '#C9D0DA');
+  body.addColorStop(1, '#6E7787');
+  ctx.beginPath();
+  ctx.moveTo(x - 58 * s, bodyY - 8 * s);
+  ctx.lineTo(x - 50 * s, top);
+  ctx.lineTo(x + 46 * s, top);
+  ctx.lineTo(x + 56 * s, bodyY - 10 * s);
+  ctx.lineTo(x + 48 * s, bodyY);
+  ctx.lineTo(x - 50 * s, bodyY);
+  ctx.closePath();
+  ctx.fillStyle = body;
+  ctx.fill();
+  ctx.strokeStyle = '#2F3540';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(47, 53, 64, .55)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  for (const k of [-30, -8, 14, 34]) {
+    ctx.moveTo(x + k * s, top + 2 * s);
+    ctx.lineTo(x + k * s, bodyY - 2 * s);
+  }
+  ctx.moveTo(x - 52 * s, top + 14 * s);
+  ctx.lineTo(x + 50 * s, top + 14 * s);
+  ctx.stroke();
+  ctx.fillStyle = '#4E5666';
+  for (let k = 0; k < 5; k++) ctx.fillRect(x + (-40 + k * 6) * s, top + 20 * s, 3 * s, 10 * s);
+  // Neck and head, nodding a little
+  const nod = Math.sin(cycle * TAU * 2 + 1) * 1.2 * s;
+  const hx = x + 70 * s;
+  const hy = top + 12 * s + nod;
+  ctx.fillStyle = '#7C8595';
+  ctx.fillRect(x + 50 * s, top + 10 * s, 14 * s, 12 * s);
+  const head = ctx.createLinearGradient(0, hy - 12 * s, 0, hy + 14 * s);
+  head.addColorStop(0, '#CDD4DE');
+  head.addColorStop(1, '#6E7787');
+  ctx.beginPath();
+  ctx.moveTo(hx - 8 * s, hy - 12 * s);
+  ctx.lineTo(hx + 18 * s, hy - 10 * s);
+  ctx.lineTo(hx + 26 * s, hy + 2 * s);
+  ctx.lineTo(hx + 20 * s, hy + 14 * s);
+  ctx.lineTo(hx - 8 * s, hy + 14 * s);
+  ctx.closePath();
+  ctx.fillStyle = head;
+  ctx.fill();
+  ctx.strokeStyle = '#2F3540';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.fillStyle = '#FFB547'; // lit viewport
+  ctx.fillRect(hx + 10 * s, hy - 4 * s, 12 * s, 2.2 * s);
+  ctx.strokeStyle = '#2F3540';
+  ctx.lineWidth = 2.2 * s;
+  ctx.beginPath(); // chin guns
+  ctx.moveTo(hx + 18 * s, hy + 11 * s);
+  ctx.lineTo(hx + 32 * s, hy + 11 * s);
+  ctx.stroke();
+  for (const l of placed) if (!l.far) walkerLeg(ctx, l.hip, l.foot, len, s, false);
+  // Snow kicked up when a foot comes down
+  for (const l of placed) {
+    if (l.u > 0.12) continue;
+    ctx.globalAlpha = (1 - l.u / 0.12) * 0.7;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.ellipse(l.foot[0], ground - 2 * s, (10 + l.u * 120) * s, (3 + l.u * 30) * s, 0, Math.PI, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  return { gun: [hx + 32 * s, hy + 11 * s], legs: placed.map((l) => knee(l.hip[0], l.hip[1], l.foot[0], l.foot[1], len)) };
+}
+
+/** Small two-seat airspeeder seen from the side, nose towards `dir`: wedge hull, canopy, orange stripes, split flaps. */
+function snowspeeder(ctx, x, y, s, dir, now) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir * s, s);
+  glow(ctx, -15, 0, 1.8 + Math.sin(now / 50) * 0.3, '#FFE2B8', 'rgba(255, 140, 60, .5)');
+  ctx.beginPath();
+  ctx.moveTo(16, 1);
+  ctx.lineTo(-6, -5);
+  ctx.lineTo(-15, -4);
+  ctx.lineTo(-15, 4);
+  ctx.lineTo(10, 4);
+  ctx.closePath();
+  const hull = ctx.createLinearGradient(0, -5, 0, 4);
+  hull.addColorStop(0, '#F2F4F7');
+  hull.addColorStop(1, '#9AA1AD');
+  ctx.fillStyle = hull;
+  ctx.fill();
+  ctx.strokeStyle = '#3B4250';
+  ctx.lineWidth = 0.7;
+  ctx.stroke();
+  ctx.fillStyle = '#E06A2C';
+  ctx.fillRect(-12, -1, 18, 1.4);
+  ctx.fillRect(4, 2, 6, 1.2);
+  ctx.beginPath(); // canopy
+  ctx.moveTo(4, -2.6);
+  ctx.lineTo(-4, -5.6);
+  ctx.lineTo(-8, -5);
+  ctx.lineTo(-6, -2.4);
+  ctx.closePath();
+  ctx.fillStyle = '#2B3A55';
+  ctx.fill();
+  ctx.strokeStyle = '#3B4250'; // split rear flaps
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-15, -4);
+  ctx.lineTo(-19, -6 - Math.sin(now / 300) * 1.5);
+  ctx.moveTo(-15, 4);
+  ctx.lineTo(-19, 6 + Math.sin(now / 300) * 1.5);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * The battle on the ice: the walker crosses the bottom of the canvas; snowspeeders circle it,
+ * passing behind then in front, fire red bolts, and one now and then trails a tow cable that wraps
+ * around its legs; the walker answers with green bolts from its head.
+ */
+function iceBattle(ctx, s, now, w, h) {
+  const ground = h * 0.92;
+  const scale = Math.min(1.25, h / 450);
+  const speed = (34 * scale) / (2600 * 0.75); // as fast as its planted feet slide back: they don't skid
+  icePlain(ctx, ground, w, h);
+  // The walker: walking, tripping over the cable, or gone (wreck burning) until the next one comes
+  const fall = s.fall && (now - s.fall.born) / 1000;
+  if (fall > 7) {
+    s.fall = null;
+    s.walkStart = now;
+    s.cableBorn = now + rand(14000, 22000);
+  }
+  let x = s.fall ? s.fall.x : (now - s.walkStart) * speed - 160 * scale;
+  if (x > w + 160 * scale) {
+    s.walkStart = now;
+    x = -160 * scale;
+  }
+  const orbit = (p) => {
+    const a = p.a + now * p.speed;
+    const depth = Math.sin(a); // < 0: behind the walker
+    return {
+      x: x + Math.cos(a) * p.rx * scale, y: ground - 70 * scale + Math.sin(a * 2) * 18 * scale - depth * 16 * scale,
+      depth, dir: -Math.sin(a) > 0 ? 1 : -1, size: scale * (0.95 + depth * 0.25),
+    };
+  };
+  for (const p of s.speeders) if (p.down && now - p.down > 9000) p.down = 0; // a new speeder joins
+  const ships = s.speeders.filter((p) => !p.down).map((p) => ({ p, o: orbit(p) }));
+  for (const { o } of ships) if (o.depth < 0) snowspeeder(ctx, o.x, o.y, o.size, o.dir, now);
+  let parts = null;
+  if (!s.fall || fall < 1.6) {
+    ctx.save();
+    if (s.fall) {
+      // It tips forward over its front feet
+      const pivot = x + 40 * scale;
+      ctx.translate(pivot, ground);
+      ctx.rotate(Math.min(1, fall / 1.6) ** 2 * 1.25);
+      ctx.translate(-pivot, -ground);
+    }
+    parts = walker(ctx, x, ground, scale, s.fall ? s.fall.born : now);
+    ctx.restore();
+  }
+  if (s.fall && fall >= 1.6 && !s.fall.boom) {
+    s.fall.boom = true;
+    for (let k = 0; k < 5; k++) {
+      s.booms.push({ x: x + rand(-50, 70) * scale, y: ground - rand(5, 45) * scale, r: rand(30, 55) * scale, born: now + k * 140, sparks: Array.from({ length: 12 }, () => rand(0, TAU)) });
+    }
+  }
+  if (s.fall && fall >= 1.6) {
+    // The wreck smokes on the snow
+    ctx.fillStyle = '#3B4250';
+    ctx.beginPath();
+    ctx.ellipse(x + 50 * scale, ground - 4 * scale, 70 * scale, 12 * scale, 0.05, Math.PI, TAU);
+    ctx.fill();
+    for (let k = 0; k < 6; k++) {
+      const age = ((now / 1000 + k * 0.4) % 2.4) / 2.4;
+      ctx.globalAlpha = (1 - age) * 0.35 * Math.min(1, (7 - fall) / 2);
+      ctx.fillStyle = '#5D6575';
+      ctx.beginPath();
+      ctx.arc(x + (30 + k * 8) * scale + age * 20 * scale, ground - 10 * scale - age * 90 * scale, (8 + age * 22) * scale, 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // Tow cable: a few loops across the legs at knee height, then a line to the speeder; four loops and it trips
+  const towing = ships[0];
+  if (parts && towing && !s.fall && now > s.cableBorn) {
+    const loops = Math.min(4, Math.floor((now - s.cableBorn) / 1500));
+    if (now - s.cableBorn > 7000) s.fall = { born: now, x };
+    ctx.strokeStyle = 'rgba(40, 40, 46, .85)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const ks = parts.legs;
+    for (let k = 0; k < loops; k++) {
+      ctx.moveTo(ks[0][0], ks[0][1] + k * 4 * scale);
+      ctx.lineTo(ks[3][0], ks[3][1] + k * 4 * scale + 3);
+    }
+    ctx.moveTo(ks[3][0], ks[3][1]);
+    ctx.lineTo(towing.o.x, towing.o.y);
+    ctx.stroke();
+  }
+  for (const { o } of ships) if (o.depth >= 0) snowspeeder(ctx, o.x, o.y, o.size, o.dir, now);
+  // Bolts: red from the speeders towards the walker's body, green from its head guns
+  if (ships.length && parts && Math.random() < 0.03) {
+    const { o } = pick(ships);
+    const d = Math.hypot(x - o.x, ground - 110 * scale - o.y) || 1;
+    s.iceBolts.push({ x: o.x, y: o.y, dx: ((x - o.x) / d) * 8, dy: ((ground - 110 * scale - o.y) / d) * 8, color: '#FF5C5C', life: Math.min(40, d / 8) });
+  }
+  if (ships.length && parts && Math.random() < 0.02) {
+    const { o } = pick(ships);
+    const [gx, gy] = parts.gun;
+    const d = Math.hypot(o.x - gx, o.y - gy) || 1;
+    s.iceBolts.push({ x: gx, y: gy, dx: ((o.x - gx) / d) * 9, dy: ((o.y - gy) / d) * 9 - 1.5, color: '#7CFF6B', life: 30 });
+  }
+  s.iceBolts = s.iceBolts.filter((b) => {
+    b.x += b.dx;
+    b.y += b.dy;
+    bolt(ctx, b);
+    // A green bolt that reaches a speeder brings it down
+    const hit = b.color === '#7CFF6B' && ships.find(({ p, o }) => !p.down && Math.hypot(o.x - b.x, o.y - b.y) < 12 * scale);
+    if (hit) {
+      hit.p.down = now;
+      s.booms.push({ x: hit.o.x, y: hit.o.y, r: 20 * scale, born: now, sparks: Array.from({ length: 9 }, () => rand(0, TAU)) });
+      return false;
+    }
+    return --b.life > 0;
+  });
+}
+
 function galaxy(ctx, s, now, w, h) {
   deepSpace(ctx, now, w, h);
   // Twin suns, low on the right
@@ -1964,18 +2657,29 @@ function galaxy(ctx, s, now, w, h) {
   glow(ctx, w * 0.965, h * 0.67, 6, '#FFE9B8', 'rgba(255, 120, 60, .3)');
   if (s.jump) hyperspace(ctx, s, now, w, h);
   else starDrift(ctx, s, now, w, h);
-  ringedPlanet(ctx, w * 0.07, h * 1.02, Math.min(w, h) * 0.3, now);
+  // Shooting stars, now and then
+  if (!s.jump && Math.random() < 0.004) s.meteors.push({ x: rand(0.1, 0.9) * w, y: rand(0, 0.4) * h, dx: rand(-1, 1) * w * 0.3, dy: h * rand(0.15, 0.3), born: now });
+  s.meteors = s.meteors.filter((m) => meteor(ctx, m, now));
+  // The ringed planet rises over the ice horizon
+  ringedPlanet(ctx, w * 0.08, h * 0.86, Math.min(w, h) * 0.3, now);
   if (s.cruiser) {
     // It comes out of hyperspace fast, brakes, then drifts slowly across the top and leaves
-    const L = Math.min(w * 0.5, 480);
+    const L = Math.min(w * 0.55, 560);
     const age = now - s.cruiser.born;
     const braking = Math.min(1, age / 2500);
-    const x = w * 0.62 + (1 - braking) ** 3 * w * 0.9 - Math.max(0, age - 2500) * 0.012;
-    cruiser(ctx, x, h * 0.16, L, now);
+    const x = w * 0.6 + (1 - braking) ** 3 * w * 0.9 - Math.max(0, age - 2500) * 0.012;
+    cruiser(ctx, s.cruiser, x, h * 0.17, L, now);
     if (x + L < -20) s.cruiser = null;
   }
-  if (s.jump) return; // in hyperspace, no fighters
-  if (!s.chase && now > s.nextChase) s.chase = { dir: pick([-1, 1]), y: rand(0.25, 0.8) * h, born: now, speed: rand(0.16, 0.22) };
+  iceBattle(ctx, s, now, w, h);
+  s.booms = s.booms.filter((b) => explosion(ctx, b, now));
+  if (s.jump) return; // in hyperspace, no chase in the sky
+  if (!s.chase && now > s.nextChase) {
+    s.chase = {
+      dir: pick([-1, 1]), y: rand(0.22, 0.5) * h, born: now, speed: rand(0.16, 0.22), lead: s.chases++ % 2 ? 'xwing' : 'freighter',
+      hunters: [{ back: 130, lift: 0.5 }, { back: 200, lift: 1 }],
+    };
+  }
   if (s.chase) chase(ctx, s, now, w, h);
   if (!s.chase && now > s.nextJump) s.jump = { born: now };
   intro(ctx, s, now, w, h);
@@ -2317,7 +3021,10 @@ export const SCENES = {
   galaxie: {
     make: (w, h) => ({
       born: Date.now(), stars: Array.from({ length: Math.round((w * h) / 2600) }, () => spaceStar(w, h)),
-      chase: null, nextChase: Date.now() + 4000, bolts: [], jump: null, nextJump: Date.now() + 20000, cruiser: null,
+      chase: null, chases: 0, nextChase: Date.now() + 3000, bolts: [], jump: null, nextJump: Date.now() + 14000,
+      cruiser: { born: Date.now() - 2500, plates: hullPlates(), shots: [] }, meteors: [], booms: [],
+      speeders: [{ a: 0, speed: 0.0011, rx: 150 }, { a: 2.4, speed: 0.0008, rx: 190 }, { a: 4.2, speed: 0.00095, rx: 120 }],
+      iceBolts: [], cableBorn: Date.now() + 8000, walkStart: Date.now() - 4000, fall: null,
     }),
     draw: (ctx, s, now, w, h) => galaxy(ctx, s, now, w, h),
   },
