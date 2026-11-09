@@ -70,16 +70,31 @@ export function loadLocalTree() {
   S.unions = data.unions;
 }
 
-/** Saves the open tree in the browser. */
+// Browsers keep about 5 million characters per site: past this size, the user is warned once
+export const NEARLY_FULL = 4_000_000;
+let warnedFull = false;
+
+const isQuotaError = (e) => !!e && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014);
+
+/**
+ * Saves the open tree in the browser. Throws if the browser refused it, so the action
+ * doesn't claim the change was saved.
+ */
 export function saveBrowserTree() {
+  const json = JSON.stringify({
+    people: Object.fromEntries(S.people),
+    unions: Object.fromEntries(S.unions),
+  });
   try {
-    localStorage.setItem(TREE_KEY + S.tree, JSON.stringify({
-      people: Object.fromEntries(S.people),
-      unions: Object.fromEntries(S.unions),
-    }));
+    localStorage.setItem(TREE_KEY + S.tree, json);
     writeLocalTrees();
   } catch (e) {
-    toast(t('st.browserRefused'), true);
+    toast(t(isQuotaError(e) ? 'st.browserFull' : 'st.browserRefused'), true);
+    throw e;
+  }
+  if (json.length > NEARLY_FULL && !warnedFull) {
+    warnedFull = true;
+    toast(t('st.browserNearlyFull'), true);
   }
 }
 

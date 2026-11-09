@@ -478,6 +478,8 @@ const FR = {
 
   // Saving
   'st.browserRefused': 'Ce navigateur refuse d’enregistrer les données. Exportez votre arbre pour le garder.',
+  'st.browserFull': 'Non enregistré : le navigateur n’a plus de place pour cet arbre (photos et documents trop lourds). Exportez-le, puis lancez node server.js pour garder les photos dans des fichiers.',
+  'st.browserNearlyFull': 'Le navigateur sera bientôt plein pour cet arbre. Exportez-le, puis lancez node server.js pour garder les photos dans des fichiers.',
   'st.readFailed': 'Impossible de lire cet arbre. Le serveur local est-il toujours lancé ?',
   'st.photoFailed': 'L’enregistrement de la photo a échoué. Le serveur local est-il toujours lancé ?',
   'st.fileFailed': 'L’enregistrement dans data/arbres/ a échoué. Le serveur local est-il toujours lancé ?',
@@ -1245,6 +1247,8 @@ const EN = {
   'img.unreadable': 'This image could not be read.',
 
   'st.browserRefused': 'This browser refuses to store data. Export your tree to keep it.',
+  'st.browserFull': 'Not saved: the browser has no room left for this tree (photos and documents too large). Export it, then run node server.js to keep photos as files.',
+  'st.browserNearlyFull': 'The browser will soon be full for this tree. Export it, then run node server.js to keep photos as files.',
   'st.readFailed': 'This tree could not be read. Is the local server still running?',
   'st.photoFailed': 'Saving the photo failed. Is the local server still running?',
   'st.fileFailed': 'Saving to data/arbres/ failed. Is the local server still running?',

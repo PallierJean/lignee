@@ -11,6 +11,7 @@ import {
 } from '../js/services/storage.js';
 import { PREF_KEY, TREES_KEY, TREE_KEY } from '../js/config.js';
 import { loadTree, person, resetApp } from './helpers.js';
+import { NEARLY_FULL, loadLocalTree } from '../js/services/storage/local.js';
 
 const el = (id) => document.getElementById(id);
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
@@ -169,10 +170,45 @@ describe('mode navigateur', () => {
     assert.ok(S.trees.size >= 1);
     const set = localStorage.setItem;
     localStorage.setItem = () => { throw new Error('plein'); };
-    saveLocal();
-    assert.match(el('toast').textContent, /refuse/);
-    savePrefs();
-    localStorage.setItem = set;
+    try {
+      assert.throws(() => saveLocal(), /plein/);
+      assert.match(el('toast').textContent, /refuse/);
+      savePrefs();
+    } finally {
+      localStorage.setItem = set;
+    }
+  });
+
+  test('browser full: not saved, the change is undone in memory, with a clear message', async () => {
+    S.mode = 'local';
+    loadLocal();
+    await opSet('people', 'kept', { given: 'Kept' });
+    const set = localStorage.setItem;
+    localStorage.setItem = () => { throw Object.assign(new Error('quota'), { name: 'QuotaExceededError' }); };
+    try {
+      await assert.rejects(opSet('people', 'lost', { given: 'Lost' }));
+      await assert.rejects(opUpdate('people', 'kept', { given: 'Changed' }));
+      await assert.rejects(opDelete('people', 'kept'));
+      assert.match(el('toast').textContent, /plus de place/);
+    } finally {
+      localStorage.setItem = set;
+    }
+    assert.equal(S.people.has('lost'), false);
+    assert.equal(S.people.get('kept').given, 'Kept');
+    loadLocalTree();
+    assert.equal(S.people.get('kept').given, 'Kept');
+    assert.equal(S.people.has('lost'), false);
+  });
+
+  test('browser nearly full: one warning', async () => {
+    S.mode = 'local';
+    loadLocal();
+    await opSet('people', 'big', { given: 'Big', notes: 'x'.repeat(NEARLY_FULL) });
+    assert.match(el('toast').textContent, /bientôt plein/);
+    el('toast').textContent = '';
+    await opUpdate('people', 'big', { given: 'Bigger' });
+    assert.equal(el('toast').textContent, '');
+    await opDelete('people', 'big');
   });
 });
 
