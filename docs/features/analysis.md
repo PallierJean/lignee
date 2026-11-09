@@ -42,7 +42,9 @@
   Routes du serveur local qui relaient ces appels : [Relais vers le fichier des décès](../insee.md).
 - **Actes** (avec `npm start` seulement, comme la vue INSEE) : les actes de décès à demander aux
   mairies. Reprend les fiches vérifiées par l'INSEE (acte certain, probable ou confirmé) qui ont un
-  numéro d'acte, regroupées par mairie à contacter aujourd'hui : un décès dans une commune qui a
+  numéro d'acte, et les décès d'avant 1970 que l'INSEE ne connaît pas, d'après les fiches (date sûre,
+  commune en France ; sans numéro : la mairie retrouve l'acte avec le nom, la date et le lieu,
+  `recordDeathAct`), regroupés par mairie à contacter aujourd'hui : un décès dans une commune qui a
   fusionné depuis (commune nouvelle, commune déléguée, changement de nom) est rangé sous la commune
   d'aujourd'hui, qui garde ses registres, et la ligne rappelle la commune du décès
   (`js/data/commune-changes.js`, chargé à l'ouverture de la vue). Mairies rangées par département,

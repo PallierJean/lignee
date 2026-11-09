@@ -15,7 +15,7 @@ import { mapView, locateMissing } from './places.js';
 import { placesByDepartment, parsePlace } from '../model/places.js';
 import {
   loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText, loadCommuneChanges, communeChangesLoaded, currentCommune,
-  officialCommune,
+  officialCommune, cityDepartments,
 } from '../model/communes.js';
 import { mediaGrid } from './record.js';
 import { toast } from './toast.js';
@@ -24,8 +24,10 @@ import { buildActsCsv } from '../services/csv.js';
 import { findTownHall, townHallSearchUrl } from '../services/town-hall.js';
 import { CC_KEY } from '../config.js';
 import { sleep } from '../utils/helpers.js';
-import { longDate } from '../utils/dates.js';
-import { inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune } from '../model/insee.js';
+import { longDate, dateParts } from '../utils/dates.js';
+import {
+  inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune, recordDeathAct,
+} from '../model/insee.js';
 import {
   inseeAvailable, inseePending, inseeResults, inseeMatch, checkInsee, forgetInsee, inseeStatus, inseeRegister, inseeAuth,
 } from '../services/insee.js';
@@ -207,19 +209,38 @@ function actGroups() {
     const m = inseeMatch(id);
     if (m && m.level !== 'lead' && m.act.certificate) rows.push({ id, act: m.act });
   }
+  // Deaths before 1970, which INSEE can't have: from the records, without a number
+  const unique = (city) => {
+    const depts = cityDepartments(city);
+    return depts.length === 1 ? depts[0] : '';
+  };
+  const known = new Set(rows.map((r) => r.id));
+  for (const [id, p] of S.people) {
+    const act = !known.has(id) && recordDeathAct(p, unique);
+    if (act) rows.push({ id, act });
+  }
   return deathActsByCommune(rows, (death) => currentCommune(death.city, death.dept));
 }
 
 /** A certificate in plain text, as written in a request to the town hall; `former`: town of death if since merged. */
-const actRequestLine = (a, former) => t('acts.line', a.last, a.first.join(' '), longDate(actDateText(a.birthDate)), longDate(actDateText(a.deathDate)), a.certificate, former);
+const bornOf = (a) => longDate(a.record ? a.birthText : actDateText(a.birthDate));
+const diedOf = (a) => longDate(a.record ? a.deathText : actDateText(a.deathDate));
+/** "le 05 Juin 1940", or "en 1930" / "en Mars 1930" when the day isn't known (record dates). */
+const onDate = (text) => (text ? t(dateParts(text) && dateParts(text).d ? 'acts.on' : 'acts.in', longDate(text)) : '');
+const actRequestLine = (a, former) => (a.record
+  ? t('acts.lineOld', a.last, a.first.join(' '), onDate(a.birthText), onDate(a.deathText), former, a.married)
+  : t('acts.line', a.last, a.first.join(' '), bornOf(a), diedOf(a), a.certificate, former));
 
 function actsView() {
   if (!inseeAvailable()) return inseeLocal();
   if (!communeChangesLoaded()) loadCommuneChanges().then(renderAnalysis); // today's communes, then redraw
+  if (!communesLoaded()) loadCommunes().then(renderAnalysis); // departments of places written without one
   const groups = actGroups();
   if (!groups.length) return `<p class="nofocus">${t('acts.none')}</p>`;
   const total = groups.reduce((n, g) => n + g.rows.length, 0);
+  const old = groups.reduce((n, g) => n + g.rows.filter((r) => r.act.record).length, 0);
   return `<p class="hint an-hint">${t('acts.hint', total, groups.length)}</p>`
+    + (old ? `<p class="hint an-hint">${t('acts.oldHint', old)}</p>` : '')
     + `<label class="fld acts-cc"><span>${t('acts.cc')}</span><input type="email" id="actsCc" autocomplete="email" value="${esc(ccEmail())}" placeholder="${t('acts.ccPlaceholder')}"></label>`
     + `<p class="hint an-hint">${t('acts.ccHint')}</p>`
     + `<div class="row-btns reg-tools"><button class="btn small" type="button" data-act="acts-copy">${t('acts.copyAll')}</button>`
@@ -228,7 +249,8 @@ function actsView() {
     + (hallsBusy ? `<p class="hint an-hint">${t('acts.hallsProgress', hallsBusy.done, hallsBusy.total)}</p>` : '')
     + readyBlock(groups)
     + groups.map((g, i) => {
-      const rows = g.rows.map(({ id, act, former }) => `<li>${personLink(id)} <small>${t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small></li>`).join('');
+      const rows = g.rows.map(({ id, act, former }) => `<li>${personLink(id)} <small>${act.record
+        ? t('acts.rowOld', esc(onDate(act.deathText)), esc(former)) : t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small></li>`).join('');
       return `<section class="rel acts-town"><h3>${esc(g.place || t('acts.unknown'))} <span class="n">${g.rows.length}</span></h3>`
         + (g.former.length ? `<p class="hint an-hint">${t('acts.former', esc(g.former.join(', ')))}</p>` : '')
         + `<ul class="ins-diffs">${rows}</ul>`
@@ -273,7 +295,7 @@ export function setActsCc(value) {
 /** Prefilled e-mail asking town hall `g` for its certificates, with the user's address in copy. */
 function mailTo(email, g) {
   const lines = g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former)).join('\n');
-  const body = t('acts.mailBody', g.place, lines).replace(/\n/g, '\r\n');
+  const body = t('acts.mailBody', g.place, lines, g.rows.some((r) => r.act.record)).replace(/\n/g, '\r\n');
   const cc = ccEmail();
   return `mailto:${email}?subject=${encodeURIComponent(t('acts.mailSubject'))}${cc ? '&cc=' + encodeURIComponent(cc) : ''}&body=${encodeURIComponent(body)}`;
 }
@@ -380,7 +402,7 @@ const townText = (g) => [t('acts.townHall', g.place || t('acts.unknown')), ...g.
  * the lists of every town, one after the other.
  */
 export async function copyActs(i) {
-  await loadCommuneChanges();
+  await Promise.all([loadCommunes(), loadCommuneChanges()]);
   const groups = actGroups();
   const chosen = i === undefined ? groups : groups.slice(i, i + 1);
   if (!chosen.length) return;
@@ -394,11 +416,11 @@ export async function copyActs(i) {
 
 /** Downloads every certificate to request as a CSV file, for a spreadsheet. */
 export async function exportActsCsv() {
-  await loadCommuneChanges();
+  await Promise.all([loadCommunes(), loadCommuneChanges()]);
   const groups = actGroups();
   if (!groups.length) return;
   const name = `${fileBase()}-${t('acts.fileSuffix')}.csv`;
-  downloadBlob(name, buildActsCsv(groups, (d) => longDate(actDateText(d))), 'text/csv;charset=utf-8');
+  downloadBlob(name, buildActsCsv(groups, { born: bornOf, died: diedOf }), 'text/csv;charset=utf-8');
   toast(t('acts.saved', name));
 }
 

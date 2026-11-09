@@ -35,9 +35,9 @@ export function buildRegisterCsv() {
 
 /**
  * Death certificates to request as CSV, one row per certificate: groups from deathActsByCommune.
- * `date` turns a certificate date (yyyymmdd) into text.
+ * `dates.born(act)` and `dates.died(act)` give its dates as text.
  */
-export function buildActsCsv(groups, date) {
+export function buildActsCsv(groups, dates) {
   const sep = t('csv.sep');
   const rows = [[
     t('acts.cTownHall'), t('acts.cTown'), t('acts.cLast'), t('acts.cFirst'), t('acts.cBorn'), t('acts.cDied'), t('acts.cNumber'), t('acts.cRecord'),
@@ -45,7 +45,7 @@ export function buildActsCsv(groups, date) {
   for (const g of groups) {
     const hall = g.place || t('acts.unknown');
     for (const { id, act, former } of g.rows) {
-      rows.push([hall, former || hall, act.last, act.first.join(' '), date(act.birthDate), date(act.deathDate), act.certificate, P(id) ? fullName(P(id)) : '']);
+      rows.push([hall, former || hall, act.married ? `${act.last} (${act.married})` : act.last, act.first.join(' '), dates.born(act), dates.died(act), act.certificate, P(id) ? fullName(P(id)) : '']);
     }
   }
   return '\ufeff' + rows.map((r) => r.map((v) => cell(v, sep)).join(sep)).join('\r\n') + '\r\n';

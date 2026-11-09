@@ -239,10 +239,37 @@ export function matchDeath(id, acts) {
 /** A certificate's place, written like the tree's: "Tulle (19)", "Fribourg, Allemagne". */
 export const actPlace = (l) => formatPlace({ city: l.city, dept: isFrance(l.country) ? l.dept : '', country: l.country });
 
+/** "yyyymmdd" of a record's date, missing month or day as 00 (for sorting), or ''. */
+const sortable = (d) => (d ? String(d.y) + String(d.m || 0).padStart(2, '0') + String(d.d || 0).padStart(2, '0') : '');
+
+/**
+ * A death before 1970, which INSEE can't have, as a certificate to request without a number:
+ * { first, last, maiden, sex, birthDate, deathDate (yyyymmdd, to sort), birthText, deathText,
+ * death: { city, dept, country }, certificate: '', record: true }, or null (died since 1970, no
+ * known date or town, or abroad). `deptOf(city)` gives the department when the place has none.
+ */
+export function recordDeathAct(p, deptOf = () => '') {
+  const died = dateParts(p.deathDate);
+  if (!died || died.y >= INSEE_FROM || died.q) return null;
+  const place = parsePlace(p.deathPlace);
+  if (!place.city || !isFrance(place.country)) return null;
+  const maiden = p.sex === 'F' ? String(p.maidenName || '').trim() : '';
+  return {
+    first: String(p.given || '').trim().split(/\s+/).filter(Boolean),
+    last: maiden || String(p.surname || '').trim(),
+    married: maiden && maiden !== String(p.surname || '').trim() ? String(p.surname || '').trim() : '',
+    sex: p.sex || '',
+    birthDate: sortable(dateParts(p.birthDate)), deathDate: sortable(died),
+    birthText: String(p.birthDate || '').trim(), deathText: String(p.deathDate || '').trim(),
+    death: { city: place.city, dept: place.dept || deptOf(place.city) || '', country: '' },
+    certificate: '', record: true,
+  };
+}
+
 /**
  * Death certificates to request, grouped by the town hall that holds them today:
  * [{ place, city, dept, former: [places], rows: [{ id, act, former }] }] (dept empty abroad). `rows` lists [{ id, act }]; those
- * without a certificate number are left out. `today(death)` gives today's commune { city, dept }
+ * without a certificate number are left out, except deaths before 1970 taken from the records (recordDeathAct). `today(death)` gives today's commune { city, dept }
  * of a former one (merged, renamed), or null: its deaths go with today's commune, and `former`
  * keeps where they occurred. Towns sorted by department then name, abroad then an unknown town
  * last; within a town, by date of death.
@@ -250,7 +277,7 @@ export const actPlace = (l) => formatPlace({ city: l.city, dept: isFrance(l.coun
 export function deathActsByCommune(rows, today = () => null) {
   const groups = new Map();
   for (const row of rows) {
-    if (!row.act.certificate) continue;
+    if (!row.act.certificate && !row.act.record) continue;
     const death = row.act.death || {};
     const now = death.city && isFrance(death.country) ? today(death) : null;
     const where = now ? { ...death, ...now } : death;
