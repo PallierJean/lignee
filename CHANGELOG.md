@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.13](https://github.com/PallierJean/lignee/compare/v1.20.12...v1.20.13) (2026-11-09)
+
+### Code Refactoring
+
+* Split the interface texts by language ([5ec3660](https://github.com/PallierJean/lignee/commit/5ec36601859de8b68cc55dde120d046ddbb3efff))
+
+---
+
+### Refontes
+
+* Séparer les textes de l'interface par langue ([5ec3660](https://github.com/PallierJean/lignee/commit/5ec36601859de8b68cc55dde120d046ddbb3efff))
+
 ## [1.20.12](https://github.com/PallierJean/lignee/compare/v1.20.11...v1.20.12) (2026-11-09)
 
 ### Performance Improvements

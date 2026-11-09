@@ -1,6 +1,6 @@
 {
   "name": "lignee",
-  "version": "1.20.12",
+  "version": "1.20.13",
   "private": true,
   "type": "module",
   "description": "Family tree web application: records, unions, Sosa numbers, register, GEDCOM import/export.",
