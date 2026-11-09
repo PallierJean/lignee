@@ -15,7 +15,7 @@ export const PAD = 48;  // margin around the tree
 export const ZOOMS = [0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.6, 2, 2.5, 3];
 
 // Colour themes (css/tokens.css); "auto" follows the system, "season" changes with the date
-export const THEMES = ['auto', 'season', 'light', 'dark', 'noel', 'halloween', 'printemps', 'ete', 'automne', 'maraudeur', 'constellations', 'porcelaine', 'matrix', 'grandline', 'daltonisme', 'contraste', 'contraste-sombre'];
+export const THEMES = ['auto', 'season', 'light', 'dark', 'noel', 'halloween', 'printemps', 'ete', 'automne', 'maraudeur', 'constellations', 'porcelaine', 'matrix', 'grandline', 'galaxie', 'daltonisme', 'contraste', 'contraste-sombre'];
 // Interface text size (data-text attribute on <html>, css/base.css); the tree has its own zoom
 export const TEXT_SIZES = ['normal', 'large', 'xlarge'];
 

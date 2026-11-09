@@ -8,9 +8,12 @@
  * their coloured leaves in gusts of wind; on Grand Line, a manga page (ink
  * lines, screentone, sound effects) where a pirate ship sails, chased by the navy firing its
  * cannons, whose rubber-armed sailor catches his straw hat; islands, gulls and a
- * sea monster. Each object has its own size, speed and sway,
- * drawn at random.
+ * sea monster; in the faraway galaxy, drifting stars and nebulae, a ringed planet and twin
+ * suns, starfighter chases with laser bolts, jumps to hyperspace and a dagger-shaped cruiser.
+ * Each object has its own size, speed and sway, drawn at random.
  */
+
+import { t } from '../../i18n.js';
 
 const TAU = 2 * Math.PI;
 
@@ -1571,6 +1574,413 @@ function grandLine(ctx, s, now, w, h) {
   });
 }
 
+/* ---------- Faraway galaxy: deep space, starfighters, hyperspace ---------- */
+
+const STAR_TINTS = ['#FFFFFF', '#FFFFFF', '#CFE0FF', '#FFF1C9', '#BFD4FF', '#FFD2D2'];
+const NEBULAE = [
+  { x: 0.78, y: 0.3, r: 0.38, color: 'rgba(110, 60, 200, .2)', phase: 0 },
+  { x: 0.25, y: 0.2, r: 0.3, color: 'rgba(40, 120, 220, .16)', phase: 2 },
+  { x: 0.55, y: 0.8, r: 0.32, color: 'rgba(210, 70, 130, .1)', phase: 4 },
+];
+
+/** A star at depth `z` (0.15 far, 1 near): the near ones are bigger, brighter and drift faster. */
+const spaceStar = (w, h) => ({ x: rand(0, w), y: rand(0, h), z: rand(0.15, 1), phase: rand(0, TAU), color: pick(STAR_TINTS) });
+
+/** Deep space: dark blue to black, and slow nebulae. */
+function deepSpace(ctx, now, w, h) {
+  const sky = ctx.createRadialGradient(w * 0.6, h * 0.35, 0, w * 0.6, h * 0.35, Math.max(w, h) * 0.9);
+  sky.addColorStop(0, '#101A44');
+  sky.addColorStop(0.55, '#070B22');
+  sky.addColorStop(1, '#02030A');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, h);
+  for (const n of NEBULAE) {
+    const x = n.x * w + Math.sin(now / 40000 + n.phase) * 30;
+    const y = n.y * h + Math.cos(now / 50000 + n.phase) * 20;
+    const r = n.r * Math.max(w, h);
+    const glow = ctx.createRadialGradient(x, y, 0, x, y, r);
+    glow.addColorStop(0, n.color);
+    glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+  }
+}
+
+/** The stars drift to the left, each at the speed of its depth, and twinkle. */
+function starDrift(ctx, s, now, w, h) {
+  for (const st of s.stars) {
+    st.x -= st.z * 0.12;
+    if (st.x < -2) Object.assign(st, { x: w + 2, y: rand(0, h) });
+    ctx.globalAlpha = 0.35 + 0.65 * st.z * (0.75 + 0.25 * Math.sin((now / 500) * st.z + st.phase));
+    ctx.fillStyle = st.color;
+    ctx.beginPath();
+    ctx.arc(st.x, st.y, 0.4 + st.z * 1.1, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/** Glowing disc: a sun, an engine, the tip of a bolt. */
+function glow(ctx, x, y, r, core, halo) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3);
+  g.addColorStop(0, halo);
+  g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - r * 3, y - r * 3, r * 6, r * 6);
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.fillStyle = core;
+  ctx.fill();
+}
+
+/** Tilted rings: the back half before the globe, the front half after it. */
+function rings(ctx, r, a0, a1) {
+  for (const [k, color, width] of [[1.45, 'rgba(233, 207, 166, .6)', 5], [1.62, 'rgba(201, 165, 126, .4)', 8], [1.8, 'rgba(235, 217, 188, .28)', 3]]) {
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * k, r * k * 0.28, 0, a0, a1);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.stroke();
+  }
+}
+
+/** Ringed gas giant, half out of the frame, with its moon going round it. */
+function ringedPlanet(ctx, x, y, r, now) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-0.32);
+  rings(ctx, r, Math.PI, TAU);
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 1.07, 0, TAU);
+  ctx.fillStyle = 'rgba(127, 168, 255, .12)'; // atmosphere
+  ctx.fill();
+  const body = ctx.createRadialGradient(-r * 0.35, -r * 0.35, r * 0.1, 0, 0, r);
+  body.addColorStop(0, '#E8B98A');
+  body.addColorStop(0.6, '#B4704A');
+  body.addColorStop(1, '#4A2228');
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, TAU);
+  ctx.fillStyle = body;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  // Cloud bands, drifting slowly
+  [[-0.62, 0.12, '#F3D3A6'], [-0.36, 0.2, '#8C4B33'], [-0.05, 0.09, '#F6E2C0'], [0.15, 0.24, '#A65E3C'], [0.5, 0.11, '#E8C090']].forEach(([at, size, color], i) => {
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(Math.sin(now / 9000 + i) * r * 0.05, at * r, r * 1.2, size * r * 0.5, 0, 0, TAU);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  const night = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.75, 0, 0, r * 1.05);
+  night.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  night.addColorStop(1, 'rgba(2, 3, 10, .6)');
+  ctx.fillStyle = night;
+  ctx.fillRect(-r, -r, 2 * r, 2 * r);
+  ctx.restore();
+  rings(ctx, r, 0, Math.PI);
+  ctx.restore();
+  // The moon: in front of the planet on half of its orbit, hidden behind it on the other half
+  const a = now / 14000;
+  if (Math.sin(a) > -0.2) {
+    const mx = x + Math.cos(a) * r * 1.9;
+    const my = y - r * 0.55 + Math.sin(a) * r * 0.35;
+    ctx.beginPath();
+    ctx.arc(mx, my, r * 0.07, 0, TAU);
+    ctx.fillStyle = '#B9C2CF';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(mx + r * 0.025, my + r * 0.02, r * 0.065, 0, TAU);
+    ctx.fillStyle = 'rgba(2, 3, 10, .45)';
+    ctx.fill();
+  }
+}
+
+/**
+ * Dagger-shaped capital ship, nose at (x, y) pointing left: light upper face, dark lower
+ * face, stepped superstructure, bridge tower with its two domes, blue engines at the stern.
+ */
+function cruiser(ctx, x, y, L, now) {
+  const H = L * 0.22;
+  const top = (at) => -H * 0.5 * at;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = '#3B4250';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(L, top(1));
+  ctx.lineTo(L, 0);
+  ctx.closePath();
+  ctx.fillStyle = '#A3ACBA';
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(L, 0);
+  ctx.lineTo(L, H * 0.45);
+  ctx.closePath();
+  ctx.fillStyle = '#5D6575';
+  ctx.fill();
+  ctx.stroke();
+  // Hull plates
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  for (const k of [0.3, 0.45, 0.6, 0.75, 0.9]) {
+    ctx.moveTo(L * k, top(k) + 3);
+    ctx.lineTo(L * k, H * 0.45 * k - 3);
+  }
+  ctx.stroke();
+  // Superstructure, in steps up to the bridge tower
+  ctx.lineWidth = 0.8;
+  for (let i = 0; i < 4; i++) {
+    const at = 0.58 + i * 0.085;
+    const tall = H * (0.07 + i * 0.05);
+    ctx.fillStyle = '#858E9D';
+    ctx.fillRect(L * at, top(at) - tall, L * 0.13, tall + 4);
+    ctx.strokeRect(L * at, top(at) - tall, L * 0.13, tall + 4);
+  }
+  ctx.fillStyle = '#8C95A4';
+  ctx.fillRect(L * 0.9, top(1) - H * 0.45, L * 0.045, H * 0.4);
+  ctx.fillStyle = '#A3ACBA';
+  ctx.fillRect(L * 0.86, top(1) - H * 0.52, L * 0.12, H * 0.09);
+  for (const at of [0.865, 0.975]) {
+    ctx.beginPath();
+    ctx.arc(L * at, top(1) - H * 0.55, H * 0.045, 0, TAU);
+    ctx.fill();
+    ctx.stroke();
+  }
+  // Running lights, blinking
+  ctx.fillStyle = Math.sin(now / 400) > 0 ? '#FFE9A8' : 'rgba(255, 233, 168, .3)';
+  for (const k of [0.2, 0.4, 0.55, 0.7]) ctx.fillRect(L * k, -1, 1.6, 1.6);
+  for (const dy of [-0.3, -0.05, 0.2]) glow(ctx, L + 2, H * dy, H * 0.08, '#E6F6FF', 'rgba(92, 200, 255, .55)');
+  ctx.restore();
+}
+
+/** Starfighter with wings in an X, seen from above, nose towards `dir` (1: right). */
+function xFighter(ctx, x, y, s, dir, now) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir * s, s);
+  for (const side of [-1, 1]) {
+    // Wing, laser cannon at its tip, red stripe
+    ctx.beginPath();
+    ctx.moveTo(-13, side * 2);
+    ctx.lineTo(-3, side * 2);
+    ctx.lineTo(-5, side * 17);
+    ctx.lineTo(-12, side * 17);
+    ctx.closePath();
+    inked(ctx, '#D7DBE2', 0.8);
+    ctx.fillStyle = '#C0392B';
+    ctx.fillRect(-10, side > 0 ? 9 : -11, 4, 2);
+    ctx.fillStyle = '#9AA1AD';
+    ctx.fillRect(-13, side * 17 - 1, 25, 2);
+    // Engines: four, two by wing pair
+    glow(ctx, -15, side * 5, 1.6 + Math.sin(now / 60 + side) * 0.3, '#FFE2B8', 'rgba(255, 120, 60, .55)');
+  }
+  ctx.beginPath();
+  ctx.moveTo(-16, -3);
+  ctx.lineTo(8, -2.5);
+  ctx.lineTo(22, 0);
+  ctx.lineTo(8, 2.5);
+  ctx.lineTo(-16, 3);
+  ctx.closePath();
+  inked(ctx, '#ECEEF1', 0.8);
+  ctx.fillStyle = '#C0392B';
+  ctx.fillRect(10, -1.2, 5, 2.4);
+  ctx.beginPath();
+  ctx.ellipse(1, 0, 4, 1.8, 0, 0, TAU);
+  ctx.fillStyle = '#2B3A55';
+  ctx.fill();
+  ctx.restore();
+}
+
+/** Tall hexagonal wing panel, seen at an angle: frame and spokes. */
+function hexPanel(ctx, cx, rx, ry) {
+  ctx.beginPath();
+  for (let k = 0; k < 6; k++) {
+    const a = (k * Math.PI) / 3 + Math.PI / 6;
+    ctx[k ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * rx, Math.sin(a) * ry);
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#2E333D';
+  ctx.fill();
+  ctx.strokeStyle = '#9AA1AD';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  for (let k = 0; k < 3; k++) {
+    const a = (k * Math.PI) / 3 + Math.PI / 6;
+    ctx.moveTo(cx + Math.cos(a) * rx, Math.sin(a) * ry);
+    ctx.lineTo(cx - Math.cos(a) * rx, -Math.sin(a) * ry);
+  }
+  ctx.stroke();
+}
+
+/** Twin-panel fighter: round cockpit between two hexagonal wings. */
+function hexFighter(ctx, x, y, s) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  hexPanel(ctx, -11, 5, 17);
+  ctx.fillStyle = '#5D6575';
+  ctx.fillRect(-10, -1.5, 20, 3);
+  ctx.beginPath();
+  ctx.arc(0, 0, 6, 0, TAU);
+  inked(ctx, '#7B8494', 0.8);
+  ctx.beginPath();
+  ctx.arc(0, 0, 3.4, 0, TAU);
+  ctx.fillStyle = '#111827';
+  ctx.fill();
+  ctx.strokeStyle = '#4B5563';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  for (let k = 0; k < 4; k++) {
+    const a = (k * Math.PI) / 4;
+    ctx.moveTo(Math.cos(a) * 3.4, Math.sin(a) * 3.4);
+    ctx.lineTo(-Math.cos(a) * 3.4, -Math.sin(a) * 3.4);
+  }
+  ctx.stroke();
+  hexPanel(ctx, 11, 5, 17);
+  ctx.restore();
+}
+
+/** Laser bolt: a short glowing line. */
+function bolt(ctx, b) {
+  ctx.save();
+  ctx.strokeStyle = b.color;
+  ctx.shadowColor = b.color;
+  ctx.shadowBlur = 8;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(b.x, b.y);
+  ctx.lineTo(b.x - b.dx * 2.2, b.y - b.dy * 2.2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * A chase: the X-wing fighter leads, two twin-panel fighters follow it and fire green
+ * bolts that miss; now and then it answers with a red one over its shoulder.
+ */
+function chase(ctx, s, now, w, h) {
+  const c = s.chase;
+  const run = (now - c.born) * c.speed;
+  const lead = c.dir > 0 ? run - 80 : w + 80 - run;
+  const at = (back, lift) => {
+    const x = lead - c.dir * back;
+    return [x, c.y + Math.sin((x / w) * TAU * 1.3 + lift) * h * 0.06];
+  };
+  const scale = Math.min(1.5, h / 420);
+  const hunters = [at(110 * scale, 0.5), at(175 * scale, 1)];
+  if (Math.random() < 0.06) {
+    const [x, y] = pick(hunters);
+    s.bolts.push({ x: x + c.dir * 14, y: y + rand(-4, 4), dx: c.dir * 9, dy: rand(-0.6, 0.6), color: '#7CFF6B', life: 70 });
+  }
+  if (Math.random() < 0.012) {
+    const [x, y] = at(0, 0);
+    s.bolts.push({ x, y, dx: -c.dir * 7, dy: rand(-1.5, 1.5), color: '#FF5C5C', life: 40 });
+  }
+  s.bolts = s.bolts.filter((b) => {
+    b.x += b.dx;
+    b.y += b.dy;
+    bolt(ctx, b);
+    return --b.life > 0;
+  });
+  // The leader banks along its path: nose up when it climbs
+  const [x0, y0] = at(0, 0);
+  const behind = at(4, 0)[1];
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.rotate(c.dir * Math.atan((y0 - behind) / 4) * 0.5);
+  xFighter(ctx, 0, 0, scale, c.dir, now);
+  ctx.restore();
+  for (const [x, y] of hunters) hexFighter(ctx, x, y, scale * 0.95);
+  const last = hunters[1][0];
+  if ((c.dir > 0 && last > w + 80) || (c.dir < 0 && last < -80)) {
+    s.chase = null;
+    s.bolts = [];
+    s.nextChase = now + rand(9000, 16000);
+  }
+}
+
+/** Jump to hyperspace: the stars stretch into streaks from the centre, a white flash, then a new sky. */
+function hyperspace(ctx, s, now, w, h) {
+  const t = (now - s.jump.born) / 2600;
+  const cx = w / 2;
+  const cy = h * 0.45;
+  const k = Math.min(1, t / 0.7) ** 3 * 6;
+  ctx.lineCap = 'round';
+  for (const st of s.stars) {
+    const dx = st.x - cx;
+    const dy = st.y - cy;
+    ctx.globalAlpha = Math.min(1, 0.4 + st.z);
+    ctx.strokeStyle = st.z > 0.7 ? '#FFFFFF' : '#BFE3FF';
+    ctx.lineWidth = 0.6 + st.z * 1.4;
+    ctx.beginPath();
+    ctx.moveTo(cx + dx * (1 + k * 0.12), cy + dy * (1 + k * 0.12));
+    ctx.lineTo(cx + dx * (1 + k * (0.12 + st.z * 0.5)), cy + dy * (1 + k * (0.12 + st.z * 0.5)));
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  if (t > 0.66 && t < 0.92) {
+    ctx.globalAlpha = Math.max(0, 1 - Math.abs(t - 0.76) / 0.16) * 0.85;
+    ctx.fillStyle = '#E6F4FF';
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = 1;
+  }
+  // At the flash: a new sky, and a cruiser drops out of hyperspace
+  if (t >= 0.76 && !s.jump.arrived) {
+    s.jump.arrived = true;
+    s.stars = s.stars.map(() => spaceStar(w, h));
+    if (!s.cruiser) s.cruiser = { born: now };
+  }
+  if (t > 1) {
+    s.jump = null;
+    s.nextJump = now + rand(35000, 55000);
+  }
+}
+
+/** The opening words, in blue, at the top of the canvas: they appear, stay, then fade. */
+function intro(ctx, s, now, w, h) {
+  const age = (now - s.born) / 1000;
+  if (age > 7) return;
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, age / 1.2, (7 - age) / 1.5);
+  ctx.fillStyle = '#4BD5EE';
+  ctx.textAlign = 'center';
+  ctx.font = `500 ${Math.round(Math.min(22, w / 32))}px "Atkinson Hyperlegible", sans-serif`;
+  t('galaxy.intro').split('\n').forEach((line, i) => ctx.fillText(line, w / 2, h * 0.09 + i * 28));
+  ctx.restore();
+}
+
+function galaxy(ctx, s, now, w, h) {
+  deepSpace(ctx, now, w, h);
+  // Twin suns, low on the right
+  glow(ctx, w * 0.93, h * 0.62, 9, '#FFF4D6', 'rgba(255, 170, 80, .35)');
+  glow(ctx, w * 0.965, h * 0.67, 6, '#FFE9B8', 'rgba(255, 120, 60, .3)');
+  if (s.jump) hyperspace(ctx, s, now, w, h);
+  else starDrift(ctx, s, now, w, h);
+  ringedPlanet(ctx, w * 0.07, h * 1.02, Math.min(w, h) * 0.3, now);
+  if (s.cruiser) {
+    // It comes out of hyperspace fast, brakes, then drifts slowly across the top and leaves
+    const L = Math.min(w * 0.5, 480);
+    const age = now - s.cruiser.born;
+    const braking = Math.min(1, age / 2500);
+    const x = w * 0.62 + (1 - braking) ** 3 * w * 0.9 - Math.max(0, age - 2500) * 0.012;
+    cruiser(ctx, x, h * 0.16, L, now);
+    if (x + L < -20) s.cruiser = null;
+  }
+  if (s.jump) return; // in hyperspace, no fighters
+  if (!s.chase && now > s.nextChase) s.chase = { dir: pick([-1, 1]), y: rand(0.25, 0.8) * h, born: now, speed: rand(0.16, 0.22) };
+  if (s.chase) chase(ctx, s, now, w, h);
+  if (!s.chase && now > s.nextJump) s.jump = { born: now };
+  intro(ctx, s, now, w, h);
+}
+
 /* ---------- Summer: the beach ---------- */
 
 /** Gull: two wings like a circumflex accent, flapping. */
@@ -1903,6 +2313,13 @@ export const SCENES = {
       shot: null, nextShot: Date.now() + 3000,
     }),
     draw: (ctx, s, now, w, h) => grandLine(ctx, s, now, w, h),
+  },
+  galaxie: {
+    make: (w, h) => ({
+      born: Date.now(), stars: Array.from({ length: Math.round((w * h) / 2600) }, () => spaceStar(w, h)),
+      chase: null, nextChase: Date.now() + 4000, bolts: [], jump: null, nextJump: Date.now() + 20000, cruiser: null,
+    }),
+    draw: (ctx, s, now, w, h) => galaxy(ctx, s, now, w, h),
   },
   automne: {
     make: (w, h) => ({

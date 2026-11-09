@@ -88,6 +88,52 @@ def matrix_still():
             b += f"<text x='{col + 2}' y='{(top + k) * 16}' fill='#00FF41' opacity='{op:.2f}'>{random.choice(glyphs)}</text>"
     return svg(240, 320, f"<g font-family='monospace' font-size='14'>{b}</g>")
 
+def galaxy_stars():
+    """Faraway galaxy: deep-space star dust, white, blue and amber, with a few bright four-pointed stars."""
+    rnd = random.Random(1977)
+    b = ''
+    for _ in range(110):
+        x, y = rnd.uniform(0, 420), rnd.uniform(0, 420)
+        r = rnd.choice([.4, .5, .6, .8, 1, 1.2])
+        b += f"<circle cx='{x:.0f}' cy='{y:.0f}' r='{r}' fill='{rnd.choice(['#FFFFFF', '#CFE0FF', '#FFF1C9', '#BFD4FF'])}' opacity='{rnd.uniform(.3, .9):.2f}'/>"
+    for x, y in [(70, 110), (330, 60), (250, 330)]:
+        b += (f"<g stroke='#DCEBFF' stroke-linecap='round' opacity='.8'><path d='M{x} {y-7}v14M{x-7} {y}h14' stroke-width='.8'/></g>"
+              f"<circle cx='{x}' cy='{y}' r='1.6' fill='#FFFFFF'/>")
+    return svg(420, 420, b)
+
+def galaxy_planet():
+    """Ringed gas giant with its moon, for the still canvas: banded globe, shaded side, tilted rings."""
+    ring = lambda a0, a1: ''.join(
+        f"<path d='M{180 + k * 150 * math.cos(a0):.1f} {180 + k * 42 * math.sin(a0):.1f}A{k * 150:.0f} {k * 42:.0f} 0 0 1 {180 + k * 150 * math.cos(a1):.1f} {180 + k * 42 * math.sin(a1):.1f}' "
+        f"fill='none' stroke='{c}' stroke-width='{wd}' opacity='{o}'/>"
+        for k, c, wd, o in ((1, '#E9CFA6', 6, .6), (1.13, '#C9A57E', 9, .4), (1.26, '#EBD9BC', 3, .3)))
+    bands = ''.join(f"<rect x='80' y='{y}' width='200' height='{hgt}' fill='{c}' opacity='.35'/>"
+                    for y, hgt, c in ((112, 14, '#F3D3A6'), (140, 22, '#8C4B33'), (176, 10, '#F6E2C0'), (196, 26, '#A65E3C'), (234, 12, '#E8C090')))
+    return svg(360, 360,
+        "<defs><radialGradient id='gp' cx='.35' cy='.32' r='.75'><stop offset='0' stop-color='#E8B98A'/><stop offset='.6' stop-color='#B4704A'/><stop offset='1' stop-color='#4A2228'/></radialGradient>"
+        "<radialGradient id='gs' cx='.25' cy='.25' r='.9'><stop offset='.55' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#02030A' stop-opacity='.75'/></radialGradient>"
+        "<clipPath id='gc'><circle cx='180' cy='180' r='100'/></clipPath></defs>"
+        f"<g transform='rotate(-18 180 180)'>{ring(math.pi, 2 * math.pi)}"
+        f"<circle cx='180' cy='180' r='108' fill='#7FA8FF' opacity='.12'/><circle cx='180' cy='180' r='100' fill='url(#gp)'/>"
+        f"<g clip-path='url(#gc)'>{bands}</g><circle cx='180' cy='180' r='100' fill='url(#gs)'/>{ring(0, math.pi)}</g>"
+        "<circle cx='318' cy='62' r='14' fill='#B9C2CF'/><circle cx='324' cy='66' r='14' fill='#02030A' opacity='.45'/>")
+
+def galaxy_cruiser():
+    """Dagger-shaped capital ship, nose to the left: light upper face, dark lower face, stepped
+    superstructure, bridge tower with its two domes, blue engines at the stern."""
+    L, H = 400, 88
+    top = lambda x: -H * .5 * x / L
+    blocks = ''.join(f"<rect x='{L * (.58 + i * .085):.0f}' y='{top(L * (.58 + i * .085)) - H * (.07 + i * .05) + 60:.0f}' width='{L * .13:.0f}' height='{H * (.07 + i * .05) + 4:.0f}' fill='#858E9D' stroke='#3B4250' stroke-width='.8'/>" for i in range(4))
+    lines = ''.join(f"<path d='M{L * k:.0f} {top(L * k) + 60 + 3:.1f}L{L * k:.0f} {60 + H * .45 * k - 3:.1f}' stroke='#3B4250' stroke-width='.6' opacity='.6'/>" for k in (.3, .45, .6, .75, .9))
+    engines = ''.join(f"<circle cx='{L + 2}' cy='{60 + y:.0f}' r='7' fill='#BDE6FF'/><circle cx='{L + 2}' cy='{60 + y:.0f}' r='13' fill='#5CC8FF' opacity='.3'/>" for y in (-26, -4, 18))
+    return svg(L + 20, 160,
+        f"<path d='M0 60L{L} {60 - H * .5}V60Z' fill='#A3ACBA' stroke='#3B4250' stroke-width='1'/>"
+        f"<path d='M0 60H{L}V{60 + H * .45}Z' fill='#5D6575' stroke='#3B4250' stroke-width='1'/>{lines}{blocks}"
+        f"<rect x='{L * .9:.0f}' y='{60 - H * .5 - 40:.0f}' width='{L * .045:.0f}' height='34' fill='#8C95A4' stroke='#3B4250' stroke-width='.8'/>"
+        f"<rect x='{L * .86:.0f}' y='{60 - H * .5 - 46:.0f}' width='{L * .12:.0f}' height='8' fill='#A3ACBA' stroke='#3B4250' stroke-width='.8'/>"
+        f"<circle cx='{L * .865:.0f}' cy='{60 - H * .5 - 48:.0f}' r='4' fill='#A3ACBA' stroke='#3B4250' stroke-width='.8'/>"
+        f"<circle cx='{L * .975:.0f}' cy='{60 - H * .5 - 48:.0f}' r='4' fill='#A3ACBA' stroke='#3B4250' stroke-width='.8'/>{engines}")
+
 # ---------- Themes ----------
 KEYS = ['paper', 'surface', 'ink', 'muted', 'line', 'edge', 'dot', 'accent', 'accent-ink', 'accent-soft', 'warn',
         'danger', 'danger-soft', 'ok', 'halo', 'male', 'female', 'scrim']
@@ -112,6 +158,11 @@ THEMES = [
         accent='#C41E3A', **{'accent-ink': '#FFFFFF', 'accent-soft': '#FBE3C2'}, warn='#7A4E00', danger='#A3172E', **{'danger-soft': '#F8D7D2'},
         ok='#22693A', halo='#E8A317', male='#1F5FA8', female='#C83E78', scrim='rgba(10, 30, 60, .45)'),
    sea_still(), '240px 200px', {'--f-display': '"Gloock", Georgia, serif'}),
+  ('galaxie', 'Faraway galaxy: deep space with drifting stars and nebulae, a ringed planet and twin suns, starfighter chases with laser bolts, jumps to hyperspace and a dagger-shaped cruiser (ui/ambient.js); holographic cards, the focus person lights a laser sword', 'dark',
+   dict(paper='#05060F', surface='#0E1430', ink='#E8F1FF', muted='#A9BCE0', line='#26345E', edge='#5CC8FF', dot='#141B3A',
+        accent='#FFE81F', **{'accent-ink': '#0A0A12', 'accent-soft': '#1A2A5C'}, warn='#FFD27A', danger='#FF8A80', **{'danger-soft': '#3A1420'},
+        ok='#7CFFB0', halo='#7CFF6B', male='#5CC8FF', female='#FF7A9C', scrim='rgba(0, 0, 8, .75)'),
+   galaxy_stars(), '420px', {}),
 ]
 
 out = ["""/* ==========================================================
@@ -248,6 +299,18 @@ out.append(f"""
     background-repeat: repeat-x, repeat-x, no-repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat;
     background-size: 400px 30px, 400px 30px, 216px 184px, var(--deco-size), 100% 100%, 100% 100%, 100% 100%, cover, 20px 20px;
   }}
+}}
+""")
+
+out.append(f"""
+/* Faraway galaxy: the still scene (ringed planet, cruiser, star dust) under the animation,
+   and on its own if the system asks for reduced motion */
+:root[data-theme="galaxie"] .canvas {{
+  background-color: var(--paper);
+  background-image: {uri(galaxy_planet())}, {uri(galaxy_cruiser())}, var(--deco), radial-gradient(120% 90% at 65% 30%, #101A44, #05060F 70%);
+  background-position: bottom -90px left -90px, top 36px right 30px, 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-size: 400px 400px, 380px auto, var(--deco-size), 100% 100%;
 }}
 """)
 
@@ -400,6 +463,76 @@ out.append("""
   letter-spacing: .12em;
   transform: rotate(-8deg);
   opacity: .9;
+}
+
+/* Faraway galaxy: holographic cards, blue light and scan lines */
+:root[data-theme="galaxie"] .card {
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(0deg, rgba(120, 200, 255, .07) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(22, 38, 84, .95), rgba(10, 18, 46, .95));
+  box-shadow: 0 0 12px rgba(92, 200, 255, .22);
+}
+
+:root[data-theme="galaxie"] .card .g {
+  text-shadow: 0 0 6px rgba(140, 210, 255, .55);
+}
+
+:root[data-theme="galaxie"] .card.is-focus {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 232, 31, .06) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #1F3068, #121C44);
+  box-shadow: 0 0 16px rgba(255, 232, 31, .25);
+}
+
+/* The focus person lights a laser sword under their card: ridged hilt, then the blade */
+:root[data-theme="galaxie"] .card.is-focus::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  bottom: -10px;
+  width: 26px;
+  height: 7px;
+  border-radius: 1px;
+  background: repeating-linear-gradient(90deg, #2B2F36 0 2px, #B8BEC8 2px 5px);
+}
+
+:root[data-theme="galaxie"] .card.is-focus::after {
+  content: '';
+  position: absolute;
+  left: 36px;
+  right: 8px;
+  bottom: -9px;
+  height: 5px;
+  border-radius: 0 3px 3px 0;
+  background: #F4FBFF;
+  box-shadow: 0 0 4px 1px #5CC8FF, 0 0 12px 3px rgba(92, 200, 255, .7);
+  transform-origin: left;
+  animation: saber-on .45s ease-out, saber-hum 1.6s ease-in-out .45s infinite;
+}
+
+@keyframes saber-on {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes saber-hum {
+  50% {
+    box-shadow: 0 0 5px 2px #5CC8FF, 0 0 18px 5px rgba(92, 200, 255, .85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="galaxie"] .card.is-focus::after {
+    animation: none;
+  }
+}
+
+/* Direct line: glowing green, like a blade */
+:root[data-theme="galaxie"] .edges path.line {
+  stroke: var(--halo);
+  filter: drop-shadow(0 0 3px rgba(124, 255, 107, .7));
 }
 
 /* Constellations: the real sky over Bordeaux, drawn by ui/sky.js under the tree */
