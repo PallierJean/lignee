@@ -53,6 +53,8 @@ export class FakeElement {
   getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
   removeAttribute(k) { delete this.attrs[k]; }
   appendChild(el) { this.children.push(el); return el; }
+  append(...nodes) { this.children.push(...nodes); }
+  replaceChildren(...nodes) { this.children = nodes; }
   remove() {}
   focus() { document.activeElement = this; }
   blur() {}
