@@ -22,6 +22,7 @@ import { toast } from './toast.js';
 import { downloadBlob, fileBase } from './transfer.js';
 import { buildActsCsv } from '../services/csv.js';
 import { findTownHall, townHallSearchUrl } from '../services/town-hall.js';
+import { CC_KEY } from '../config.js';
 import { longDate } from '../utils/dates.js';
 import { inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune } from '../model/insee.js';
 import {
@@ -218,6 +219,8 @@ function actsView() {
   if (!groups.length) return `<p class="nofocus">${t('acts.none')}</p>`;
   const total = groups.reduce((n, g) => n + g.rows.length, 0);
   return `<p class="hint an-hint">${t('acts.hint', total, groups.length)}</p>`
+    + `<label class="fld acts-cc"><span>${t('acts.cc')}</span><input type="email" id="actsCc" autocomplete="email" value="${esc(ccEmail())}" placeholder="${t('acts.ccPlaceholder')}"></label>`
+    + `<p class="hint an-hint">${t('acts.ccHint')}</p>`
     + `<div class="row-btns reg-tools"><button class="btn small" type="button" data-act="acts-copy">${t('acts.copyAll')}</button>`
     + `<button class="btn small" type="button" data-act="acts-csv">${t('acts.csv')}</button></div>`
     + groups.map((g, i) => {
@@ -234,11 +237,40 @@ function actsView() {
 /* Town halls looked up in the service-public.fr directory: place -> { busy } | { hall } | { none } | { error } */
 const halls = new Map();
 
-/** Prefilled e-mail asking town hall `g` for its certificates. */
+const EMAIL = /^[^\s@<>",;]+@[^\s@<>",;]+\.[^\s@<>",;]+$/;
+
+/** The user's address, copied on every request (kept in this browser), or ''. */
+function ccEmail() {
+  try {
+    const cc = localStorage.getItem(CC_KEY) || '';
+    return EMAIL.test(cc) ? cc : '';
+  } catch (e) {
+    return '';
+  }
+}
+
+/** Saves the address to copy on requests; an empty field forgets it. */
+export function setActsCc(value) {
+  const cc = String(value || '').trim();
+  if (cc && !EMAIL.test(cc)) {
+    toast(t('acts.ccInvalid'), true);
+    return;
+  }
+  try {
+    if (cc) localStorage.setItem(CC_KEY, cc);
+    else localStorage.removeItem(CC_KEY);
+  } catch (e) {
+    /* storage unavailable: the address only lasts until the page is reloaded */
+  }
+  renderAnalysis();
+}
+
+/** Prefilled e-mail asking town hall `g` for its certificates, with the user's address in copy. */
 function mailTo(email, g) {
   const lines = g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former)).join('\n');
   const body = t('acts.mailBody', g.place, lines).replace(/\n/g, '\r\n');
-  return `mailto:${email}?subject=${encodeURIComponent(t('acts.mailSubject'))}&body=${encodeURIComponent(body)}`;
+  const cc = ccEmail();
+  return `mailto:${email}?subject=${encodeURIComponent(t('acts.mailSubject'))}${cc ? '&cc=' + encodeURIComponent(cc) : ''}&body=${encodeURIComponent(body)}`;
 }
 
 /** What was found for the town hall of group `g`: contact details and prefilled e-mail. */

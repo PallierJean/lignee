@@ -11,7 +11,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
 import {
-  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall,
+  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, setActsCc,
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
@@ -394,6 +394,7 @@ export function bindEvents() {
     }
     if (el.id === 'fanKids' && el.value) A.setFocus(el.value);
     if (el.id === 'themeSel') A.setTheme(el.value);
+    if (el.id === 'actsCc') setActsCc(el.value);
     if (el.id === 'textSel') A.setTextSize(el.value);
     if (el.name === 'f-sex') updateNames(false);
     if (el.id === 'f-father' || el.id === 'f-mother') updateNames(true);

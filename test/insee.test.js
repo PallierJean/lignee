@@ -7,7 +7,7 @@ import {
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, resetActsHalls } from '../js/ui/analysis.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, resetActsHalls, setActsCc } from '../js/ui/analysis.js';
 import { findTownHall, resetTownHalls } from '../js/services/town-hall.js';
 import { setLang } from '../js/i18n.js';
 import { loadCommuneChanges, currentCommune } from '../js/model/communes.js';
@@ -450,6 +450,21 @@ describe('actes de décès à demander, par commune', () => {
     const mail = decodeURIComponent(out.match(/href="(mailto:[^"]+)"/)[1].replace(/&amp;/g, '&'));
     assert.match(mail, /^mailto:etat-civil@limoges\.fr\?subject=Demande de copies intégrales d’actes de décès&body=Madame, Monsieur,/);
     assert.match(mail, /conservés par la mairie de Limoges \(87\) :\r\n\r\n- Bertrand Lucien Marcel, né\(e\) le 12 Mars 1920, décédé\(e\) le 04 Juillet 1995, acte n° 412/);
+    assert.doesNotMatch(mail, /cc=/, 'pas de copie sans adresse');
+
+    // Votre adresse en copie : retenue dans ce navigateur, refusée si elle n'en est pas une
+    const mailOf = () => decodeURIComponent(html('paneAnalysis').match(/href="(mailto:[^"]+)"/)[1].replace(/&amp;/g, '&'));
+    assert.match(out, /id="actsCc"[^>]*value=""/);
+    setActsCc(' moi@exemple.fr ');
+    assert.equal(localStorage.getItem('lignee.cc.v1'), 'moi@exemple.fr');
+    assert.match(mailOf(), /\?subject=Demande de copies intégrales d’actes de décès&cc=moi@exemple\.fr&body=/);
+    assert.match(html('paneAnalysis'), /id="actsCc"[^>]*value="moi@exemple\.fr"/);
+    setActsCc('pas une adresse');
+    assert.match(document.getElementById('toast').textContent, /Adresse e-mail non reconnue/);
+    assert.equal(localStorage.getItem('lignee.cc.v1'), 'moi@exemple.fr', 'l’ancienne adresse reste');
+    setActsCc('');
+    assert.equal(localStorage.getItem('lignee.cc.v1'), null);
+    assert.doesNotMatch(mailOf(), /cc=/);
     await findTownHall('Limoges', '87');
     assert.equal(asked.length, 1, 'réponse gardée en mémoire');
 
