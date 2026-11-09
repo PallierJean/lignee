@@ -340,29 +340,93 @@
   box-shadow: 0 0 16px rgba(255, 232, 31, .25);
 }
 
-/* The focus person lights a laser sword under their card: ridged hilt, then the blade */
-:root[data-theme="galaxie"] .card.is-focus::before {
+/* Each person lights a laser sword under their card: green, blue or red, and a hilt of their own
+   (data-saber and data-hilt, from the id: js/tree/render.js). Only the focus person's is purple. */
+:root[data-theme="galaxie"] .card[data-saber="green"] {
+  --saber: #4CFF6A;
+  --saber-glow: rgba(76, 255, 106, .65);
+}
+
+:root[data-theme="galaxie"] .card[data-saber="blue"] {
+  --saber: #5CC8FF;
+  --saber-glow: rgba(92, 200, 255, .7);
+}
+
+:root[data-theme="galaxie"] .card[data-saber="red"] {
+  --saber: #FF4D4D;
+  --saber-glow: rgba(255, 77, 77, .7);
+}
+
+:root[data-theme="galaxie"] .card.is-focus {
+  --saber: #B266FF;
+  --saber-glow: rgba(178, 102, 255, .75);
+}
+
+/* Six hilts: ridged grip, black sleeve, brass with a curved pommel, red rings, vented shroud, ivory and gold */
+:root[data-theme="galaxie"] .card[data-hilt="0"] {
+  --hilt-w: 26px;
+  --hilt-bg: repeating-linear-gradient(90deg, #2B2F36 0 2px, #B8BEC8 2px 5px);
+  --hilt-r: 1px;
+}
+
+:root[data-theme="galaxie"] .card[data-hilt="1"] {
+  --hilt-w: 30px;
+  --hilt-bg: linear-gradient(90deg, #C9CED6 0 5px, #1E2128 5px 22px, #8A919C 22px 24px, #C9CED6 24px);
+  --hilt-r: 2px 1px 1px 2px;
+}
+
+:root[data-theme="galaxie"] .card[data-hilt="2"] {
+  --hilt-w: 24px;
+  --hilt-bg: linear-gradient(90deg, #6B4A2B 0 6px, #C9A227 6px 8px, #8C6A3E 8px 18px, #E2C15A 18px 20px, #B0B6BF 20px);
+  --hilt-r: 5px 1px 1px 5px;
+}
+
+:root[data-theme="galaxie"] .card[data-hilt="3"] {
+  --hilt-w: 28px;
+  --hilt-bg: linear-gradient(90deg, #9AA1AD 0 4px, #C0392B 4px 6px, #D5D9DF 6px 14px, #C0392B 14px 16px, #9AA1AD 16px 22px, #2B2F36 22px);
+  --hilt-r: 1px;
+}
+
+:root[data-theme="galaxie"] .card[data-hilt="4"] {
+  --hilt-w: 32px;
+  --hilt-bg: linear-gradient(90deg, transparent 0 24px, #E8ECF1 24px 32px), repeating-linear-gradient(90deg, #3B4250 0 1px, #9AA1AD 1px 3px);
+  --hilt-r: 1px 3px 3px 1px;
+}
+
+:root[data-theme="galaxie"] .card[data-hilt="5"] {
+  --hilt-w: 26px;
+  --hilt-bg: linear-gradient(90deg, #E8E4D8 0 8px, #C9A227 8px 10px, #F4F1E8 10px 20px, #C9A227 20px 22px, #8A919C 22px);
+  --hilt-r: 3px 1px 1px 3px;
+}
+
+:root[data-theme="galaxie"] .card[data-id]::before {
   content: '';
   position: absolute;
   left: 10px;
   bottom: -10px;
-  width: 26px;
+  width: var(--hilt-w, 26px);
   height: 7px;
-  border-radius: 1px;
-  background: repeating-linear-gradient(90deg, #2B2F36 0 2px, #B8BEC8 2px 5px);
+  border-radius: var(--hilt-r, 1px);
+  background: var(--hilt-bg, #9AA1AD);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .5);
 }
 
-:root[data-theme="galaxie"] .card.is-focus::after {
+:root[data-theme="galaxie"] .card[data-id]::after {
   content: '';
   position: absolute;
-  left: 36px;
+  left: calc(var(--hilt-w, 26px) + 10px);
   right: 8px;
   bottom: -9px;
   height: 5px;
   border-radius: 0 3px 3px 0;
   background: #F4FBFF;
-  box-shadow: 0 0 4px 1px #5CC8FF, 0 0 12px 3px rgba(92, 200, 255, .7);
+  box-shadow: 0 0 4px 1px var(--saber, #5CC8FF), 0 0 12px 3px var(--saber-glow, rgba(92, 200, 255, .7));
   transform-origin: left;
+  animation: saber-on .45s ease-out;
+}
+
+/* The focus person's sword hums */
+:root[data-theme="galaxie"] .card.is-focus::after {
   animation: saber-on .45s ease-out, saber-hum 1.6s ease-in-out .45s infinite;
 }
 
@@ -374,12 +438,12 @@
 
 @keyframes saber-hum {
   50% {
-    box-shadow: 0 0 5px 2px #5CC8FF, 0 0 18px 5px rgba(92, 200, 255, .85);
+    box-shadow: 0 0 5px 2px var(--saber), 0 0 18px 5px var(--saber-glow);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root[data-theme="galaxie"] .card.is-focus::after {
+  :root[data-theme="galaxie"] .card[data-id]::after {
     animation: none;
   }
 }

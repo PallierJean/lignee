@@ -163,8 +163,8 @@ chacun leur taille, leur vitesse et leur balancement, tirés au hasard) :
   en forme de dague à tourelles ; en bas, sur la glace, un marcheur quadrupède entouré d'airspeeders
   qui l'enroulent d'un câble jusqu'à ce qu'il tombe et explose, d'autres marcheurs au loin dans la
   brume, une tranchée tenue par des soldats et des tourelles qui ripostent, gerbes de neige ; « Il y a bien longtemps, dans une
-  famille lointaine, très lointaine… » au démarrage ; fiches en hologrammes, la personne au centre
-  allume un sabre laser, la lignée directe brille en vert).
+  famille lointaine, très lointaine… » au démarrage ; fiches en hologrammes, chaque personne a son sabre laser
+  (vert, bleu ou rouge, poignée à elle ; violet pour la personne au centre), la lignée directe brille en vert).
 
 Palettes et motifs des thèmes « Univers » sont générés par `scripts/build-themes.py` dans
 `css/themes.css`. Si le système demande moins d'animations, les animations s'arrêtent et le motif

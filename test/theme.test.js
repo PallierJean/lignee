@@ -422,3 +422,18 @@ describe('animations des thèmes fêtes et saisons', () => {
     }
   });
 });
+
+describe('Star Wars theme: a laser sword under each card', () => {
+  test('green, blue or red, with one of six hilts, always the same for a person; purple only for the focus', async () => {
+    const { saberOf } = await import('../js/tree/render.js');
+    const ids = Array.from({ length: 300 }, (_, i) => 'p' + i.toString(36) + 'x');
+    const swords = ids.map(saberOf);
+    assert.deepEqual([...new Set(swords.map((x) => x.saber))].sort(), ['blue', 'green', 'red']);
+    assert.deepEqual([...new Set(swords.map((x) => x.hilt))].sort(), ['0', '1', '2', '3', '4', '5']);
+    assert.deepEqual(saberOf('p42'), saberOf('p42'));
+    const css = readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8');
+    assert.equal(css.match(/#B266FF/g).length, 1, 'one purple, for the focus person');
+    assert.match(css, /\.card\.is-focus \{\s+--saber: #B266FF;/);
+    for (let k = 0; k < 6; k++) assert.match(css, new RegExp(`\\.card\\[data-hilt="${k}"\\] \\{\\s+--hilt-w`));
+  });
+});
