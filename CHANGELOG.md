@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.8](https://github.com/PallierJean/lignee/compare/v1.20.7...v1.20.8) (2026-11-09)
+
+### Bug Fixes
+
+* Keep keyboard shortcuts off while the photo crop dialog is open ([c85831a](https://github.com/PallierJean/lignee/commit/c85831aa0650b2a2dda005cbd9da49e9eaa00cc9))
+
+---
+
+### Corrections
+
+* Bloquer les raccourcis clavier pendant le recadrage d'une photo ([c85831a](https://github.com/PallierJean/lignee/commit/c85831aa0650b2a2dda005cbd9da49e9eaa00cc9))
+
 ## [1.20.7](https://github.com/PallierJean/lignee/compare/v1.20.6...v1.20.7) (2026-11-09)
 
 ### Code Refactoring
