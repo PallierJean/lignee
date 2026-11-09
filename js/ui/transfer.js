@@ -18,7 +18,7 @@ import { t } from '../i18n.js';
 const inClaude = () => !!(window.claude && window.claude.use);
 
 /** Start of exported file names, from the tree name: "lignee-famille-dupont". */
-const fileBase = () => ['lignee', norm(treeName()).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')]
+export const fileBase = () => ['lignee', norm(treeName()).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')]
   .filter(Boolean).join('-');
 
 /* ---------- Opening / closing ---------- */
@@ -58,7 +58,7 @@ export function closeTransfer() {
 /* ---------- Export ---------- */
 
 /** Direct download (regular browser, outside claude.ai). */
-function downloadBlob(filename, text, type) {
+export function downloadBlob(filename, text, type) {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a');
   a.href = url;

@@ -28,7 +28,8 @@ Le texte de chaque licence est dans assets/fonts/OFL-*.txt.
 Avatars par défaut (dossier images/) : générés par IA (ChatGPT) pour Lignée, distribués avec
 elle sous la même licence.
 
-Liste des communes françaises (js/data/communes.js) : générée d'après le Code officiel
+Listes des communes françaises et des anciennes communes (js/data/communes.js,
+js/data/commune-changes.js) : générées d'après le Code officiel
 géographique de l'INSEE, publié sous la Licence Ouverte d'Etalab
 (https://www.insee.fr/fr/information/2560452).
 
