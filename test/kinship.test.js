@@ -68,3 +68,32 @@ describe('lien de parenté', () => {
     assert.equal(relationship('a', 'c').type, 'blood');
   });
 });
+
+describe('English kinship terms', async () => {
+  const { kinEn, ordinalEn } = await import('../js/i18n/grammar.js');
+
+  test('direct line, siblings, uncles and nephews', () => {
+    assert.equal(kinEn(0, 1, 'M'), 'father');
+    assert.equal(kinEn(0, 3, 'F'), 'great-grandmother');
+    assert.equal(kinEn(2, 0, ''), 'grandchild');
+    assert.equal(kinEn(1, 0, 'F'), 'daughter');
+    assert.equal(kinEn(1, 1, 'M', true), 'half-brother');
+    assert.equal(kinEn(1, 1, 'F'), 'sister');
+    assert.equal(kinEn(1, 3, 'F'), 'great-aunt');
+    assert.equal(kinEn(2, 1, 'M'), 'nephew');
+  });
+
+  test('cousins: degree and generations removed', () => {
+    assert.equal(kinEn(2, 2, 'M'), 'first cousin');
+    assert.equal(kinEn(2, 3, 'F'), 'first cousin once removed');
+    assert.equal(kinEn(5, 3, ''), 'second cousin twice removed');
+    assert.equal(kinEn(4, 8, ''), 'third cousin 4 times removed');
+    assert.equal(kinEn(12, 12, ''), '11th cousin');
+    assert.equal(kinEn(22, 22, ''), '21st cousin');
+  });
+
+  test('ordinals', () => {
+    assert.deepEqual([1, 4, 10, 11, 12, 13, 21, 22, 23, 24, 101, 111, 112].map(ordinalEn),
+      ['first', 'fourth', 'tenth', '11th', '12th', '13th', '21st', '22nd', '23rd', '24th', '101st', '111th', '112th']);
+  });
+});
