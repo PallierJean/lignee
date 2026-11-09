@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.20.12](https://github.com/PallierJean/lignee/compare/v1.20.11...v1.20.12) (2026-11-09)
+
+### Performance Improvements
+
+* Load the theme animations only when an animated theme is shown ([fa50349](https://github.com/PallierJean/lignee/commit/fa503498799b202a11fc5939e96748bef8a72dc7))
+
+---
+
+### Performances
+
+* Charger les animations de thème seulement quand un thème animé est affiché ([fa50349](https://github.com/PallierJean/lignee/commit/fa503498799b202a11fc5939e96748bef8a72dc7))
+
 ## [1.20.11](https://github.com/PallierJean/lignee/compare/v1.20.10...v1.20.11) (2026-11-09)
 
 ### Code Refactoring
