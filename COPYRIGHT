@@ -1,0 +1,39 @@
+Lignée : application web d'arbre généalogique
+Copyright © 2026 Jean Pallier
+
+Ce programme est un logiciel libre : vous pouvez le redistribuer et le modifier selon les termes
+de la GNU Affero General Public License publiée par la Free Software Foundation, version 3 de la
+licence ou, à votre choix, toute version ultérieure.
+
+Il est distribué dans l'espoir qu'il sera utile, mais SANS AUCUNE GARANTIE, sans même la garantie
+implicite de qualité marchande ou d'adéquation à un usage particulier. Voir la GNU Affero General
+Public License pour plus de détails : fichier LICENSE, ou <https://www.gnu.org/licenses/>.
+
+Si vous proposez une version modifiée de Lignée à des utilisateurs par un réseau (un site web,
+par exemple), la licence vous demande de leur donner accès à son code source.
+
+
+Éléments tiers
+==============
+
+Ces éléments sont distribués avec Lignée sous leur propre licence.
+
+Polices (dossier assets/fonts/), licence SIL Open Font License 1.1 :
+- Atkinson Hyperlegible : Copyright 2020 Braille Institute of America, Inc.
+- Gloock : Copyright 2022 The Gloock Project Authors (https://github.com/duartp/gloock)
+- IBM Plex Mono : Copyright © 2017 IBM Corp., avec le nom de police réservé « Plex »
+- IM Fell English : Copyright (c) 2010, Igino Marini
+Le texte de chaque licence est dans assets/fonts/OFL-*.txt.
+
+Liste des communes françaises (js/data/communes.js) : générée d'après le Code officiel
+géographique de l'INSEE, publié sous la Licence Ouverte d'Etalab
+(https://www.insee.fr/fr/information/2560452).
+
+
+Marques
+=======
+
+Les noms de certains thèmes de couleur (par exemple Star Wars, Matrix ou Grand Line) sont des
+marques de leurs propriétaires respectifs. Ils servent uniquement à désigner l'univers dont
+s'inspire un thème. Lignée n'est ni affilié à ces propriétaires, ni approuvé ou soutenu par eux.
+Les dessins et les animations des thèmes sont des créations originales de Lignée.
