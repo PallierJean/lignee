@@ -135,6 +135,7 @@ export function mapView() {
       + `<button class="btn small" type="button" data-act="map-zoom" data-d="-1" aria-label="${t('ctl.zoomOut')}">−</button>`
       + `<button class="btn small" type="button" data-act="map-region">${t('map.fit')}</button>${chips}</div>`
       + `<div class="map-box" id="mapBox">${mapSVG(points, moves, view || fit(points))}</div>`
+      + `<p class="hint an-hint map-credit">${t('map.credit')}</p>`
       + `<p class="hint an-hint">${t('map.help')}</p><div id="mapPlace">${placeHTML(points)}</div>`;
   } else {
     html += `<p class="nofocus">${t('map.none')}</p>`;

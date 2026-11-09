@@ -239,6 +239,7 @@ describe('onglet Analyse', () => {
     assert.ok(out.includes('class="mv"'));
     assert.ok(out.includes('Introuvables : Nantes'));
     assert.ok(out.includes('Principales migrations'));
+    assert.ok(out.includes('© les contributeurs d’<a href="https://www.openstreetmap.org/copyright"'), 'mention de la licence ODbL');
   });
 
   test('carte explorable : commune choisie, zoom, département, glisser', () => {

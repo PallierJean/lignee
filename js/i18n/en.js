@@ -672,6 +672,7 @@ export const EN = {
   'map.none': 'No place has been located yet.',
   'map.legend': 'Dots: towns cited, hamlets included. Arrows: from a parent’s birth town to their child’s. Simplified outline of France.',
   'map.locate': (n) => `Locate ${n} place${sEn(n)}`,
+  'map.credit': 'Place coordinates © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors, ODbL licence.',
   'map.privacy': 'Place names, and nothing else, are sent to OpenStreetMap. Coordinates stay in this browser.',
   'map.progress': (done, total) => `Locating… ${done} / ${total}`,
   'map.notFound': (names) => 'Not found: ' + names,

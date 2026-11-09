@@ -66,6 +66,11 @@ GEDCOM ou JSON) est échappé par `esc()` (`js/utils/dom.js`) avant d'entrer dan
 nouvelle insertion de HTML doit faire de même ; la CSP, qui interdit les scripts en ligne, est
 une seconde barrière, pas la première.
 
+`test/xss.test.js` remplit chaque champ d'une fiche, d'une union, d'un événement, d'une source,
+d'une image et le nom de l'arbre avec du HTML piégé, puis vérifie qu'il reste du texte dans
+l'arbre, la roue, la fiche, le registre, chaque vue de l'onglet Analyse, la fiche en fenêtre et la
+visionneuse.
+
 ## Ce qui sort sur Internet
 
 L'ouverture de l'application ne contacte aucun service tiers : les polices sont dans
@@ -94,9 +99,17 @@ En mode navigateur (site GitHub Pages ou autre serveur), les arbres sont dans le
 de ce navigateur, sans chiffrement : toute personne qui utilise la même session y a accès.
 Effacer les données du site efface l'arbre ; d'où le conseil d'exporter une sauvegarde.
 
+Sur GitHub Pages, cette mémoire appartient à l'adresse `https://pallierjean.github.io`, commune à
+tous les sites GitHub Pages du compte `PallierJean`. Lignée est aujourd'hui le seul : un autre
+site publié plus tard sous ce compte pourrait lire les arbres gardés par les visiteurs. Pour en
+publier un, utilisez un autre compte ou un domaine personnalisé.
+
 ## Dépendances
 
-Aucune dépendance npm : pas de risque venant d'un paquet tiers dans l'application. Les outils
+Aucune dépendance npm : pas de risque venant d'un paquet tiers dans l'application.
+
+Les coordonnées obtenues d'OpenStreetMap sont sous licence ODbL : la carte affiche la mention
+« © les contributeurs d'OpenStreetMap » exigée par cette licence. Les outils
 de la CI (actions GitHub, outils de version) sont figés sur une version exacte et mis à jour
 par Renovate (voir [Mises à jour](updates.md)). La CI n'a que la permission de lire le dépôt,
 sauf les étapes de publication (version et site).

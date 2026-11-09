@@ -701,6 +701,7 @@ export const FR = {
   'map.none': 'Aucun lieu n’est encore localisé.',
   'map.legend': 'Points : communes citées, lieux-dits réunis. Flèches : de la commune de naissance d’un parent à celle de son enfant. Contour de la France simplifié.',
   'map.locate': (n) => `Localiser ${n} lieu${n > 1 ? 'x' : ''}`,
+  'map.credit': 'Coordonnées des lieux © les contributeurs d’<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>, licence ODbL.',
   'map.privacy': 'Les noms des lieux, et rien d’autre, sont envoyés à OpenStreetMap. Les coordonnées restent dans ce navigateur.',
   'map.progress': (done, total) => `Localisation… ${done} / ${total}`,
   'map.notFound': (names) => 'Introuvables : ' + names,
