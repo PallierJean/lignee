@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.21.2](https://github.com/PallierJean/lignee/compare/v1.21.1...v1.21.2) (2026-11-09)
+
+### Bug Fixes
+
+* Credit OpenStreetMap contributors under the map ([28dbbec](https://github.com/PallierJean/lignee/commit/28dbbec8d6b1106157d33ea0874a9c25d4ff44f0))
+
+---
+
+### Corrections
+
+* Mention des contributeurs d'OpenStreetMap sous la carte, exigée par la licence ODbL ([28dbbec](https://github.com/PallierJean/lignee/commit/28dbbec8d6b1106157d33ea0874a9c25d4ff44f0))
+
 ## [1.21.1](https://github.com/PallierJean/lignee/compare/v1.21.0...v1.21.1) (2026-11-09)
 
 ### Bug Fixes
