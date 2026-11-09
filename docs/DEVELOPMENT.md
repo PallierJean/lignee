@@ -15,7 +15,7 @@ dépendance, aucune étape de compilation : Node.js 26 suffit pour la lancer et 
 - [Architecture](architecture.md) : arborescence, circulation des données, langues, annuler / rétablir.
 - [Stockage des données](storage.md) : plusieurs arbres, fichiers, navigateur ou base en ligne, photos.
 - [Format des données](data-format.md) : référence des objets (sauvegarde, personne, union, événement, source, galerie), types, correspondance GEDCOM.
-- [API du serveur local](api.md) : routes REST, requêtes, réponses et codes d'erreur.
+- [Relais vers le fichier des décès (INSEE)](insee.md) : les routes du serveur local qui interrogent matchID.
 - [Sécurité](security.md) : menaces, serveur local, politique de sécurité, sorties vers Internet, secrets.
 
 ## Fonctionnalités

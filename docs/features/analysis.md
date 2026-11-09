@@ -39,6 +39,7 @@
   la vue propose alors l'inscription gratuite (adresse e-mail, puis code reçu par e-mail). Le jeton
   est gardé par server.js dans `data/matchid.json` (ignoré par git, jamais servi aux pages) et
   renouvelé la veille de son expiration ; les fiches déjà vérifiées restent acquises.
+  Routes du serveur local qui relaient ces appels : [Relais vers le fichier des décès](../insee.md).
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).
