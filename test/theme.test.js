@@ -92,7 +92,7 @@ describe('thèmes de couleur', () => {
     // Thèmes illustrés : texte lisible (AA) sur les panneaux, et sur le fond pour le texte principal
     const illustrated = readFileSync(new URL('../css/themes.css', import.meta.url), 'utf8');
     const blocks = [...illustrated.matchAll(/:root\[data-theme="([\w-]+)"\] \{([^}]*--paper[^}]*)\}/g)];
-    assert.equal(blocks.length, 4, 'quatre thèmes illustrés');
+    assert.equal(blocks.length, 5, 'cinq thèmes illustrés');
     for (const [, theme, block] of blocks) {
       const tv = Object.fromEntries([...block.matchAll(/--([\w-]+): (#[0-9A-F]{6});/gi)].map((m) => [m[1], m[2]]));
       for (const k of ['ink', 'muted', 'warn', 'danger', 'ok']) assert.ok(ratio(tv[k], tv.surface) >= 4.5, `${theme} : --${k}`);
@@ -347,6 +347,31 @@ describe('animations des thèmes fêtes et saisons', () => {
       } finally {
         Date.now = now;
       }
+      // Faraway galaxy: space, ringed planet, opening words; then a chase, a jump to hyperspace and the cruiser
+      const space = await drawn('galaxie');
+      assert.ok(space.has('ellipse') && space.has('arc') && space.has('fillRect'), 'stars, planet and its rings');
+      assert.ok(calls.some((c) => c[0] === 'fillText' && /famille lointaine/.test(c[1])), 'the opening words');
+      const sky = ambientState();
+      const starCount = sky.stars.length;
+      sky.nextChase = 0;
+      Math.random = () => 0.01; // the hunters fire at once
+      await new Promise((r) => setTimeout(r, 120));
+      Math.random = random;
+      assert.ok(sky.chase, 'a chase starts');
+      assert.ok(sky.bolts.some((b) => b.color === '#7CFF6B'), 'green bolts');
+      Object.assign(sky, { chase: null, bolts: [], nextChase: Infinity, nextJump: 0 });
+      await new Promise((r) => setTimeout(r, 80));
+      assert.ok(sky.jump, 'a jump to hyperspace');
+      sky.jump.born = Date.now() - 2100; // just after the flash
+      await new Promise((r) => setTimeout(r, 80));
+      assert.ok(sky.jump.arrived && sky.cruiser, 'a cruiser drops out of hyperspace');
+      assert.equal(sky.stars.length, starCount, 'a new sky, as many stars');
+      sky.jump.born = Date.now() - 3000;
+      await new Promise((r) => setTimeout(r, 80));
+      assert.equal(sky.jump, null);
+      sky.cruiser.born = Date.now() - 10 ** 6; // far gone to the left
+      await new Promise((r) => setTimeout(r, 80));
+      assert.equal(sky.cruiser, null);
       // Halloween : chauves-souris et fantômes lâchés au hasard (ici, à coup sûr)
       Math.random = () => 0.001;
       assert.ok((await drawn('halloween')).has('quadraticCurveTo'));

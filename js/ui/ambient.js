@@ -1,5 +1,5 @@
 /**
- * Animations of the "holidays and seasons" themes, and of Grand Line, drawn on a layer under
+ * Animations of the "holidays and seasons" themes, and of Grand Line and the faraway galaxy, drawn on a layer under
  * the tree: snow and a garland all around the canvas at Christmas; at Halloween, moon and clouds,
  * flickering pumpkins, mist, spider, bats and ghosts; in spring, flowering cherry
  * branches, a flowery meadow, petals, butterflies and swallows; in summer, the beach
@@ -7,7 +7,8 @@
  * their coloured leaves in gusts of wind; on Grand Line, a manga page (ink
  * lines, screentone, sound effects) where a pirate ship sails, chased by the navy firing its
  * cannons, whose rubber-armed sailor catches his straw hat; islands, gulls and a
- * sea monster. Each object has its own size, speed and sway,
+ * sea monster; in the faraway galaxy, drifting stars and nebulae, a ringed planet, starfighter
+ * chases, jumps to hyperspace and a capital ship. Each object has its own size, speed and sway,
  * drawn at random. Stopped outside these themes or if the system asks for reduced motion (the
  * background pattern stays), paused when the tab is hidden.
  *
@@ -19,7 +20,7 @@ import { reduced } from '../config.js';
 const FRAME = 40;   // ms between two frames
 
 // Themes with an animation: their scenes are in ui/ambient/scenes.js, loaded on demand
-const ANIMATED = ['noel', 'halloween', 'printemps', 'ete', 'grandline', 'automne'];
+const ANIMATED = ['noel', 'halloween', 'printemps', 'ete', 'grandline', 'galaxie', 'automne'];
 
 let scenes = null;  // the scenes, once loaded
 let wanted = null;  // last theme asked for, while the scenes load

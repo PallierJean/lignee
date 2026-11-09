@@ -107,6 +107,31 @@
   color-scheme: light;
 }
 
+/* Faraway galaxy: deep space with drifting stars and nebulae, a ringed planet and twin suns, starfighter chases with laser bolts, jumps to hyperspace and a dagger-shaped cruiser (ui/ambient.js); holographic cards, the focus person lights a laser sword */
+:root[data-theme="galaxie"] {
+  --paper: #05060F;
+  --surface: #0E1430;
+  --ink: #E8F1FF;
+  --muted: #A9BCE0;
+  --line: #26345E;
+  --edge: #5CC8FF;
+  --dot: #141B3A;
+  --accent: #FFE81F;
+  --accent-ink: #0A0A12;
+  --accent-soft: #1A2A5C;
+  --warn: #FFD27A;
+  --danger: #FF8A80;
+  --danger-soft: #3A1420;
+  --ok: #7CFFB0;
+  --halo: #7CFF6B;
+  --male: #5CC8FF;
+  --female: #FF7A9C;
+  --scrim: rgba(0, 0, 8, .75);
+  --deco: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Ccircle cx='193' cy='232' r='1' fill='%23BFD4FF' opacity='0.63'/%3E%3Ccircle cx='108' cy='266' r='0.6' fill='%23FFFFFF' opacity='0.51'/%3E%3Ccircle cx='275' cy='83' r='0.6' fill='%23FFFFFF' opacity='0.80'/%3E%3Ccircle cx='289' cy='358' r='0.5' fill='%23FFF1C9' opacity='0.63'/%3E%3Ccircle cx='357' cy='132' r='0.4' fill='%23BFD4FF' opacity='0.73'/%3E%3Ccircle cx='212' cy='196' r='0.8' fill='%23CFE0FF' opacity='0.83'/%3E%3Ccircle cx='186' cy='396' r='1' fill='%23CFE0FF' opacity='0.77'/%3E%3Ccircle cx='220' cy='211' r='0.4' fill='%23FFF1C9' opacity='0.66'/%3E%3Ccircle cx='113' cy='180' r='0.5' fill='%23CFE0FF' opacity='0.77'/%3E%3Ccircle cx='232' cy='343' r='1' fill='%23BFD4FF' opacity='0.54'/%3E%3Ccircle cx='186' cy='279' r='0.8' fill='%23CFE0FF' opacity='0.39'/%3E%3Ccircle cx='413' cy='296' r='0.8' fill='%23FFF1C9' opacity='0.90'/%3E%3Ccircle cx='260' cy='214' r='1.2' fill='%23CFE0FF' opacity='0.47'/%3E%3Ccircle cx='241' cy='230' r='1' fill='%23FFF1C9' opacity='0.39'/%3E%3Ccircle cx='387' cy='278' r='0.8' fill='%23CFE0FF' opacity='0.39'/%3E%3Ccircle cx='188' cy='23' r='0.4' fill='%23BFD4FF' opacity='0.56'/%3E%3Ccircle cx='387' cy='401' r='0.8' fill='%23BFD4FF' opacity='0.55'/%3E%3Ccircle cx='307' cy='240' r='0.8' fill='%23FFF1C9' opacity='0.73'/%3E%3Ccircle cx='135' cy='22' r='0.4' fill='%23FFFFFF' opacity='0.78'/%3E%3Ccircle cx='411' cy='262' r='1.2' fill='%23FFF1C9' opacity='0.46'/%3E%3Ccircle cx='141' cy='44' r='0.6' fill='%23CFE0FF' opacity='0.71'/%3E%3Ccircle cx='175' cy='281' r='0.5' fill='%23BFD4FF' opacity='0.70'/%3E%3Ccircle cx='12' cy='305' r='0.4' fill='%23FFFFFF' opacity='0.84'/%3E%3Ccircle cx='348' cy='60' r='0.4' fill='%23BFD4FF' opacity='0.75'/%3E%3Ccircle cx='44' cy='272' r='0.6' fill='%23CFE0FF' opacity='0.58'/%3E%3Ccircle cx='72' cy='6' r='0.5' fill='%23CFE0FF' opacity='0.75'/%3E%3Ccircle cx='341' cy='61' r='0.5' fill='%23BFD4FF' opacity='0.86'/%3E%3Ccircle cx='249' cy='291' r='1.2' fill='%23CFE0FF' opacity='0.62'/%3E%3Ccircle cx='50' cy='363' r='1' fill='%23FFFFFF' opacity='0.56'/%3E%3Ccircle cx='202' cy='106' r='1.2' fill='%23FFFFFF' opacity='0.89'/%3E%3Ccircle cx='171' cy='267' r='0.5' fill='%23CFE0FF' opacity='0.37'/%3E%3Ccircle cx='68' cy='175' r='1' fill='%23FFF1C9' opacity='0.82'/%3E%3Ccircle cx='395' cy='251' r='1' fill='%23BFD4FF' opacity='0.63'/%3E%3Ccircle cx='126' cy='321' r='0.8' fill='%23BFD4FF' opacity='0.87'/%3E%3Ccircle cx='67' cy='220' r='1.2' fill='%23CFE0FF' opacity='0.33'/%3E%3Ccircle cx='371' cy='396' r='1.2' fill='%23BFD4FF' opacity='0.71'/%3E%3Ccircle cx='341' cy='199' r='0.8' fill='%23FFFFFF' opacity='0.31'/%3E%3Ccircle cx='143' cy='372' r='1.2' fill='%23BFD4FF' opacity='0.64'/%3E%3Ccircle cx='337' cy='254' r='0.8' fill='%23FFF1C9' opacity='0.70'/%3E%3Ccircle cx='130' cy='371' r='0.8' fill='%23BFD4FF' opacity='0.33'/%3E%3Ccircle cx='158' cy='150' r='1.2' fill='%23FFF1C9' opacity='0.47'/%3E%3Ccircle cx='100' cy='325' r='1' fill='%23FFF1C9' opacity='0.89'/%3E%3Ccircle cx='2' cy='73' r='1' fill='%23CFE0FF' opacity='0.36'/%3E%3Ccircle cx='36' cy='351' r='0.6' fill='%23BFD4FF' opacity='0.36'/%3E%3Ccircle cx='329' cy='22' r='0.5' fill='%23BFD4FF' opacity='0.37'/%3E%3Ccircle cx='30' cy='146' r='0.8' fill='%23FFF1C9' opacity='0.90'/%3E%3Ccircle cx='376' cy='33' r='0.8' fill='%23FFFFFF' opacity='0.44'/%3E%3Ccircle cx='390' cy='394' r='0.5' fill='%23FFFFFF' opacity='0.33'/%3E%3Ccircle cx='139' cy='123' r='0.6' fill='%23CFE0FF' opacity='0.52'/%3E%3Ccircle cx='343' cy='207' r='0.4' fill='%23CFE0FF' opacity='0.57'/%3E%3Ccircle cx='182' cy='226' r='0.6' fill='%23FFF1C9' opacity='0.68'/%3E%3Ccircle cx='212' cy='137' r='0.4' fill='%23BFD4FF' opacity='0.76'/%3E%3Ccircle cx='6' cy='45' r='0.5' fill='%23FFFFFF' opacity='0.54'/%3E%3Ccircle cx='261' cy='4' r='0.8' fill='%23CFE0FF' opacity='0.83'/%3E%3Ccircle cx='285' cy='140' r='0.5' fill='%23CFE0FF' opacity='0.66'/%3E%3Ccircle cx='69' cy='271' r='0.8' fill='%23FFFFFF' opacity='0.78'/%3E%3Ccircle cx='158' cy='228' r='1.2' fill='%23CFE0FF' opacity='0.60'/%3E%3Ccircle cx='6' cy='167' r='0.6' fill='%23BFD4FF' opacity='0.74'/%3E%3Ccircle cx='99' cy='38' r='1' fill='%23CFE0FF' opacity='0.75'/%3E%3Ccircle cx='290' cy='344' r='0.5' fill='%23CFE0FF' opacity='0.85'/%3E%3Ccircle cx='323' cy='267' r='0.5' fill='%23CFE0FF' opacity='0.33'/%3E%3Ccircle cx='6' cy='27' r='1.2' fill='%23BFD4FF' opacity='0.45'/%3E%3Ccircle cx='132' cy='80' r='1.2' fill='%23FFFFFF' opacity='0.39'/%3E%3Ccircle cx='346' cy='76' r='0.4' fill='%23BFD4FF' opacity='0.49'/%3E%3Ccircle cx='341' cy='375' r='0.6' fill='%23FFF1C9' opacity='0.56'/%3E%3Ccircle cx='363' cy='346' r='1.2' fill='%23FFF1C9' opacity='0.32'/%3E%3Ccircle cx='115' cy='339' r='0.8' fill='%23BFD4FF' opacity='0.78'/%3E%3Ccircle cx='134' cy='383' r='0.5' fill='%23BFD4FF' opacity='0.76'/%3E%3Ccircle cx='158' cy='367' r='1.2' fill='%23FFF1C9' opacity='0.37'/%3E%3Ccircle cx='122' cy='178' r='1' fill='%23CFE0FF' opacity='0.42'/%3E%3Ccircle cx='215' cy='90' r='0.8' fill='%23FFF1C9' opacity='0.87'/%3E%3Ccircle cx='299' cy='403' r='0.6' fill='%23BFD4FF' opacity='0.57'/%3E%3Ccircle cx='250' cy='162' r='0.4' fill='%23CFE0FF' opacity='0.90'/%3E%3Ccircle cx='191' cy='415' r='0.5' fill='%23FFF1C9' opacity='0.52'/%3E%3Ccircle cx='186' cy='19' r='0.6' fill='%23FFF1C9' opacity='0.60'/%3E%3Ccircle cx='166' cy='146' r='0.6' fill='%23FFF1C9' opacity='0.58'/%3E%3Ccircle cx='377' cy='124' r='1.2' fill='%23BFD4FF' opacity='0.33'/%3E%3Ccircle cx='23' cy='234' r='1.2' fill='%23BFD4FF' opacity='0.61'/%3E%3Ccircle cx='273' cy='419' r='0.6' fill='%23BFD4FF' opacity='0.71'/%3E%3Ccircle cx='289' cy='254' r='1.2' fill='%23FFFFFF' opacity='0.32'/%3E%3Ccircle cx='205' cy='394' r='0.4' fill='%23FFFFFF' opacity='0.45'/%3E%3Ccircle cx='361' cy='64' r='0.5' fill='%23FFF1C9' opacity='0.48'/%3E%3Ccircle cx='48' cy='159' r='1.2' fill='%23CFE0FF' opacity='0.56'/%3E%3Ccircle cx='348' cy='154' r='0.8' fill='%23FFFFFF' opacity='0.88'/%3E%3Ccircle cx='163' cy='185' r='1.2' fill='%23FFF1C9' opacity='0.71'/%3E%3Ccircle cx='281' cy='36' r='0.5' fill='%23FFF1C9' opacity='0.65'/%3E%3Ccircle cx='141' cy='59' r='0.5' fill='%23FFF1C9' opacity='0.65'/%3E%3Ccircle cx='171' cy='18' r='0.6' fill='%23CFE0FF' opacity='0.90'/%3E%3Ccircle cx='373' cy='284' r='1' fill='%23FFFFFF' opacity='0.63'/%3E%3Ccircle cx='337' cy='120' r='0.5' fill='%23BFD4FF' opacity='0.38'/%3E%3Ccircle cx='114' cy='203' r='1.2' fill='%23FFFFFF' opacity='0.36'/%3E%3Ccircle cx='410' cy='69' r='0.4' fill='%23FFF1C9' opacity='0.42'/%3E%3Ccircle cx='385' cy='65' r='0.4' fill='%23FFFFFF' opacity='0.65'/%3E%3Ccircle cx='292' cy='191' r='0.4' fill='%23FFF1C9' opacity='0.78'/%3E%3Ccircle cx='234' cy='254' r='0.8' fill='%23FFF1C9' opacity='0.86'/%3E%3Ccircle cx='52' cy='202' r='0.6' fill='%23BFD4FF' opacity='0.67'/%3E%3Ccircle cx='163' cy='268' r='1.2' fill='%23CFE0FF' opacity='0.32'/%3E%3Ccircle cx='159' cy='248' r='1' fill='%23FFFFFF' opacity='0.44'/%3E%3Ccircle cx='272' cy='39' r='0.4' fill='%23BFD4FF' opacity='0.58'/%3E%3Ccircle cx='175' cy='100' r='0.4' fill='%23CFE0FF' opacity='0.77'/%3E%3Ccircle cx='290' cy='241' r='0.5' fill='%23CFE0FF' opacity='0.89'/%3E%3Ccircle cx='30' cy='228' r='0.8' fill='%23FFFFFF' opacity='0.63'/%3E%3Ccircle cx='409' cy='339' r='0.4' fill='%23FFFFFF' opacity='0.78'/%3E%3Ccircle cx='146' cy='61' r='1.2' fill='%23FFFFFF' opacity='0.45'/%3E%3Ccircle cx='383' cy='2' r='1.2' fill='%23BFD4FF' opacity='0.46'/%3E%3Ccircle cx='263' cy='253' r='0.6' fill='%23FFFFFF' opacity='0.67'/%3E%3Ccircle cx='187' cy='34' r='0.5' fill='%23BFD4FF' opacity='0.89'/%3E%3Ccircle cx='58' cy='403' r='0.5' fill='%23BFD4FF' opacity='0.41'/%3E%3Ccircle cx='334' cy='340' r='0.5' fill='%23CFE0FF' opacity='0.56'/%3E%3Ccircle cx='236' cy='350' r='1.2' fill='%23FFF1C9' opacity='0.62'/%3E%3Cg stroke='%23DCEBFF' stroke-linecap='round' opacity='.8'%3E%3Cpath d='M70 103v14M63 110h14' stroke-width='.8'/%3E%3C/g%3E%3Ccircle cx='70' cy='110' r='1.6' fill='%23FFFFFF'/%3E%3Cg stroke='%23DCEBFF' stroke-linecap='round' opacity='.8'%3E%3Cpath d='M330 53v14M323 60h14' stroke-width='.8'/%3E%3C/g%3E%3Ccircle cx='330' cy='60' r='1.6' fill='%23FFFFFF'/%3E%3Cg stroke='%23DCEBFF' stroke-linecap='round' opacity='.8'%3E%3Cpath d='M250 323v14M243 330h14' stroke-width='.8'/%3E%3C/g%3E%3Ccircle cx='250' cy='330' r='1.6' fill='%23FFFFFF'/%3E%3C/svg%3E");
+  --deco-size: 420px;
+  color-scheme: dark;
+}
+
 /* Matrix: still rain in the background for those who asked for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   :root[data-theme="matrix"] {
@@ -133,6 +158,16 @@
     background-repeat: repeat-x, repeat-x, no-repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat;
     background-size: 400px 30px, 400px 30px, 216px 184px, var(--deco-size), 100% 100%, 100% 100%, 100% 100%, cover, 20px 20px;
   }
+}
+
+/* Faraway galaxy: the still scene (ringed planet, cruiser, star dust) under the animation,
+   and on its own if the system asks for reduced motion */
+:root[data-theme="galaxie"] .canvas {
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cdefs%3E%3CradialGradient id='gp' cx='.35' cy='.32' r='.75'%3E%3Cstop offset='0' stop-color='%23E8B98A'/%3E%3Cstop offset='.6' stop-color='%23B4704A'/%3E%3Cstop offset='1' stop-color='%234A2228'/%3E%3C/radialGradient%3E%3CradialGradient id='gs' cx='.25' cy='.25' r='.9'%3E%3Cstop offset='.55' stop-color='%23000' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%2302030A' stop-opacity='.75'/%3E%3C/radialGradient%3E%3CclipPath id='gc'%3E%3Ccircle cx='180' cy='180' r='100'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg transform='rotate(-18 180 180)'%3E%3Cpath d='M30.0 180.0A150 42 0 0 1 330.0 180.0' fill='none' stroke='%23E9CFA6' stroke-width='6' opacity='0.6'/%3E%3Cpath d='M10.5 180.0A169 47 0 0 1 349.5 180.0' fill='none' stroke='%23C9A57E' stroke-width='9' opacity='0.4'/%3E%3Cpath d='M-9.0 180.0A189 53 0 0 1 369.0 180.0' fill='none' stroke='%23EBD9BC' stroke-width='3' opacity='0.3'/%3E%3Ccircle cx='180' cy='180' r='108' fill='%237FA8FF' opacity='.12'/%3E%3Ccircle cx='180' cy='180' r='100' fill='url(%23gp)'/%3E%3Cg clip-path='url(%23gc)'%3E%3Crect x='80' y='112' width='200' height='14' fill='%23F3D3A6' opacity='.35'/%3E%3Crect x='80' y='140' width='200' height='22' fill='%238C4B33' opacity='.35'/%3E%3Crect x='80' y='176' width='200' height='10' fill='%23F6E2C0' opacity='.35'/%3E%3Crect x='80' y='196' width='200' height='26' fill='%23A65E3C' opacity='.35'/%3E%3Crect x='80' y='234' width='200' height='12' fill='%23E8C090' opacity='.35'/%3E%3C/g%3E%3Ccircle cx='180' cy='180' r='100' fill='url(%23gs)'/%3E%3Cpath d='M330.0 180.0A150 42 0 0 1 30.0 180.0' fill='none' stroke='%23E9CFA6' stroke-width='6' opacity='0.6'/%3E%3Cpath d='M349.5 180.0A169 47 0 0 1 10.5 180.0' fill='none' stroke='%23C9A57E' stroke-width='9' opacity='0.4'/%3E%3Cpath d='M369.0 180.0A189 53 0 0 1 -9.0 180.0' fill='none' stroke='%23EBD9BC' stroke-width='3' opacity='0.3'/%3E%3C/g%3E%3Ccircle cx='318' cy='62' r='14' fill='%23B9C2CF'/%3E%3Ccircle cx='324' cy='66' r='14' fill='%2302030A' opacity='.45'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='160'%3E%3Cpath d='M0 60L400 16.0V60Z' fill='%23A3ACBA' stroke='%233B4250' stroke-width='1'/%3E%3Cpath d='M0 60H400V99.6Z' fill='%235D6575' stroke='%233B4250' stroke-width='1'/%3E%3Cpath d='M120 49.8L120 68.9' stroke='%233B4250' stroke-width='.6' opacity='.6'/%3E%3Cpath d='M180 43.2L180 74.8' stroke='%233B4250' stroke-width='.6' opacity='.6'/%3E%3Cpath d='M240 36.6L240 80.8' stroke='%233B4250' stroke-width='.6' opacity='.6'/%3E%3Cpath d='M300 30.0L300 86.7' stroke='%233B4250' stroke-width='.6' opacity='.6'/%3E%3Cpath d='M360 23.4L360 92.6' stroke='%233B4250' stroke-width='.6' opacity='.6'/%3E%3Crect x='232' y='28' width='52' height='10' fill='%23858E9D' stroke='%233B4250' stroke-width='.8'/%3E%3Crect x='266' y='20' width='52' height='15' fill='%23858E9D' stroke='%233B4250' stroke-width='.8'/%3E%3Crect x='300' y='12' width='52' height='19' fill='%23858E9D' stroke='%233B4250' stroke-width='.8'/%3E%3Crect x='334' y='4' width='52' height='23' fill='%23858E9D' stroke='%233B4250' stroke-width='.8'/%3E%3Crect x='360' y='-24' width='18' height='34' fill='%238C95A4' stroke='%233B4250' stroke-width='.8'/%3E%3Crect x='344' y='-30' width='48' height='8' fill='%23A3ACBA' stroke='%233B4250' stroke-width='.8'/%3E%3Ccircle cx='346' cy='-32' r='4' fill='%23A3ACBA' stroke='%233B4250' stroke-width='.8'/%3E%3Ccircle cx='390' cy='-32' r='4' fill='%23A3ACBA' stroke='%233B4250' stroke-width='.8'/%3E%3Ccircle cx='402' cy='34' r='7' fill='%23BDE6FF'/%3E%3Ccircle cx='402' cy='34' r='13' fill='%235CC8FF' opacity='.3'/%3E%3Ccircle cx='402' cy='56' r='7' fill='%23BDE6FF'/%3E%3Ccircle cx='402' cy='56' r='13' fill='%235CC8FF' opacity='.3'/%3E%3Ccircle cx='402' cy='78' r='7' fill='%23BDE6FF'/%3E%3Ccircle cx='402' cy='78' r='13' fill='%235CC8FF' opacity='.3'/%3E%3C/svg%3E"), var(--deco), radial-gradient(120% 90% at 65% 30%, #101A44, #05060F 70%);
+  background-position: bottom -90px left -90px, top 36px right 30px, 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-size: 400px 400px, 380px auto, var(--deco-size), 100% 100%;
 }
 
 /* ---------- Theme-specific touches ---------- */
@@ -283,6 +318,76 @@
   letter-spacing: .12em;
   transform: rotate(-8deg);
   opacity: .9;
+}
+
+/* Faraway galaxy: holographic cards, blue light and scan lines */
+:root[data-theme="galaxie"] .card {
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(0deg, rgba(120, 200, 255, .07) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, rgba(22, 38, 84, .95), rgba(10, 18, 46, .95));
+  box-shadow: 0 0 12px rgba(92, 200, 255, .22);
+}
+
+:root[data-theme="galaxie"] .card .g {
+  text-shadow: 0 0 6px rgba(140, 210, 255, .55);
+}
+
+:root[data-theme="galaxie"] .card.is-focus {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 232, 31, .06) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #1F3068, #121C44);
+  box-shadow: 0 0 16px rgba(255, 232, 31, .25);
+}
+
+/* The focus person lights a laser sword under their card: ridged hilt, then the blade */
+:root[data-theme="galaxie"] .card.is-focus::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  bottom: -10px;
+  width: 26px;
+  height: 7px;
+  border-radius: 1px;
+  background: repeating-linear-gradient(90deg, #2B2F36 0 2px, #B8BEC8 2px 5px);
+}
+
+:root[data-theme="galaxie"] .card.is-focus::after {
+  content: '';
+  position: absolute;
+  left: 36px;
+  right: 8px;
+  bottom: -9px;
+  height: 5px;
+  border-radius: 0 3px 3px 0;
+  background: #F4FBFF;
+  box-shadow: 0 0 4px 1px #5CC8FF, 0 0 12px 3px rgba(92, 200, 255, .7);
+  transform-origin: left;
+  animation: saber-on .45s ease-out, saber-hum 1.6s ease-in-out .45s infinite;
+}
+
+@keyframes saber-on {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes saber-hum {
+  50% {
+    box-shadow: 0 0 5px 2px #5CC8FF, 0 0 18px 5px rgba(92, 200, 255, .85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="galaxie"] .card.is-focus::after {
+    animation: none;
+  }
+}
+
+/* Direct line: glowing green, like a blade */
+:root[data-theme="galaxie"] .edges path.line {
+  stroke: var(--halo);
+  filter: drop-shadow(0 0 3px rgba(124, 255, 107, .7));
 }
 
 /* Constellations: the real sky over Bordeaux, drawn by ui/sky.js under the tree */
