@@ -223,7 +223,7 @@ function actsView() {
     + groups.map((g, i) => {
       const rows = g.rows.map(({ id, act, former }) => `<li>${personLink(id)} <small>${t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small></li>`).join('');
       return `<section class="rel acts-town"><h3>${esc(g.place || t('acts.unknown'))} <span class="n">${g.rows.length}</span></h3>`
-        + (g.former.length ? `<p class="hint">${t('acts.former', esc(g.former.join(', ')))}</p>` : '')
+        + (g.former.length ? `<p class="hint an-hint">${t('acts.former', esc(g.former.join(', ')))}</p>` : '')
         + `<ul class="ins-diffs">${rows}</ul>`
         + `<div class="row-btns"><button class="btn small" type="button" data-act="acts-copy" data-i="${i}">${t('acts.copy')}</button>`
         + (g.city && g.dept && !halls.has(g.place) ? `<button class="btn small" type="button" data-act="acts-hall" data-i="${i}">${t('acts.findHall')}</button>` : '')
