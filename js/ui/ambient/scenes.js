@@ -2634,11 +2634,13 @@ function iceBattle(ctx, s, now, w, h) {
   if (fall > 7) {
     s.fall = null;
     s.walkStart = now;
-    s.cableBorn = now + rand(14000, 22000);
+    s.nextTow = now + rand(14000, 22000);
   }
   let x = s.fall ? s.fall.x : (now - s.walkStart) * speed - 160 * scale;
   if (x > w + 160 * scale) {
+    // Gone on the right: a new walker on the left, without the cable of the old one
     s.walkStart = now;
+    s.tow = null;
     x = -160 * scale;
   }
   const orbit = (p) => {
@@ -2651,6 +2653,10 @@ function iceBattle(ctx, s, now, w, h) {
   };
   for (const p of s.speeders) if (p.down && now - p.down > 9000) p.down = 0; // a new speeder joins
   const ships = s.speeders.filter((p) => !p.down).map((p) => ({ p, o: orbit(p) }));
+  // Tow cable: one speeder throws it when the walker is well in sight, then holds it until the fall
+  if (!s.tow && !s.fall && now > s.nextTow && x > w * 0.1 && x < w * 0.6 && ships.length) s.tow = { p: pick(ships).p, born: now };
+  const towing = s.tow && ships.find((x) => x.p === s.tow.p);
+  if (s.tow && !towing) s.tow = null; // safety: its speeder is gone
   for (const { o } of ships) if (o.depth < 0) snowspeeder(ctx, o.x, o.y, o.size, o.dir, now);
   let parts = null;
   // It tips forward over its front feet: `tipped` places a point of the walker as it falls
@@ -2669,10 +2675,24 @@ function iceBattle(ctx, s, now, w, h) {
     }
     const flash = s.fall ? 0 : Math.max(0, 1 - (now - s.gunFired) / 160);
     parts = walker(ctx, x, ground, scale, s.fall ? s.fall.born : now, flash);
+    if (s.tow) {
+      // Loops round the four legs at knee height, one more every 1.5 s; they tip with the walker
+      const loops = s.fall ? 4 : Math.min(4, Math.floor((now - s.tow.born) / 1500));
+      const xs = parts.legs.map((k) => k[0]);
+      const ky = parts.legs.reduce((sum, k) => sum + k[1], 0) / 4;
+      ctx.strokeStyle = 'rgba(225, 230, 238, .9)'; // pale: it shows against the snow and the night
+      ctx.lineWidth = 1.4;
+      for (let k = 0; k < loops; k++) {
+        ctx.beginPath();
+        ctx.ellipse((Math.min(...xs) + Math.max(...xs)) / 2, ky + k * 5 * scale, (Math.max(...xs) - Math.min(...xs)) / 2 + 8 * scale, 4 * scale, 0, 0, TAU);
+        ctx.stroke();
+      }
+    }
     ctx.restore();
   }
   if (s.fall && fall >= 1.6 && !s.fall.boom) {
     s.fall.boom = true;
+    s.tow = null; // the cable goes with the wreck
     for (let k = 0; k < 5; k++) {
       s.booms.push({ x: x + rand(-50, 70) * scale, y: ground - rand(5, 45) * scale, r: rand(30, 55) * scale, born: now + k * 140, sparks: Array.from({ length: 12 }, () => rand(0, TAU)) });
     }
@@ -2693,24 +2713,14 @@ function iceBattle(ctx, s, now, w, h) {
     }
     ctx.globalAlpha = 1;
   }
-  // Tow cable: a few loops across the legs at knee height, then a line to the speeder; four loops and
-  // it trips. The cable stays wound round the legs, and held by the speeder, until the walker hits the snow.
-  const towing = ships[0];
-  if (parts && (s.fall || (towing && now > s.cableBorn))) {
-    const loops = s.fall ? 4 : Math.min(4, Math.floor((now - s.cableBorn) / 1500));
-    if (!s.fall && now - s.cableBorn > 7000) s.fall = { born: now, x };
-    ctx.strokeStyle = 'rgba(225, 230, 238, .9)'; // pale: it shows against the snow and the night
+  // The cable runs from the front knee to the speeder holding it; after four loops, the walker trips
+  if (parts && towing) {
+    if (!s.fall && now - s.tow.born > 7000) s.fall = { born: now, x };
+    ctx.strokeStyle = 'rgba(225, 230, 238, .9)';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
-    const ks = parts.legs;
-    for (let k = 0; k < loops; k++) {
-      ctx.moveTo(...tipped([ks[0][0], ks[0][1] + k * 4 * scale]));
-      ctx.lineTo(...tipped([ks[3][0], ks[3][1] + k * 4 * scale + 3]));
-    }
-    if (towing) {
-      ctx.moveTo(...tipped(ks[3]));
-      ctx.lineTo(towing.o.x, towing.o.y);
-    }
+    ctx.moveTo(...tipped(parts.legs[3]));
+    ctx.lineTo(towing.o.x, towing.o.y);
     ctx.stroke();
   }
   for (const { o } of ships) if (o.depth >= 0) snowspeeder(ctx, o.x, o.y, o.size, o.dir, now);
@@ -2722,7 +2732,8 @@ function iceBattle(ctx, s, now, w, h) {
   }
   // The walker fires bursts of three at a speeder, aiming where it is going
   if (ships.length && parts && !s.fall) {
-    if (!s.burst && now > s.nextBurst) s.burst = { target: pick(ships).p, left: 3, next: now };
+    const targets = ships.filter((x) => !s.tow || x.p !== s.tow.p); // the one holding the cable is too low to aim at
+    if (!s.burst && now > s.nextBurst && targets.length) s.burst = { target: pick(targets).p, left: 3, next: now };
     if (s.burst && now >= s.burst.next) {
       const ship = ships.find((x) => x.p === s.burst.target);
       if (ship) {
@@ -2746,7 +2757,7 @@ function iceBattle(ctx, s, now, w, h) {
     b.y += b.dy;
     bolt(ctx, b);
     // A green bolt that reaches a speeder brings it down
-    const hit = b.color === '#7CFF6B' && ships.find(({ p, o }) => !p.down && Math.hypot(o.x - b.x, o.y - b.y) < 12 * scale);
+    const hit = b.color === '#7CFF6B' && ships.find(({ p, o }) => !p.down && (!s.tow || p !== s.tow.p) && Math.hypot(o.x - b.x, o.y - b.y) < 12 * scale);
     if (hit) {
       hit.p.down = now;
       s.booms.push({ x: hit.o.x, y: hit.o.y, r: 20 * scale, born: now, sparks: Array.from({ length: 9 }, () => rand(0, TAU)) });
@@ -3130,7 +3141,7 @@ export const SCENES = {
       chase: null, chases: 0, nextChase: Date.now() + 3000, bolts: [], jump: null, nextJump: Date.now() + 14000,
       cruiser: { born: Date.now() - 2500, plates: hullPlates(), shots: [] }, meteors: [], booms: [],
       speeders: [{ a: 0, speed: 0.0011, rx: 150 }, { a: 2.4, speed: 0.0008, rx: 190 }, { a: 4.2, speed: 0.00095, rx: 120 }],
-      iceBolts: [], cableBorn: Date.now() + 8000, walkStart: Date.now() - 4000, fall: null,
+      iceBolts: [], tow: null, nextTow: Date.now() + 8000, walkStart: Date.now() - 4000, fall: null,
       burst: null, nextBurst: Date.now() + 1500, gunFired: 0,
     }),
     draw: (ctx, s, now, w, h) => galaxy(ctx, s, now, w, h),
