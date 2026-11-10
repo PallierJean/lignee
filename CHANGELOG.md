@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.27.0](https://github.com/PallierJean/lignee/compare/v1.26.3...v1.27.0) (2026-11-10)
+
+### Features
+
+* Stop offering death certificates already obtained ([77a8bc5](https://github.com/PallierJean/lignee/commit/77a8bc5212aa88dde03526203dcfbb97b960becb))
+* Ask the departmental archives for deaths before 1800 ([0098114](https://github.com/PallierJean/lignee/commit/0098114ef1b53595542435667621601d9079bca6))
+
+---
+
+### Nouveautés
+
+* La vue Actes ne propose plus les actes déjà obtenus (photo dans une source de décès) ([77a8bc5](https://github.com/PallierJean/lignee/commit/77a8bc5212aa88dde03526203dcfbb97b960becb))
+* Avant 1800, les actes de décès se demandent aux archives départementales et non plus aux mairies ([0098114](https://github.com/PallierJean/lignee/commit/0098114ef1b53595542435667621601d9079bca6))
+
 ## [1.26.3](https://github.com/PallierJean/lignee/compare/v1.26.2...v1.26.3) (2026-11-10)
 
 ### Bug Fixes
