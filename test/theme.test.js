@@ -148,7 +148,7 @@ describe('empreintes du thème Maraudeur', () => {
       const layer = canvas.children[0];
       assert.equal(layer.className, 'steps');
       const svg = layer.firstChild;
-      assert.equal(svg.attrs.width, '800');
+      assert.equal(svg.attrs.width, '799'); // one pixel less than the area: never a scrollbar
       const [trail] = svg.children;
       const steps = trail.children;
       assert.ok(steps.length >= 5 && steps.length <= 11);
@@ -260,7 +260,7 @@ describe('pluie du thème Matrix', () => {
       assert.equal(box.children.length, 1);
       assert.equal(box.children[0].className, 'rain');
       const canvas = box.children[0].firstChild;
-      assert.deepEqual([canvas.width, canvas.height], [160, 320], 'à la taille de la zone visible');
+      assert.deepEqual([canvas.width, canvas.height], [159, 319], 'à la taille de la zone visible, un pixel de moins (jamais d’ascenseur)');
       // Quelques images : les colonnes avancent et dessinent des signes retournés (miroir)
       await new Promise((r) => setTimeout(r, 400));
       const texts = drawn.filter((x) => x[0] === 'text');

@@ -5,6 +5,7 @@
  * katakana and digits, mirrored as in the film. Stopped outside this theme or if the system
  * asks for reduced motion (a still rain stays in the background), paused when the tab is hidden.
  */
+import { layerSize } from '../utils/dom.js';
 import { reduced } from '../config.js';
 
 const SIZE = 16;     // px: column width, glyph height
@@ -26,8 +27,7 @@ function frame() {
   if (document.hidden) return;
   const canvas = layer.firstChild;
   const box = layer.parentElement;
-  const w = box.clientWidth;
-  const h = box.clientHeight;
+  const [w, h] = layerSize(box);
   const ratio = window.devicePixelRatio || 1;
   if (canvas.width !== Math.round(w * ratio) || canvas.height !== Math.round(h * ratio)) {
     canvas.width = Math.round(w * ratio);

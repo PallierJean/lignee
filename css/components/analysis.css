@@ -915,6 +915,7 @@
 /* Gallery viewer: previous / next image */
 .media-nav {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 4px;
   margin-left: auto;
@@ -926,4 +927,5 @@
   color: var(--muted);
   min-width: 4ch;
   text-align: center;
+  white-space: nowrap; /* "4 / 9" stays on one line next to a long title */
 }
