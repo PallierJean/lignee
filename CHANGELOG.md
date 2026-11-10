@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.26.0](https://github.com/PallierJean/lignee/compare/v1.25.0...v1.26.0) (2026-11-10)
+
+### Features
+
+* Pair a front and a back on a source's document ([9769f38](https://github.com/PallierJean/lignee/commit/9769f38b8d399e67af6476283c7d6fcb342ced5a))
+* Pair a front and a back in the gallery ([5ab7fe6](https://github.com/PallierJean/lignee/commit/5ab7fe6713e307bbc3ea609208165ef1bc4ab026))
+* Open the viewer on the images just added, to identify the people ([a1fe9bf](https://github.com/PallierJean/lignee/commit/a1fe9bf5686acfcf6fe95e322ebb1da629a8be54))
+* Go from one gallery image to the next in the viewer ([b955d35](https://github.com/PallierJean/lignee/commit/b955d35515f1993537f857df5188aecd08cf6423))
+* Add deaths before 1970 to the certificates to request ([1044ce1](https://github.com/PallierJean/lignee/commit/1044ce1d92c491cbf43c8760c1c093f3da1383a7))
+
+### Bug Fixes
+
+* Narrow the side panel on laptop screens ([c1671cd](https://github.com/PallierJean/lignee/commit/c1671cd003d8b572b3889c34f4e971d4f106c16a))
+
+---
+
+### Nouveautés
+
+* Recto-verso sur le document d'une source (contrat de mariage, acte…) ([9769f38](https://github.com/PallierJean/lignee/commit/9769f38b8d399e67af6476283c7d6fcb342ced5a))
+* Jumelage recto-verso des images de la galerie (contrats, actes, dos de photos annotés) ([5ab7fe6](https://github.com/PallierJean/lignee/commit/5ab7fe6713e307bbc3ea609208165ef1bc4ab026))
+* Après l'ajout de photos à une fiche, la visionneuse s'ouvre dessus pour identifier les personnes ([a1fe9bf](https://github.com/PallierJean/lignee/commit/a1fe9bf5686acfcf6fe95e322ebb1da629a8be54))
+* Passer d'une image à l'autre dans la visionneuse de la galerie (boutons et flèches du clavier) ([b955d35](https://github.com/PallierJean/lignee/commit/b955d35515f1993537f857df5188aecd08cf6423))
+* Les décès d'avant 1970 rejoignent les actes à demander, sans numéro ([1044ce1](https://github.com/PallierJean/lignee/commit/1044ce1d92c491cbf43c8760c1c093f3da1383a7))
+
+### Corrections
+
+* Panneau latéral moins large sur les écrans d'ordinateur portable ([c1671cd](https://github.com/PallierJean/lignee/commit/c1671cd003d8b572b3889c34f4e971d4f106c16a))
+
 ## [1.25.0](https://github.com/PallierJean/lignee/compare/v1.24.0...v1.25.0) (2026-11-09)
 
 ### Features
