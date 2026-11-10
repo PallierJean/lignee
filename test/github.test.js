@@ -444,7 +444,7 @@ describe('connecter l’arbre ouvert', () => {
     await connect({ 'agathe-famille.json': backup({ photo: '' }) });
     assert.equal(S.repoLink.path, 'agathe-famille.json');
     assert.equal(S.pending, null);
-    assert.ok(html('importInfo').includes('est connecté'));
+    assert.equal(document.getElementById('transfer').hidden, true); // the dialog closes
   });
 
   test('autre sauvegarde et arbre personnel : nouvel arbre ou connexion, jamais d’ajout', async () => {

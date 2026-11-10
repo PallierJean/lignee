@@ -237,7 +237,8 @@ async function offerRepoBackup(repo, backup) {
 async function connectOpenTree(repo) {
   if (S.people.size && !ownTree() && !(await newTree(repo.name.split('/').pop()))) return;
   await connectTree(repo);
-  $('#importInfo').innerHTML = `<p class="okmsg">${t('tr.repoConnected', esc(treeName()))}</p>`;
+  closeTransfer();
+  toast(t('tr.repoConnected', treeName()));
 }
 
 /**
