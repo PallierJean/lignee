@@ -6,10 +6,15 @@
  * 2. Generation of each person: a child is at least one row below their parents,
  *    two spouses are on the same row, and a person with no known parents
  *    moves down to just above their first child.
- * 3. On each row, spouses form a block (cards side by side).
- *    The order of the blocks follows a walk through the family, from elders to children.
- * 4. Horizontal position: several alternating passes that centre the parents
+ * 3. On each row, spouses form a block (cards side by side), each spouse on the side of their
+ *    own parents; a couple from two families belongs to neither sibling group and settles between them.
+ * 4. Order of the blocks: first a walk through the family, from elders to children, then sweeps
+ *    down and up (under the parents, above the children, siblings kept together), then swaps of
+ *    two neighbours (a whole sibling group or a block), kept when they help. Each order is judged
+ *    on the lines from parents to children: how many cross, and their length. The best one is kept.
+ * 5. Horizontal position: several alternating passes that centre the parents
  *    above their children, then the children under their parents, without overlap.
+ *    The result is kept until the data change (the swaps take a while on a big tree).
  *
  * Returns { nodes, edges, marks, W, H } like buildLayout(), without empty slots.
  *
@@ -19,7 +24,7 @@
  */
 import { CW, CH, HG, VG, SG, PAD } from '../config.js';
 import { S } from '../state.js';
-import { P, partnersOf, childrenOf } from '../model/people.js';
+import { P, partnersOf, childrenOf, dataVersion } from '../model/people.js';
 import { parentsOf, components, generations } from '../model/generations.js';
 
 const STANDARD = {
@@ -35,6 +40,9 @@ const STACK_GAP = 8;         // vertical gap between two stacked cards
 const SPINE = 9;             // a stack's line: left of the cards
 let K = STANDARD;            // measurements of the current layout
 const PASSES = 6;            // centring passes
+const SWEEPS = 12;           // ordering sweeps, alternately down and up
+const SWAP_ROUNDS = 4;       // rounds of neighbour swaps
+const SWAP_BUDGET = 400;     // ms at most spent on swaps
 const LANE = 16;             // gap between two stacked horizontal bars
 const BUS_MARGIN = 22;       // space between a card and the nearest bar
 
@@ -150,8 +158,10 @@ function layoutComponent(comp) {
     members.sort((a, b) => order.get(a) - order.get(b));
     const ids = blockOrder(members);
     // The block's sibling group: that of the first member whose parents are known
-    const withParents = ids.find((x) => parentsOf(x).length);
-    const fam = withParents ? parentsOf(withParents).slice().sort().join('|') : '';
+    // The block's sibling group: that of its members whose parents are known, if they share it;
+    // spouses from two families belong to neither and settle between them
+    const fams = new Set(ids.filter((x) => parentsOf(x).length).map((x) => parentsOf(x).slice().sort().join('|')));
+    const fam = fams.size === 1 ? [...fams][0] : '';
     const block = { ids, g, fam, w: ids.length * K.cw + (ids.length - 1) * K.sg, left: 0, rank: Math.min(...ids.map((x) => order.get(x))) };
     ids.forEach((x, i) => blockOf.set(x, { block, i, k: 0 }));
     (rows[g] = rows[g] || []).push(block);
@@ -222,24 +232,132 @@ function layoutComponent(comp) {
     placeRow(row, targets);
   };
 
-  // Order of a row's blocks: under the parents (failing that, above the children),
-  // siblings side by side, to limit crossing lines
-  const reorder = (row) => {
+  // Order of a row's blocks: under their parents (sweeping down) or above their children
+  // (sweeping up), failing that where they are; siblings side by side, to limit crossing lines
+  const reorder = (row, down) => {
     const key = new Map(row.map((b) => {
       const up = b.ids.filter((id) => parentsOf(id).length).map((id) => mean(parentsOf(id).map(center)));
-      const down = b.ids.flatMap((id) => childrenOf(id)).filter((k) => blockOf.has(k)).map(center);
-      return [b, up.length ? mean(up) : down.length ? mean(down) : b.left + b.w / 2];
+      const kids = b.ids.flatMap((id) => childrenOf(id)).filter((k) => blockOf.has(k)).map(center);
+      const first = down ? up : kids;
+      const second = down ? kids : up;
+      return [b, first.length ? mean(first) : second.length ? mean(second) : b.left + b.w / 2];
     }));
     const famKey = new Map();
-    for (const b of row) if (b.fam && !famKey.has(b.fam)) famKey.set(b.fam, key.get(b));
+    for (const b of row) {
+      if (!b.fam) continue;
+      if (!famKey.has(b.fam)) famKey.set(b.fam, []);
+      famKey.get(b.fam).push(key.get(b));
+    }
+    for (const [f, keys] of famKey) famKey.set(f, mean(keys));
     row.sort((a, b) => (famKey.get(a.fam) ?? key.get(a)) - (famKey.get(b.fam) ?? key.get(b)) || key.get(a) - key.get(b) || a.rank - b.rank);
   };
 
-  for (let pass = 0; pass < PASSES; pass++) {
-    if (pass < PASSES / 2) for (const row of ordered) reorder(row);
+  // Quality of a layout: lines from parents to children that cross, and their length
+  const score = () => {
+    const byRow = new Map();
+    for (const f of families.values()) {
+      const a = anchorOf(f);
+      for (const k of f.kids) {
+        const g = blockOf.get(k).block.g;
+        if (!byRow.has(g)) byRow.set(g, []);
+        byRow.get(g).push([a, center(k)]);
+      }
+    }
+    let crossings = 0;
+    let length = 0;
+    for (const segs of byRow.values()) {
+      for (let i = 0; i < segs.length; i++) {
+        length += Math.abs(segs[i][0] - segs[i][1]);
+        for (let j = i + 1; j < segs.length; j++) {
+          if ((segs[i][0] - segs[j][0]) * (segs[i][1] - segs[j][1]) < -1e-6) crossings++;
+        }
+      }
+    }
+    return crossings * K.cw + length;
+  };
+  // A couple's spouses each on the side of their own parents (a chain of 3 or more stays as it is)
+  const orient = () => {
+    for (const row of ordered) {
+      for (const b of row) {
+        if (b.ids.length !== 2 || b.stack) continue;
+        const side = b.ids.map((id) => (parentsOf(id).length ? mean(parentsOf(id).map(center)) : null));
+        if (side[0] === null || side[1] === null || side[0] <= side[1]) continue;
+        b.ids.reverse();
+        b.ids.forEach((x, i) => { blockOf.get(x).i = i; });
+      }
+    }
+  };
+  const align = () => {
+    orient();
     for (let r = ordered.length - 1; r >= 0; r--) alignUp(ordered[r]);
     for (const row of ordered) alignDown(row);
+  };
+
+  // Layout of a given order: blocks placed, then scored
+  const settle = () => {
+    for (let pass = 0; pass < PASSES; pass++) align();
+    return score();
+  };
+  const snapshot = (value) => ({ value, rows: ordered.map((row) => row.map((b) => [b, b.left])) });
+
+  // First order: under the parents, as placed so far
+  for (let pass = 0; pass < PASSES; pass++) {
+    if (pass < PASSES / 2) for (const row of ordered) reorder(row, true);
+    align();
   }
+  let best = snapshot(score());
+  // Then sweeps up and down from it; the best layout found is kept
+  for (let sweep = 0; sweep < SWEEPS; sweep++) {
+    const down = sweep % 2 === 1;
+    for (const row of down ? ordered : ordered.slice().reverse()) reorder(row, down);
+    const value = settle();
+    if (value < best.value) best = snapshot(value);
+  }
+  const restore = (snap) => snap.rows.forEach((row, r) => {
+    ordered[r].splice(0, row.length, ...row.map(([b]) => b));
+    for (const [b, left] of row) b.left = left;
+  });
+  restore(best);
+
+  // Swaps of two neighbours (a whole sibling group, or a block on its own), kept when they help:
+  // sweeps only follow averages, and can't turn two families round. Time-limited for big trees
+  const until = performance.now() + SWAP_BUDGET;
+  const units = (row) => {
+    const out = [];
+    for (const b of row) {
+      const last = out[out.length - 1];
+      if (last && b.fam && last[0].fam === b.fam) last.push(b);
+      else out.push([b]);
+    }
+    return out;
+  };
+  for (let round = 0, better = true; better && round < SWAP_ROUNDS; round++) {
+    better = false;
+    for (const [r, row] of ordered.entries()) {
+      for (let i = 0; i + 1 < units(row).length && performance.now() < until; i++) {
+        const u = units(row);
+        const swapped = [...u.slice(0, i).flat(), ...u[i + 1], ...u[i], ...u.slice(i + 2).flat()];
+        // Two tries: the swap alone, then with the rows below following (children under their parents' new places)
+        let found = null;
+        for (const follow of [false, true]) {
+          restore(best);
+          row.splice(0, row.length, ...swapped);
+          if (follow) {
+            align();
+            for (const below of ordered.slice(r + 1)) reorder(below, true);
+          }
+          const value = settle();
+          if (value < (found ? found.value : best.value) - 1) found = snapshot(value);
+        }
+        if (found) {
+          best = found;
+          better = true;
+        }
+        restore(best);
+      }
+    }
+  }
+  restore(best);
 
   const minLeft = Math.min(...ordered.map((row) => row[0].left));
   const maxRight = Math.max(...ordered.map((row) => row[row.length - 1].left + row[row.length - 1].w));
@@ -284,6 +402,19 @@ function sosaMap() {
   return out;
 }
 
+// Last families laid out, with what they depend on: the order is searched for (swaps), which takes
+// a while on a big tree, and the tree is drawn again on every click or zoom
+let cached = { key: [], comps: [] };
+
+/** Each group of the tree laid out, largest first; kept until the data or the card size change. */
+function componentLayouts() {
+  const key = [S.people, S.unions, dataVersion(), K];
+  if (key.some((k, i) => k !== cached.key[i])) {
+    cached = { key, comps: components().map(layoutComponent).sort((a, b) => b.blockOf.size - a.blockOf.size) };
+  }
+  return cached.comps;
+}
+
 export function buildFullLayout({ compact = false } = {}) {
   if (!S.people.size) return null;
   K = compact ? COMPACT : STANDARD;
@@ -301,7 +432,7 @@ function fullLayout() {
   const sosa = sosaMap();
 
   // Largest families first
-  const comps = components().map(layoutComponent).sort((a, b) => b.blockOf.size - a.blockOf.size);
+  const comps = componentLayouts();
 
   // Parentage bars: one horizontal bar under the parents per family, on its own
   // lane when it would cross another family's

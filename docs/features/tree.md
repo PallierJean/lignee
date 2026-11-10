@@ -19,6 +19,12 @@
 - « Tout l'arbre » (`tree/full-layout.js`) affiche toutes les personnes à plat, une ligne
   par génération : conjoints côte à côte, enfants sous leurs parents, familles sans lien
   posées l'une à côté de l'autre. Les numéros Sosa restent ceux de la personne choisie.
+  L'ordre de chaque ligne est cherché pour limiter les traits qui se croisent et leur longueur :
+  balayages vers le bas et vers le haut, puis échanges de deux voisins (une fratrie entière ou un
+  couple) gardés quand ils améliorent l'ensemble, dans une limite de temps (400 ms) pour les grands
+  arbres. Chaque conjoint se place du côté de ses parents, et un couple issu de deux familles se
+  pose entre elles. Le calcul est gardé tant que les données ne changent pas : zoomer ou cliquer ne
+  le refait pas.
 - « Lignée directe » entoure d'un halo vert les ancêtres directs de la personne centrale (ceux
   qui ont un numéro Sosa) et colore les traits qui remontent jusqu'à eux. À l'impression, seul le
   contour des fiches est vert.
