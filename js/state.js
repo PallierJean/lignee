@@ -2,7 +2,7 @@
  * Shared application state.
  * A single object S, read and modified by the other modules.
  */
-import { ZOOMS, THEMES, TEXT_SIZES, PREF_KEY, DEFAULT_TREE } from './config.js';
+import { ZOOMS, THEMES, TEXT_SIZES, TREE_FILTERS, PREF_KEY, DEFAULT_TREE } from './config.js';
 
 export const S = {
   mode: 'loading',       // 'loading' | 'db' (online database) | 'file' (data/arbres/) | 'local' (browser)
@@ -23,6 +23,7 @@ export const S = {
   full: false,           // whole tree, flat (otherwise a view centred on the person)
   fan: false,            // fan chart instead of the tree
   line: true,            // halo on the focus person's direct line
+  filter: '',            // tree filter: '' | 'living' | 'certificate' (other cards faded)
   panel: true,           // record/register panel shown
   sheet: false,          // phone: record/register panel open over the tree
   closed: {},            // closed banners: ex (example family), local (local mode)
@@ -89,6 +90,7 @@ export function loadPrefs() {
     S.full = v.full === true;
     S.fan = v.fan === true;
     S.line = v.line !== false;
+    S.filter = TREE_FILTERS.includes(v.filter) ? v.filter : '';
     S.panel = v.panel !== false;
     if (v.closed && typeof v.closed === 'object') S.closed = v.closed;
     if (THEMES.includes(v.theme)) S.theme = v.theme;
@@ -102,7 +104,7 @@ export function savePrefs() {
   try {
     if (S.focus) S.foci[S.tree] = S.focus;
     else delete S.foci[S.tree];
-    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci, theme: S.theme, textSize: S.textSize }));
+    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, filter: S.filter, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci, theme: S.theme, textSize: S.textSize }));
   } catch (e) {
     /* storage unavailable: preferences not remembered */
   }

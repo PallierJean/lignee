@@ -22,6 +22,14 @@
 - « Lignée directe » entoure d'un halo vert les ancêtres directs de la personne centrale (ceux
   qui ont un numéro Sosa) et colore les traits qui remontent jusqu'à eux. À l'impression, seul le
   contour des fiches est vert.
+- « Vivants » et « N° d'acte » sont des filtres : les fiches qui n'y répondent pas sont estompées
+  (`passesFilter` dans `model/people.js`), les autres restent nettes. « Vivants » garde les personnes
+  qui ne sont pas décédées ; « N° d'acte » garde celles dont une source du décès porte un numéro
+  d'acte, dans sa cote ou dans son titre (« Acte n°412 », comme l'ajoute la vérification INSEE :
+  `hasDeathNumber`). Un seul filtre à la fois ; un second clic l'enlève. Le choix est gardé avec
+  les préférences d'affichage (`filter`) ; l'impression et l'éventail l'ignorent.
+- Quand la barre manque de place, « Lignée directe », les filtres et « Éventail » passent en
+  icônes (le nom reste en infobulle et pour les lecteurs d'écran), comme Imprimer ou Recentrer.
 - « Éventail » (`tree/fan.js`) remplace l'arbre par la roue d'ascendance de la personne
   centrale, jusqu'à 10 générations, père à gauche et mère à droite de chaque secteur. Seuls les
   ancêtres connus et une case vide juste au-dessus d'eux sont tracés, et la roue est recadrée sur eux ;

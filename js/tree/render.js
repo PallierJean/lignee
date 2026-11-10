@@ -6,7 +6,7 @@ import { CW, CH, reduced, RINGS_PATH } from '../config.js';
 import { S, cardEls, isLoading } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, given, fullName, cardNames, longName, cardDates, situationLabel, currentSituation } from '../model/people.js';
+import { P, given, fullName, cardNames, longName, cardDates, situationLabel, currentSituation, passesFilter } from '../model/people.js';
 import { buildLayout } from './layout.js';
 import { buildFullLayout } from './full-layout.js';
 import { relationship } from '../model/kinship.js';
@@ -61,7 +61,8 @@ function fillCard(el, n, purpleSword) {
   const names = cardNames(p);
   el.className = 'card' + (p.sex === 'M' || p.sex === 'F' ? ' is-' + p.sex : '')
     + (n.focus ? ' is-focus' : '') + (n.partnerOf ? ' is-partner' : '') + (n.onPath ? ' on-path' : '')
-    + (lineShown() && n.sosa && !n.focus ? ' is-line' : '') + (names.maiden ? ' has-maiden' : '');
+    + (lineShown() && n.sosa && !n.focus ? ' is-line' : '') + (names.maiden ? ' has-maiden' : '')
+    + (S.filter && !passesFilter(p, S.filter) ? ' is-faded' : '');
   el.dataset.act = 'person-open';
   el.dataset.id = n.id;
   Object.assign(el.dataset, saberOf(n.id), purpleSword ? { saber: 'purple' } : {});
