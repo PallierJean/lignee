@@ -69,6 +69,15 @@
   l'annuaire et passent par leur formulaire ; Paris a une mairie par arrondissement, que le fichier de
   l'INSEE tel que Lignée le garde ne précise pas. Un navigateur n'ouvre qu'un e-mail par clic : on les
   envoie l'un après l'autre.
+  Les décès d'avant 1800 (`ARCHIVES_BEFORE`) ne vont pas aux mairies mais aux archives
+  départementales, qui conservent les registres paroissiaux et les premiers registres d'état civil :
+  un groupe « Archives départementales : Haute-Vienne (87) » par département (commune
+  d'aujourd'hui, comme pour les mairies), rangé avant les mairies du département, chaque ligne
+  rappelant la commune du décès. « Trouver les archives » cherche dans le même annuaire le service
+  « Archives départementales - … » du département (les Archives de Paris pour Paris ; seul le numéro
+  du département part, `findArchives`), et l'e-mail prérempli demande les actes de décès ou de
+  sépulture, avec la cote du registre en ligne s'il est numérisé. Sans département connu ou à
+  l'étranger, le décès reste rangé par commune.
 - **Statistiques**, **Éphémérides** (dates exactes seulement ; un 29 février se fête le 28 les
   années non bissextiles), **Frise** (personne ou famille proche, avec repères historiques,
   plutôt français, dans `model/history-data.js`) et **Galerie** (toutes les images de l'arbre).

@@ -14,6 +14,7 @@ import { norm, rid } from '../utils/helpers.js';
 import { DICT } from '../i18n.js';
 import { parsePlace, formatPlace } from './places.js';
 import { isFrance } from './countries.js';
+import { departmentName } from './departments.js';
 import { ACCENTED_FIRST_NAMES } from './first-names.js';
 
 export const INSEE_FROM = 1970;  // first deaths in the file
@@ -266,13 +267,18 @@ export function recordDeathAct(p, deptOf = () => '') {
   };
 }
 
+/** Deaths before this year are asked of the departmental archives, not of the town hall. */
+export const ARCHIVES_BEFORE = 1800;
+
 /**
  * Death certificates to request, grouped by the town hall that holds them today:
- * [{ place, city, dept, former: [places], rows: [{ id, act, former }] }] (dept empty abroad). `rows` lists [{ id, act }]; those
+ * [{ place, city, dept, archives, former: [places], rows: [{ id, act, former }] }] (dept empty abroad). `rows` lists [{ id, act }]; those
  * without a certificate number are left out, except deaths before 1970 taken from the records (recordDeathAct). `today(death)` gives today's commune { city, dept }
  * of a former one (merged, renamed), or null: its deaths go with today's commune, and `former`
- * keeps where they occurred. Towns sorted by department then name, abroad then an unknown town
- * last; within a town, by date of death.
+ * keeps where they occurred. A death in France before ARCHIVES_BEFORE goes to the archives of its
+ * department instead (archives: true, place "Loire (42)", one group per department, `former` the
+ * town of death). Sorted by department, its archives before its towns, then name, abroad then an
+ * unknown town last; within a group, by date of death.
  */
 export function deathActsByCommune(rows, today = () => null) {
   const groups = new Map();
@@ -281,20 +287,23 @@ export function deathActsByCommune(rows, today = () => null) {
     const death = row.act.death || {};
     const now = death.city && isFrance(death.country) ? today(death) : null;
     const where = now ? { ...death, ...now } : death;
-    const place = where.city ? actPlace(where) : '';
-    if (!groups.has(place)) {
-      groups.set(place, { place, abroad: !isFrance(where.country), dept: where.dept || '', city: where.city || '', former: new Set(), rows: [] });
+    const year = parseInt(String(row.act.deathDate || '').slice(0, 4), 10);
+    const archives = year < ARCHIVES_BEFORE && Boolean(where.city) && isFrance(where.country) && Boolean(departmentName(where.dept));
+    const place = archives ? `${departmentName(where.dept)} (${where.dept})` : where.city ? actPlace(where) : '';
+    const key = (archives ? 'archives|' : '') + place;
+    if (!groups.has(key)) {
+      groups.set(key, { place, archives, abroad: !isFrance(where.country), dept: where.dept || '', city: archives ? '' : where.city || '', former: new Set(), rows: [] });
     }
-    const g = groups.get(place);
-    const former = now ? actPlace(death) : '';
-    if (former) g.former.add(former);
+    const g = groups.get(key);
+    const former = archives ? actPlace(death) : now ? actPlace(death) : '';
+    if (former && !archives) g.former.add(former);
     g.rows.push({ ...row, former });
   }
   return [...groups.values()]
     .sort((a, b) => (!a.place) - (!b.place) || a.abroad - b.abroad
-      || a.dept.localeCompare(b.dept, 'fr', { numeric: true }) || a.city.localeCompare(b.city, 'fr'))
-    .map(({ place, abroad, dept, city, former, rows: list }) => ({
-      place, city, dept: abroad ? '' : dept, former: [...former].sort(), rows: list.sort((a, b) => a.act.deathDate.localeCompare(b.act.deathDate)),
+      || a.dept.localeCompare(b.dept, 'fr', { numeric: true }) || b.archives - a.archives || a.city.localeCompare(b.city, 'fr'))
+    .map(({ place, archives, abroad, dept, city, former, rows: list }) => ({
+      place, city, dept: abroad ? '' : dept, archives, former: [...former].sort(), rows: list.sort((a, b) => a.act.deathDate.localeCompare(b.act.deathDate)),
     }));
 }
 const placeText = actPlace;

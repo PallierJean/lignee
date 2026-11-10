@@ -8,7 +8,7 @@ import {
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
 import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc } from '../js/ui/analysis.js';
-import { findTownHall, resetTownHalls } from '../js/services/town-hall.js';
+import { findTownHall, findArchives, resetTownHalls } from '../js/services/town-hall.js';
 import { setLang } from '../js/i18n.js';
 import { loadCommuneChanges, currentCommune } from '../js/model/communes.js';
 import { loadTree, person, resetApp, html } from './helpers.js';
@@ -376,7 +376,7 @@ describe('actes de décès à demander, par commune', () => {
     Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: async (x) => { copied = x; } } }, configurable: true });
     await copyActs(1);
     assert.equal(copied, 'Mairie de Limoges (87)\n- Bertrand Lucien Marcel, né(e) le 12 Mars 1920, décédé(e) le 04 Juillet 1995, acte n° 412');
-    assert.match(document.getElementById('toast').textContent, /Liste de Limoges \(87\) copiée/);
+    assert.match(document.getElementById('toast').textContent, /Liste « Limoges \(87\) » copiée/);
     navigator.clipboard.writeText = async () => { throw new Error('refusé'); };
     await copyActs(0);
     assert.match(document.getElementById('toast').textContent, /Copie impossible/);
@@ -394,7 +394,7 @@ describe('actes de décès à demander, par commune', () => {
     globalThis.URL.revokeObjectURL = () => {};
     await exportActsCsv();
     const csv = new TextDecoder('utf-8', { ignoreBOM: true }).decode(await file.arrayBuffer()); // BOM gardé : Excel lit les accents
-    assert.equal(csv, '﻿Mairie à contacter;Commune du décès;Nom;Prénoms;Naissance;Décès;N° d’acte;Fiche\r\n'
+    assert.equal(csv, '﻿Mairie ou archives à contacter;Commune du décès;Nom;Prénoms;Naissance;Décès;N° d’acte;Fiche\r\n'
       + 'Tulle (19);Tulle (19);ROCHE;Anne;05 Janvier 1930;03 Février 2001;7;Anne ROCHE\r\n'
       + 'Limoges (87);Limoges (87);Bertrand;Lucien Marcel;12 Mars 1920;04 Juillet 1995;412;Lucien BERTRAND\r\n');
     assert.match(document.getElementById('toast').textContent, /lignee-.*-actes-deces\.csv/);
@@ -563,6 +563,75 @@ describe('actes de décès à demander, par commune', () => {
     await copyActs();
     assert.match(copied, /Mairie de Limoges \(87\)\n- Bertrand Louis, né\(e\) le 03 Février 1870, décédé\(e\) le 05 Juin 1940 \(numéro d’acte inconnu\)\n- Bertrand Lucien Marcel, né\(e\) le 12 Mars 1920, décédé\(e\) le 04 Juillet 1995, acte n° 412/);
     assert.match(copied, /- Petit Rose, décédé\(e\) en 1930 à Octeville \(50\) \(numéro d’acte inconnu\)/);
+  });
+
+  test('décès d’avant 1800 : aux archives du département, une demande par département', () => {
+    const row = (id, death, deathDate) => ({ id, act: { ...act({ death, deathDate, certificate: '' }), record: true } });
+    const groups = deathActsByCommune([
+      row('a', { city: 'Limoges', dept: '87', country: 'France' }, '19400605'),
+      row('b', { city: 'Saint-Junien', dept: '87', country: 'France' }, '17500300'),
+      row('c', { city: 'Limoges', dept: '87', country: 'France' }, '17990000'),
+      row('d', { city: 'Limoges', dept: '87', country: 'France' }, '18000101'),
+      row('e', { city: 'Liège', dept: '', country: 'Belgique' }, '17500000'),
+      row('f', { city: 'Tulle', dept: '', country: '' }, '17500000'),
+    ]);
+    assert.deepEqual(groups.map((g) => [g.place, g.archives, g.rows.map((r) => [r.id, r.former])]), [
+      ['Tulle', false, [['f', '']]],
+      ['Haute-Vienne (87)', true, [['b', 'Saint-Junien (87)'], ['c', 'Limoges (87)']]],
+      ['Limoges (87)', false, [['d', ''], ['a', '']]],
+      ['Liège, Belgique', false, [['e', '']]],
+    ], 'avant 1800 et département connu : les archives ; 1800 : la mairie ; étranger ou sans département : comme avant');
+    assert.equal(groups[1].city, '');
+  });
+
+  test('vue Actes : les archives départementales trouvées dans l’annuaire, puis l’e-mail', async () => {
+    resetTownHalls();
+    resetActsHalls();
+    S.mode = 'file';
+    loadTree([
+      lucien(),
+      person('j', { given: 'Jean', surname: 'Faure', sex: 'M', birthDate: '1702', deathDate: '15/03/1750', deathPlace: 'Saint-Junien (87)', deceased: true }),
+    ]);
+    const asked = [];
+    let directory = async () => ({ ok: true, json: async () => ({ results: [{ nom: 'Archives départementales - Haute-Vienne', adresse_courriel: 'archives@haute-vienne.fr' }] }) });
+    globalThis.fetch = async (url) => {
+      if (url.startsWith('api/insee')) return { ok: true, json: async () => (url.includes('Bertrand') ? [act()] : []) };
+      asked.push(url);
+      return directory(url);
+    };
+    await checkInsee(inseePending(), () => {});
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    let out = html('paneAnalysis');
+    assert.match(out, /Dont 1 décès d’avant 1800, à demander aux archives départementales \(1 département\)/);
+    assert.match(out, /<h3>Archives départementales : Haute-Vienne \(87\) <span class="n">1<\/span>/);
+    assert.match(out, /décès le 15 Mars 1750 à Saint-Junien \(87\)/);
+    assert.match(out, /data-act="acts-hall" data-i="0">Trouver les archives/);
+
+    await findActsHall(0);
+    assert.equal(new URL(asked[0]).searchParams.get('where'),
+      '(startswith(nom, "Archives départementales") or nom = "Archives de Paris") and startswith(code_insee_commune, "87")', 'seul le département part');
+    out = html('paneAnalysis');
+    assert.match(out, /Archives départementales - Haute-Vienne : archives@haute-vienne\.fr/);
+    assert.match(out, /Écrire aux archives départementales : Haute-Vienne \(87\)/);
+    assert.match(out, /data-act="acts-hall" data-i="1">Trouver la mairie/, 'la mairie de Limoges reste à chercher');
+    const mail = decodeURIComponent(out.match(/href="(mailto:[^"]+)"/)[1].replace(/&amp;/g, '&'));
+    assert.match(mail, /^mailto:archives@haute-vienne\.fr\?subject=Demande de copies d’actes de décès ou de sépulture antérieurs à 1800&body=/);
+    assert.match(mail, /conservés par vos services \(département : Haute-Vienne \(87\)\) :\r\n\r\n- Faure Jean, né\(e\) en 1702, décédé\(e\) le 15 Mars 1750 à Saint-Junien \(87\) \(numéro d’acte inconnu\)/);
+
+    let copied = null;
+    Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: async (x) => { copied = x; } } }, configurable: true });
+    await copyActs(0);
+    assert.match(copied, /^Archives départementales : Haute-Vienne \(87\)\n- Faure Jean/);
+    assert.match(document.getElementById('toast').textContent, /Liste « Archives départementales : Haute-Vienne \(87\) » copiée/);
+
+    // Introuvables : la recherche de l'annuaire, par département
+    resetTownHalls();
+    resetActsHalls();
+    directory = async () => ({ ok: true, json: async () => ({ results: [] }) });
+    await findActsHall(0);
+    assert.match(html('paneAnalysis'), /Archives introuvables dans l’annuaire\. <a href="https:\/\/lannuaire\.service-public\.fr\/recherche\?whoWhat=Archives%20d%C3%A9partementales&amp;where=Haute-Vienne"/);
+    assert.equal(await findArchives('BE'), null, 'hors de France : rien à chercher');
   });
 
   test('vue Actes : sans vérification, ou en ligne', () => {
