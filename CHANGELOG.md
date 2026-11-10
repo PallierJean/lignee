@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.26.1](https://github.com/PallierJean/lignee/compare/v1.26.0...v1.26.1) (2026-11-10)
+
+### Bug Fixes
+
+* Close the import dialog once the repository is connected ([140f5a8](https://github.com/PallierJean/lignee/commit/140f5a8ef6dbc8ab05d5c19dc1f2570924c9f9b5))
+
+---
+
+### Corrections
+
+* La fenêtre d'import se ferme une fois le dépôt connecté ([140f5a8](https://github.com/PallierJean/lignee/commit/140f5a8ef6dbc8ab05d5c19dc1f2570924c9f9b5))
+
 ## [1.26.0](https://github.com/PallierJean/lignee/compare/v1.25.0...v1.26.0) (2026-11-10)
 
 ### Features
