@@ -216,3 +216,17 @@
   width: 100%;
   min-width: 0;
 }
+
+/* Tablet and phone: the button can be anywhere in the wrapped header; the menu spans the screen
+   width, just under the button (top: auto keeps it where it would be in the flow) */
+@media (max-width: 900px) {
+  .appearance-menu {
+    position: fixed;
+    top: auto;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: none;
+    margin-top: 6px;
+  }
+}
