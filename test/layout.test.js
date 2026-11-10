@@ -143,6 +143,50 @@ describe('arbre complet', () => {
     assertNoOverlap(nodes);
   });
 
+  test('deux familles liées par un mariage : chacun du côté de ses parents, les enfants dessous, sans croisement', () => {
+    // Les Grossmann (g) et les Frisch (f) ; Lionel Grossmann épouse Marie-Hélène Frisch.
+    // Les frères Frisch ont chacun femme et enfants : sans échange de familles, les enfants
+    // de Lionel finissaient à l'autre bout de l'arbre
+    const people = [
+      person('gf', { sex: 'M' }), person('gm', { sex: 'F' }), person('ff', { sex: 'M' }), person('fm', { sex: 'F' }),
+      person('lionel', { sex: 'M', fatherId: 'gf', motherId: 'gm' }), person('mh', { sex: 'F', fatherId: 'ff', motherId: 'fm' }),
+      person('dom', { sex: 'F', fatherId: 'gf', motherId: 'gm' }), person('pascal', { sex: 'M', fatherId: 'gf', motherId: 'gm' }),
+      person('agathe', { sex: 'F', fatherId: 'lionel', motherId: 'mh' }), person('arthur', { sex: 'M', fatherId: 'lionel', motherId: 'mh' }),
+    ];
+    const unions = [{ a: 'gf', b: 'gm' }, { a: 'ff', b: 'fm' }, { a: 'lionel', b: 'mh' }];
+    for (const k of [1, 2, 3, 4]) {
+      people.push(person('b' + k, { sex: 'M', fatherId: 'ff', motherId: 'fm' }), person('w' + k, { sex: 'F' }));
+      unions.push({ a: 'b' + k, b: 'w' + k });
+      for (const c of [1, 2, 3]) people.push(person(`c${k}${c}`, { fatherId: 'b' + k, motherId: 'w' + k }));
+    }
+    loadTree(people, unions);
+    S.focus = 'agathe';
+    const nodes = cards(buildFullLayout());
+    assertNoOverlap(nodes);
+    const x = new Map(nodes.map((n) => [n.id, n.x + CW / 2]));
+    const mid = (a, b) => (x.get(a) + x.get(b)) / 2;
+    // Chaque conjoint du côté de sa famille
+    assert.equal(x.get('lionel') < x.get('mh'), mid('gf', 'gm') < mid('ff', 'fm'));
+    // Les enfants de Lionel du même côté que leurs parents, pas au-delà de leurs cousins Frisch
+    const cousins = people.filter((p) => p.id.startsWith('c')).map((p) => x.get(p.id));
+    const before = x.get('lionel') < x.get('b1');
+    for (const k of ['agathe', 'arthur']) assert.equal(cousins.every((c) => x.get(k) < c), before, `${k} du côté de ses parents`);
+    // Aucun trait parent -> enfant ne croise un autre sur la même ligne
+    const segs = people.filter((p) => p.fatherId).map((p) => [mid(p.fatherId, p.motherId || p.fatherId), x.get(p.id), nodes.find((n) => n.id === p.id).y]);
+    const crossings = segs.flatMap((s, i) => segs.slice(i + 1).filter((t) => t[2] === s[2] && (s[0] - t[0]) * (s[1] - t[1]) < -1e-6));
+    assert.equal(crossings.length, 0);
+  });
+
+  test('mise en page gardée tant que les données ne changent pas', () => {
+    loadTree(ex.people, ex.unions);
+    S.focus = 'p_ex_13';
+    const first = buildFullLayout();
+    assert.deepEqual(buildFullLayout().nodes, first.nodes, 'même résultat au second appel');
+    const moved = ex.people.map((p) => (p.id === 'p_ex_13' ? { ...p, fatherId: '', motherId: '' } : p));
+    loadTree(moved, ex.unions); // nouvelles données : recalculée
+    assert.notDeepEqual(buildFullLayout().nodes, first.nodes);
+  });
+
   test('null pour un arbre vide', () => {
     loadTree([]);
     assert.equal(buildFullLayout(), null);
