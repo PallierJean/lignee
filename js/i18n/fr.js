@@ -677,6 +677,7 @@ export const FR = {
   'acts.writeToArchives': (dept) => `Écrire aux archives départementales : ${dept}`,
   'acts.mailSubjectArchives': 'Demande de copies d’actes de décès ou de sépulture antérieurs à 1800',
   'acts.mailBodyArchives': (dept, lines) => `Madame, Monsieur,\n\nDans le cadre de recherches sur l’histoire de ma famille, pourriez-vous m’adresser une copie des actes de décès ou de sépulture suivants, antérieurs à 1800, conservés par vos services (département : ${dept}) :\n\n${lines}\n\nJe n’ai pas leur numéro : le nom, la date et la commune ou la paroisse du décès devraient permettre de les retrouver. Si ces registres sont consultables en ligne, la cote ou le lien du registre me suffira.\n\nUne réponse par e-mail me convient.\n\nJe vous remercie par avance et vous prie d’agréer, Madame, Monsieur, mes salutations distinguées.\n\n`,
+  'acts.obtained': (n) => `${n} fiche${s(n)} ${n > 1 ? 'ont' : 'a'} déjà la photo de ${n > 1 ? 'leur' : 'son'} acte de décès ou d’inhumation dans une source : ${n > 1 ? 'elles ne sont plus proposées' : 'elle n’est plus proposée'}.`,
   'acts.copy': 'Copier la liste',
   'acts.copied': (town) => `Liste « ${town} » copiée.`,
   'acts.copyFailed': 'Copie impossible : sélectionnez la liste à la main.',

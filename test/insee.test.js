@@ -3,7 +3,7 @@ import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import {
-  inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace, estimatedBirth, deathActsByCommune, recordDeathAct,
+  inseeQuery, inseeSignature, matchDeath, deathDifferences, actDateText, actPlace, estimatedBirth, deathActsByCommune, recordDeathAct, hasDeathDocument,
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
@@ -632,6 +632,36 @@ describe('actes de décès à demander, par commune', () => {
     await findActsHall(0);
     assert.match(html('paneAnalysis'), /Archives introuvables dans l’annuaire\. <a href="https:\/\/lannuaire\.service-public\.fr\/recherche\?whoWhat=Archives%20d%C3%A9partementales&amp;where=Haute-Vienne"/);
     assert.equal(await findArchives('BE'), null, 'hors de France : rien à chercher');
+  });
+
+  test('acte déjà obtenu (photo dans une source de décès) : plus proposé', async () => {
+    const photo = 'data:image/jpeg;base64,AAAA';
+    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'death', photo }] }), true);
+    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'burial', photo }] }), true);
+    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'other', fact: 'death', photo }] }), true);
+    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'death' }] }), false, 'sans photo : encore à demander');
+    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'birth', photo }] }), false, 'un autre acte');
+    assert.equal(hasDeathDocument({}), false);
+
+    S.mode = 'file';
+    loadTree([
+      lucien({ sources: [{ id: 's1', kind: 'death', title: 'Acte n°412', photo }] }),
+      person('g', { given: 'Louis', surname: 'Bertrand', sex: 'M', deathDate: '05/06/1940', deathPlace: 'Limoges (87)', deceased: true, sources: [{ id: 's2', fact: 'death', photo }] }),
+      person('h', { given: 'Rose', surname: 'Petit', sex: 'F', deathDate: '1930', deathPlace: 'Tulle (19)', deceased: true }),
+    ]);
+    globalThis.fetch = async (url) => ({ ok: true, json: async () => (url.includes('Bertrand&firstName=Lucien') ? [act()] : []) });
+    await checkInsee(inseePending(), () => {});
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    let out = html('paneAnalysis');
+    assert.doesNotMatch(out, /Lucien|Louis/, 'actes déjà là : ni l’INSEE ni les fiches ne les reproposent');
+    assert.match(out, /Rose/);
+    assert.match(out, /2 fiches ont déjà la photo de leur acte de décès ou d’inhumation dans une source : elles ne sont plus proposées\./);
+    loadTree([lucien({ sources: [{ id: 's1', kind: 'death', photo }] })]);
+    renderAnalysis();
+    out = html('paneAnalysis');
+    assert.match(out, /Aucune fiche vérifiée/);
+    assert.match(out, /1 fiche a déjà la photo de son acte de décès ou d’inhumation dans une source : elle n’est plus proposée\./);
   });
 
   test('vue Actes : sans vérification, ou en ligne', () => {
