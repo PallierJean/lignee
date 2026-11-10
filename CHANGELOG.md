@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.28.0](https://github.com/PallierJean/lignee/compare/v1.27.0...v1.28.0) (2026-11-10)
+
+### Features
+
+* Filter the tree to the living or to known death certificates ([6100f5e](https://github.com/PallierJean/lignee/commit/6100f5e69ef8876cdaa83ba4a8460249e437020d))
+
+---
+
+### Nouveautés
+
+* Filtres de l'arbre « Vivants » et « N° d'acte » (les autres fiches sont estompées) ([6100f5e](https://github.com/PallierJean/lignee/commit/6100f5e69ef8876cdaa83ba4a8460249e437020d))
+
 ## [1.27.0](https://github.com/PallierJean/lignee/compare/v1.26.3...v1.27.0) (2026-11-10)
 
 ### Features
