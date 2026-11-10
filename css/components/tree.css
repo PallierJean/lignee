@@ -9,6 +9,8 @@
 }
 
 .stage-bar {
+  /* Holds the hidden button labels (.txt): otherwise they widen the whole page on a phone */
+  position: relative;
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
