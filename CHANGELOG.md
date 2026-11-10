@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.26.2](https://github.com/PallierJean/lignee/compare/v1.26.1...v1.26.2) (2026-11-10)
+
+### Bug Fixes
+
+* Keep the page to the screen width on a phone ([552911f](https://github.com/PallierJean/lignee/commit/552911fb69ffc940578eb2759d2d59405288430d))
+
+---
+
+### Corrections
+
+* Sur téléphone, la page reste à la largeur de l'écran (fenêtres et menus ne débordent plus) ([552911f](https://github.com/PallierJean/lignee/commit/552911fb69ffc940578eb2759d2d59405288430d))
+
 ## [1.26.1](https://github.com/PallierJean/lignee/compare/v1.26.0...v1.26.1) (2026-11-10)
 
 ### Bug Fixes
