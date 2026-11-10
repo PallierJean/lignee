@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.26.3](https://github.com/PallierJean/lignee/compare/v1.26.2...v1.26.3) (2026-11-10)
+
+### Bug Fixes
+
+* Keep the image counter on one line in the viewer ([0847d0d](https://github.com/PallierJean/lignee/commit/0847d0d8143137db595a849a0a1b78b303b9f52b))
+* Stop the theme animations flickering at some browser zooms ([6488b27](https://github.com/PallierJean/lignee/commit/6488b27055af96c37224118d887bd3a298c3a9a2))
+
+---
+
+### Corrections
+
+* Le compteur d'images de la visionneuse reste sur une ligne à côté d'un titre long ([0847d0d](https://github.com/PallierJean/lignee/commit/0847d0d8143137db595a849a0a1b78b303b9f52b))
+* Les animations des thèmes ne clignotent plus avec certains zooms du navigateur (50, 90, 110 %) ([6488b27](https://github.com/PallierJean/lignee/commit/6488b27055af96c37224118d887bd3a298c3a9a2))
+
 ## [1.26.2](https://github.com/PallierJean/lignee/compare/v1.26.1...v1.26.2) (2026-11-10)
 
 ### Bug Fixes
