@@ -40,6 +40,8 @@ export function renderControls() {
   $('#btnFull').setAttribute('aria-pressed', String(S.full && !S.fan));
   $('#btnFan').setAttribute('aria-pressed', String(S.fan));
   $('#btnLine').setAttribute('aria-pressed', String(S.line));
+  $('#btnLiving').setAttribute('aria-pressed', String(S.filter === 'living'));
+  $('#btnCertificate').setAttribute('aria-pressed', String(S.filter === 'certificate'));
   $('#btnPanel').setAttribute('aria-pressed', String(narrow() ? S.sheet : S.panel));
   $('#main').className = 'main' + (S.panel ? '' : ' side-off') + (S.sheet ? ' sheet' : '');
   $('#zoomVal').textContent = t('percent', Math.round(S.zoom * 100));

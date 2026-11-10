@@ -115,6 +115,14 @@ export function toggleLine() {
   renderTree();
 }
 
+/** Turns tree filter `kind` on ('living', 'certificate'), or off if it is already on: the other cards fade. */
+export function toggleFilter(kind) {
+  S.filter = S.filter === kind ? '' : kind;
+  savePrefs();
+  renderControls();
+  renderTree();
+}
+
 /** Shows or hides the record/register panel: the tree takes the full width. */
 export function togglePanel() {
   if (narrow()) {

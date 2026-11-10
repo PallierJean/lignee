@@ -161,6 +161,7 @@ const CLICK_ACTIONS = {
   full: () => A.toggleFull(),
   fan: () => A.toggleFan(),
   line: () => A.toggleLine(),
+  filter: (el) => A.toggleFilter(el.dataset.filter),
   panel: () => A.togglePanel(),
   lang: () => A.toggleLang(),
   undo: () => A.undo(),

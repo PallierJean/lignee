@@ -349,6 +349,20 @@ export function byBirth(a, b) {
 export const isDead = (p) =>
   !!(String(p.deathDate || '').trim() || String(p.deathPlace || '').trim() || p.deceased);
 
+/**
+ * Whether a death certificate number is known for `p`: a source of the death (a death record, or
+ * one citing the death) with a number in its reference, or in its title ("Acte n°412", as INSEE adds it).
+ */
+export const hasDeathNumber = (p) => listOf(p && p.sources).some((s) => (s.kind === 'death' || s.fact === 'death')
+  && (/\d/.test(String(s.ref || '')) || /\b(n|no|num[ée]ro)\s*[°º.]?\s*\d/i.test(String(s.title || ''))));
+
+/** Whether `p` passes tree filter `filter` ('' lets everyone through). */
+export function passesFilter(p, filter) {
+  if (filter === 'living') return !isDead(p);
+  if (filter === 'certificate') return hasDeathNumber(p);
+  return true;
+}
+
 /** "1932 – 2004", "° 1958" or "† 1971". */
 export function lifeYears(p) {
   const b = shortDate(p.birthDate);

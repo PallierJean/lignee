@@ -891,6 +891,17 @@
   pointer-events: none;
 }
 
+/* Tree filter (Living, Cert. no.): the cards that don't match fade */
+.card.is-faded {
+  opacity: .3;
+  filter: grayscale(.6);
+}
+
+.card.is-faded:hover,
+.card.is-faded:focus-visible {
+  opacity: .8;
+}
+
 /* Direct line of the focus person */
 .card.is-line {
   border-color: var(--halo);

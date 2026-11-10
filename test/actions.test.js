@@ -6,7 +6,7 @@ import * as A from '../js/actions.js';
 import { bindEvents } from '../js/events.js';
 import { afterData } from '../js/ui/render.js';
 import { openPersonDlg } from '../js/ui/person-dlg.js';
-import { currentSituation, unionCauseText } from '../js/model/people.js';
+import { currentSituation, unionCauseText, hasDeathNumber, passesFilter } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
 import { CW, CH, DUP_KEY } from '../js/config.js';
 import { ignoredPairs } from '../js/services/dup-ignore.js';
@@ -186,6 +186,41 @@ describe('navigation et affichage', () => {
     A.toggleLang();
     assert.equal(el('btnLang').textContent, 'FR');
     A.toggleLang();
+  });
+
+  test('filtres de l’arbre : vivants ou numéro d’acte, les autres cartes estompées', () => {
+    const cards = () => el('tree').children.filter((c) => c.dataset && c.dataset.id);
+    const faded = () => cards().filter((c) => c.className.includes('is-faded')).map((c) => S.people.get(c.dataset.id).given).sort();
+    const henri = ex.people.find((p) => p.given === 'Henri').id;
+    assert.deepEqual(faded(), [], 'sans filtre : aucune carte estompée');
+    A.toggleFilter('living');
+    assert.equal(S.filter, 'living');
+    assert.equal(el('btnLiving').attrs['aria-pressed'], 'true');
+    assert.ok(faded().includes('Henri'), 'décédé : estompé');
+    assert.ok(!faded().includes('Camille'), 'en vie : net');
+    assert.match(localStorage.getItem('lignee.view.v1'), /"filter":"living"/, 'gardé avec les préférences');
+
+    S.people.get(henri).sources = [{ id: 's1', kind: 'death', fact: 'death', title: 'Acte n°412', photo: '' }];
+    A.toggleFilter('certificate'); // l'un remplace l'autre
+    assert.deepEqual([el('btnLiving').attrs['aria-pressed'], el('btnCertificate').attrs['aria-pressed']], ['false', 'true']);
+    assert.ok(!faded().includes('Henri'), 'numéro d’acte dans une source : net');
+    assert.ok(faded().includes('Camille'));
+    A.toggleFilter('certificate'); // second clic : plus de filtre
+    assert.equal(S.filter, '');
+    assert.deepEqual(faded(), []);
+    delete S.people.get(henri).sources;
+  });
+
+  test('numéro d’acte de décès : dans la cote ou le titre d’une source du décès', () => {
+    assert.equal(hasDeathNumber({ sources: [{ kind: 'death', title: 'Acte n°5' }] }), true);
+    assert.equal(hasDeathNumber({ sources: [{ kind: 'death', title: 'Décès', ref: '1094 N' }] }), true);
+    assert.equal(hasDeathNumber({ sources: [{ kind: 'other', fact: 'death', title: 'Acte no 12' }] }), true);
+    assert.equal(hasDeathNumber({ sources: [{ kind: 'death', title: 'Décès en 1950' }] }), false, 'une année n’est pas un numéro');
+    assert.equal(hasDeathNumber({ sources: [{ kind: 'birth', title: 'Acte n°5' }] }), false, 'un autre acte');
+    assert.equal(hasDeathNumber({}), false);
+    assert.equal(passesFilter({ deceased: true }, 'living'), false);
+    assert.equal(passesFilter({}, 'living'), true);
+    assert.equal(passesFilter({ deceased: true }, ''), true);
   });
 
   test('parenté : ouverture, choix, surlignage, retour à la vue d’avant', () => {
