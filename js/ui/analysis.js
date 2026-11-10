@@ -27,7 +27,7 @@ import { CC_KEY } from '../config.js';
 import { sleep } from '../utils/helpers.js';
 import { longDate, dateParts } from '../utils/dates.js';
 import {
-  inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune, recordDeathAct,
+  inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune, recordDeathAct, hasDeathDocument,
 } from '../model/insee.js';
 import {
   inseeAvailable, inseePending, inseeResults, inseeMatch, checkInsee, forgetInsee, inseeStatus, inseeRegister, inseeAuth,
@@ -205,6 +205,7 @@ function actGroups() {
   const results = inseeResults();
   const rows = [];
   for (const id of S.people.keys()) {
+    if (hasDeathDocument(P(id))) continue; // certificate already in hand
     const entry = results[id];
     if (!entry || entry.ignored || entry.sig !== inseeSignature(inseeQuery(id))) continue;
     const m = inseeMatch(id);
@@ -217,7 +218,7 @@ function actGroups() {
   };
   const known = new Set(rows.map((r) => r.id));
   for (const [id, p] of S.people) {
-    const act = !known.has(id) && recordDeathAct(p, unique);
+    const act = !known.has(id) && !hasDeathDocument(p) && recordDeathAct(p, unique);
     if (act) rows.push({ id, act });
   }
   return deathActsByCommune(rows, (death) => currentCommune(death.city, death.dept));
@@ -246,12 +247,15 @@ function actsView() {
   if (!communeChangesLoaded()) loadCommuneChanges().then(renderAnalysis); // today's communes, then redraw
   if (!communesLoaded()) loadCommunes().then(renderAnalysis); // departments of places written without one
   const groups = actGroups();
-  if (!groups.length) return `<p class="nofocus">${t('acts.none')}</p>`;
+  const obtained = [...S.people.values()].filter(hasDeathDocument).length;
+  const obtainedHint = obtained ? `<p class="hint an-hint">${t('acts.obtained', obtained)}</p>` : '';
+  if (!groups.length) return `<p class="nofocus">${t('acts.none')}</p>${obtainedHint}`;
   const total = groups.reduce((n, g) => n + g.rows.length, 0);
   const old = groups.reduce((n, g) => n + g.rows.filter((r) => r.act.record).length, 0);
   const archives = groups.filter((g) => g.archives);
   return `<p class="hint an-hint">${t('acts.hint', total, groups.length - archives.length)}</p>`
     + (old ? `<p class="hint an-hint">${t('acts.oldHint', old)}</p>` : '')
+    + obtainedHint
     + (archives.length ? `<p class="hint an-hint">${t('acts.archivesHint', archives.reduce((n, g) => n + g.rows.length, 0), archives.length)}</p>` : '')
     + `<label class="fld acts-cc"><span>${t('acts.cc')}</span><input type="email" id="actsCc" autocomplete="email" value="${esc(ccEmail())}" placeholder="${t('acts.ccPlaceholder')}"></label>`
     + `<p class="hint an-hint">${t('acts.ccHint')}</p>`

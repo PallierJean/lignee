@@ -641,6 +641,7 @@ export const EN = {
   'acts.writeToArchives': (dept) => `Write to the departmental archives: ${dept}`,
   'acts.mailSubjectArchives': 'Request for copies of death or burial records before 1800',
   'acts.mailBodyArchives': (dept, lines) => `Dear Sir or Madam,\n\nAs part of research into my family history, could you please send me a copy of the following death or burial records, dated before 1800 and kept by your services (department: ${dept}):\n\n${lines}\n\nI do not have their numbers: the name, date and town or parish of death should help to find them. If these registers can be viewed online, the reference or link of the register will be enough.\n\nA reply by e-mail is fine.\n\nThank you in advance.\n\nYours faithfully,\n\n`,
+  'acts.obtained': (n) => `${n} record${sEn(n)} already ${n > 1 ? 'have' : 'has'} the picture of ${n > 1 ? 'their' : 'its'} death or burial certificate in a source: no longer offered.`,
   'acts.writeTo': (town) => `Write to the town hall of ${town}`,
   'acts.count': (n) => `${n} certificate${sEn(n)}`,
   'acts.manual': 'No e-mail address in the directory, often the big cities: make the request on their online form (copy the town hall’s list first).',

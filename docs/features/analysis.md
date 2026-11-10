@@ -69,6 +69,9 @@
   l'annuaire et passent par leur formulaire ; Paris a une mairie par arrondissement, que le fichier de
   l'INSEE tel que Lignée le garde ne précise pas. Un navigateur n'ouvre qu'un e-mail par clic : on les
   envoie l'un après l'autre.
+  Une fiche qui a déjà la photo de son acte (source de décès ou d'inhumation, ou qui appuie le décès,
+  avec son image : `hasDeathDocument`) n'est plus proposée : l'acte a déjà été obtenu ; la vue dit
+  combien de fiches sont dans ce cas.
   Les décès d'avant 1800 (`ARCHIVES_BEFORE`) ne vont pas aux mairies mais aux archives
   départementales, qui conservent les registres paroissiaux et les premiers registres d'état civil :
   un groupe « Archives départementales : Haute-Vienne (87) » par département (commune
