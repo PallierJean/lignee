@@ -15,6 +15,7 @@
  * This module runs the animation (layer, timer, frames); the scenes themselves are drawn by
  * ui/ambient/scenes.js, loaded only when an animated theme is shown.
  */
+import { layerSize } from '../utils/dom.js';
 import { reduced } from '../config.js';
 
 const FRAME = 40;   // ms between two frames
@@ -33,8 +34,7 @@ function frame() {
   if (document.hidden) return;
   const canvas = layer.firstChild;
   const box = layer.parentElement;
-  const w = box.clientWidth;
-  const h = box.clientHeight;
+  const [w, h] = layerSize(box);
   const ratio = window.devicePixelRatio || 1;
   if (canvas.width !== Math.round(w * ratio) || canvas.height !== Math.round(h * ratio)) {
     canvas.width = Math.round(w * ratio);

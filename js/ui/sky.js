@@ -7,6 +7,7 @@
  * spikes, a random star flares for a moment, a shooting star passes from time to
  * time. If the system asks for reduced motion, the sky is redrawn without these effects.
  */
+import { layerSize } from '../utils/dom.js';
 import { reduced } from '../config.js';
 import { t, getLang } from '../i18n.js';
 import { skyAt } from '../model/sky.js';
@@ -45,8 +46,7 @@ function frame() {
   if (document.hidden && !reduced) return;
   const canvas = layer.firstChild;
   const box = layer.parentElement;
-  const w = box.clientWidth;
-  const h = box.clientHeight;
+  const [w, h] = layerSize(box);
   const ratio = window.devicePixelRatio || 1;
   if (canvas.width !== Math.round(w * ratio) || canvas.height !== Math.round(h * ratio)) {
     canvas.width = Math.round(w * ratio);

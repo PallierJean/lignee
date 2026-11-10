@@ -6,6 +6,7 @@
  * place to another, unlike a background pattern. Stopped outside this theme or if the system
  * asks for reduced motion (the footprints are then still, in the background).
  */
+import { layerSize } from '../utils/dom.js';
 import { reduced } from '../config.js';
 import { S } from '../state.js';
 import { fullName } from '../model/people.js';
@@ -59,8 +60,7 @@ function walk() {
   if (document.hidden) return;
   const svg = layer.firstChild;
   const canvas = layer.parentElement;
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
+  const [w, h] = layerSize(canvas);
   svg.setAttribute('width', w);
   svg.setAttribute('height', h);
   let x = rand(0.05, 0.95) * w;
