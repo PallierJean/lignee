@@ -21,7 +21,8 @@ import { mediaGrid } from './record.js';
 import { toast } from './toast.js';
 import { downloadBlob, fileBase } from './transfer.js';
 import { buildActsCsv } from '../services/csv.js';
-import { findTownHall, townHallSearchUrl } from '../services/town-hall.js';
+import { findTownHall, townHallSearchUrl, findArchives, archivesSearchUrl } from '../services/town-hall.js';
+import { departmentName } from '../model/departments.js';
 import { CC_KEY } from '../config.js';
 import { sleep } from '../utils/helpers.js';
 import { longDate, dateParts } from '../utils/dates.js';
@@ -231,6 +232,15 @@ const actRequestLine = (a, former) => (a.record
   ? t('acts.lineOld', a.last, a.first.join(' '), onDate(a.birthText), onDate(a.deathText), former, a.married)
   : t('acts.line', a.last, a.first.join(' '), bornOf(a), diedOf(a), a.certificate, former));
 
+/** Who receives group `g`'s request: its town hall, or its department's archives (deaths before 1800). */
+const groupTitle = (g) => (g.archives ? t('acts.archivesOf', g.place) : g.place || t('acts.unknown'));
+/** Key of group `g` among the contacts looked up: a department's archives aren't a town named like it. */
+const hallKey = (g) => (g.archives ? 'archives|' : '') + g.place;
+/** Whether the directory can be searched for group `g`'s recipient. */
+const canLookUp = (g) => g.archives || Boolean(g.city && g.dept);
+/** Directory search page for group `g`'s recipient, when it isn't found automatically. */
+const searchUrl = (g, found) => (g.archives ? archivesSearchUrl(departmentName(g.dept)) : townHallSearchUrl(found.city || g.city));
+
 function actsView() {
   if (!inseeAvailable()) return inseeLocal();
   if (!communeChangesLoaded()) loadCommuneChanges().then(renderAnalysis); // today's communes, then redraw
@@ -239,8 +249,10 @@ function actsView() {
   if (!groups.length) return `<p class="nofocus">${t('acts.none')}</p>`;
   const total = groups.reduce((n, g) => n + g.rows.length, 0);
   const old = groups.reduce((n, g) => n + g.rows.filter((r) => r.act.record).length, 0);
-  return `<p class="hint an-hint">${t('acts.hint', total, groups.length)}</p>`
+  const archives = groups.filter((g) => g.archives);
+  return `<p class="hint an-hint">${t('acts.hint', total, groups.length - archives.length)}</p>`
     + (old ? `<p class="hint an-hint">${t('acts.oldHint', old)}</p>` : '')
+    + (archives.length ? `<p class="hint an-hint">${t('acts.archivesHint', archives.reduce((n, g) => n + g.rows.length, 0), archives.length)}</p>` : '')
     + `<label class="fld acts-cc"><span>${t('acts.cc')}</span><input type="email" id="actsCc" autocomplete="email" value="${esc(ccEmail())}" placeholder="${t('acts.ccPlaceholder')}"></label>`
     + `<p class="hint an-hint">${t('acts.ccHint')}</p>`
     + `<div class="row-btns reg-tools"><button class="btn small" type="button" data-act="acts-copy">${t('acts.copyAll')}</button>`
@@ -251,11 +263,11 @@ function actsView() {
     + groups.map((g, i) => {
       const rows = g.rows.map(({ id, act, former }) => `<li>${personLink(id)} <small>${act.record
         ? t('acts.rowOld', esc(onDate(act.deathText)), esc(former)) : t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small></li>`).join('');
-      return `<section class="rel acts-town"><h3>${esc(g.place || t('acts.unknown'))} <span class="n">${g.rows.length}</span></h3>`
+      return `<section class="rel acts-town"><h3>${esc(groupTitle(g))} <span class="n">${g.rows.length}</span></h3>`
         + (g.former.length ? `<p class="hint an-hint">${t('acts.former', esc(g.former.join(', ')))}</p>` : '')
         + `<ul class="ins-diffs">${rows}</ul>`
         + `<div class="row-btns"><button class="btn small" type="button" data-act="acts-copy" data-i="${i}">${t('acts.copy')}</button>`
-        + (g.city && g.dept && !halls.has(g.place) ? `<button class="btn small" type="button" data-act="acts-hall" data-i="${i}">${t('acts.findHall')}</button>` : '')
+        + (canLookUp(g) && !halls.has(hallKey(g)) ? `<button class="btn small" type="button" data-act="acts-hall" data-i="${i}">${t(g.archives ? 'acts.findArchives' : 'acts.findHall')}</button>` : '')
         + `</div>${hallBlock(g)}</section>`;
     }).join('');
 }
@@ -292,22 +304,23 @@ export function setActsCc(value) {
   renderAnalysis();
 }
 
-/** Prefilled e-mail asking town hall `g` for its certificates, with the user's address in copy. */
+/** Prefilled e-mail asking the town hall or archives of group `g` for its certificates, with the user's address in copy. */
 function mailTo(email, g) {
   const lines = g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former)).join('\n');
-  const body = t('acts.mailBody', g.place, lines, g.rows.some((r) => r.act.record)).replace(/\n/g, '\r\n');
+  const body = (g.archives ? t('acts.mailBodyArchives', g.place, lines) : t('acts.mailBody', g.place, lines, g.rows.some((r) => r.act.record))).replace(/\n/g, '\r\n');
+  const subject = t(g.archives ? 'acts.mailSubjectArchives' : 'acts.mailSubject');
   const cc = ccEmail();
-  return `mailto:${email}?subject=${encodeURIComponent(t('acts.mailSubject'))}${cc ? '&cc=' + encodeURIComponent(cc) : ''}&body=${encodeURIComponent(body)}`;
+  return `mailto:${email}?subject=${encodeURIComponent(subject)}${cc ? '&cc=' + encodeURIComponent(cc) : ''}&body=${encodeURIComponent(body)}`;
 }
 
 /** What was found for the town hall of group `g`: contact details and prefilled e-mail. */
 function hallBlock(g) {
-  const found = halls.get(g.place);
+  const found = halls.get(hallKey(g));
   if (!found) return '';
   if (found.busy) return `<p class="hint an-hint">${t('acts.hallBusy')}</p>`;
-  const search = `<a href="${esc(townHallSearchUrl(found.city || g.city))}" target="_blank" rel="noopener noreferrer">${t('acts.hallSearch')}</a>`;
+  const search = `<a href="${esc(searchUrl(g, found))}" target="_blank" rel="noopener noreferrer">${t('acts.hallSearch')}</a>`;
   if (found.error) return `<p class="hint an-hint">${t('acts.hallError')} ${search}</p>`;
-  if (found.none) return `<p class="hint an-hint">${t('acts.hallNone')} ${search}</p>`;
+  if (found.none) return `<p class="hint an-hint">${t(g.archives ? 'acts.archivesNone' : 'acts.hallNone')} ${search}</p>`;
   const { hall } = found;
   const link = (url, label) => `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
   const details = [
@@ -318,14 +331,14 @@ function hallBlock(g) {
       : `<p class="hint an-hint">${t('acts.hallNoEmail')}</p>`);
 }
 
-/** Looks group `g`'s town hall up in the service-public.fr directory and keeps what was found. */
+/** Looks group `g`'s town hall (or department archives) up in the service-public.fr directory and keeps what was found. */
 async function lookUpHall(g) {
-  const city = officialCommune(g.city, g.dept);
+  const city = g.archives ? '' : officialCommune(g.city, g.dept);
   try {
-    const hall = await findTownHall(city, g.dept);
-    halls.set(g.place, hall ? { hall } : { none: true, city });
+    const hall = await (g.archives ? findArchives(g.dept) : findTownHall(city, g.dept));
+    halls.set(hallKey(g), hall ? { hall } : { none: true, city });
   } catch (e) {
-    halls.set(g.place, { error: true, city });
+    halls.set(hallKey(g), { error: true, city });
   }
 }
 
@@ -333,8 +346,8 @@ async function lookUpHall(g) {
 export async function findActsHall(i) {
   await Promise.all([loadCommunes(), loadCommuneChanges()]);
   const g = actGroups()[i];
-  if (!g || !g.city || !g.dept) return;
-  halls.set(g.place, { busy: true });
+  if (!g || !canLookUp(g)) return;
+  halls.set(hallKey(g), { busy: true });
   renderAnalysis();
   await lookUpHall(g);
   renderAnalysis();
@@ -343,7 +356,7 @@ export async function findActsHall(i) {
 let hallsBusy = null; // { done, total } while every town hall is being looked up
 
 /** Town halls still to look up: French towns not found yet, or whose search failed. */
-const hallsToFind = (groups) => groups.filter((g) => g.city && g.dept && (!halls.has(g.place) || halls.get(g.place).error));
+const hallsToFind = (groups) => groups.filter((g) => canLookUp(g) && (!halls.has(hallKey(g)) || halls.get(hallKey(g)).error));
 
 /** One click for every request: looks up all the town halls, one after the other. */
 export async function findAllActsHalls() {
@@ -352,7 +365,7 @@ export async function findAllActsHalls() {
   const todo = hallsToFind(actGroups());
   if (!todo.length) return;
   hallsBusy = { done: 0, total: todo.length };
-  for (const g of todo) halls.set(g.place, { busy: true });
+  for (const g of todo) halls.set(hallKey(g), { busy: true });
   renderAnalysis();
   for (const g of todo) {
     await lookUpHall(g);
@@ -369,16 +382,16 @@ function readyBlock(groups) {
   const ready = [];
   const manual = [];
   for (const g of groups) {
-    const found = halls.get(g.place);
+    const found = halls.get(hallKey(g));
     if (!found || found.busy) continue;
     if (found.hall && found.hall.email) {
-      ready.push(`<li><a href="${esc(mailTo(found.hall.email, g))}">${t('acts.writeTo', esc(g.place))}</a> <small>${t('acts.count', g.rows.length)}</small></li>`);
+      ready.push(`<li><a href="${esc(mailTo(found.hall.email, g))}">${t(g.archives ? 'acts.writeToArchives' : 'acts.writeTo', esc(g.place))}</a> <small>${t('acts.count', g.rows.length)}</small></li>`);
     } else {
       // No e-mail: the town's contact form, its website, or else a search of the directory
       const hall = found.hall || {};
       const [url, label] = hall.form ? [hall.form, t('acts.hallForm')] : hall.site ? [hall.site, t('acts.hallSite')]
-        : [townHallSearchUrl(found.city || g.city), t('acts.hallSearch')];
-      manual.push(`<li>${esc(g.place)} : <a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${label}</a> <small>${t('acts.count', g.rows.length)}</small></li>`);
+        : [searchUrl(g, found), t('acts.hallSearch')];
+      manual.push(`<li>${esc(groupTitle(g))} : <a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${label}</a> <small>${t('acts.count', g.rows.length)}</small></li>`);
     }
   }
   if (!ready.length && !manual.length) return '';
@@ -395,7 +408,7 @@ export const resetActsHalls = () => {
 };
 
 /** A town's list: its town hall, then one line per certificate. */
-const townText = (g) => [t('acts.townHall', g.place || t('acts.unknown')), ...g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former))].join('\n');
+const townText = (g) => [g.archives ? groupTitle(g) : t('acts.townHall', g.place || t('acts.unknown')), ...g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former))].join('\n');
 
 /**
  * Copies the list of town `i`, ready to paste into a request to its town hall; without `i`,
@@ -408,7 +421,7 @@ export async function copyActs(i) {
   if (!chosen.length) return;
   try {
     await navigator.clipboard.writeText(chosen.map(townText).join('\n\n'));
-    toast(i === undefined ? t('acts.copiedAll', groups.length) : t('acts.copied', chosen[0].place || t('acts.unknown')));
+    toast(i === undefined ? t('acts.copiedAll', groups.length) : t('acts.copied', groupTitle(chosen[0])));
   } catch (e) {
     toast(t('acts.copyFailed'), true);
   }

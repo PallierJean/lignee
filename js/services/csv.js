@@ -43,7 +43,7 @@ export function buildActsCsv(groups, dates) {
     t('acts.cTownHall'), t('acts.cTown'), t('acts.cLast'), t('acts.cFirst'), t('acts.cBorn'), t('acts.cDied'), t('acts.cNumber'), t('acts.cRecord'),
   ]];
   for (const g of groups) {
-    const hall = g.place || t('acts.unknown');
+    const hall = g.archives ? t('acts.archivesOf', g.place) : g.place || t('acts.unknown');
     for (const { id, act, former } of g.rows) {
       rows.push([hall, former || hall, act.married ? `${act.last} (${act.married})` : act.last, act.first.join(' '), dates.born(act), dates.died(act), act.certificate, P(id) ? fullName(P(id)) : '']);
     }
