@@ -73,10 +73,10 @@ export function mergeRecords(base, mine, theirs, prefer = 'mine') {
   return { result, conflicts };
 }
 
-/** Records of a backup ({ people: [{id, ...}], unions } as stored in the file), as Maps id -> record. */
+/** Records of a backup ({ people: [{id, ...}], unions, sources } as stored in the file), as Maps id -> record. */
 export function backupRecords(backup) {
   const index = (list) => new Map((Array.isArray(list) ? list : [])
     .filter((x) => x && typeof x.id === 'string')
     .map(({ id, ...data }) => [id, data]));
-  return { people: index(backup && backup.people), unions: index(backup && backup.unions) };
+  return { people: index(backup && backup.people), unions: index(backup && backup.unions), sources: index(backup && backup.sources) };
 }

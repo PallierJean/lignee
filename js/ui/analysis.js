@@ -2,7 +2,7 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
-import { P, fullName, lifeYears, eventLabel, allMedia } from '../model/people.js';
+import { P, fullName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS } from '../model/people.js';
 import { relationship } from '../model/kinship.js';
 import { currentIssues } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
@@ -34,7 +34,7 @@ import {
 } from '../services/insee.js';
 
 const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['insee', 'an.insee'], ['acts', 'an.acts'], ['stats', 'an.stats'],
-  ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery']];
+  ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery'], ['sources', 'an.sources']];
 
 const name = (id) => esc(fullName(P(id)));
 const decimal = (x) => t('decimal', x.toFixed(1));
@@ -638,6 +638,45 @@ function timeView() {
 
 /* ---------- Gallery ---------- */
 
+/* ---------- Sources ---------- */
+
+/**
+ * Every document of the tree, once, with who cites it: [{ src, cites: [{ id, fact }] }], by kind
+ * then title. A shared source is one entry; a record from before shared sources keeps its own.
+ */
+export function sourceLibrary() {
+  const byKey = new Map();
+  for (const [id, p] of S.people) {
+    for (const x of sourcesOf(p)) {
+      const key = x.source || 'own:' + id + ':' + x.id;
+      if (!byKey.has(key)) byKey.set(key, { src: x, cites: [] });
+      byKey.get(key).cites.push({ id, fact: x.fact });
+    }
+  }
+  const order = (k) => (SOURCE_KINDS.includes(k) ? SOURCE_KINDS.indexOf(k) : SOURCE_KINDS.length);
+  return [...byKey.values()].sort((a, b) => order(a.src.kind) - order(b.src.kind)
+    || String(a.src.title || '').localeCompare(String(b.src.title || ''), t('locale')));
+}
+
+function sourcesView() {
+  const list = sourceLibrary();
+  if (!list.length) return `<p class="nofocus">${t('lib.none')}</p>`;
+  const shared = list.filter((x) => new Set(x.cites.map((c) => c.id)).size > 1).length;
+  const kinds = [...new Set(list.map((x) => x.src.kind || 'other'))];
+  return `<p class="hint an-hint">${t('lib.hint', list.length, shared)}</p>`
+    + kinds.map((kind) => {
+      const items = list.filter((x) => (x.src.kind || 'other') === kind);
+      return `<section class="rel lib-kind"><h3>${esc(t('src.' + (SOURCE_KINDS.includes(kind) ? kind : 'other')))} <span class="n">${items.length}</span></h3><ul class="lib-list">`
+        + items.map(({ src, cites }) => {
+          const pic = photoSrc(src.photo);
+          const what = [src.title, src.place, src.ref].filter(Boolean).map((x) => esc(String(x))).join(' · ') || `<span class="muted">${t('lib.untitled')}</span>`;
+          const who = cites.map((c) => personLink(c.id) + (factLabel(c.id, c.fact) ? ` <small>(${esc(factLabel(c.id, c.fact))})</small>` : '')).join(', ');
+          return `<li class="lib-item">${pic ? `<img class="lib-pic" src="${esc(pic)}" alt="" loading="lazy">` : '<span class="lib-pic none" aria-hidden="true"></span>'}`
+            + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p></div></li>`;
+        }).join('') + '</ul></section>';
+    }).join('');
+}
+
 function galleryView() {
   const items = allMedia();
   return items.length ? mediaGrid(items, 'all') : `<p class="nofocus">${t('med.empty')}</p>`;
@@ -658,7 +697,7 @@ export function renderAnalysis() {
   if (!S.kinA && P(S.focus)) S.kinA = S.focus;
   const seg = VIEWS.map(([view, label]) => `<button type="button" data-act="analysis-view" data-view="${view}" aria-pressed="${S.analysis === view}">${t(label)}</button>`).join('');
   const body = {
-    kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, acts: actsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView,
+    kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, acts: actsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView, sources: sourcesView,
   }[S.analysis]();
   setHTML($('#paneAnalysis'), `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`);
 }

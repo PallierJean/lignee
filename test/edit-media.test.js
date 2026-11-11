@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { sourcesOf } from '../js/model/sources.js';
 import { test, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
@@ -118,7 +119,7 @@ test('source document: a back, like the second side of a marriage contract', asy
   await A.setDraftSourceBack(7, png()); // no such source: nothing
   for (const [id, v] of [['f-given', 'Anne'], ['f-surname', 'Roux'], ['src-title-0', 'Contrat de mariage']]) document.getElementById(id).value = v;
   await A.submitEdit();
-  const saved = S.people.get('a').sources[0];
+  const saved = sourcesOf(S.people.get('a'))[0];
   assert.equal(saved.back, 'data:image/jpeg;base64,IMG', 'saved with its front');
   const shown = sourcesHTML('a');
   assert.equal((shown.match(/class="src-doc zoomable"/g) || []).length, 2, 'front and back side by side');

@@ -92,3 +92,7 @@
   Le bouton « Localiser » envoie les noms des lieux, et eux seuls, à OpenStreetMap (Nominatim),
   un par seconde. Rien ne part sans ce clic. Les coordonnées sont gardées dans ce navigateur
   (clé `lignee.geo.v1`). Le fond est un contour simplifié de la France, sans fichier externe.
+- **Sources** : chaque document de l'arbre, une seule fois, rangé par nature (naissance, mariage…)
+  puis par titre, avec sa vignette et les fiches qui le citent, et pour quel fait (`sourceLibrary`
+  dans `ui/analysis.js`). Un acte de mariage cité par les deux époux n'apparaît qu'une fois. Dans
+  le formulaire, un document partagé l'indique : le modifier le modifie pour toutes ces fiches.

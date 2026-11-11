@@ -279,6 +279,7 @@ const CLICK_ACTIONS = {
   'transfer-close': () => closeTransfer(),
   'export-ged': () => exportGedcom(),
   'export-json': () => exportBackup(),
+  'export-json-v1': () => exportBackup(true),
   'export-csv': () => exportCsv(),
   'register-csv': () => {
     openTransfer('export');

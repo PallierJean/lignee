@@ -198,10 +198,21 @@ function mediaRows(e) {
     </div>`)).join('');
 }
 
+/** Other people citing shared source `sid`: their names, for the warning in the form. */
+function alsoCitedBy(sid, self) {
+  if (!sid) return [];
+  return [...S.people].filter(([id, p]) => id !== self && Array.isArray(p.citations) && p.citations.some((c) => c.source === sid))
+    .map(([, p]) => fullName(p));
+}
+
 /** Source rows of the form. */
 function sourceRows(e) {
-  return e.sources.map((x, i) => (x.removed ? '' : `
+  return e.sources.map((x, i) => {
+    if (x.removed) return '';
+    const others = alsoCitedBy(x.source, e.id);
+    return `
     <div class="urow">
+      ${others.length ? `<p class="hint src-shared">${t('f.srcShared', others.length, esc(others.slice(0, 3).join(', ')) + (others.length > 3 ? '…' : ''))}</p>` : ''}
       <div class="row2">
         <label class="fld"><span>${t('f.srcKind')}</span><select id="src-kind-${i}">${SOURCE_KINDS.map((c) => `<option value="${c}"${x.kind === c ? ' selected' : ''}>${esc(t('src.' + c))}</option>`).join('')}</select></label>
         <label class="fld"><span>${t('f.srcFact')}</span><select id="src-fact-${i}">${factOptions(e, x.fact)}</select></label>
@@ -227,7 +238,8 @@ function sourceRows(e) {
         </div>
       </div>` : ''}
       <button class="link" type="button" data-act="src-remove" data-i="${i}">${t('f.srcRemove')}</button>
-    </div>`)).join('');
+    </div>`;
+  }).join('');
 }
 
 function leadText(e) {

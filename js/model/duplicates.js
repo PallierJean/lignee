@@ -6,7 +6,7 @@
 import { S } from '../state.js';
 import { fullDate, yearOf } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
-import { P, partnersOf } from './people.js';
+import { P, partnersOf, sourcesOf } from './people.js';
 
 const MIN_SCORE = 3;
 const YEAR_MARGIN = 2;
@@ -83,7 +83,7 @@ export function findDuplicates(ignored = new Set()) {
 export function mergedData(keep, drop, unionIds = new Map()) {
   const out = { ...keep };
   for (const [key, value] of Object.entries(drop)) {
-    if (['createdAt', 'updatedAt', 'notes', 'events', 'sources', 'media', 'example'].includes(key)) continue;
+    if (['createdAt', 'updatedAt', 'notes', 'events', 'sources', 'citations', 'media', 'example'].includes(key)) continue;
     if (out[key] === undefined || out[key] === null || out[key] === '') out[key] = value;
   }
   out.deceased = !!(keep.deceased || drop.deceased);
@@ -100,11 +100,14 @@ export function mergedData(keep, drop, unionIds = new Map()) {
     const union = String(f || '').startsWith('union:') && unionIds.get(f.slice(6));
     return union ? 'union:' + union : eventIds.get(f) || f;
   };
-  const sources = [...(keep.sources || []), ...(drop.sources || []).map((s) => ({ ...s, fact: fact(s.fact) }))];
+  // Documents as the form has them (shared sources resolved): saving turns them back into citations
+  const sources = [...sourcesOf(keep), ...sourcesOf(drop).map((s) => ({ ...s, fact: fact(s.fact) }))];
   const media = [...(keep.media || []), ...(drop.media || [])];
-  for (const [key, list] of [['events', events], ['sources', sources], ['media', media]]) {
+  for (const [key, list] of [['events', events], ['media', media]]) {
     if (list.length) out[key] = list;
     else delete out[key];
   }
+  delete out.citations;
+  out.sources = sources;
   return out;
 }

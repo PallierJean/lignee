@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { sourcesOf } from '../js/model/sources.js';
 import { test, describe, beforeEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
@@ -224,7 +225,7 @@ describe('INSEE : vérification et vue', () => {
     assert.equal(S.people.get('l').deathPlace, 'Limoges (87)');
     // Tout reporter : prénoms de l'état civil et numéro d'acte compris, plus rien à proposer
     assert.equal(S.people.get('l').given, 'Lucien Marcel');
-    assert.deepEqual(S.people.get('l').sources.map((x) => [x.kind, x.fact, x.title]), [['death', 'death', 'Acte n°412']]);
+    assert.deepEqual(sourcesOf(S.people.get('l')).map((x) => [x.kind, x.fact, x.title]), [['death', 'death', 'Acte n°412']]);
     assert.deepEqual(A.inseeDifferences('l'), []);
     await A.undo();
     assert.equal(S.people.get('l').deathPlace, undefined);

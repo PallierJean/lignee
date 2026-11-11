@@ -34,8 +34,15 @@ que l'action puisse être annulée, puis est effacée à la prochaine ouverture 
 encore intégrées (arbre importé, ou enregistré avant ce changement) sont sorties en
 fichiers à l'ouverture de l'arbre. La sauvegarde .json exportée les réintègre en data URL.
 
-Dans la base en ligne, les fiches portent un champ `tree` (identifiant de l'arbre) ; celles qui n'en ont pas
-appartiennent à « Mon arbre », et les noms des arbres sont dans la collection `trees`.
+Dans la base en ligne, les collections `people`, `unions` et `sources` portent un champ `tree`
+(identifiant de l'arbre) ; les documents qui n'en ont pas appartiennent à « Mon arbre », et les noms
+des arbres sont dans la collection `trees`. Une fiche enregistrée avant Lignée 2.0 garde ses documents
+jusqu'à sa prochaine modification, où ils passent dans `sources` : la base n'est pas convertie d'un
+coup, et l'application lit les deux formes.
+
+Partout, les sources partagées (`S.sources`) passent par la même écriture que les fiches :
+`storage.js` découpe les documents d'une fiche en citations et en sources (`splitSources` dans
+`model/sources.js`), dans le même lot, et supprime les sources que plus personne ne cite.
 
 En stockage navigateur, les données restent sur cet appareil et dans ce navigateur.
 Exportez régulièrement une sauvegarde (.json) ou un fichier GEDCOM.

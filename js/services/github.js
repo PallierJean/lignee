@@ -19,7 +19,7 @@ const HEAD_WAIT = 400; // ms entre deux lectures
 const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
 const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
 
-const EMPTY_BACKUP = '{"format":"lignee","version":1,"people":[],"unions":[]}\n';
+const EMPTY_BACKUP = '{"format":"lignee","version":2,"people":[],"unions":[],"sources":[]}\n';
 
 const fail = (code) => Object.assign(new Error(code), { code });
 
@@ -138,14 +138,22 @@ async function snapshot(api, raw, head) {
 
 /**
  * Reads target.path at the repository's latest commit. Returns { backup, moveTo }: backup as
- * stored ({ people: [{id, ...}], unions }), or an empty one if the file is gone; moveTo() makes
- * `repo` start from that commit, once its changes are in the open tree.
+ * stored ({ people: [{id, ...}], unions, sources }, format 1 converted), or an empty one if the
+ * file is gone; moveTo() makes `repo` start from that commit, once its changes are in the open tree.
+ * A backup from a newer Lignée fails with `newer`.
  */
 export async function readLatest(repo, target) {
   const head = await headCommit(repo.api);
   const { read, files } = await snapshot(repo.api, repo.raw, head);
   const file = files.get(target.path.normalize('NFC'));
-  const backup = file ? JSON.parse(await (await read(file)).text()) : JSON.parse(EMPTY_BACKUP);
+  let parsed;
+  try {
+    parsed = parseBackup(file ? await (await read(file)).text() : EMPTY_BACKUP);
+  } catch (e) {
+    throw e.code === 'newer' ? fail('newer') : e;
+  }
+  const stored = (list) => list.map((x) => ({ ...x.data, id: x.id }));
+  const backup = { people: stored(parsed.people), unions: stored(parsed.unions), sources: stored(parsed.sources) };
   return { backup, files, read, moveTo: () => Object.assign(repo, { head, read, files }) };
 }
 
@@ -171,6 +179,7 @@ export async function attachPhotos(repo, backup) {
   const stored = backupRecords({
     people: backup.people.map((x) => ({ ...x.data, id: x.id })),
     unions: (backup.unions || []).map((x) => ({ ...x.data, id: x.id })),
+    sources: (backup.sources || []).map((x) => ({ ...x.data, id: x.id })),
   });
   const count = { found: 0, missing: 0, photos: new Map(), base: stored };
 
@@ -190,9 +199,10 @@ export async function attachPhotos(repo, backup) {
     }
   };
 
-  await pool(backup.people, 4, async (x) => {
+  await pool([...backup.people, ...(backup.sources || [])], 4, async (x) => {
     const p = await convertPhotos(x.data, load);
     if (!p.photo) delete p.photo;
+    if (!p.photo || !p.back) delete p.back; // a shared source's back, alone, means nothing
     if (p.media) p.media = keptMedia(p.media);
     x.data = p;
   });
@@ -237,6 +247,10 @@ export async function pushBackup(repo, target, text, message) {
   const people = [];
   for (const p of backup.people) people.push(await convertPhotos(p, (photo) => store(photo, p)));
   backup.people = people;
+  // A shared source's document: its file is named after its title or its kind
+  const sources = [];
+  for (const s of backup.sources || []) sources.push(await convertPhotos(s, (photo) => store(photo, { given: s.title || s.kind || 'source' })));
+  if (backup.sources) backup.sources = sources;
 
   const kept = new Set([...photos.values()].map((x) => x.path));
   // Only files still in the repository: someone else may have removed one already

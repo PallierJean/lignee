@@ -15,7 +15,7 @@ Conventions des tableaux :
   Lignée, ignorée par les autres logiciels.
 
 Identifiants : texte de 1 à 200 caractères parmi `A-Z a-z 0-9 _ - . ~ : @ +` (`p_…` pour une
-personne, `u_…` pour une union). Un objet à l'identifiant invalide est ignoré à l'import.
+personne, `u_…` pour une union, `S…` pour une source). Un objet à l'identifiant invalide est ignoré à l'import.
 
 ## Sauvegarde (`Backup`)
 
@@ -24,21 +24,23 @@ L'enveloppe d'une sauvegarde `.json` et d'un fichier de `data/arbres/`.
 | Champ | Type | Requis | Description |
 | --- | --- | --- | --- |
 | `format` | `"lignee"` | ✅ | Reconnaît une sauvegarde Lignée ; sinon le fichier est refusé |
-| `version` | `number` | ✅ | Version du format, actuellement `1`. Une sauvegarde d'une version plus récente est refusée (import, dépôt GitHub, mode fichier) : la lire ferait perdre ce que cette version ne connaît pas. En mode fichier, l'arbre s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
+| `version` | `number` | ✅ | Version du format, actuellement `2` (`1` est lu et converti, voir [Format 1](#format-1)). Une sauvegarde d'une version plus récente est refusée (import, dépôt GitHub, mode fichier) : la lire ferait perdre ce que cette version ne connaît pas. En mode fichier, l'arbre s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
 | `name` | `string` | | Nom de l'arbre |
 | `createdAt` | `number` | | Création de l'arbre, en millisecondes depuis 1970 |
 | `exportedAt` | `string` | | Date de l'export, ISO 8601 |
 | `people` | [`Person[]`](#personne-person) | ✅ | Les personnes |
 | `unions` | [`Union[]`](#union-union) | ✅ | Les unions |
+| `sources` | [`Source[]`](#source-source) | | Les documents cités, chacun une seule fois (format 2) |
 
 ```json
 {
   "format": "lignee",
-  "version": 1,
+  "version": 2,
   "name": "Famille Bertrand (exemple)",
   "exportedAt": "2026-10-28T08:00:00.000Z",
   "people": [ … ],
-  "unions": [ … ]
+  "unions": [ … ],
+  "sources": [ … ]
 }
 ```
 
@@ -64,7 +66,7 @@ L'enveloppe d'une sauvegarde `.json` et d'un fichier de `data/arbres/`.
 | `motherId` | `Id` \| `null` | | Mère | `FAMC` |
 | `photo` | `Image` | | Portrait, 256 × 320 pixels | non exporté |
 | `events` | [`Event[]`](#événement-event) | | Autres événements | voir Événement |
-| `sources` | [`Source[]`](#source-source) | | Actes cités | `SOUR` |
+| `citations` | [`Citation[]`](#citation-citation) | | Actes cités : renvois vers les sources partagées | `SOUR` sous chaque fait |
 | `media` | [`Media[]`](#galerie-media) | | Galerie d'images | non exporté |
 | `createdAt` | `number` | | Création de la fiche, en millisecondes depuis 1970 | |
 | `updatedAt` | `number` | | Dernière modification, en millisecondes depuis 1970 | |
@@ -180,10 +182,13 @@ décès. Une inhumation marque tout de même la personne comme décédée. Le ch
 
 ## Source (`Source`)
 
+Un document (acte, page de recensement, livret…), rangé une seule fois dans la liste `sources` de
+la sauvegarde avec sa photo, et cité par une ou plusieurs fiches. Le modifier depuis une fiche le
+modifie pour toutes celles qui le citent ; une source que plus personne ne cite est supprimée.
+
 | Champ | Type | Requis | Description | GEDCOM |
 | --- | --- | --- | --- | --- |
-| `id` | `Id` | ✅ | Identifiant, unique sur la fiche | `@S…@` |
-| `fact` | `string` | | Fait appuyé : `birth`, `death`, l'`id` d'un événement, `union:<id d'union>`, ou vide pour toute la fiche | source citée sous ce fait |
+| `id` | `Id` | ✅ | Identifiant, unique dans l'arbre | `@S…@` |
 | `kind` | voir ci-dessous | | Nature de l'acte | `_KIND` |
 | `title` | `string` | | Intitulé | `TITL` |
 | `place` | `Place` | | Lieu de l'acte | `_PLAC` |
@@ -195,7 +200,44 @@ décès. Une inhumation marque tout de même la personne comme décédée. Le ch
 `kind` : `birth`, `baptism`, `marriage`, `death`, `burial`, `census`, `military`, `notary`,
 `family`, `book`, `web`, `other`.
 
-Les sources d'un mariage sont gardées sur la fiche d'un conjoint et exportées sous `MARR`.
+Les sources d'un mariage sont citées par la fiche d'un conjoint (ou des deux) et exportées sous `MARR`.
+
+## Citation (`Citation`)
+
+Le renvoi d'une fiche vers une source, avec le fait qu'elle appuie.
+
+| Champ | Type | Requis | Description | GEDCOM |
+| --- | --- | --- | --- | --- |
+| `id` | `Id` | ✅ | Identifiant, unique sur la fiche | |
+| `source` | `Id` | ✅ | La [source](#source-source) citée | `SOUR @S…@` |
+| `fact` | `string` | | Fait appuyé : `birth`, `death`, l'`id` d'un événement, `union:<id d'union>`, ou vide pour toute la fiche | source citée sous ce fait |
+
+```json
+"people": [
+  { "id": "p_1", "given": "Jean", "citations": [{ "id": "c_1", "source": "S_mariage", "fact": "union:u_1" }] },
+  { "id": "p_2", "given": "Marie", "citations": [{ "id": "c_2", "source": "S_mariage", "fact": "union:u_1" }] }
+],
+"sources": [
+  { "id": "S_mariage", "kind": "marriage", "title": "Acte de mariage", "place": "Lyon", "ref": "n°12", "photo": "photos/acte-….jpg" }
+]
+```
+
+## Format 1
+
+Avant Lignée 2.0, chaque fiche portait ses propres documents : `sources` était une liste de
+sources complètes, chacune avec son `fact`. Lignée 2 lit toujours ce format, d'un fichier, du
+navigateur, de la base en ligne ou d'un dépôt GitHub, et le convertit (`migratePeople` dans
+`js/model/sources.js`) :
+
+- chaque document devient une source, et la fiche garde une citation vers elle ;
+- deux documents identiques qui ont un numéro d'acte (`ref`) ou une image deviennent une seule
+  source partagée ; un document sans l'un ni l'autre (un acte pas encore trouvé) reste à part ;
+- l'identifiant d'une source convertie vient de son contenu : convertir deux fois, ou depuis deux
+  endroits à la fois, donne les mêmes sources.
+
+L'export « Sauvegarde pour une version de Lignée antérieure à la 2.0 » écrit ce format 1 : chaque
+fiche y reprend une copie des documents qu'elle cite. Une Lignée 1.31 ou plus récente refuse une
+sauvegarde au format 2 plutôt que d'en perdre une partie.
 
 ## Galerie (`Media`)
 

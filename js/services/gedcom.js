@@ -4,6 +4,7 @@
  */
 import { S } from '../state.js';
 import { GM } from '../config.js';
+import { migratePeople } from '../model/sources.js';
 import { rid } from '../utils/helpers.js';
 import { dateParts } from '../utils/dates.js';
 import { P, byBirth, maiden, SITUATIONS, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, unionType, unionTypeLabel, eventsOf, sourcesOf, factLabel } from '../model/people.js';
@@ -480,5 +481,11 @@ export function parseGedcom(text) {
     }
   }
 
-  return { people, unions };
+  // Documents cited under each fact become shared sources: the same SOUR record and PAGE, one source
+  const migrated = migratePeople(new Map(people.map((x) => [x.id, x.data])));
+  return {
+    people: people.map((x) => ({ ...x, data: migrated.people.get(x.id) })),
+    unions,
+    sources: [...migrated.sources].map(([id, data]) => ({ id, data })),
+  };
 }

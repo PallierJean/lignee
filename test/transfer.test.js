@@ -55,6 +55,8 @@ describe('exports', () => {
     assert.match(el('exportHint').textContent, /\.ged/);
     await exportBackup();
     assert.match(el('exportHint').textContent, /Sauvegarde/);
+    await exportBackup(true);
+    assert.match(el('exportHint').textContent, /antérieures à la 2\.0/);
     await exportCsv();
     assert.match(el('exportHint').textContent, /registre\.csv/);
     closeTransfer();

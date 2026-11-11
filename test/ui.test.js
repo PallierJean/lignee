@@ -557,3 +557,29 @@ describe('choix d’un conjoint', () => {
     assert.ok(html('f-spouseList').includes('autres') || html('f-spouseList').includes('3 autre'));
   });
 });
+
+describe('bibliothèque de sources', () => {
+  beforeEach(openExample);
+
+  test('chaque document une fois, avec qui le cite ; avertissement dans le formulaire', async () => {
+    const { sourceLibrary } = await import('../js/ui/analysis.js');
+    loadTree([
+      person('a', { given: 'Jean', surname: 'Roux', citations: [{ id: 'c1', source: 'S1', fact: 'union:u' }] }),
+      person('b', { given: 'Marie', surname: 'Roux', citations: [{ id: 'c2', source: 'S1', fact: 'union:u' }] }),
+      person('c', { given: 'Paul', sources: [{ id: 'old', kind: 'census', title: 'Recensement 1906' }] }),
+    ], [{ id: 'u', a: 'a', b: 'b' }]);
+    S.sources = new Map([['S1', { kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12' }]]);
+    const lib = sourceLibrary();
+    assert.deepEqual(lib.map((x) => [x.src.title, x.cites.map((c) => c.id)]), [['Mariage', ['a', 'b']], ['Recensement 1906', ['c']]]);
+    S.focus = 'a';
+    const out = view('sources');
+    assert.ok(out.includes('2 documents, dont 1 partagé'));
+    assert.ok(out.includes('Mariage · Lyon · n°12'));
+    assert.ok(out.includes('data-id="b"'));
+    S.tab = 'record';
+    A.startEdit('a');
+    renderAll(true);
+    assert.ok(html('paneRecord').includes('aussi cité par Marie ROUX'), 'formulaire : document partagé signalé');
+    A.cancelEdit();
+  });
+});

@@ -65,6 +65,7 @@ lignee/
 │   │   └── image.js            Réduction des photos
 │   ├── model/
 │   │   ├── people.js           Noms, âges, parents, conjoints, enfants, événements, sources, galerie
+│   │   ├── sources.js          Sources partagées : citations, conversion du format 1, export compatible
 │   │   ├── kinship.js          Lien de parenté entre deux personnes
 │   │   ├── occupations.js      Traduction des professions à l'affichage
 │   │   ├── book-branches.js    Livre de famille complet : chapitres par branche

@@ -38,7 +38,8 @@ export const savedRepo = () => savedRepos()[S.tree] || null;
 
 const remember = (link) => writeRepos({ ...savedRepos(), [link.tree]: { name: link.name, path: link.path, head: link.repo.head } });
 
-const NO_BASE = () => ({ people: new Map(), unions: new Map() });
+const NO_BASE = () => ({ people: new Map(), unions: new Map(), sources: new Map() });
+const COLLECTIONS = ['people', 'unions', 'sources'];
 const MERGE_TRIES = 3; // the repository may change again while we merge
 
 function setLink(repo, path, photos, mustConfirm, base) {
@@ -135,6 +136,10 @@ export function confirmRepoSave(show) {
 /** Name of a conflicting record, for the banner. */
 function conflictName(collection, id, records) {
   if (collection === 'people') return fullName(records.people.get(id));
+  if (collection === 'sources') {
+    const s = records.sources.get(id) || {};
+    return s.title || [t('src.' + (s.kind || 'other')), s.ref].filter(Boolean).join(' ');
+  }
   const u = records.unions.get(id) || {};
   return `${fullName(records.people.get(u.a))} & ${fullName(records.people.get(u.b))}`;
 }
@@ -148,7 +153,7 @@ async function localRecord(link, latest, collection, id, next, mine) {
     if (mine && canonical(next[key]) === canonical(mine[key]) && key in local) kept[key] = local[key];
     else changed[key] = next[key];
   }
-  if (collection === 'people') {
+  if (collection !== 'unions') {
     // Photos: those of the open tree come back as they are, the repository's new ones are loaded
     const known = new Map([...link.photos].map(([data, file]) => [file.ref, data]));
     const record = { id, data: await convertPhotos(changed, (photo) => known.get(photo) || photo) };
@@ -172,22 +177,20 @@ async function mergeLatest(link, prefer) {
   const mine = backupRecords({
     people: await Promise.all(portable.people.map((p) => convertPhotos(p, toRef))),
     unions: portable.unions,
+    sources: await Promise.all((portable.sources || []).map((s) => convertPhotos(s, toRef))),
   });
-  const both = {
-    people: new Map([...theirs.people, ...mine.people]),
-    unions: new Map([...theirs.unions, ...mine.unions]),
-  };
+  const both = Object.fromEntries(COLLECTIONS.map((c) => [c, new Map([...theirs[c], ...mine[c]])]));
   const merged = {};
   const conflicts = [];
-  for (const collection of ['people', 'unions']) {
-    const { result, conflicts: ids } = mergeRecords(link.base[collection], mine[collection], theirs[collection], prefer);
+  for (const collection of COLLECTIONS) {
+    const { result, conflicts: ids } = mergeRecords(link.base[collection] || new Map(), mine[collection], theirs[collection], prefer);
     merged[collection] = result;
     for (const id of ids) conflicts.push(conflictName(collection, id, both));
   }
   if (conflicts.length && !prefer) return { conflicts }; // the repository stays where it was read
 
   const writes = [];
-  for (const collection of ['people', 'unions']) {
+  for (const collection of COLLECTIONS) {
     const [result, before] = [merged[collection], mine[collection]];
     for (const id of new Set([...before.keys(), ...result.keys()])) {
       if (canonical(result.get(id)) === canonical(before.get(id))) continue;
@@ -203,7 +206,8 @@ async function mergeLatest(link, prefer) {
   beginAction('hist.repoMerge');
   try {
     await inBatch(async () => {
-      for (const [collection, id, data] of writes) await (data ? opSet(collection, id, data) : opDelete(collection, id));
+      // Each collection is set by the merge itself: no source is deleted along with a person
+      for (const [collection, id, data] of writes) await (data ? opSet(collection, id, data) : opDelete(collection, id, { raw: true }));
     });
     if (await storePhotos()) await saveLocal(); // file mode: photos from the repository become files
   } finally {

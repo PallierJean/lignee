@@ -57,6 +57,7 @@ async function init() {
     }
     S.loadedP = true;
     S.loadedU = true;
+    S.loadedS = true;
   }
   afterData();
 
