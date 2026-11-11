@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.1.1](https://github.com/PallierJean/lignee/compare/v2.1.0...v2.1.1) (2026-11-11)
+
+### Bug Fixes
+
+* Stay read-only when the local server is older than the page ([dc7017f](https://github.com/PallierJean/lignee/commit/dc7017f5d167b6c7ea81d6864a766a62645f8458))
+
+---
+
+### Corrections
+
+* Après une mise à jour, si le serveur Lignée tourne encore avec l'ancienne version, l'arbre s'ouvre en lecture seule et demande de relancer npm start, au lieu de risquer de supprimer des photos d'actes. ([dc7017f](https://github.com/PallierJean/lignee/commit/dc7017f5d167b6c7ea81d6864a766a62645f8458))
+
 ## [2.1.0](https://github.com/PallierJean/lignee/compare/v2.0.0...v2.1.0) (2026-11-11)
 
 ### Features
