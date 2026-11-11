@@ -228,3 +228,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Gallery of the form: the thumbnail opens the viewer to identify the people */
+.med-thumb {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.med-thumb:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.med-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 8px;
+}

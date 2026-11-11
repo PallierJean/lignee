@@ -5,23 +5,28 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, given, surname, maiden, fullName, lifeYears, mediaList, photoSrc, peopleNamedIn } from '../model/people.js';
+import { P, given, surname, maiden, fullName, lifeYears, mediaList, mediaLabel, photoSrc, peopleNamedIn } from '../model/people.js';
 import { opUpdate, beginAction, commitAction } from '../services/storage.js';
 import { emit } from '../services/notify.js';
-import { personOptions } from './form.js';
+import { personOptions, captureDraft } from './form.js';
 import { toast, reportError } from './toast.js';
 import { mediaGroups } from './record.js';
 
 /** Data changed: indexes and page follow (ui/render.js afterData, see ui/connect.js). */
 const afterData = () => emit('data');
 
-let current = null;  // { owner, id }: photo shown
+let current = null;  // { owner, id }: photo shown; { draft: index }: an image of the form, not saved yet
 let pin = null;      // { x, y }: marker waiting for a person
 let editing = false; // caption being edited
 let sequence = [];    // [{ owner, id }]: the images of the grid it was opened from, in order
 let back = false;     // the back of the image is shown (contract, annotated photo)
 
-const item = () => current && mediaList(P(current.owner)).find((m) => m.id === current.id);
+const isDraft = () => !!current && current.draft !== undefined;
+const item = () => {
+  if (!current) return null;
+  if (isDraft()) return (S.edit && S.edit.media[current.draft] && !S.edit.media[current.draft].removed) ? S.edit.media[current.draft] : null;
+  return mediaList(P(current.owner)).find((m) => m.id === current.id);
+};
 
 /** Markers of an image, with numeric positions: they may come from an imported file. */
 const tagsOf = (m) => (Array.isArray(m.tags) ? m.tags : [])
@@ -81,12 +86,12 @@ export function renderMedia() {
       + `<span class="n">${t('med.position', at + 1, sequence.length)}</span>`
       + `<button class="icon-btn" type="button" data-act="media-step" data-d="1" aria-label="${t('med.next')}" title="${t('med.next')}">›</button></div>`
     : '';
-  setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(m.title || t('med.untitled'))}</h2>${nav}`
+  setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(mediaLabel(m) || t('med.untitled'))}</h2>${nav}`
     + `<button class="icon-btn" type="button" data-act="media-close" aria-label="${t('close')}">×</button></div>`
     + sides + hint
     + `<div class="media-pic${S.canWrite && !back ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(back ? m.back : m.photo))}" alt="${esc(m.title || '')}${back ? ' (' + t('med.back') + ')' : ''}">${marks}`
     + (pin ? `<span class="tag-pin new" data-style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
-    + caption(m)
+    + (isDraft() ? `<p class="hint">${t('med.draftHint')}</p>` : caption(m))
     + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker);
 }
 
@@ -162,6 +167,22 @@ export async function saveCaption() {
   }
 }
 
+/**
+ * Opens an image of the form (gallery of the record being edited) to identify the people on it:
+ * the markers go with the record, when it is saved.
+ */
+export function openDraftMedia(i) {
+  if (!S.edit || !S.edit.media[i]) return;
+  captureDraft(); // what was typed in the form stays
+  current = { draft: i };
+  sequence = [];
+  back = false;
+  pin = null;
+  editing = false;
+  $('#mediaDlg').hidden = false;
+  renderMedia();
+}
+
 export function openMedia(owner, id, group = '') {
   current = { owner, id };
   sequence = (mediaGroups.get(group) || []).filter((x) => P(x.owner));
@@ -219,6 +240,13 @@ export function cancelPin() {
 }
 
 async function saveTags(tags) {
+  if (isDraft()) {
+    // An image of the form: the markers wait for the record to be saved
+    item().tags = tags;
+    renderMedia();
+    emit('form');
+    return;
+  }
   const owner = P(current.owner);
   beginAction('hist.tag');
   try {

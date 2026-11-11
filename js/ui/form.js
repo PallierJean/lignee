@@ -181,13 +181,15 @@ function mediaRows(e) {
   return e.media.map((x, i) => (x.removed ? '' : `
     <div class="urow">
       <div class="photofld">
-        <img class="photo" src="${esc(photoSrc(x.photo))}" alt="">
+        <button class="med-thumb" type="button" data-act="med-tag" data-i="${i}" title="${t('f.medTag')}"><img class="photo" src="${esc(photoSrc(x.photo))}" alt="${t('f.medTag')}"></button>
         <div class="an-form media-fields">
-          <label class="fld"><span>${t('f.srcTitle')}</span><input id="med-title-${i}" value="${esc(x.title)}"></label>
+          <label class="fld"><span>${t('f.srcTitle')}</span><input id="med-title-${i}" value="${esc(x.title)}" placeholder="${t('f.medTitlePlaceholder')}"></label>
           <label class="fld"><span>${t('f.date')}</span><input id="med-date-${i}" value="${esc(dateValue(x.date))}"></label>
         </div>
       </div>
       <label class="fld"><span>${t('f.eventNote')}</span><input id="med-note-${i}" value="${esc(x.note)}"></label>
+      <p class="med-tags"><button class="btn small" type="button" data-act="med-tag" data-i="${i}">${t('f.medTag')}</button>
+        ${taggedNames(x)}</p>
       <div class="photofld med-back">
         ${x.back ? `<img class="photo" src="${esc(photoSrc(x.back))}" alt="${t('f.medBack')}">` : ''}
         <div class="photobtns">
@@ -197,6 +199,12 @@ function mediaRows(e) {
       </div>
       <button class="link" type="button" data-act="med-remove" data-i="${i}">${t('f.medRemove')}</button>
     </div>`)).join('');
+}
+
+/** People identified on an image of the form, by name. */
+function taggedNames(m) {
+  const ids = [...new Set((Array.isArray(m.tags) ? m.tags : []).map((x) => x && x.id))].filter((id) => P(id));
+  return ids.length ? `<span class="hint">${esc(ids.map((id) => fullName(P(id))).join(', '))}</span>` : `<span class="hint">${t('f.medTagHint')}</span>`;
 }
 
 /** Other people citing shared source `sid`: their names, for the warning in the form. */

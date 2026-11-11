@@ -214,3 +214,35 @@ test('deleting a record or the example family while the browser is full: nothing
   assert.ok(S.people.has('b'), 'the example family is still there');
   assert.equal(S.people.get('b').example, true);
 });
+
+test('intitulé tiré du nom du fichier, sauf un nom d’appareil', async () => {
+  const { fileTitle } = await import('../js/actions/edit.js');
+  assert.equal(fileTitle('mariage.jpg'), 'mariage');
+  assert.equal(fileTitle('Noces d’or 1975.png'), 'Noces d’or 1975');
+  for (const name of ['photo.jpg', 'IMG_1234.JPG', 'DSC0042.jpg', 'PXL_20240512_101010.jpg', 'WhatsApp Image 2024-05-12 at 10.10.10.jpeg', 'Scan 3.png', '20240512_101010.jpg', 'image(2).png']) {
+    assert.equal(fileTitle(name), '', name);
+  }
+});
+
+test('identifier les personnes dès l’ajout, depuis le formulaire : enregistré avec la fiche', async () => {
+  const media = await import('../js/ui/media.js');
+  const { renderAll } = await import('../js/ui/render.js');
+  const { mediaLabel } = await import('../js/model/people.js');
+  S.edit.media.push({ id: 'm1', photo: 'data:image/jpeg;base64,IMG', back: '', title: '', date: '1985', note: '', tags: [], removed: false });
+  renderAll(true);
+  for (const [id, v] of [['med-title-0', ''], ['med-date-0', '1985'], ['med-note-0', '']]) document.getElementById(id).value = v;
+  media.openDraftMedia(0);
+  assert.equal(document.getElementById('mediaDlg').hidden, false);
+  assert.match(document.getElementById('mediaCard').innerHTML, /enregistrés avec la fiche/);
+  // Un clic sur un visage, puis la personne
+  const pic = { querySelector: () => ({ getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 100 }) }) };
+  media.placePin(pic, { clientX: 50, clientY: 40, target: { closest: () => null } });
+  await media.addTag('b');
+  assert.deepEqual(S.edit.media[0].tags, [{ id: 'b', x: 25, y: 40 }]);
+  assert.ok(!S.people.get('a').media, 'rien d’enregistré avant la fiche');
+  media.closeMedia();
+  assert.match(document.getElementById('paneRecord').innerHTML, /Paul ROUX/, 'le formulaire montre qui est identifié');
+  assert.equal(mediaLabel(S.edit.media[0]), 'Paul ROUX · 1985', 'sans intitulé : les personnes et la date');
+  await A.submitEdit();
+  assert.deepEqual(S.people.get('a').media[0].tags, [{ id: 'b', x: 25, y: 40 }]);
+});

@@ -7,7 +7,7 @@ import { S } from '../state.js';
 import { esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { yearOf, longDate } from '../utils/dates.js';
-import { P, photoOf, photoSrc } from '../model/people.js';
+import { P, photoOf, photoSrc, mediaLabel } from '../model/people.js';
 import { bookSections } from '../model/narrative.js';
 import { bookChapters } from '../model/book-branches.js';
 import { familyBook, familyBookName } from '../model/family-book.js';
@@ -166,7 +166,7 @@ const timelineHTML = (rows, first) => '<div class="bk-block">' + (first ? `<h3 c
 
 const albumHTML = (items, first) => '<div class="bk-block">' + (first ? `<h3 class="bk-sub">${esc(t('bb.album'))}</h3>` : '')
   + '<div class="bk-album">' + items.map(({ m }) => `<figure><img src="${esc(photoSrc(m.photo))}" alt="">`
-    + `${m.title || m.date ? `<figcaption>${esc([m.title, m.date].filter(Boolean).join(' · '))}</figcaption>` : ''}</figure>`).join('') + '</div></div>';
+    + `${mediaLabel(m) ? `<figcaption>${esc(m.title ? [m.title, m.date].filter(Boolean).join(' · ') : mediaLabel(m))}</figcaption>` : ''}</figure>`).join('') + '</div></div>';
 
 /** The full book: cover, table of contents, then one chapter per branch, with timeline and album. */
 export async function fullBookHTML(title) {

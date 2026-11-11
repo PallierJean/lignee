@@ -5,7 +5,7 @@ import { longDate } from '../utils/dates.js';
 import { t } from '../i18n.js';
 import {
   P, given, surname, maiden, fullName, photoOf, photoSrc, avatarOf, lifeYears, ageInfo,
-  partnersOf, childrenOf, siblingsOf, isMinor, UNION_AGE, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, unionTypeLabel, unionCauseText, unionEndText,
+  partnersOf, childrenOf, siblingsOf, isMinor, UNION_AGE, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, mediaLabel, unionTypeLabel, unionCauseText, unionEndText,
 } from '../model/people.js';
 import { sourcesOfPerson } from '../model/sources.js';
 import { occupationLabel } from '../model/occupations.js';
@@ -21,8 +21,8 @@ export function mediaGrid(items, group = '') {
   // The viewer goes from one image to the next in the order of this grid
   if (group) mediaGroups.set(group, shown.map(({ owner, m }) => ({ owner, id: m.id })));
   const cells = shown.map(({ owner, m }) => `<button class="med" type="button" data-act="media-open" data-owner="${esc(owner)}" data-id="${esc(m.id)}"`
-    + `${group ? ` data-group="${esc(group)}"` : ''} title="${esc(m.title || '')}">`
-    + `<img src="${esc(photoSrc(m.photo))}" alt="${esc(m.title || '')}">`
+    + `${group ? ` data-group="${esc(group)}"` : ''} title="${esc(mediaLabel(m))}">`
+    + `<img src="${esc(photoSrc(m.photo))}" alt="${esc(mediaLabel(m))}">`
     + (count(m) ? `<span class="med-n" title="${esc(t('med.taggedN', count(m)))}">${count(m)}</span>` : '')
     + (photoSrc(m.back) ? `<span class="med-rv" title="${t('med.hasBack')}">${t('med.rv')}</span>` : '') + '</button>');
   return cells.length ? `<div class="meds">${cells.join('')}</div>` : '';
