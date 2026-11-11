@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.1](https://github.com/PallierJean/lignee/compare/v2.3.0...v2.3.1) (2026-11-11)
+
+### Bug Fixes
+
+* Keep the marriage documents when merging duplicates ([884308f](https://github.com/PallierJean/lignee/commit/884308f8fcbaca8f043e42f3651ddab36d205b9f))
+
+---
+
+### Corrections
+
+* Fusionner deux doublons ne perd plus l'acte de mariage porté par leur union. ([884308f](https://github.com/PallierJean/lignee/commit/884308f8fcbaca8f043e42f3651ddab36d205b9f))
+
 ## [2.3.0](https://github.com/PallierJean/lignee/compare/v2.2.0...v2.3.0) (2026-11-11)
 
 ### Features
