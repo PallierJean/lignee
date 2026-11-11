@@ -4,7 +4,7 @@
  * photos are separate files, in data/arbres/<tree id>/photos/.
  */
 import { S, treeName } from '../../state.js';
-import { buildBackup, parseBackup } from '../backup.js';
+import { buildBackup, parseBackup, FORMAT_VERSION } from '../backup.js';
 import { mediaList, isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
 import { pool } from '../../utils/helpers.js';
 import { say, failure } from '../notify.js';
@@ -13,9 +13,14 @@ import { readLocalTrees, readLocalData } from './local.js';
 
 const API = 'api/trees/';
 
+// The local server knows an older backup format than this page: it was started before
+// Lignée was updated. It would drop what it doesn't know (photos of shared sources): read only.
+let serverTooOld = false;
+
 async function fetchTrees() {
   const res = await fetch(API, { cache: 'no-store' });
   if (!res.ok) throw new Error(String(res.status));
+  serverTooOld = Number(res.headers.get('X-Lignee-Format') || 1) < FORMAT_VERSION;
   const list = await res.json();
   if (!Array.isArray(list)) throw new Error('Réponse inattendue');
   return list;
@@ -49,8 +54,9 @@ export async function loadFile() {
     return false;
   }
   S.mode = 'file';
+  if (serverTooOld) say('st.oldServer', true);
 
-  if (!list.length) {
+  if (!list.length && !serverTooOld) {
     // First launch: the trees already kept in this browser are taken over, if any
     for (const t of readLocalTrees()) {
       const data = readLocalData(t.id);
@@ -96,10 +102,11 @@ export async function loadFileTree() {
     say('backup.newer', true);
     return;
   }
-  S.canWrite = true;
+  S.canWrite = !serverTooOld;
   S.people = new Map(data.people.map((x) => [x.id, x.data]));
   S.unions = new Map(data.unions.map((x) => [x.id, x.data]));
   S.sources = new Map(data.sources.map((x) => [x.id, x.data]));
+  if (serverTooOld) return; // nothing written, no photo swept, until the server is restarted
   // Photos still embedded in the record (saved before photo files existed): they are moved out
   if (await storePhotos()) await saveFile().catch(() => {}); // message already shown
   // Photos removed during the previous session: nothing can restore them any more

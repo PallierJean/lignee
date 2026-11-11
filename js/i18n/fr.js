@@ -477,6 +477,7 @@ export const FR = {
   'st.renameFailed': 'Le changement de nom a échoué. Le serveur local est-il toujours lancé ?',
   'st.deleteFailed': 'La suppression a échoué. Le serveur local est-il toujours lancé ?',
   'err.unexpected': 'Une erreur inattendue a interrompu l’action. Rechargez la page, puis vérifiez la fiche avant de recommencer.',
+  'st.oldServer': 'Le serveur Lignée a été lancé avant la mise à jour : arrêtez-le (Ctrl+C dans son terminal) et relancez npm start. D’ici là, l’arbre est en lecture seule, pour ne rien perdre.',
   'st.conflict': 'Non enregistré : l’arbre a été modifié ailleurs (autre onglet ?). Rechargez la page. Votre dernière saisie sera à refaire.',
 
   // Undo / redo
