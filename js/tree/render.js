@@ -2,11 +2,13 @@
  * Tree drawing: cards (positioned buttons) and lines (SVG).
  * Existing cards are reused so their movement is animated.
  */
-import { CW, CH, reduced, RINGS_PATH } from '../config.js';
+import { CW, CH, reduced, RINGS_PATH, setCardSize } from '../config.js';
 import { S, cardEls, isLoading } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, given, fullName, cardNames, longName, cardDates, situationLabel, currentSituation, passesFilter } from '../model/people.js';
+import {
+  P, given, fullName, cardNames, longName, cardDates, situationLabel, currentSituation, passesFilter, photoOf, avatarOf,
+} from '../model/people.js';
 import { buildLayout } from './layout.js';
 import { buildFullLayout } from './full-layout.js';
 import { relationship } from '../model/kinship.js';
@@ -72,8 +74,15 @@ function fillCard(el, n, purpleSword) {
   const wed = ['married', 'remarried'].includes(currentSituation(n.id));
   const spokenDates = (wed ? ', ' + situationLabel('married', p.sex).toLowerCase() : '') + (dates ? ', ' + dates.replace(/°/g, t('card.born')).replace(/†/g, t('card.died')) : '');
   const partnerOf = n.partnerOf ? ', ' + t('card.partnerOf', p.sex === 'F', fullName(P(n.partnerOf))) : '';
-  el.title = longName(p);
   el.setAttribute('aria-label', longName(p) + spokenDates + (n.sosa ? ', Sosa ' + n.sosa : '') + partnerOf);
+  if (S.photos) {
+    // Photo only; the name and dates show on hover or keyboard focus, in place of the tooltip
+    el.removeAttribute('title');
+    el.innerHTML = `<img class="ph-img" src="${esc(photoOf(p) || avatarOf(p.sex))}" alt="" draggable="false">`
+      + `<span class="tip" aria-hidden="true"><b>${esc(fullName(p))}</b>${dates ? `<span>${esc(dates)}</span>` : ''}</span>`;
+    return;
+  }
+  el.title = longName(p);
   el.innerHTML = `<span class="tp"><i class="sx ${esc(p.sex || 'U')}"></i><span class="g">${esc(given(p) || '—')}</span>`
     + `${n.sosa ? `<span class="sosa" title="${t('sosaTitle')}">${n.sosa}</span>` : ''}</span>`
     + `<span class="s">${esc(names.name || t('card.noSurname'))}</span>`
@@ -94,7 +103,8 @@ function fillPlaceholder(el, n) {
     ? (of.sex === 'M' ? 'addSpouseF' : of.sex === 'F' ? 'addSpouseM' : 'addSpouse')
     : PH_LABEL[n.rel]);
   el.setAttribute('aria-label', t('card.of', label, fullName(of)));
-  el.innerHTML = `<span class="plus" aria-hidden="true">+</span><span>${esc(label)}</span>`;
+  el.innerHTML = `<span class="plus" aria-hidden="true">+</span>`
+    + (S.photos ? `<span class="tip" aria-hidden="true">${esc(label)}</span>` : `<span>${esc(label)}</span>`);
 }
 
 /** Kinship link path, from one card to the next. */
@@ -176,6 +186,8 @@ export function renderTree() {
     return;
   }
 
+  setCardSize(S.photos);
+  tree.classList.toggle('photos', S.photos);
   const L = S.full ? buildFullLayout() : buildLayout();
   if (!L) return;
   const path = S.kinShow ? relationship(S.kinA, S.kinB).path : [];

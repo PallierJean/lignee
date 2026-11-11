@@ -734,6 +734,8 @@ export const FR = {
   'ins.f.deceased': 'Marqué(e) vivant(e), mais décédé(e) selon l’INSEE',
   'ctl.fan': 'Éventail',
   'ctl.line': 'Lignée directe',
+  'ctl.photos': 'Photos',
+  'ctl.photosTitle': 'Montrer seulement les photos, le nom au survol',
   'ctl.lineTitle': 'Halo vert sur les ancêtres directs de la personne centrale',
   'ctl.living': 'Vivants',
   'ctl.livingTitle': 'Estomper les personnes décédées : seules les personnes en vie restent nettes',

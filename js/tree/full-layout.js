@@ -27,18 +27,26 @@ import { S } from '../state.js';
 import { P, partnersOf, childrenOf, dataVersion } from '../model/people.js';
 import { parentsOf, components, generations } from '../model/generations.js';
 
-const STANDARD = {
-  cw: CW,                    // card width
-  sg: SG,                    // gap between two spouses
-  blockGap: HG * 2,          // gap between two siblings
-  familyGap: CW / 2,         // gap between two different sibling groups
-  groupGap: CW,              // gap between two unrelated families
-  stack: false,              // stack siblings with no descendants
-};
+const standards = new Map(); // card width -> measurements, the same object each time (cache key)
+
+/** Measurements for the current card width (full cards, or photos). */
+function standard() {
+  if (!standards.has(CW)) {
+    standards.set(CW, {
+      cw: CW,                  // card width
+      sg: SG,                  // gap between two spouses
+      blockGap: HG * 2,        // gap between two siblings
+      familyGap: CW / 2,       // gap between two different sibling groups
+      groupGap: CW,            // gap between two unrelated families
+      stack: false,            // stack siblings with no descendants
+    });
+  }
+  return standards.get(CW);
+}
 const COMPACT = { cw: 128, sg: 18, blockGap: 14, familyGap: 30, groupGap: 60, stack: true };
 const STACK_GAP = 8;         // vertical gap between two stacked cards
 const SPINE = 9;             // a stack's line: left of the cards
-let K = STANDARD;            // measurements of the current layout
+let K = null;                // measurements of the current layout
 const PASSES = 6;            // centring passes
 const SWEEPS = 12;           // ordering sweeps, alternately down and up
 const SWAP_ROUNDS = 4;       // rounds of neighbour swaps
@@ -417,11 +425,11 @@ function componentLayouts() {
 
 export function buildFullLayout({ compact = false } = {}) {
   if (!S.people.size) return null;
-  K = compact ? COMPACT : STANDARD;
+  K = compact ? COMPACT : standard();
   try {
     return fullLayout();
   } finally {
-    K = STANDARD;
+    K = null;
   }
 }
 

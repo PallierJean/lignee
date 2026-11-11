@@ -370,6 +370,78 @@
   }
 }
 
+/* Photo mode: round photos only, the name on hover (PHOTO_D in js/config.js) */
+#tree.photos .card {
+  width: 84px;
+  height: 84px;
+  padding: 0;
+  border-radius: 50%;
+  border-width: 3px;
+  background: var(--surface);
+  overflow: visible;
+  align-items: center;
+  justify-content: center;
+}
+
+#tree.photos .card.is-focus {
+  border-width: 4px;
+}
+
+#tree.photos .card::before,
+#tree.photos .card::after {
+  display: none; /* decorations of the full cards */
+}
+
+#tree.photos .ph-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+#tree.photos .card .tip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  z-index: 3;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 9px;
+  font-size: 13px;
+  line-height: 1.25;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / .18);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+#tree.photos .card .tip span {
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+#tree.photos .card:hover,
+#tree.photos .card:focus-visible {
+  z-index: 4;
+}
+
+#tree.photos .card:hover .tip,
+#tree.photos .card:focus-visible .tip {
+  display: flex;
+}
+
+#tree.photos .card.ph .plus {
+  font-size: 26px;
+}
+
 /* Empty or loading state */
 .empty {
   position: absolute;
