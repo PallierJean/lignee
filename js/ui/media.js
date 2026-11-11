@@ -134,8 +134,14 @@ export function pickFirstTag() {
 
 /** Cropping and deleting the image: links, then a confirmation that says where it disappears. */
 function deleteBlock() {
+  const m = item();
   const crop = back ? '' : `<button class="link" type="button" data-act="media-crop">${t('med.crop')}</button> · `;
-  if (!askDelete) return `<p class="media-delete">${crop}<button class="link" type="button" data-act="media-delete">${t('med.delete')}</button></p>`;
+  // The back: a contract's second side, a photo's annotated back
+  const side = photoSrc(m && m.back)
+    ? `<label class="link"><input type="file" accept="image/*" class="sr" data-media-back="1">${t('med.backChange')}</label> · `
+      + `<button class="link" type="button" data-act="media-back-remove">${t('med.backRemove')}</button> · `
+    : `<label class="link"><input type="file" accept="image/*" class="sr" data-media-back="1">${t('med.backAdd')}</label> · `;
+  if (!askDelete) return `<p class="media-delete">${crop}${side}<button class="link" type="button" data-act="media-delete">${t('med.delete')}</button></p>`;
   return `<div class="confirm media-delete"><p>${t('med.deleteAsk', esc(fullName(P(current.owner))))}</p>`
     + `<button class="btn small danger" type="button" data-act="media-delete-yes">${t('med.deleteYes')}</button>`
     + `<button class="btn small" type="button" data-act="media-delete-no">${t('cancel')}</button></div>`;
@@ -212,6 +218,47 @@ export async function addGalleryPhotos(owner, files) {
   }
   toast(t('med.added', added.length));
   openMedia(owner, added[0].id, 'person:' + owner);
+}
+
+/**
+ * Adds or replaces the back of the image shown (`file`), or removes it (`file` null): one undoable
+ * action; the viewer shows the side just added.
+ */
+export async function setMediaBack(file) {
+  const m = item();
+  if (!m || isDraft() || !S.canWrite) return;
+  if (S.edit && S.edit.id === current.owner) {
+    toast(t('finishFirst'));
+    return;
+  }
+  const { owner, id } = current;
+  let data = '';
+  if (file) {
+    try {
+      data = await storePhoto(await photoFromFile(file, DOCUMENT_SIDE), P(owner));
+    } catch (e) {
+      toast(e.message, true);
+      return;
+    }
+  }
+  beginAction(file ? 'hist.mediaBack' : 'hist.mediaBackRemove');
+  try {
+    await opUpdate('people', owner, {
+      media: mediaList(P(owner)).map((x) => {
+        if (x.id !== id) return x;
+        if (data) return { ...x, back: data };
+        const { back: gone, ...front } = x;
+        return front;
+      }),
+    });
+  } catch (e) {
+    reportError(e);
+  } finally {
+    commitAction();
+    afterData();
+  }
+  back = Boolean(data);
+  renderMedia();
 }
 
 /** Asks (true) or no longer asks to confirm the deletion of the image shown. */
