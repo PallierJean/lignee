@@ -707,8 +707,10 @@ function libraryItem({ src, cites }, kind) {
   // The document, and its back if it has one: a click shows it full size, as on the record
   const back = pic && photoSrc(src.back);
   const name = esc(String(src.title || t('src.' + kind)));
-  const zoom = (url, label) => `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom">`;
-  return `<li class="lib-item">${pic ? zoom(pic, name) + (back ? zoom(back, `${name} (${t('med.back')})`) : '') : '<span class="lib-pic none" aria-hidden="true"></span>'}`
+  // Front and back share data-pair: enlarged, one switches to the other (ui/events.js)
+  const pair = (side) => (back ? ` data-pair="${esc(src.source || src.id || name)}" data-side="${side}"` : '');
+  const zoom = (url, label, side) => `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom"${pair(side)}>`;
+  return `<li class="lib-item">${pic ? zoom(pic, name, 0) + (back ? zoom(back, `${name} (${t('med.back')})`, 1) : '') : '<span class="lib-pic none" aria-hidden="true"></span>'}`
     + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p></div></li>`;
 }
 

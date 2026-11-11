@@ -3,6 +3,7 @@
  * Each clickable element carries a data-act attribute naming the action to run.
  */
 import { S } from './state.js';
+import { t } from './i18n.js';
 import { avatarOf, birthSurname, DATED_SITUATIONS, situationOfUnion } from './model/people.js';
 import { situationOptions } from './ui/form.js';
 import * as A from './actions.js';
@@ -108,16 +109,43 @@ function updateNames(parentsChanged) {
   if (sex && sex.value === 'F') fill(document.getElementById('f-maiden'));
 }
 
-/** Enlarges a record's photo in the middle of the screen. */
-function openPhotoZoom(img) {
+// Faces of the document enlarged: its front and back (data-pair), or the image alone
+let zoomFaces = [];
+
+/** Shows face `i` of the enlarged document; the Front / Back buttons follow. */
+function showZoomFace(i) {
+  const face = zoomFaces[i];
+  if (!face) return;
   const big = document.getElementById('photoZoomImg');
-  big.src = img.src;
-  big.alt = img.alt;
+  big.src = face.src;
+  big.alt = face.alt;
+  const sides = document.getElementById('photoZoomSides');
+  sides.hidden = zoomFaces.length < 2;
+  sides.innerHTML = zoomFaces.length < 2 ? '' : zoomFaces.map((_, k) => `<button type="button" data-face="${k}" aria-pressed="${k === i}">${t(k ? 'med.back' : 'med.front')}</button>`).join('');
+}
+
+/** Enlarges a photo in the middle of the screen; a document with a back can switch sides there. */
+function openPhotoZoom(img) {
+  const pair = img.dataset.pair;
+  const scope = img.parentElement || document;
+  zoomFaces = pair
+    ? [...scope.querySelectorAll('img[data-pair]')].filter((x) => x.dataset.pair === pair).sort((a, b) => (+a.dataset.side || 0) - (+b.dataset.side || 0))
+    : [img];
   document.getElementById('photoZoom').hidden = false;
+  showZoomFace(Math.max(0, zoomFaces.indexOf(img)));
+}
+
+/** Front or back, with the arrow keys: the other side. */
+function stepZoomFace(d) {
+  if (zoomFaces.length < 2) return false;
+  const at = zoomFaces.findIndex((x) => x.src === document.getElementById('photoZoomImg').src);
+  showZoomFace((Math.max(0, at) + d + zoomFaces.length) % zoomFaces.length);
+  return true;
 }
 
 function closePhotoZoom() {
   document.getElementById('photoZoom').hidden = true;
+  zoomFaces = [];
 }
 
 /** Disables the button during a long action. */
@@ -397,9 +425,11 @@ export function bindEvents() {
     // Display menu: a click elsewhere closes it
     const look = document.getElementById('appearance');
     if (look.open && !look.contains(ev.target)) look.open = false;
-    // Enlarged photo: any click closes it
+    // Enlarged photo: Front / Back switch sides, any other click closes it
     if (!document.getElementById('photoZoom').hidden) {
-      closePhotoZoom();
+      const face = ev.target.closest && ev.target.closest('[data-face]');
+      if (face) showZoomFace(+face.dataset.face);
+      else closePhotoZoom();
       return;
     }
     if (closeOnBackdrop(ev.target)) return;
@@ -482,6 +512,11 @@ export function bindEvents() {
   });
 
   document.addEventListener('keydown', (ev) => {
+    // Enlarged document with a back: the arrow keys switch sides
+    if (!document.getElementById('photoZoom').hidden && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
+      if (stepZoomFace(ev.key === 'ArrowRight' ? 1 : -1)) ev.preventDefault();
+      return;
+    }
     if (ev.target.id === 'find') {
       if (onFindKey(ev, (id) => A.setFocus(id, true))) ev.preventDefault();
       return;

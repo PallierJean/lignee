@@ -1047,6 +1047,34 @@ describe('événements de la page', () => {
     assert.equal(el('photoZoom').hidden, true);
   });
 
+  test('document agrandi avec un verso : Recto / Verso et les flèches changent de face sans fermer', () => {
+    const front = Object.assign(target({ act: 'photo-zoom', pair: 's1', side: '0' }), { src: 'recto.jpg', alt: 'Contrat (Recto)' });
+    const backFace = Object.assign(target({ act: 'photo-zoom', pair: 's1', side: '1' }), { src: 'verso.jpg', alt: 'Contrat (Verso)' });
+    const scope = { querySelectorAll: () => [backFace, front] };
+    front.parentElement = scope;
+    backFace.parentElement = scope;
+    fire('click', { target: front });
+    assert.equal(el('photoZoomImg').src, 'recto.jpg');
+    assert.equal(el('photoZoomSides').hidden, false);
+    assert.match(el('photoZoomSides').innerHTML, /data-face="0" aria-pressed="true">Recto<.*data-face="1" aria-pressed="false">Verso</);
+    // Un clic sur « Verso » : l'autre face, la fenêtre reste ouverte
+    const verso = Object.assign(target({ face: '1' }), { closest: (sel) => (sel === '[data-face]' ? verso : null) });
+    fire('click', { target: verso });
+    assert.equal(el('photoZoom').hidden, false);
+    assert.equal(el('photoZoomImg').src, 'verso.jpg');
+    // Les flèches aussi
+    key('ArrowLeft');
+    assert.equal(el('photoZoomImg').src, 'recto.jpg');
+    key('ArrowRight');
+    assert.equal(el('photoZoomImg').src, 'verso.jpg');
+    fire('click', { target: target() });
+    assert.equal(el('photoZoom').hidden, true);
+    // Une image seule : pas de boutons
+    fire('click', { target: Object.assign(target({ act: 'photo-zoom' }), { src: 'seule.jpg', alt: '' }) });
+    assert.equal(el('photoZoomSides').hidden, true);
+    key('Escape');
+  });
+
   test('raccourcis : Ctrl+Z, Ctrl+Maj+Z, Ctrl+Y, /, Ctrl+K', async () => {
     await A.doDelete(ex.people.find((p) => p.given === 'Hugo').id);
     key('z', { ctrlKey: true });

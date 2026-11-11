@@ -226,3 +226,25 @@ input[type="file"] {
 .free-crop-box .ne { right: -9px; top: -9px; cursor: nesw-resize; }
 .free-crop-box .sw { left: -9px; bottom: -9px; cursor: nesw-resize; }
 .free-crop-box .se { right: -9px; bottom: -9px; cursor: nwse-resize; }
+
+/* Enlarged document with a back: Front / Back above the image */
+.photo-zoom {
+  flex-direction: column;
+}
+
+.zoom-sides {
+  flex: none;
+  margin: 0 auto 8px;
+  background: var(--surface);
+  border-radius: 6px;
+  cursor: default;
+}
+
+.zoom-sides[hidden] {
+  display: none;
+}
+
+.photo-zoom img {
+  min-height: 0;
+  flex: 1;
+}
