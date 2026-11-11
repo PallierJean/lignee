@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.2.0](https://github.com/PallierJean/lignee/compare/v2.1.1...v2.2.0) (2026-11-11)
+
+### Features
+
+* Convert online database trees to format 2 in one batch ([893406e](https://github.com/PallierJean/lignee/commit/893406e87e420d9b33e399a894b4be274a901edb))
+* Marriage documents are cited by the union, seen by both spouses ([0573fbe](https://github.com/PallierJean/lignee/commit/0573fbed2bb7903623f39f8d7f22c176e9f5ad4d))
+* Record a person's part in a document ([a19ebd0](https://github.com/PallierJean/lignee/commit/a19ebd0fd82f278d925a3c5515423ac9971e07b8))
+* Cite a document already in the tree, and filter the Sources view ([c47b5f3](https://github.com/PallierJean/lignee/commit/c47b5f3b1829b0720f7da0c4e203940d24fd485d))
+* Keep a copy of each tree before its first save in format 2 ([8de64f5](https://github.com/PallierJean/lignee/commit/8de64f57b7cc3f8b6f7dc1ecffe333720e42e2f8))
+
+---
+
+### Nouveautés
+
+* Dans la base en ligne, un arbre d'avant la 2.0 est converti d'un coup par le premier visiteur, sous verrou, sans rien perdre. ([893406e](https://github.com/PallierJean/lignee/commit/893406e87e420d9b33e399a894b4be274a901edb))
+* Les actes de mariage sont maintenant portés par l'union : les deux époux les voient sur leur fiche. Les arbres existants sont convertis à la lecture, sans rien perdre. ([0573fbe](https://github.com/PallierJean/lignee/commit/0573fbed2bb7903623f39f8d7f22c176e9f5ad4d))
+* Une source peut indiquer le rôle de la personne dans l'acte : personne concernée, père, mère, conjoint ou témoin. Il apparaît sur la fiche et dans la vue Sources, et passe dans le GEDCOM. ([a19ebd0](https://github.com/PallierJean/lignee/commit/a19ebd0fd82f278d925a3c5515423ac9971e07b8))
+* Dans le formulaire, vous pouvez citer un document déjà dans l'arbre au lieu d'en créer un nouveau. La vue Sources se filtre par nature et par recherche. ([c47b5f3](https://github.com/PallierJean/lignee/commit/c47b5f3b1829b0720f7da0c4e203940d24fd485d))
+* En mode fichier, chaque arbre est copié tel quel avant son premier enregistrement au format 2 (data/arbres/<arbre>/avant-format-2.json), pour pouvoir revenir en arrière. ([8de64f5](https://github.com/PallierJean/lignee/commit/8de64f57b7cc3f8b6f7dc1ecffe333720e42e2f8))
+
 ## [2.1.1](https://github.com/PallierJean/lignee/compare/v2.1.0...v2.1.1) (2026-11-11)
 
 ### Bug Fixes
