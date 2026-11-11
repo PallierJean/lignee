@@ -20,6 +20,7 @@ let pin = null;      // { x, y }: marker waiting for a person
 let editing = false; // caption being edited
 let sequence = [];    // [{ owner, id }]: the images of the grid it was opened from, in order
 let back = false;     // the back of the image is shown (contract, annotated photo)
+let askDelete = false; // the deletion of the image waits for its confirmation
 
 const isDraft = () => !!current && current.draft !== undefined;
 const item = () => {
@@ -92,7 +93,55 @@ export function renderMedia() {
     + `<div class="media-pic${S.canWrite && !back ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(back ? m.back : m.photo))}" alt="${esc(m.title || '')}${back ? ' (' + t('med.back') + ')' : ''}">${marks}`
     + (pin ? `<span class="tag-pin new" data-style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
     + (isDraft() ? `<p class="hint">${t('med.draftHint')}</p>` : caption(m))
-    + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker);
+    + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker
+    + (isDraft() || !S.canWrite || editing ? '' : deleteBlock()));
+}
+
+/** Deleting the image: a link, then a confirmation that says where it disappears. */
+function deleteBlock() {
+  if (!askDelete) return `<p class="media-delete"><button class="link" type="button" data-act="media-delete">${t('med.delete')}</button></p>`;
+  return `<div class="confirm media-delete"><p>${t('med.deleteAsk', esc(fullName(P(current.owner))))}</p>`
+    + `<button class="btn small danger" type="button" data-act="media-delete-yes">${t('med.deleteYes')}</button>`
+    + `<button class="btn small" type="button" data-act="media-delete-no">${t('cancel')}</button></div>`;
+}
+
+/** Asks (true) or no longer asks to confirm the deletion of the image shown. */
+export function askMediaDelete(on) {
+  if (on && S.edit && S.edit.id === current.owner) {
+    toast(t('finishFirst')); // the record form would bring the image back when saving
+    return;
+  }
+  askDelete = on;
+  renderMedia();
+}
+
+/**
+ * Deletes the image shown from its owner's gallery (and so from the galleries of the people
+ * identified on it), as one undoable action; the viewer goes on to the next image, or closes.
+ */
+export async function deleteMedia() {
+  const m = item();
+  if (!m || isDraft() || !S.canWrite) return;
+  const { owner, id } = current;
+  askDelete = false;
+  beginAction('hist.mediaDelete');
+  try {
+    await opUpdate('people', owner, { media: mediaList(P(owner)).filter((x) => x.id !== id) });
+  } catch (e) {
+    reportError(e);
+  } finally {
+    commitAction();
+  }
+  // The next image first: the page redrawn afterwards would close a viewer showing a deleted image
+  const at = sequence.findIndex((x) => x.owner === owner && x.id === id);
+  sequence = sequence.filter((x) => !(x.owner === owner && x.id === id));
+  if (sequence.length) {
+    current = { ...sequence[Math.max(0, Math.min(at, sequence.length - 1))] };
+    back = false;
+  } else closeMedia();
+  afterData();
+  if (current) renderMedia();
+  toast(t('med.deleted'));
 }
 
 /**
@@ -187,6 +236,7 @@ export function openMedia(owner, id, group = '') {
   current = { owner, id };
   sequence = (mediaGroups.get(group) || []).filter((x) => P(x.owner));
   back = false;
+  askDelete = false;
   pin = null;
   editing = false;
   $('#mediaDlg').hidden = false;
@@ -203,6 +253,7 @@ export function stepMedia(d) {
   if (at < 0) return false;
   current = { ...sequence[(at + d + sequence.length) % sequence.length] };
   back = false;
+  askDelete = false;
   renderMedia();
   return true;
 }
