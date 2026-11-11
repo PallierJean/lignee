@@ -641,7 +641,7 @@ describe('bibliothèque de sources : ordre', () => {
     // Un en-tête par famille, avec son nombre d'actes ; les fiches sans nom à la fin
     S.focus = 'g';
     const out = view('sources');
-    const heads = [...out.matchAll(/<h4>([^<]*) <span class="n">(\d+)<\/span><\/h4>/g)].map((m) => m[1] + ' ' + m[2]);
-    assert.deepEqual(heads, ['LAMBORRE 1', 'BOURREL 5', 'Sans nom 1']);
+    const heads = [...out.matchAll(/<h4>([^<]*)<\/h4>/g)].map((m) => m[1]);
+    assert.deepEqual(heads, ['LAMBORRE - 1 acte', 'BOURREL - 5 actes', 'Sans nom - 1 acte']);
   });
 });
