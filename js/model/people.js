@@ -201,6 +201,18 @@ const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'obj
 export { sourcesOf } from './sources.js';
 export const mediaList = (p) => listOf(p && p.media);
 
+/**
+ * Name of a gallery image: its title, or else the people identified on it (three at most) and its
+ * date, or else '' (the caller shows "Untitled image").
+ */
+export function mediaLabel(m) {
+  if (!m) return '';
+  if (String(m.title || '').trim()) return String(m.title).trim();
+  const ids = [...new Set((Array.isArray(m.tags) ? m.tags : []).map((x) => x && x.id))].filter((id) => P(id));
+  const names = ids.slice(0, 3).map((id) => fullName(P(id))).join(', ') + (ids.length > 3 ? ' +' + (ids.length - 3) : '');
+  return [names, String(m.date || '').trim()].filter(Boolean).join(' · ');
+}
+
 /** A person's gallery: their images, and those where they are identified: [{ owner, m }]. */
 export function mediaOf(id) {
   const out = mediaList(P(id)).map((m) => ({ owner: id, m }));

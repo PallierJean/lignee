@@ -164,13 +164,22 @@ export function removeDraftUnion(i) {
 }
 
 /** Images chosen in the form: added to the draft's gallery. */
+// File names a camera, a phone or a scanner gives: they say nothing of the image
+const DEVICE_NAME = /^(img|image|photo|pic|picture|dsc|dscn|dcim|pxl|mvimg|scan|scanned|numérisation|capture|screenshot|whatsapp image|signal|wp|p)?[\s_\-.]*[\d\s_\-.:()]*$/i;
+
+/** Title from a file's name, when it means something ("mariage.jpg"); '' for "IMG_1234.jpg" or "photo.jpg". */
+export function fileTitle(name) {
+  const base = String(name || '').replace(/\.[^.]+$/, '').trim();
+  return !base || DEVICE_NAME.test(base) || /^whatsapp image /i.test(base) ? '' : base;
+}
+
 export async function addDraftMedia(files) {
   if (!S.edit) return;
   const token = S.edit.token;
   const added = [];
   for (const file of files) {
     try {
-      added.push({ id: rid('m'), photo: await photoFromFile(file, DOCUMENT_SIDE), back: '', title: file.name.replace(/\.[^.]+$/, ''), date: '', note: '', tags: [], removed: false });
+      added.push({ id: rid('m'), photo: await photoFromFile(file, DOCUMENT_SIDE), back: '', title: fileTitle(file.name), date: '', note: '', tags: [], removed: false });
     } catch (err) {
       toast(err.message, true);
     }
