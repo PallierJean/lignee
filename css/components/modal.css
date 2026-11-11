@@ -163,3 +163,16 @@ input[type="file"] {
 .crop-sheet .fld {
   width: 100%;
 }
+
+/* Before replacing a backup on GitHub: what would change */
+.diff-list {
+  margin: 4px 0 12px;
+  padding-left: 20px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+#repoDiffBody h3 {
+  margin: 12px 0 2px;
+  font-size: .9375rem;
+}

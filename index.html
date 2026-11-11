@@ -243,6 +243,22 @@
     </div>
   </div>
 
+  <!-- Before replacing a backup written elsewhere: what would change in the repository -->
+  <div class="overlay" id="repoDiffDlg" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rdTitle">
+      <div class="sheet-head">
+        <h2 id="rdTitle" data-i18n="diff.title">Avant d’envoyer vers GitHub</h2>
+        <button class="icon-btn" type="button" data-act="repo-diff-close" aria-label="Fermer" data-i18n-attr="aria-label:close">×</button>
+      </div>
+      <section id="repoDiffBody"></section>
+      <div class="row-btns">
+        <button class="btn primary" type="button" data-act="repo-diff-merge" data-i18n="diff.merge">Fusionner</button>
+        <button class="btn danger" type="button" data-act="repo-diff-replace" data-i18n="diff.replace">Remplacer le dépôt</button>
+        <button class="btn" type="button" data-act="repo-diff-close" data-i18n="cancel">Annuler</button>
+      </div>
+    </div>
+  </div>
+
   <!-- My trees dialog -->
   <div class="overlay" id="treesDlg" hidden>
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tsTitle">

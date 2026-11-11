@@ -65,3 +65,14 @@ describe('fusion à trois voies', () => {
     assert.deepEqual([...r.unions], [['u', { a: 'a' }]]);
   });
 });
+
+describe('différences avant d’envoyer', () => {
+  test('ajoutées, seulement de l’autre côté, différentes (sans updatedAt)', async () => {
+    const { diffRecords, imagesOf } = await import('../js/services/merge.js');
+    const d = diffRecords(map({ a: { given: 'A', updatedAt: 1 }, b: { given: 'B' }, c: { given: 'C' } }),
+      map({ a: { given: 'A', updatedAt: 2 }, b: { given: 'Bé', notes: 'x' }, n: { given: 'N' } }));
+    assert.deepEqual(d, { added: ['n'], removed: ['c'], changed: [{ id: 'b', fields: ['given', 'notes'] }] });
+    const imgs = imagesOf({ people: map({ a: { photo: 'p1', media: [{ photo: 'm1', back: 'm2' }], sources: [{ photo: 's1' }] } }), sources: map({ S: { photo: 'd1', back: 'd2' } }) });
+    assert.deepEqual([...imgs].sort(), ['d1', 'd2', 'm1', 'm2', 'p1', 's1']);
+  });
+});

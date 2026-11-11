@@ -19,6 +19,8 @@ const HEAD_WAIT = 400; // ms entre deux lectures
 const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
 const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
 
+// Name Lignée gives a photo it sends: <label>-<random UUID>.<extension>
+export const SENT_NAME = /-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp|gif)$/;
 const EMPTY_BACKUP = '{"format":"lignee","version":2,"people":[],"unions":[],"sources":[]}\n';
 
 const fail = (code) => Object.assign(new Error(code), { code });
@@ -172,6 +174,9 @@ async function dataUrl(res, photo) {
  * Any other error (network, access) interrupts the read.
  */
 export async function attachPhotos(repo, backup) {
+  // Already loaded (an import preview, then the open tree linked instead): the same answer, since
+  // the backup's paths have become images and the repository's files could no longer be recognised
+  if (backup.attached) return backup.attached;
   const base = backup.path.replace(/\.json$/i, '/');
   const dir = backup.path.replace(/[^/]*$/, '');
   const find = (photo) => repo.files.get((base + photo).normalize('NFC')) || repo.files.get((dir + photo).normalize('NFC'));
@@ -206,6 +211,7 @@ export async function attachPhotos(repo, backup) {
     if (p.media) p.media = keptMedia(p.media);
     x.data = p;
   });
+  Object.defineProperty(backup, 'attached', { value: count, configurable: true }); // not enumerable: not saved
   return count;
 }
 
@@ -253,8 +259,16 @@ export async function pushBackup(repo, target, text, message) {
   if (backup.sources) backup.sources = sources;
 
   const kept = new Set([...photos.values()].map((x) => x.path));
-  // Only files still in the repository: someone else may have removed one already
-  const gone = [...target.photos.values()].map((x) => x.path).filter((path) => !kept.has(path) && repo.files.has(path.normalize('NFC')));
+  // Photos the tree no longer cites: those loaded with it, and the files Lignée itself named in its
+  // photos folder (sent twice by an older Lignée). A file put there by hand stays. Only files still in the repository
+  const ownFolder = (folder + 'photos/').normalize('NFC');
+  const inOwnFolder = (path) => {
+    const n = path.normalize('NFC');
+    return n.startsWith(ownFolder) && isPhotoFile('photos/' + n.slice(ownFolder.length)) && SENT_NAME.test(n);
+  };
+  const leftovers = [...repo.files.values()].map((x) => x.path).filter(inOwnFolder);
+  const gone = [...new Set([...target.photos.values()].map((x) => x.path).concat(leftovers))]
+    .filter((path) => !kept.has(path) && repo.files.has(path.normalize('NFC')));
   for (const path of gone) entries.push({ path, mode: '100644', type: 'blob', sha: null });
   entries.push({ path: target.path, mode: '100644', type: 'blob', content: JSON.stringify(backup, null, 2) });
 

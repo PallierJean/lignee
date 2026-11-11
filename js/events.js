@@ -25,7 +25,7 @@ import { pinch } from './ui/pinch.js';
 import { defineDialogs, dialogOpen, closeTopDialog, closeOnBackdrop } from './ui/dialogs.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
-import { confirmRepoSave, saveRepo, forgetRepo } from './ui/repo-link.js';
+import { confirmRepoSave, saveRepo, forgetRepo, chooseRepoSave, closeRepoDiff } from './ui/repo-link.js';
 import { openPrint, closePrint, updatePrintInfo, printTree, printFamilyBook } from './ui/print.js';
 import {
   openTrees, closeTrees, switchTree, newTree, askTree, cancelTreeEdit, submitRename, confirmDeleteTree,
@@ -298,7 +298,9 @@ const CLICK_ACTIONS = {
   },
   'repo-save': once(() => saveRepo(false)),
   'repo-save-no': () => confirmRepoSave(false),
-  'repo-save-yes': once(() => saveRepo(true)),
+  'repo-diff-merge': once(() => chooseRepoSave('merge')),
+  'repo-diff-replace': once(() => chooseRepoSave('replace')),
+  'repo-diff-close': () => closeRepoDiff(),
   'repo-keep-mine': once(() => saveRepo(true, 'mine')),
   'repo-keep-theirs': once(() => saveRepo(true, 'theirs')),
   'repo-forget': () => forgetRepo(),
@@ -328,6 +330,7 @@ const DIALOGS = () => [
   { id: 'photoZoom', close: closePhotoZoom },
   { id: 'mediaDlg', close: closeMedia, backdrop: true },
   { id: 'personDlg', close: closePersonDlg, backdrop: true },
+  { id: 'repoDiffDlg', close: closeRepoDiff, backdrop: true },
   { id: 'transfer', close: closeTransfer, backdrop: true },
   { id: 'printDlg', close: closePrint, backdrop: true },
   // Escape first leaves the rename or delete in progress; the backdrop closes the dialog

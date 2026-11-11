@@ -764,7 +764,7 @@ describe('événements de la page', () => {
     openExample();
     if (!bound) bindEvents();
     bound = true;
-    for (const id of ['transfer', 'printDlg', 'treesDlg', 'personDlg', 'mediaDlg', 'photoZoom', 'leaveDlg', 'cropDlg']) el(id).hidden = true;
+    for (const id of ['repoDiffDlg', 'transfer', 'printDlg', 'treesDlg', 'personDlg', 'mediaDlg', 'photoZoom', 'leaveDlg', 'cropDlg']) el(id).hidden = true;
     Object.assign(el('prFormat'), { value: 'A3' });
     Object.assign(el('prOrient'), { value: 'auto' });
     Object.assign(el('prContent'), { value: 'tree' });
@@ -877,6 +877,12 @@ describe('événements de la page', () => {
       fire('click', { target: target({}, id) });
       assert.equal(el(id).hidden, true, id);
     }
+    el('repoDiffDlg').hidden = false; // opened by a GitHub save (test/github.test.js)
+    key('Escape');
+    assert.equal(el('repoDiffDlg').hidden, true);
+    el('repoDiffDlg').hidden = false;
+    fire('click', { target: target({}, 'repoDiffDlg') });
+    assert.equal(el('repoDiffDlg').hidden, true);
     click({ act: 'person-open', id: camille });
     assert.equal(el('personDlg').hidden, false);
     key('Escape');
