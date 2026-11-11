@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.5.0](https://github.com/PallierJean/lignee/compare/v3.4.0...v3.5.0) (2026-11-11)
+
+### Features
+
+* Move a gallery image to the archives as a source ([779c17a](https://github.com/PallierJean/lignee/commit/779c17a84d907fc0093fed5b30c818150a5b73c3))
+* Add, change or remove an image's back from the gallery viewer ([942b1a1](https://github.com/PallierJean/lignee/commit/942b1a12383c44c2e3d8cec25832680efc39eda4))
+* Switch between the front and back of an enlarged document ([c9f4007](https://github.com/PallierJean/lignee/commit/c9f4007c747722cb39ce09eebe4420ce8b02f95f))
+* Read the family headers of the Sources view as "BOURREL - 7 documents" ([d553004](https://github.com/PallierJean/lignee/commit/d553004f49a42e1bd11924d1997340925dfc4f46))
+* Group the Sources view by family ([2100426](https://github.com/PallierJean/lignee/commit/2100426e870fe6a3492ff26079e611037d1cd4cf))
+
+### Code Refactoring
+
+* Remove the claude.ai online database mode ([ab273a7](https://github.com/PallierJean/lignee/commit/ab273a79bf9300e8d04b2340a69cb772d3665ada))
+
+---
+
+### Nouveautés
+
+* « Classer aux archives » depuis la visionneuse : l'image quitte la galerie et devient une source (recto, verso, titre, date et note), citée par les personnes identifiées dessus. Annulable par Ctrl+Z. ([779c17a](https://github.com/PallierJean/lignee/commit/779c17a84d907fc0093fed5b30c818150a5b73c3))
+* Le verso d'une image de la galerie s'ajoute, se change ou se retire directement depuis la visionneuse. ([942b1a1](https://github.com/PallierJean/lignee/commit/942b1a12383c44c2e3d8cec25832680efc39eda4))
+* Un document agrandi qui a un verso, comme un contrat de mariage, passe du recto au verso avec deux boutons ou les flèches du clavier, sans fermer la fenêtre. ([c9f4007](https://github.com/PallierJean/lignee/commit/c9f4007c747722cb39ce09eebe4420ce8b02f95f))
+* Les en-têtes de famille de la vue Sources se lisent « BOURREL - 7 actes ». ([d553004](https://github.com/PallierJean/lignee/commit/d553004f49a42e1bd11924d1997340925dfc4f46))
+* Dans la vue Sources, les actes de chaque nature sont regroupés par nom de famille, avec un en-tête et leur nombre. ([2100426](https://github.com/PallierJean/lignee/commit/2100426e870fe6a3492ff26079e611037d1cd4cf))
+
+### Refontes
+
+* L'application n'a plus aucun lien avec claude.ai : le mode base en ligne et le téléchargement par claude.ai sont retirés. Les arbres restent dans data/arbres/ (serveur local) ou dans le navigateur. Corrige aussi un import interrompu en mode navigateur, qui ne proposait pas la reprise. ([ab273a7](https://github.com/PallierJean/lignee/commit/ab273a79bf9300e8d04b2340a69cb772d3665ada))
+
 ## [3.4.0](https://github.com/PallierJean/lignee/compare/v3.3.2...v3.4.0) (2026-11-11)
 
 ### Features
