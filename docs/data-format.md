@@ -235,6 +235,11 @@ navigateur, de la base en ligne ou d'un dépôt GitHub, et le convertit (`migrat
 - l'identifiant d'une source convertie vient de son contenu : convertir deux fois, ou depuis deux
   endroits à la fois, donne les mêmes sources.
 
+En mode fichier, le serveur garde l'arbre tel qu'il était avant son premier enregistrement au format 2,
+dans `data/arbres/<arbre>/avant-format-2.json` : écrit une seule fois, jamais écrasé, et absent de la
+liste des arbres. Pour revenir en arrière, copiez-le à la place de `data/arbres/<arbre>.json`
+(Lignée arrêtée). Les photos retirées des fiches après la migration ne sont plus dans le dossier.
+
 L'export « Sauvegarde pour une version de Lignée antérieure à la 2.0 » écrit ce format 1 : chaque
 fiche y reprend une copie des documents qu'elle cite. Une Lignée 1.31 ou plus récente refuse une
 sauvegarde au format 2 plutôt que d'en perdre une partie.
