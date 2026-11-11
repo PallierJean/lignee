@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.1.0](https://github.com/PallierJean/lignee/compare/v3.0.0...v3.1.0) (2026-11-11)
+
+### Features
+
+* Zoom out to 35 percent for an overview ([09f0fca](https://github.com/PallierJean/lignee/commit/09f0fca0e436adced92475175f3e3ff96e16f606))
+
+---
+
+### Nouveautés
+
+* Le zoom de l'arbre descend jusqu'à 35 %, pour une vue d'ensemble. ([09f0fca](https://github.com/PallierJean/lignee/commit/09f0fca0e436adced92475175f3e3ff96e16f606))
+
 ## [3.0.0](https://github.com/PallierJean/lignee/compare/v2.3.1...v3.0.0) (2026-11-11)
 
 ### ⚠ BREAKING CHANGES
