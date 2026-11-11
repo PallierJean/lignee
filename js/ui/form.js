@@ -11,7 +11,7 @@ import { COUNTRIES, countryName, isFrance } from '../model/countries.js';
 import { loadCommunes, cityDepartments, departmentsText } from '../model/communes.js';
 import {
   P, fullName, lifeYears, cmpName, avatarOf, photoSrc, birthSurname, SITUATIONS, DATED_SITUATIONS, situationLabel, situationNoneLabel,
-  EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, REMARRIAGE_CAUSES, eventLabel, isDead, partnersOf, isMinor, UNION_AGE,
+  EVENT_TYPES, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, REMARRIAGE_CAUSES, eventLabel, isDead, partnersOf, isMinor, UNION_AGE, fileTitle,
 } from '../model/people.js';
 
 const TITLE_PREFIX = {
@@ -183,7 +183,7 @@ function mediaRows(e) {
       <div class="photofld">
         <button class="med-thumb" type="button" data-act="med-tag" data-i="${i}" title="${t('f.medTag')}"><img class="photo" src="${esc(photoSrc(x.photo))}" alt="${t('f.medTag')}"></button>
         <div class="an-form media-fields">
-          <label class="fld"><span>${t('f.srcTitle')}</span><input id="med-title-${i}" value="${esc(x.title)}" placeholder="${t('f.medTitlePlaceholder')}"></label>
+          <label class="fld"><span>${t('f.srcTitle')}</span><input id="med-title-${i}" value="${esc(fileTitle(x.title || '') ? x.title : '')}" placeholder="${t('f.medTitlePlaceholder')}"></label>
           <label class="fld"><span>${t('f.date')}</span><input id="med-date-${i}" value="${esc(dateValue(x.date))}"></label>
         </div>
       </div>

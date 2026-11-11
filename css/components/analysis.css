@@ -1076,3 +1076,9 @@
 .tag-hits small {
   color: var(--muted);
 }
+
+/* Viewer: the pen next to the image's title */
+.md-pen {
+  margin-left: 4px;
+  margin-right: auto;
+}

@@ -88,7 +88,9 @@ export function renderMedia() {
       + `<span class="n">${t('med.position', at + 1, sequence.length)}</span>`
       + `<button class="icon-btn" type="button" data-act="media-step" data-d="1" aria-label="${t('med.next')}" title="${t('med.next')}">›</button></div>`
     : '';
-  setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(mediaLabel(m) || t('med.untitled'))}</h2>${nav}`
+  // The title, and next to it the way to change it
+  const pen = S.canWrite && !isDraft() && !editing ? `<button class="icon-btn md-pen" type="button" data-act="caption-edit" aria-label="${t('med.editTitle')}" title="${t('med.editTitle')}">✎</button>` : '';
+  setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(mediaLabel(m) || t('med.untitled'))}</h2>${pen}${nav}`
     + `<button class="icon-btn" type="button" data-act="media-close" aria-label="${t('close')}">×</button></div>`
     + sides + hint
     + `<div class="media-pic${S.canWrite && !back ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(back ? m.back : m.photo))}" alt="${esc(m.title || '')}${back ? ' (' + t('med.back') + ')' : ''}">${marks}`
@@ -282,7 +284,7 @@ function caption(m) {
   if (editing) {
     const off = S.busy ? ' disabled' : '';
     return `<div class="an-form media-caption">`
-      + `<label class="fld"><span>${t('f.srcTitle')}</span><input id="mdEditTitle" value="${esc(m.title)}"></label>`
+      + `<label class="fld"><span>${t('f.srcTitle')}</span><input id="mdEditTitle" value="${esc(fileTitle(m.title || '') ? m.title : '')}" placeholder="${t('f.medTitlePlaceholder')}"></label>`
       + `<label class="fld"><span>${t('f.date')}</span><input id="mdEditDate" value="${esc(m.date)}"></label>`
       + `<label class="fld"><span>${t('med.caption')}</span><textarea id="mdEditNote" rows="3">${esc(m.note)}</textarea></label>`
       + `<div class="row-btns"><button class="btn small primary" type="button" data-act="caption-save"${off}>${t('save')}</button>`
