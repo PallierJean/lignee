@@ -40,6 +40,7 @@ export function renderControls() {
   $('#btnFull').setAttribute('aria-pressed', String(S.full && !S.fan));
   $('#btnFan').setAttribute('aria-pressed', String(S.fan));
   $('#btnLine').setAttribute('aria-pressed', String(S.line));
+  $('#btnPhotos').setAttribute('aria-pressed', String(S.photos));
   $('#btnLiving').setAttribute('aria-pressed', String(S.filter === 'living'));
   $('#btnCertificate').setAttribute('aria-pressed', String(S.filter === 'certificate'));
   $('#btnPanel').setAttribute('aria-pressed', String(narrow() ? S.sheet : S.panel));

@@ -115,6 +115,15 @@ export function toggleLine() {
   renderTree();
 }
 
+/** Shows the tree as round photos, the name on hover, or as full cards. */
+export function togglePhotos() {
+  S.photos = !S.photos;
+  S.scrollPending = true;
+  savePrefs();
+  renderControls();
+  renderTree();
+}
+
 /** Turns tree filter `kind` on ('living', 'certificate'), or off if it is already on: the other cards fade. */
 export function toggleFilter(kind) {
   S.filter = S.filter === kind ? '' : kind;

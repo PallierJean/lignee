@@ -3,9 +3,31 @@
  * browser storage keys.
  */
 
-// Tree dimensions, in pixels (CW and CH must match .card in tree.css)
-export const CW = 176;  // card width
-export const CH = 88;   // card height
+// Tree dimensions, in pixels (CARD_W, CARD_H and PHOTO_D must match .card in tree.css)
+export const CARD_W = 176;  // card width
+export const CARD_H = 88;   // card height
+export const PHOTO_D = 84;  // diameter of a card in photo mode (photo only, name on hover)
+// Size of the cards being laid out: CARD_W × CARD_H, or PHOTO_D × PHOTO_D in photo mode
+export let CW = CARD_W;
+export let CH = CARD_H;
+
+/** Lays the tree out with photo cards (true) or full cards (false). */
+export function setCardSize(photos) {
+  CW = photos ? PHOTO_D : CARD_W;
+  CH = photos ? PHOTO_D : CARD_H;
+}
+
+/** Runs `fn` with full cards, whatever the screen shows (printing), then puts the size back. */
+export function withFullCards(fn) {
+  const [w, h] = [CW, CH];
+  setCardSize(false);
+  try {
+    return fn();
+  } finally {
+    CW = w;
+    CH = h;
+  }
+}
 export const HG = 18;   // horizontal gap between two neighbouring cards
 export const VG = 58;   // vertical gap between two generations
 export const SG = 32;   // gap between two spouses

@@ -23,6 +23,7 @@ export const S = {
   full: false,           // whole tree, flat (otherwise a view centred on the person)
   fan: false,            // fan chart instead of the tree
   line: true,            // halo on the focus person's direct line
+  photos: false,         // photo mode: round photos only, the name on hover
   filter: '',            // tree filter: '' | 'living' | 'certificate' (other cards faded)
   panel: true,           // record/register panel shown
   sheet: false,          // phone: record/register panel open over the tree
@@ -91,6 +92,7 @@ export function loadPrefs() {
     S.full = v.full === true;
     S.fan = v.fan === true;
     S.line = v.line !== false;
+    S.photos = v.photos === true;
     S.filter = TREE_FILTERS.includes(v.filter) ? v.filter : '';
     S.panel = v.panel !== false;
     if (v.closed && typeof v.closed === 'object') S.closed = v.closed;
@@ -105,7 +107,7 @@ export function savePrefs() {
   try {
     if (S.focus) S.foci[S.tree] = S.focus;
     else delete S.foci[S.tree];
-    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, filter: S.filter, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci, theme: S.theme, textSize: S.textSize }));
+    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, photos: S.photos, filter: S.filter, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci, theme: S.theme, textSize: S.textSize }));
   } catch (e) {
     /* storage unavailable: preferences not remembered */
   }

@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach } from 'node:test';
 import { fire, FakeElement } from './setup.js';
-import { S } from '../js/state.js';
+import { S, cardEls } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { bindEvents } from '../js/events.js';
 import { afterData } from '../js/ui/render.js';
 import { openPersonDlg } from '../js/ui/person-dlg.js';
 import { currentSituation, unionCauseText, hasDeathNumber, passesFilter } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
-import { CW, CH, DUP_KEY } from '../js/config.js';
+import { CW, CH, CARD_W, PHOTO_D, DUP_KEY, PREF_KEY } from '../js/config.js';
 import { ignoredPairs } from '../js/services/dup-ignore.js';
 import { parsePlace } from '../js/model/places.js';
 import { resetHistory, canUndo } from '../js/services/history.js';
@@ -186,6 +186,26 @@ describe('navigation et affichage', () => {
     A.toggleLang();
     assert.equal(el('btnLang').textContent, 'FR');
     A.toggleLang();
+  });
+
+  test('mode photos : photo ronde, nom au survol, cartes plus petites, retenu', () => {
+    const cards = () => [...cardEls.values()].filter((c) => c.dataset.id);
+    const before = S.lastLayout.W;
+    A.togglePhotos();
+    assert.equal(S.photos, true);
+    assert.equal(el('btnPhotos').attrs['aria-pressed'], 'true');
+    assert.ok(el('tree').classList.contains('photos'));
+    assert.equal(CW, PHOTO_D);
+    assert.equal(CH, PHOTO_D);
+    assert.ok(S.lastLayout.W < before, 'arbre plus étroit');
+    const henri = cards().find((c) => S.people.get(c.dataset.id).given === 'Henri');
+    assert.match(henri.innerHTML, /<img class="ph-img" src="images\/avatar_homme\.jpeg"/);
+    assert.match(henri.innerHTML, /<span class="tip" aria-hidden="true"><b>Henri /);
+    assert.ok(henri.attrs['aria-label'].startsWith('Henri'), 'nom toujours lu par les lecteurs d’écran');
+    assert.equal(JSON.parse(localStorage.getItem(PREF_KEY)).photos, true);
+    A.togglePhotos();
+    assert.equal(CW, CARD_W);
+    assert.ok(!henri.innerHTML.includes('ph-img'));
   });
 
   test('filtres de l’arbre : vivants ou numéro d’acte, les autres cartes estompées', () => {

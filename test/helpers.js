@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { S } from '../js/state.js';
 import { reindex } from '../js/model/people.js';
+import { setCardSize } from '../js/config.js';
 
 /** Famille d'exemple livrée avec l'application (data/arbres/exemple-famille-bertrand.json). */
 export const example = () =>
@@ -23,10 +24,11 @@ export function resetApp() {
   S.tree = 'principal';
   S.trees = new Map([['principal', { name: 'Mon arbre', createdAt: 0, count: 0 }]]);
   Object.assign(S, {
-    focus: null, full: false, fan: false, line: true, tab: 'record', analysis: 'kin', popup: null, edit: null, busy: false,
+    focus: null, full: false, fan: false, line: true, photos: false, tab: 'record', analysis: 'kin', popup: null, edit: null, busy: false,
     canWrite: true, writeKnown: false, pending: null, confirmDel: false, confirmEx: false, query: '', kinA: '', kinB: '',
     kinShow: false, calMonth: null, timeFamily: false, treeEdit: null, up: 3, down: 2, zoom: 1, lastLayout: null,
   });
+  setCardSize(false);
   localStorage.clear();
 }
 

@@ -706,6 +706,8 @@ export const EN = {
   'ins.f.deceased': 'Marked as living, but deceased according to INSEE',
   'ctl.fan': 'Fan chart',
   'ctl.line': 'Direct line',
+  'ctl.photos': 'Photos',
+  'ctl.photosTitle': 'Show only the photos, the name on hover',
   'ctl.lineTitle': 'Green halo on the direct ancestors of the central person',
   'ctl.living': 'Living',
   'ctl.livingTitle': 'Fade the deceased: only the living stay sharp',

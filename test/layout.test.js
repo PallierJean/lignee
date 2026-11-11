@@ -1,7 +1,7 @@
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { S } from '../js/state.js';
-import { CW, CH } from '../js/config.js';
+import { CW, CH, CARD_W, PHOTO_D, setCardSize, withFullCards } from '../js/config.js';
 import { buildLayout } from '../js/tree/layout.js';
 import { buildFullLayout } from '../js/tree/full-layout.js';
 import { example, loadTree, person } from './helpers.js';
@@ -235,5 +235,33 @@ describe('sept générations d’ascendants', () => {
     const nodes = cards(buildLayout());
     assert.deepEqual(nodes.map((n) => n.sosa).filter(Boolean).sort((a, b) => a - b), [...Array(255)].map((_, i) => i + 1));
     assertNoOverlap(nodes);
+  });
+});
+
+describe('mode photos', () => {
+  /** Smallest distance between two neighbouring cards of a row. */
+  const gap = (L) => Math.min(...Object.values(Object.groupBy(L.nodes, (n) => n.y)).map((row) => {
+    const xs = row.map((n) => n.x).sort((a, b) => a - b);
+    return Math.min(...xs.slice(1).map((x, i) => x - xs[i]));
+  }));
+
+  test('cartes rondes plus petites ; l’impression garde les cartes complètes', () => {
+    loadTree(example().people, example().unions);
+    S.focus = [...S.people.keys()][0];
+    const full = buildFullLayout();
+    setCardSize(true);
+    try {
+      assert.equal(CW, PHOTO_D);
+      const photos = buildFullLayout();
+      assert.ok(photos.W < full.W, 'arbre plus étroit');
+      assert.ok(gap(photos) >= PHOTO_D, 'pas de chevauchement');
+      const printed = withFullCards(() => buildFullLayout());
+      assert.equal(printed.W, full.W, 'mise en page de l’impression inchangée');
+      assert.equal(CW, PHOTO_D, 'taille remise après l’impression');
+      assert.ok(gap(buildLayout()) >= PHOTO_D);
+    } finally {
+      setCardSize(false);
+    }
+    assert.equal(CW, CARD_W);
   });
 });
