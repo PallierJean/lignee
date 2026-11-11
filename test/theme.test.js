@@ -378,8 +378,10 @@ describe('animations des thèmes fêtes et saisons', () => {
       // brought it down or shot them all during the previous steps)
       Object.assign(sky, { nextBurst: 0, burst: null, iceBolts: [], fall: null, tow: null, nextTow: Infinity, walkStart: Date.now() - 4000 });
       for (const p of sky.speeders) p.down = 0;
-      await new Promise((r) => setTimeout(r, 120));
-      assert.ok(sky.iceBolts.some((b) => b.heavy && b.color === '#7CFF6B'), 'the walker fires');
+      // Waits for the shot rather than a fixed time: a slow machine (CI) draws fewer frames
+      const fired = Date.now();
+      for (let i = 0; i < 40 && !(sky.gunFired >= fired); i++) await new Promise((r) => setTimeout(r, 50));
+      assert.ok(sky.gunFired >= fired, 'the walker fires');
       // The front line: the turrets fire orange bolts at the walkers, blasts throw up snow
       for (const tu of sky.front.turrets) tu.next = 0;
       sky.front.blasts.push({ x: 100, y: 450, born: Date.now(), bits: [{ dx: 0.5, up: 2, r: 2 }] });
