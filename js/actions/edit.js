@@ -2,7 +2,6 @@
 import { S, savePrefs } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { rid } from '../utils/helpers.js';
-import { fileTitle } from '../model/people.js';
 import { cropFree, cropTags } from '../ui/crop-free.js';
 import { P, photoOf, photoSrc, partnersOf, childrenOf, unionDeathEnd, currentSituation, reindex, birthSurname, eventsOf, sourcesOf, mediaList, unionType } from '../model/people.js';
 import { opUpdate, opDelete, inBatch, beginAction, commitAction } from '../services/storage.js';
@@ -183,7 +182,7 @@ export async function addDraftMedia(files) {
         if (!res) return; // cancelled: nothing added
         photo = res.photo;
       }
-      added.push({ id: rid('m'), photo, back: '', title: fileTitle(file.name), date: '', note: '', tags: [], removed: false });
+      added.push({ id: rid('m'), photo, back: '', title: '', date: '', note: '', tags: [], removed: false });
     } catch (err) {
       toast(err.message, true);
     }

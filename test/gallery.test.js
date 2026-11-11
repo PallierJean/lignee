@@ -138,3 +138,13 @@ describe('classer une image aux archives', () => {
     media.closeMedia();
   });
 });
+
+describe('nom d’une image', () => {
+  test('pas de titre : les personnes identifiées, sinon rien (« Image sans titre ») ; un nom de fichier ne compte pas', async () => {
+    const { mediaLabel } = await import('../js/model/people.js');
+    loadTree([person('b', { given: 'Paul', surname: 'Roux' })]);
+    assert.equal(mediaLabel({ title: 'PART_1474012919711_DSC_0936', tags: [{ id: 'b', x: 1, y: 1 }] }), 'Paul ROUX');
+    assert.equal(mediaLabel({ title: 'PART_1474012919711_DSC_0936' }), '');
+    assert.equal(mediaLabel({ title: 'Noces d’or', tags: [{ id: 'b', x: 1, y: 1 }] }), 'Noces d’or');
+  });
+});

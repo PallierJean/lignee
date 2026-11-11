@@ -210,7 +210,7 @@ export async function addGalleryPhotos(owner, files) {
         if (!res) return; // cancelled: nothing added
         photo = res.photo;
       }
-      added.push({ id: rid('m'), photo: await storePhoto(photo, P(owner)), title: fileTitle(file.name), date: '', note: '', tags: [] });
+      added.push({ id: rid('m'), photo: await storePhoto(photo, P(owner)), title: '', date: '', note: '', tags: [] });
     } catch (e) {
       toast(e.message, true);
     }

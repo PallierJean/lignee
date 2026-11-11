@@ -53,7 +53,7 @@ afterEach(() => {
 test('gallery: a refused file is reported, the others are added', async () => {
   await A.addDraftMedia([text, png('mariage.png')]);
   assert.match(toastText(), /image/i);
-  assert.deepEqual(S.edit.media.map((m) => m.title), ['mariage']);
+  assert.deepEqual(S.edit.media.map((m) => m.title), [''], 'no title from the file name: the people identified name it');
   assert.equal(S.edit.media[0].photo, 'data:image/jpeg;base64,IMG');
 });
 
@@ -225,7 +225,8 @@ test('intitulé tiré du nom du fichier, sauf un nom d’appareil', async () => 
   const { fileTitle } = await import('../js/actions/edit.js');
   assert.equal(fileTitle('mariage.jpg'), 'mariage');
   assert.equal(fileTitle('Noces d’or 1975.png'), 'Noces d’or 1975');
-  for (const name of ['20260730_210013.heic', '20260730_210013.heic.jpg', 'photo.jpg', 'IMG_1234.JPG', 'DSC0042.jpg', 'PXL_20240512_101010.jpg', 'WhatsApp Image 2024-05-12 at 10.10.10.jpeg', 'Scan 3.png', '20240512_101010.jpg', 'image(2).png']) {
+  assert.equal(fileTitle('Acte-n-3.jpg'), 'Acte-n-3');
+  for (const name of ['20260730_210013.heic', '20260730_210013.heic.jpg', 'photo.jpg', 'IMG_1234.JPG', 'DSC0042.jpg', 'PXL_20240512_101010.jpg', 'WhatsApp Image 2024-05-12 at 10.10.10.jpeg', 'Scan 3.png', '20240512_101010.jpg', 'image(2).png', 'PART_1474012919711_DSC_0936.jpg', 'FB_IMG_1474012919711.jpg']) {
     assert.equal(fileTitle(name), '', name);
   }
 });
