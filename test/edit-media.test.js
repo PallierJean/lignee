@@ -225,7 +225,7 @@ test('intitulé tiré du nom du fichier, sauf un nom d’appareil', async () => 
   const { fileTitle } = await import('../js/actions/edit.js');
   assert.equal(fileTitle('mariage.jpg'), 'mariage');
   assert.equal(fileTitle('Noces d’or 1975.png'), 'Noces d’or 1975');
-  for (const name of ['photo.jpg', 'IMG_1234.JPG', 'DSC0042.jpg', 'PXL_20240512_101010.jpg', 'WhatsApp Image 2024-05-12 at 10.10.10.jpeg', 'Scan 3.png', '20240512_101010.jpg', 'image(2).png']) {
+  for (const name of ['20260730_210013.heic', '20260730_210013.heic.jpg', 'photo.jpg', 'IMG_1234.JPG', 'DSC0042.jpg', 'PXL_20240512_101010.jpg', 'WhatsApp Image 2024-05-12 at 10.10.10.jpeg', 'Scan 3.png', '20240512_101010.jpg', 'image(2).png']) {
     assert.equal(fileTitle(name), '', name);
   }
 });
@@ -251,4 +251,10 @@ test('identifier les personnes dès l’ajout, depuis le formulaire : enregistr�
   assert.equal(mediaLabel(S.edit.media[0]), 'Paul ROUX · 1985', 'sans intitulé : les personnes et la date');
   await A.submitEdit();
   assert.deepEqual(S.people.get('a').media[0].tags, [{ id: 'b', x: 25, y: 40 }]);
+});
+
+test('ancien titre qui n’est qu’un nom de fichier : ignoré à l’affichage, champ vide à la modification', async () => {
+  const { mediaLabel } = await import('../js/model/people.js');
+  assert.equal(mediaLabel({ title: '20260730_210013.heic', date: '2026', tags: [] }), '2026');
+  assert.equal(mediaLabel({ title: 'Noces d’or', date: '2026' }), 'Noces d’or');
 });

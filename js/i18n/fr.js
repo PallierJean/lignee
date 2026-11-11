@@ -571,6 +571,7 @@ export const FR = {
   'med.whoSearch': 'Rechercher la personne (nom, lieu, année)…',
   'med.typeName': 'Tapez un nom pour trouver la personne.',
   'med.noHit': 'Personne ne correspond.',
+  'med.editTitle': 'Modifier le titre, la date et la légende',
   'med.delete': 'Supprimer l’image',
   'med.deleteAsk': (owner) => `Supprimer cette image ? Elle disparaît de la galerie de ${owner}, et de celles des personnes identifiées dessus. Ctrl+Z pour annuler.`,
   'med.deleteYes': 'Supprimer',
@@ -835,8 +836,8 @@ export const FR = {
   'hist.tag': 'identification sur une photo',
   'hist.caption': 'légende d’une photo',
   'med.caption': 'Légende',
-  'med.editCaption': 'modifier',
-  'med.addCaption': 'Ajouter une légende',
+  'med.editCaption': 'modifier le titre, la date, la légende',
+  'med.addCaption': 'Ajouter un titre, une date, une légende',
 
   // Duplicates
   'dup.none': 'Aucun doublon probable.',

@@ -375,7 +375,8 @@ describe('fiche : événements, sources, galerie', () => {
 
   test('visionneuse : modifier la légende sur place, annulable', async () => {
     openMedia('a', 'm1');
-    assert.match(html('mediaCard'), /data-act="caption-edit">modifier</);
+    assert.match(html('mediaCard'), /data-act="caption-edit">modifier le titre, la date, la légende</);
+    assert.match(html('mediaCard'), /<h2 id="mdTitle">[^<]*<\/h2><button class="icon-btn md-pen" type="button" data-act="caption-edit"/, 'le titre se modifie depuis l’en-tête');
     editCaption(true);
     assert.match(html('mediaCard'), /id="mdEditNote" rows="3">Lyon</);
     el('mdEditTitle').value = 'Mariage';

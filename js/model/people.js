@@ -206,7 +206,8 @@ const DEVICE_NAME = /^(img|image|photo|pic|picture|dsc|dscn|dcim|pxl|mvimg|scan|
 
 /** Title from a file's name, when it means something ("mariage.jpg"); '' for "IMG_1234.jpg" or "photo.jpg". */
 export function fileTitle(name) {
-  const base = String(name || '').replace(/\.[^.]+$/, '').trim();
+  // Every image extension goes, even doubled ("20260730_210013.heic.jpg")
+  const base = String(name || '').replace(/(\.(jpe?g|png|gif|webp|heic|heif|tiff?|bmp|avif))+$/i, '').replace(/\.[^.\s]{1,5}$/, '').trim();
   return !base || DEVICE_NAME.test(base) || /^whatsapp image /i.test(base) ? '' : base;
 }
 
@@ -216,7 +217,9 @@ export function fileTitle(name) {
  */
 export function mediaLabel(m) {
   if (!m) return '';
-  if (String(m.title || '').trim()) return String(m.title).trim();
+  // A title that is only a camera's file name (given by an older Lignée) counts as none
+  const title = String(m.title || '').trim();
+  if (title && fileTitle(title)) return title;
   const ids = [...new Set((Array.isArray(m.tags) ? m.tags : []).map((x) => x && x.id))].filter((id) => P(id));
   const names = ids.slice(0, 3).map((id) => fullName(P(id))).join(', ') + (ids.length > 3 ? ' +' + (ids.length - 3) : '');
   return [names, String(m.date || '').trim()].filter(Boolean).join(' · ');

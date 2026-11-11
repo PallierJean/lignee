@@ -549,6 +549,7 @@ export const EN = {
   'med.whoSearch': 'Search for the person (name, place, year)…',
   'med.typeName': 'Type a name to find the person.',
   'med.noHit': 'No one matches.',
+  'med.editTitle': 'Edit the title, date and caption',
   'med.delete': 'Delete the image',
   'med.deleteAsk': (owner) => `Delete this image? It disappears from ${owner}’s gallery, and from those of the people identified on it. Ctrl+Z to undo.`,
   'med.deleteYes': 'Delete',
@@ -807,8 +808,8 @@ export const EN = {
   'hist.tag': 'photo tag',
   'hist.caption': 'photo caption',
   'med.caption': 'Caption',
-  'med.editCaption': 'edit',
-  'med.addCaption': 'Add a caption',
+  'med.editCaption': 'edit the title, date, caption',
+  'med.addCaption': 'Add a title, a date, a caption',
 
   'dup.none': 'No likely duplicate.',
   'dup.scope': 'Records with the same first given name and surname, and no conflicting date. Ctrl+Z undoes a merge.',
