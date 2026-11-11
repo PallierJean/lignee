@@ -31,7 +31,7 @@ test('refuse ce qui n’est pas une sauvegarde Lignée', () => {
 
 test('identifiants dangereux écartés, nom raccourci', () => {
   const back = parseBackup(JSON.stringify({
-    format: 'lignee',
+    format: 'lignee', version: 2,
     name: '  ' + 'n'.repeat(100),
     people: [{ id: 'ok_1' }, { id: '..' }, { id: '__proto__/x' }, { id: 7 }, null],
     unions: 'pas une liste',
@@ -45,7 +45,7 @@ test('format plus récent : refusé clairement, sans rien lire', () => {
   const v = (version) => JSON.stringify({ format: 'lignee', version, people: [{ id: 'a', given: 'A' }], unions: [] });
   assert.throws(() => parseBackup(v(FORMAT_VERSION + 1)), { code: 'newer', message: /version plus récente/ });
   assert.equal(parseBackup(v(FORMAT_VERSION)).people.length, 1);
-  assert.equal(parseBackup(JSON.stringify({ format: 'lignee', people: [], unions: [] })).people.length, 0, 'sans version : lu');
+  assert.equal(parseBackup(JSON.stringify({ format: 'lignee', version: 2, people: [], unions: [] })).people.length, 0, 'sans version : lu');
   assert.equal(JSON.parse(buildBackup()).version, FORMAT_VERSION);
 });
 
@@ -54,70 +54,8 @@ test('le serveur connaît la même version du format', async () => {
   assert.equal(Number(/const FORMAT_VERSION = (\d+);/.exec(src)[1]), FORMAT_VERSION);
 });
 
-describe('format 2 : sources partagées', () => {
-  // Format 1 : chaque fiche porte ses documents ; le même acte de mariage chez les deux époux
-  const v1 = {
-    format: 'lignee', version: 1, name: 'V1',
-    people: [
-      { id: 'a', given: 'Jean', sources: [
-        { id: 's1', fact: 'union:u', kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12', photo: 'data:image/png;base64,AAAA' },
-        { id: 's2', fact: 'birth', kind: 'birth', title: '' },
-      ] },
-      { id: 'b', given: 'Marie', sources: [
-        { id: 's9', fact: 'union:u', kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12', photo: 'data:image/png;base64,AAAA' },
-        { id: 's3', fact: 'birth', kind: 'birth', title: '' },
-      ] },
-    ],
-    unions: [{ id: 'u', a: 'a', b: 'b' }],
-  };
-  const read = (o) => {
-    const r = parseBackup(JSON.stringify(o));
-    const sources = new Map(r.sources.map((x) => [x.id, x.data]));
-    const people = new Map(r.people.map((x) => [x.id, x.data]));
-    return { r, sources, people };
-  };
-
-  test('format 1 converti : le même acte devient une source partagée, les actes vides restent à part', () => {
-    const { sources, people, r } = read(v1);
-    const unions = new Map(r.unions.map((x) => [x.id, x.data]));
-    assert.equal(people.get('a').sources, undefined);
-    // L'acte de mariage, cité par les deux époux, n'est plus qu'une citation de l'union
-    const [ma] = unions.get('u').citations;
-    assert.deepEqual(unions.get('u').citations, [{ id: 's1', source: ma.source }]);
-    const [na] = people.get('a').citations;
-    const [nb] = people.get('b').citations;
-    assert.notEqual(na.source, nb.source, 'deux naissances sans cote ni image : deux actes distincts');
-    assert.equal(sources.size, 3);
-    assert.deepEqual(sources.get(ma.source), { kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12', photo: 'data:image/png;base64,AAAA' });
-    // Les documents vus par l'application : comme en format 1, pour chacun des deux époux
-    const resolved = sourcesOfPerson('a', { people, unions, sources }).map(({ source, ...x }) => x);
-    assert.deepEqual(sourcesOfPerson('b', { people, unions, sources }).map((x) => [x.fact, x.ref || '']), [['birth', ''], ['union:u', 'n°12']]);
-    assert.deepEqual(resolved, [
-      { kind: 'birth', id: 's2', fact: 'birth' },
-      { kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12', photo: 'data:image/png;base64,AAAA', id: 's1', fact: 'union:u' },
-    ]);
-  });
-
-  test('conversion stable : relire deux fois donne les mêmes identifiants', () => {
-    assert.deepEqual(read(v1).r, read(v1).r);
-  });
-
-  test('format 2 : relu à l’identique, et export compatible format 1', () => {
-    const { people, sources, r } = read(v1);
-    const tree = { name: 'V2', people, unions: new Map(r.unions.map((x) => [x.id, x.data])), sources };
-    const v2 = JSON.parse(buildBackup(tree));
-    assert.equal(v2.version, 2);
-    assert.equal(v2.sources.length, 3);
-    assert.deepEqual(read(v2).r, { ...r, name: 'V2' });
-    const old = JSON.parse(buildBackup(tree, { v1: true }));
-    assert.equal(old.version, 1);
-    assert.equal(old.sources, undefined);
-    assert.equal(old.people[0].citations, undefined);
-    // Format 1 : l'acte de mariage revient sur le premier époux, comme avant
-    assert.deepEqual(old.people[0].sources.map((x) => [x.fact, x.ref || '']), [['birth', ''], ['union:u', 'n°12']]);
-    assert.deepEqual(old.people[1].sources.map((x) => [x.fact, x.ref || '']), [['birth', '']]);
-    assert.equal(old.unions[0].citations, undefined);
-    // Retour en format 2 : les mêmes sources
-    assert.deepEqual(read(old).sources, sources);
-  });
+test('format 1 (avant Lignée 2.0) : refusé clairement, jamais lu à moitié', () => {
+  const v1 = JSON.stringify({ format: 'lignee', version: 1, people: [{ id: 'a', given: 'A', sources: [{ id: 's', title: 'Acte' }] }], unions: [] });
+  assert.throws(() => parseBackup(v1), { code: 'old', message: /avant Lignée 2\.0/ });
+  assert.throws(() => parseBackup(JSON.stringify({ format: 'lignee', people: [], unions: [] })), { code: 'old' }, 'sans version : format 1');
 });

@@ -224,7 +224,8 @@ describe('navigation et affichage', () => {
     assert.ok(!faded().includes('Camille'), 'en vie : net');
     assert.match(localStorage.getItem('lignee.view.v1'), /"filter":"living"/, 'gardé avec les préférences');
 
-    S.people.get(henri).sources = [{ id: 's1', kind: 'death', fact: 'death', title: 'Acte n°412', photo: '' }];
+    S.sources.set('S_dc', { kind: 'death', title: 'Acte n°412' });
+    S.people.set(henri, { ...S.people.get(henri), citations: [{ id: 's1', source: 'S_dc', fact: 'death' }] });
     A.toggleFilter('certificate'); // l'un remplace l'autre
     assert.deepEqual([el('btnLiving').attrs['aria-pressed'], el('btnCertificate').attrs['aria-pressed']], ['false', 'true']);
     assert.ok(!faded().includes('Henri'), 'numéro d’acte dans une source : net');
@@ -232,15 +233,22 @@ describe('navigation et affichage', () => {
     A.toggleFilter('certificate'); // second clic : plus de filtre
     assert.equal(S.filter, '');
     assert.deepEqual(faded(), []);
-    delete S.people.get(henri).sources;
+    const { citations, ...rest } = S.people.get(henri);
+    S.people.set(henri, rest);
+    S.sources.delete('S_dc');
   });
 
   test('numéro d’acte de décès : dans la cote ou le titre d’une source du décès', () => {
-    assert.equal(hasDeathNumber({ sources: [{ kind: 'death', title: 'Acte n°5' }] }), true);
-    assert.equal(hasDeathNumber({ sources: [{ kind: 'death', title: 'Décès', ref: '1094 N' }] }), true);
-    assert.equal(hasDeathNumber({ sources: [{ kind: 'other', fact: 'death', title: 'Acte no 12' }] }), true);
-    assert.equal(hasDeathNumber({ sources: [{ kind: 'death', title: 'Décès en 1950' }] }), false, 'une année n’est pas un numéro');
-    assert.equal(hasDeathNumber({ sources: [{ kind: 'birth', title: 'Acte n°5' }] }), false, 'un autre acte');
+    // Une fiche qui cite ces documents
+    const withDocs = (docs) => {
+      S.sources = new Map(docs.map((d, i) => ['T' + i, d]));
+      return { citations: docs.map((d, i) => ({ id: 'c' + i, source: 'T' + i, fact: d.fact || '' })) };
+    };
+    assert.equal(hasDeathNumber(withDocs([{ kind: 'death', title: 'Acte n°5' }])), true);
+    assert.equal(hasDeathNumber(withDocs([{ kind: 'death', title: 'Décès', ref: '1094 N' }])), true);
+    assert.equal(hasDeathNumber(withDocs([{ kind: 'other', fact: 'death', title: 'Acte no 12' }])), true);
+    assert.equal(hasDeathNumber(withDocs([{ kind: 'death', title: 'Décès en 1950' }])), false, 'une année n’est pas un numéro');
+    assert.equal(hasDeathNumber(withDocs([{ kind: 'birth', title: 'Acte n°5' }])), false, 'un autre acte');
     assert.equal(hasDeathNumber({}), false);
     assert.equal(passesFilter({ deceased: true }, 'living'), false);
     assert.equal(passesFilter({}, 'living'), true);
@@ -740,8 +748,8 @@ describe('suppression, exemples, fusion', () => {
     assert.deepEqual(S.people.get('a').citations.map((c) => [c.source, c.role]), [['S1', 'witness']]);
     renderAll(true);
     assert.match(html('paneRecord'), /Mariage Durand<\/b> <span class="src-fact">Témoin<\/span>/);
-    const back = parseBackup(buildBackup(undefined, { v1: true }));
-    assert.equal(back.people[0].data.citations[0].role, 'witness', 'format 1 relu : rôle gardé');
+    const back = parseBackup(buildBackup());
+    assert.equal(back.people[0].data.citations[0].role, 'witness', 'sauvegarde relue : rôle gardé');
   });
 
   test('acte de mariage porté par l’union : vu des deux époux, jamais effacé par erreur', async () => {

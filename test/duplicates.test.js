@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { S } from '../js/state.js';
 import { test, describe } from 'node:test';
 import { findDuplicates, mergedData } from '../js/model/duplicates.js';
 import { example, loadTree, person } from './helpers.js';
@@ -37,13 +38,14 @@ describe('doublons', () => {
   test('fusion : champs complétés, listes réunies, faits reliés aux éléments conservés', () => {
     const keep = {
       given: 'Jean', surname: 'Martin', birthDate: '1900', birthPlace: '', notes: 'A', deceased: false,
-      events: [{ id: 'e1', type: 'baptism', date: '1900', place: 'Lyon' }], sources: [{ id: 's1', fact: 'birth' }],
+      events: [{ id: 'e1', type: 'baptism', date: '1900', place: 'Lyon' }], citations: [{ id: 's1', source: 'S1', fact: 'birth' }],
     };
     const drop = {
       given: 'Autre', birthPlace: 'Lyon', notes: 'B', deceased: true, createdAt: 1,
       events: [{ id: 'e2', type: 'baptism', date: '1900', place: 'lyon' }, { id: 'e3', type: 'census', date: '1906', place: '' }],
-      sources: [{ id: 's2', fact: 'e2' }, { id: 's3', fact: 'union:old' }], media: [{ id: 'm1' }],
+      citations: [{ id: 's2', source: 'S2', fact: 'e2' }, { id: 's3', source: 'S3', fact: 'union:old' }], media: [{ id: 'm1' }],
     };
+    S.sources = new Map([['S1', {}], ['S2', {}], ['S3', {}]]);
     const out = mergedData(keep, drop, new Map([['old', 'new']]));
     assert.equal(out.given, 'Jean');
     assert.equal(out.birthPlace, 'Lyon');

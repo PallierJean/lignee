@@ -99,8 +99,6 @@ export const FR = {
   // Import and Export dialogs
   'tr.exportText': 'Le format GEDCOM est accepté par Geneanet, Ancestris, Gramps, Heredis et MyHeritage. La sauvegarde Lignée permet de tout restaurer ici.',
   'tr.exportGed': 'Exporter en GEDCOM',
-  'tr.exportJsonV1': 'Sauvegarde pour une version de Lignée antérieure à la 2.0',
-  'tr.backupV1Hint': 'Sauvegarde enregistrée au format des versions antérieures à la 2.0 : chaque fiche y porte ses propres documents. Pour Lignée 2, préférez la sauvegarde normale.',
   'tr.exportJson': 'Sauvegarde Lignée (.json)',
   'tr.exported': 'Contenu exporté',
   'tr.copy': 'Copier le texte',
@@ -203,9 +201,11 @@ export const FR = {
   'repo.undoCommit': 'annulation',
   'repo.redoCommit': 'rétablissement',
   'repo.forget': 'Déconnecter le dépôt',
+  'tr.repoErr.old': 'Ce dépôt contient une sauvegarde au format d’avant Lignée 2.0. Convertissez-la d’abord avec Lignée 2.3.',
   'tr.repoErr.newer': 'Ce dépôt contient une sauvegarde d’une version plus récente de Lignée. Mettez Lignée à jour pour l’ouvrir ou y sauvegarder.',
   'tr.repoErr.noBackup': 'Aucune sauvegarde Lignée (.json) trouvée dans ce dépôt.',
   'tr.repoErr.failed': 'Le dépôt n’a pas pu être lu. Vérifiez votre connexion et réessayez.',
+  'backup.old': 'Ce fichier est au format d’avant Lignée 2.0, que cette version ne lit plus. Ouvrez-le d’abord avec Lignée 2.3 pour le convertir.',
   'backup.newer': 'Cet arbre a été enregistré par une version plus récente de Lignée. Mettez Lignée à jour pour l’ouvrir : cette version risquerait d’en perdre une partie.',
   'backup.invalid': 'Ce fichier n’est pas une sauvegarde Lignée.',
 

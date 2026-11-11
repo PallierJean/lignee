@@ -107,20 +107,20 @@ export async function openRepo(input, token, forSave = false) {
     .slice(0, MAX_BACKUPS);
 
   const backups = [];
-  let newer = false;
+  let other = '';
   await pool(candidates, 4, async (file) => {
     const text = await (await read(file)).text();
     let backup = null;
     try {
       backup = parseBackup(text);
     } catch (e) {
-      // A backup from a newer Lignée: refused whole, rather than overwritten by a save
-      if (e.code === 'newer') newer = true;
+      // A backup in another format (older or newer Lignée): refused whole, rather than overwritten by a save
+      if (e.code === 'newer' || e.code === 'old') other = e.code;
       /* otherwise, another .json file in the repository */
     }
     if (backup && backup.people.length) backups.push({ path: file.path, ...backup });
   });
-  if (newer) throw fail('newer');
+  if (other) throw fail(other);
   if (!backups.length && !forSave) throw fail('noBackup');
   backups.sort((a, b) => a.path.localeCompare(b.path));
 
@@ -152,7 +152,7 @@ export async function readLatest(repo, target) {
   try {
     parsed = parseBackup(file ? await (await read(file)).text() : EMPTY_BACKUP);
   } catch (e) {
-    throw e.code === 'newer' ? fail('newer') : e;
+    throw e.code === 'newer' || e.code === 'old' ? fail(e.code) : e;
   }
   const stored = (list) => list.map((x) => ({ ...x.data, id: x.id }));
   const backup = { people: stored(parsed.people), unions: stored(parsed.unions), sources: stored(parsed.sources) };

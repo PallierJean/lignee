@@ -4,7 +4,7 @@
  */
 import { S } from '../state.js';
 import { GM } from '../config.js';
-import { migratePeople, migrateUnions, sourcesOfPerson } from '../model/sources.js';
+import { fromDocuments, sourcesOfPerson } from '../model/sources.js';
 import { rid } from '../utils/helpers.js';
 import { dateParts } from '../utils/dates.js';
 import { P, byBirth, maiden, SITUATIONS, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, unionType, unionTypeLabel, eventsOf, factLabel } from '../model/people.js';
@@ -503,11 +503,10 @@ export function parseGedcom(text) {
 
   // Documents cited under each fact become shared sources: the same SOUR record and PAGE, one source
   // and marriage documents go to their union
-  const migrated = migratePeople(new Map(people.map((x) => [x.id, x.data])));
-  const moved = migrateUnions(migrated.people, new Map(unions.map((x) => [x.id, x.data])));
+  const tree = fromDocuments(new Map(people.map((x) => [x.id, x.data])), new Map(unions.map((x) => [x.id, x.data])));
   return {
-    people: people.map((x) => ({ ...x, data: moved.people.get(x.id) })),
-    unions: unions.map((x) => ({ ...x, data: moved.unions.get(x.id) })),
-    sources: [...migrated.sources].map(([id, data]) => ({ id, data })),
+    people: people.map((x) => ({ ...x, data: tree.people.get(x.id) })),
+    unions: unions.map((x) => ({ ...x, data: tree.unions.get(x.id) })),
+    sources: [...tree.sources].map(([id, data]) => ({ id, data })),
   };
 }

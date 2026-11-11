@@ -24,7 +24,7 @@ L'enveloppe d'une sauvegarde `.json` et d'un fichier de `data/arbres/`.
 | Champ | Type | Requis | Description |
 | --- | --- | --- | --- |
 | `format` | `"lignee"` | ✅ | Reconnaît une sauvegarde Lignée ; sinon le fichier est refusé |
-| `version` | `number` | ✅ | Version du format, actuellement `2` (`1` est lu et converti, voir [Format 1](#format-1)). Une sauvegarde d'une version plus récente est refusée (import, dépôt GitHub, mode fichier) : la lire ferait perdre ce que cette version ne connaît pas. En mode fichier, l'arbre s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
+| `version` | `number` | ✅ | Version du format, actuellement `2`. Une autre version est refusée (import, dépôt GitHub, mode fichier) : un fichier d'avant Lignée 2.0 se convertit en l'ouvrant avec Lignée 2.3 ; en mode fichier, un arbre d'une autre version s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
 | `name` | `string` | | Nom de l'arbre |
 | `createdAt` | `number` | | Création de l'arbre, en millisecondes depuis 1970 |
 | `exportedAt` | `string` | | Date de l'export, ISO 8601 |
@@ -204,10 +204,7 @@ Dans le formulaire, « Ou citer un document déjà dans l'arbre » ajoute une ci
 
 Les actes d'un mariage sont cités par l'union (`union.citations`), et non par la fiche d'un conjoint :
 les deux conjoints les voient, et ils sont exportés une seule fois sous `MARR`. Une citation
-`union:<id>` encore posée sur la fiche d'un conjoint (Lignée 2.0 et 2.1, ou format 1) passe sur
-l'union à la lecture (`migrateUnions`), sans doublon ; une citation qui nomme une union dont la
-personne ne fait pas partie reste sur sa fiche. L'export au format 1 remet les actes de l'union sur
-le premier conjoint, comme le faisait ce format.
+`union:<id>` qui nomme une union dont la personne ne fait pas partie reste sur sa fiche.
 
 ## Citation (`Citation`)
 
@@ -230,27 +227,13 @@ Le renvoi d'une fiche vers une source, avec le fait qu'elle appuie.
 ]
 ```
 
-## Format 1
+## Import GEDCOM
 
-Avant Lignée 2.0, chaque fiche portait ses propres documents : `sources` était une liste de
-sources complètes, chacune avec son `fact`. Lignée 2 lit toujours ce format, d'un fichier, du
-navigateur, de la base en ligne ou d'un dépôt GitHub, et le convertit (`migratePeople` dans
-`js/model/sources.js`) :
-
-- chaque document devient une source, et la fiche garde une citation vers elle ;
-- deux documents identiques qui ont un numéro d'acte (`ref`) ou une image deviennent une seule
-  source partagée ; un document sans l'un ni l'autre (un acte pas encore trouvé) reste à part ;
-- l'identifiant d'une source convertie vient de son contenu : convertir deux fois, ou depuis deux
-  endroits à la fois, donne les mêmes sources.
-
-En mode fichier, le serveur garde l'arbre tel qu'il était avant son premier enregistrement au format 2,
-dans `data/arbres/<arbre>/avant-format-2.json` : écrit une seule fois, jamais écrasé, et absent de la
-liste des arbres. Pour revenir en arrière, copiez-le à la place de `data/arbres/<arbre>.json`
-(Lignée arrêtée). Les photos retirées des fiches après la migration ne sont plus dans le dossier.
-
-L'export « Sauvegarde pour une version de Lignée antérieure à la 2.0 » écrit ce format 1 : chaque
-fiche y reprend une copie des documents qu'elle cite. Une Lignée 1.31 ou plus récente refuse une
-sauvegarde au format 2 plutôt que d'en perdre une partie.
+Le GEDCOM décrit les actes sous chaque fait. À l'import, `fromDocuments` (`js/model/sources.js`) en
+fait des sources partagées : deux documents identiques qui ont un numéro d'acte (`ref`) ou une image
+deviennent une seule source ; un document sans l'un ni l'autre reste à part. Les actes d'un mariage
+vont à l'union. L'identifiant d'une source importée vient de son contenu : importer deux fois donne
+les mêmes sources.
 
 ## Galerie (`Media`)
 

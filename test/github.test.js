@@ -11,7 +11,7 @@ import { resetApp, html } from './helpers.js';
 
 const el = (id) => document.getElementById(id);
 const nativeFetch = globalThis.fetch;
-const backup = (extra = {}) => JSON.stringify({ format: 'lignee', name: 'Famille', people: [{ id: 'a', given: 'Ana', photo: 'photos/Ané.jpg', ...extra }], unions: [] });
+const backup = (extra = {}) => JSON.stringify({ format: 'lignee', version: 2, name: 'Famille', people: [{ id: 'a', given: 'Ana', photo: 'photos/Ané.jpg', ...extra }], unions: [] });
 let calls;
 let head;
 
@@ -111,15 +111,16 @@ describe('lecture du dépôt', () => {
   });
 
   test('photo à côté du fichier ; sources et médias convertis ; absente : retirée', async () => {
-    const people = { sources: [{ title: 'Acte', photo: 'photos/acte.png' }], media: [{ photo: 'photos/manque.gif' }] };
-    serve({ 'data/arbre.json': backup(people), 'data/photos/Ané.jpg': 'img', 'data/photos/acte.png': 'doc' });
+    const fields = { citations: [{ id: 'c', source: 'S1', fact: '' }], media: [{ photo: 'photos/manque.gif' }] };
+    const file = JSON.parse(backup(fields));
+    file.sources = [{ id: 'S1', title: 'Acte', photo: 'photos/acte.png' }];
+    serve({ 'data/arbre.json': JSON.stringify(file), 'data/photos/Ané.jpg': 'img', 'data/photos/acte.png': 'doc' });
     const repo = await openRepo('compte/depot', '');
     const count = await attachPhotos(repo, repo.backups[0]);
     const p = repo.backups[0].people[0].data;
     assert.equal(count.found, 2);
     assert.equal(count.missing, 1);
-    // Format 1 in the repository: the document becomes a shared source, its photo loaded there
-    assert.equal(p.sources, undefined);
+    // The source's document, loaded where the source is
     const src = repo.backups[0].sources.find((x) => x.id === p.citations[0].source).data;
     assert.match(src.photo, /^data:image\/png;base64,/);
     assert.equal(count.base.sources.get(p.citations[0].source).photo, 'photos/acte.png', 'base : chemins du dépôt');
@@ -283,7 +284,7 @@ describe('bandeaux', () => {
     const [id] = S.people.keys();
     S.people.set(id, { ...S.people.get(id), birthPlace: 'Lyon' });
     files['principal.json'] = JSON.stringify({
-      format: 'lignee', name: 'Famille',
+      format: 'lignee', version: 2, name: 'Famille',
       people: [{ id, given: 'Ana', surname: 'Durand', photo: 'photos/Ané.jpg' }, { id: 'b', given: 'Bruno' }],
       unions: [],
     });
@@ -341,7 +342,7 @@ describe('bandeaux', () => {
     await importGo(true);
     const [id] = S.people.keys();
     S.people.set(id, { ...S.people.get(id), given: 'Anne' });
-    files['principal.json'] = JSON.stringify({ format: 'lignee', people: [{ id, given: 'Anna', photo: 'photos/Ané.jpg' }], unions: [] });
+    files['principal.json'] = JSON.stringify({ format: 'lignee', version: 2, people: [{ id, given: 'Anna', photo: 'photos/Ané.jpg' }], unions: [] });
     head = 'c1';
     calls.length = 0;
     await saveRepo();
@@ -386,7 +387,7 @@ describe('bandeaux', () => {
 describe('envoi vers le dépôt', () => {
   const data = 'data:image/jpeg;base64,' + btoa('img');
   const other = 'data:image/png;base64,' + btoa('neuf');
-  const send = (people) => JSON.stringify({ format: 'lignee', name: 'F', people, unions: [] });
+  const send = (people, sources = []) => JSON.stringify({ format: 'lignee', version: 2, name: 'F', people, unions: [], sources });
 
   async function opened() {
     serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img', 'principal/photos/vieille.jpg': 'x' }, 0, true);
@@ -412,11 +413,11 @@ describe('envoi vers le dépôt', () => {
   test('nouvelle photo transférée, photo retirée supprimée, sources comprises', async () => {
     const { repo, target } = await opened();
     calls.length = 0;
-    await pushBackup(repo, target, send([{ id: 'a', surname: 'Garnier', given: 'Paul', sources: [{ photo: other }] }]), 'msg');
+    await pushBackup(repo, target, send([{ id: 'a', surname: 'Garnier', given: 'Paul', citations: [{ id: 'c', source: 'S', fact: '' }] }], [{ id: 'S', kind: 'birth', title: 'Naissance', photo: other }]), 'msg');
     const blob = calls.find((c) => c.url.endsWith('/git/blobs')).body;
     assert.deepEqual(blob, { content: btoa('neuf'), encoding: 'base64' });
-    const ref = json().people[0].sources[0].photo;
-    assert.match(ref, /^photos\/GARNIER-Paul-[0-9a-f-]{36}\.png$/);
+    const ref = json().sources[0].photo;
+    assert.match(ref, /^photos\/Naissance-[0-9a-f-]{36}\.png$/, 'nommée d’après le titre de la source');
     const entries = treeEntries().tree;
     assert.ok(entries.some((x) => x.path === 'principal/' + ref && x.sha === 'blobs-sha'));
     assert.ok(entries.some((x) => x.path === 'principal/photos/Ané.jpg' && x.sha === null));
@@ -434,7 +435,7 @@ describe('envoi vers le dépôt', () => {
 });
 
 describe('lecture juste après un envoi', () => {
-  const send = (given) => JSON.stringify({ format: 'lignee', name: 'F', people: [{ id: 'a', given }], unions: [] });
+  const send = (given) => JSON.stringify({ format: 'lignee', version: 2, name: 'F', people: [{ id: 'a', given }], unions: [] });
 
   test('GitHub relit encore l’ancien commit : pas de faux conflit', async () => {
     serve({ 'principal.json': backup({ photo: '' }) }, 0, true);
@@ -572,7 +573,7 @@ describe('connecter l’arbre ouvert', () => {
   });
 
   const sent = () => JSON.parse(calls.findLast((c) => c.url.endsWith('/git/trees')).body.tree.find((x) => x.path === 'agathe.json').content);
-  const twoPeople = () => JSON.stringify({ format: 'lignee', name: 'F', people: [{ id: 'a', given: 'Ana' }, { id: 'r', given: 'Rémi' }], unions: [] });
+  const twoPeople = () => JSON.stringify({ format: 'lignee', version: 2, name: 'F', people: [{ id: 'a', given: 'Ana' }, { id: 'r', given: 'Rémi' }], unions: [] });
 
   test('sauvegarde pas encore confirmée : rien ne part tout seul', async () => {
     await connect({ 'agathe.json': backup({ photo: '' }) });
@@ -590,7 +591,7 @@ describe('connecter l’arbre ouvert', () => {
   test('connecté après l’aperçu d’import : les photos du dépôt sont reconnues, pas renvoyées ; les doublons partent', async () => {
     // Même photo que celle de l'arbre ouvert (beforeEach), plus un doublon laissé par une ancienne version
     await connect({
-      'agathe.json': JSON.stringify({ format: 'lignee', name: 'F', people: [{ id: 'a', given: 'Agathe', photo: 'photos/Agathe-1.jpg' }], unions: [] }),
+      'agathe.json': JSON.stringify({ format: 'lignee', version: 2, name: 'F', people: [{ id: 'a', given: 'Agathe', photo: 'photos/Agathe-1.jpg' }], unions: [] }),
       'agathe/photos/Agathe-1.jpg': 'img', 'agathe/photos/Agathe-0db90881-c80d-4a4f-a99a-632f168b33cd.jpg': 'img',
       'agathe/photos/posée-à-la-main.jpg': 'img', 'autre/photos/x-0db90881-c80d-4a4f-a99a-632f168b33cd.jpg': 'img',
     });

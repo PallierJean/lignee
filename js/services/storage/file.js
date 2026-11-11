@@ -96,10 +96,10 @@ export async function loadFileTree() {
   try {
     data = parseBackup(text);
   } catch (e) {
-    if (e.code !== 'newer') throw e;
-    // Saved by a newer Lignée: shown empty and read-only, so that nothing overwrites the file or its photos
+    if (e.code !== 'newer' && e.code !== 'old') throw e;
+    // Another format: shown empty and read-only, so that nothing overwrites the file or its photos
     S.canWrite = false;
-    say('backup.newer', true);
+    say(e.code === 'old' ? 'backup.old' : 'backup.newer', true);
     return;
   }
   S.canWrite = !serverTooOld;
@@ -135,26 +135,20 @@ export async function storePhoto(photo, p) {
   }
 }
 
-// Documents a record carries itself: those of a format 1 record (before shared sources)
-const ownSources = (p) => (Array.isArray(p.sources) ? p.sources.filter((x) => x && typeof x === 'object') : []);
-
-/**
- * Images of a record besides its portrait: its own documents (format 1), gallery images and their
- * backs; for a shared source, the back of its document.
- */
-const attached = (p) => [p.back, ...[...ownSources(p), ...mediaList(p)].flatMap((x) => [x.photo, x.back])].filter(Boolean);
+/** Images of a record besides its portrait: gallery images and their backs; for a shared source, the back of its document. */
+const attached = (p) => [p.back, ...mediaList(p).flatMap((x) => [x.photo, x.back])].filter(Boolean);
 /** True if the record contains a photo or a document still embedded. */
 const hasPhotoData = (p) => isPhotoData(p.photo) || attached(p).some(isPhotoData);
 
 /**
- * Record whose images have gone through `convert`: a person's photo, documents and gallery
- * images (backs included), or a shared source's document and its back.
+ * Record whose images have gone through `convert`: a person's photo and gallery images (backs
+ * included), or a shared source's document and its back.
  */
 export async function convertPhotos(p, convert) {
   const out = Object.assign({}, p);
   if (p.photo) out.photo = await convert(p.photo);
   if (p.back) out.back = await convert(p.back); // back of a shared source's document
-  for (const [key, list] of [['sources', ownSources(p)], ['media', mediaList(p)]]) {
+  for (const [key, list] of [['media', mediaList(p)]]) {
     if (!list.length) continue;
     out[key] = [];
     for (const x of list) {
@@ -210,8 +204,8 @@ async function photoData(photo) {
 }
 
 /** Standalone .json backup: in file mode, photos are embedded in it as data URLs. */
-export async function buildPortableBackup(options = {}) {
-  if (S.mode !== 'file') return buildBackup(undefined, options);
+export async function buildPortableBackup() {
+  if (S.mode !== 'file') return buildBackup();
   const people = new Map(S.people);
   const sources = new Map(S.sources);
   const hasFile = (p) => isPhotoFile(p.photo) || attached(p).some(isPhotoFile);
@@ -225,7 +219,7 @@ export async function buildPortableBackup(options = {}) {
       map.set(id, portable);
     });
   }
-  return buildBackup({ name: treeName(), createdAt: (S.trees.get(S.tree) || {}).createdAt, people, unions: S.unions, sources }, options);
+  return buildBackup({ name: treeName(), createdAt: (S.trees.get(S.tree) || {}).createdAt, people, unions: S.unions, sources });
 }
 
 /* ---------- Saving and tree management ---------- */

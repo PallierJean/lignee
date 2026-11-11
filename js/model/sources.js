@@ -7,10 +7,9 @@
  * the whole record), and `role` the person's part in it (CITATION_ROLES; missing: the person
  * the document is about). Two people citing the same certificate share it: one photo, one place.
  *
- * The rest of the application still sees each person's sources as one list of documents,
- * as in version 1: sourcesOf() joins each citation with its source. Writers keep handing
- * such lists over; splitSources() turns them back into citations and sources on save.
- * Records from before version 2 (person.sources, the documents themselves) are read as they are.
+ * The rest of the application sees each person's sources as one list of documents: sourcesOf()
+ * joins each citation with its source, sourcesOfPerson() adds the person's unions' documents.
+ * Writers hand such lists over; planSources() turns them back into citations and sources on save.
  */
 import { S } from '../state.js';
 import { rid } from '../utils/helpers.js';
@@ -38,7 +37,6 @@ export function sourceData(x) {
  */
 export function sourcesOf(p, sources = S.sources) {
   if (!p) return [];
-  if (!Array.isArray(p.citations)) return listOf(p.sources);
   return listOf(p.citations).map((c) => ({
     ...(sources.get(c.source) || {}), id: c.id, fact: c.fact || '', ...(roleOf(c.role) ? { role: roleOf(c.role) } : {}), source: c.source,
   }));
@@ -61,21 +59,21 @@ function hash(text) {
 const keyOf = (data) => JSON.stringify(SOURCE_FIELDS.map((k) => (typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k] ?? '')));
 
 /**
- * Id of a version 1 document. Two documents with the same certificate number or the same image,
+ * Id of an imported document. Two documents with the same certificate number or the same image,
  * and the same content, are one shared source; a document with neither (a birth certificate not
- * yet found…) stays its own: `own` tells them apart. The id comes from the content, so migrating
- * twice, or from two places at once, gives the same sources.
+ * yet found…) stays its own: `own` tells them apart. The id comes from the content: importing
+ * twice gives the same sources.
  */
-function legacyId(data, own) {
+function documentId(data, own) {
   const shared = data.ref || data.photo;
   return 'S' + hash(keyOf(data) + (shared ? '' : '|' + own));
 }
 
 /**
- * Version 1 records to version 2: people (Map id -> person) whose `sources` become citations,
- * and the documents gathered in a Map id -> source. Records already in version 2 stay as they are.
+ * People (Map id -> person) whose `sources` (documents) become citations, and the documents
+ * gathered in a Map id -> source. Records already citing sources stay as they are.
  */
-export function migratePeople(people, sources = new Map()) {
+function peopleFromDocuments(people, sources = new Map()) {
   const out = new Map();
   for (const [id, p] of people) {
     if (!p || !Array.isArray(p.sources) || Array.isArray(p.citations)) {
@@ -85,10 +83,10 @@ export function migratePeople(people, sources = new Map()) {
     const { sources: list, ...rest } = p;
     rest.citations = listOf(list).map((x, i) => {
       const data = sourceData(x);
-      const sid = legacyId(data, id + '|' + (x.id || i));
+      const sid = documentId(data, id + '|' + (x.id || i));
       if (!sources.has(sid)) sources.set(sid, data);
       const citation = { id: x.id || 'c' + i, source: sid, fact: x.fact || '' };
-      if (roleOf(x.role)) citation.role = roleOf(x.role); // a format 1 file written by Lignée 2 keeps it
+      if (roleOf(x.role)) citation.role = roleOf(x.role);
       return citation;
     });
     out.set(id, rest);
@@ -102,7 +100,7 @@ export function migratePeople(people, sources = new Map()) {
  * The same document cited by both spouses becomes one citation. Nothing is dropped: a fact naming a
  * union the person isn't part of stays on the person.
  */
-export function migrateUnions(people, unions) {
+function marriagesToUnions(people, unions) {
   const outPeople = new Map(people);
   const outUnions = new Map(unions);
   for (const [id, p] of people) {
@@ -133,40 +131,15 @@ export function migrateUnions(people, unions) {
 }
 
 /**
- * Back to version 1: each person carries copies of the documents they cite (JSON for older
- * Lignée); a union's documents go to its first spouse, as version 1 kept them.
+ * Records whose people carry their documents (`sources`: [{ id, fact, kind, title, … }], as
+ * the GEDCOM import reads them) to the tree's form: shared sources cited by the people, and
+ * marriage documents cited by their union. Returns { people, unions, sources } (Maps).
  */
-export function inlineSources(people, sources, unions = new Map()) {
-  const out = new Map();
-  for (const [id, p] of people) {
-    const own = sourcesOf(p, sources);
-    const fromUnions = [];
-    for (const [uid, u] of unions) {
-      if (!u || listOf(u.citations).length === 0) continue;
-      const holder = people.has(u.a) ? u.a : u.b;
-      if (holder !== id) continue;
-      for (const c of listOf(u.citations)) {
-        fromUnions.push({ ...(sources.get(c.source) || {}), id: c.id, fact: 'union:' + uid, ...(roleOf(c.role) ? { role: roleOf(c.role) } : {}) });
-      }
-    }
-    if (!p || (!Array.isArray(p.citations) && !fromUnions.length)) {
-      out.set(id, p);
-      continue;
-    }
-    const { citations, ...rest } = p;
-    const list = [...own.map(({ source, ...x }) => x), ...fromUnions];
-    if (list.length) rest.sources = list;
-    else delete rest.sources;
-    out.set(id, rest);
-  }
-  return out;
+export function fromDocuments(people, unions = new Map()) {
+  const step = peopleFromDocuments(people);
+  const moved = marriagesToUnions(step.people, unions);
+  return { people: moved.people, unions: moved.unions, sources: step.sources };
 }
-
-/** A union without its citations (format 1 has none): the marriage documents went to a spouse. */
-export const unionWithoutCitations = (u) => {
-  const { citations, ...rest } = u || {};
-  return rest;
-};
 
 /** Ids of the sources cited by anyone: people (but `exceptPerson`) and unions. */
 export function citedSources(people = S.people, exceptPerson = null, unions = S.unions) {
