@@ -15,11 +15,11 @@ import { S } from '../state.js';
 import { rid, pool, markReported } from '../utils/helpers.js';
 import { failure } from './notify.js';
 import { dataChanged } from '../model/people.js';
-import { planSources, orphanSources } from '../model/sources.js';
+import { planSources, orphanSources, migratePeople, migrateUnions } from '../model/sources.js';
 import { canonical } from './merge.js';
 import { loadLocalTree, saveBrowserTree, deleteBrowserTree, saveTreesList } from './storage/local.js';
 import { loadFileTree, saveFile, createFileTree, renameFileTree, deleteFileTree } from './storage/file.js';
-import { dbSet, dbUpdate, dbDelete, refreshDb, setDbTree, deleteDbTree, holdSync } from './storage/db.js';
+import { dbSet, dbUpdate, dbDelete, refreshDb, setDbTree, deleteDbTree, holdSync, onDbLoaded, treeLock, setTreeLock } from './storage/db.js';
 import { track, resetHistory, takeUndo, takeRedo, pushDone, pushUndone } from './history.js';
 
 export { loadLocal, seedExample } from './storage/local.js';
@@ -199,6 +199,59 @@ export function opDelete(collection, id, { raw = false } = {}) {
   }
   return writeDoc(collection, id, undefined, () => (S.mode === 'db' ? dbDelete(collection, id) : saveLocal()));
 }
+
+/* ---------- Online database: converting a tree to the current format ---------- */
+
+const LOCK_TTL = 2 * 60 * 1000; // a conversion left unfinished (closed tab) frees the tree after this
+const session = rid('v'); // this visitor, for the lock
+const failed = new Set(); // trees whose conversion failed: not tried again this session
+let running = false;
+
+/**
+ * The open tree's records still in an older form, converted: { people, unions, sources } as Maps of
+ * the records to write (new or changed). Nothing is dropped: see migratePeople and migrateUnions.
+ */
+export function pendingConversion(people = S.people, unions = S.unions, sources = S.sources) {
+  const step = migratePeople(people, new Map(sources));
+  const moved = migrateUnions(step.people, unions);
+  const changed = (before, after) => new Map([...after].filter(([id, x]) => before.get(id) !== x));
+  return { people: changed(people, moved.people), unions: changed(unions, moved.unions), sources: changed(sources, step.sources) };
+}
+
+/**
+ * Online database: converts the open tree's records still in an older form (documents carried by
+ * people, marriage documents on a spouse), in one batch, under a lock on the tree that the other
+ * visitors respect. Ids come from the content, so two visitors converting at once write the same.
+ * Not an undoable action: Ctrl+Z doesn't bring the old form back.
+ */
+export async function convertDbTree() {
+  const tree = S.tree;
+  if (S.mode !== 'db' || !S.canWrite || failed.has(tree) || batch || running) return false;
+  const todo = pendingConversion();
+  if (!todo.people.size && !todo.unions.size && !todo.sources.size) return false; // already in the current form
+  const lock = treeLock(tree);
+  if (lock && lock.by !== session && Date.now() - lock.at < LOCK_TTL) return false; // someone else is on it
+  running = true;
+  try {
+    await setTreeLock(tree, { at: Date.now(), by: session });
+    await inBatch(async () => {
+      for (const [id, x] of todo.sources) await opSet('sources', id, x);
+      for (const [id, x] of todo.unions) await opSet('unions', id, x);
+      for (const [id, x] of todo.people) await opSet('people', id, x);
+    });
+    return true;
+  } catch (e) {
+    failed.add(tree);
+    return false; // nothing written (the batch is undone); the tree is still read as it is
+  } finally {
+    running = false;
+    await setTreeLock(tree, null).catch(() => {});
+  }
+}
+
+onDbLoaded(() => {
+  convertDbTree();
+});
 
 /* ---------- Undo / redo ---------- */
 

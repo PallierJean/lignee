@@ -313,7 +313,7 @@ describe('mode navigateur', () => {
 describe('base en ligne', () => {
   /** Fausse base : collections en mémoire, abonnements relancés à chaque écriture. */
   function fakeDb() {
-    const data = { people: new Map(), unions: new Map(), trees: new Map() };
+    const data = { people: new Map(), unions: new Map(), sources: new Map(), trees: new Map() };
     const subs = {};
     const emit = (c) => (subs[c] || []).forEach((fn) => fn({ docs: [...data[c]].map(([id, d]) => ({ id, data: () => d })) }));
     return {
@@ -334,9 +334,53 @@ describe('base en ligne', () => {
   beforeEach(() => {
     resetApp();
     S.mode = 'db';
-    S.loadedP = S.loadedU = S.loadedT = false;
+    S.loadedP = S.loadedU = S.loadedS = S.loadedT = false;
     services.db = fakeDb();
     subscribe();
+  });
+
+  test('arbre à l’ancien format : converti d’un coup, sous verrou, sans rien perdre', async () => {
+    const { convertDbTree, pendingConversion } = await import('../js/services/storage.js');
+    const { sourcesOfPerson } = await import('../js/model/sources.js');
+    const db = services.db;
+    // Des fiches enregistrées avant la 2.0 : documents sur les fiches, mariage sur un époux
+    db.data.people.set('a', { given: 'Jean', tree: 'principal', sources: [
+      { id: 's1', fact: 'birth', kind: 'birth', ref: 'N1', photo: 'data:image/png;base64,AAAA' },
+      { id: 's2', fact: 'union:u', kind: 'marriage', ref: 'M1', note: 'Lyon' },
+    ] });
+    db.data.people.set('b', { given: 'Marie', tree: 'principal', sources: [{ id: 's3', fact: 'union:u', kind: 'marriage', ref: 'M1', note: 'Lyon' }] });
+    db.data.unions.set('u', { a: 'a', b: 'b', tree: 'principal' });
+    const sorted = (o) => JSON.stringify(Object.fromEntries(Object.entries(o).sort()));
+    const seen = (id) => sourcesOfPerson(id).map(({ id: x, source, ...rest }) => sorted(rest)).sort();
+    // Les fiches arrivent avant l'union : une première conversion, complétée quand l'union arrive
+    for (const c of ['people', 'sources', 'trees', 'unions']) {
+      db.emit(c);
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    assert.equal(db.data.people.get('a').sources, undefined, 'plus de documents sur la fiche');
+    assert.equal(db.data.people.get('b').sources, undefined);
+    assert.equal(db.data.unions.get('u').citations.length, 1, 'un seul acte de mariage, sur l’union');
+    assert.equal(db.data.sources.size, 2);
+    assert.equal(db.data.sources.get(db.data.people.get('a').citations[0].source).photo, 'data:image/png;base64,AAAA');
+    const birth = sorted({ fact: 'birth', kind: 'birth', ref: 'N1', photo: 'data:image/png;base64,AAAA' });
+    const marriage = sorted({ fact: 'union:u', kind: 'marriage', ref: 'M1', note: 'Lyon' });
+    assert.deepEqual(seen('a'), [birth, marriage].sort(), 'Jean : tout est là');
+    assert.deepEqual(seen('b'), [marriage], 'Marie : l’acte de mariage aussi');
+    assert.equal(db.data.trees.get('principal').migrating, undefined, 'verrou levé');
+    assert.equal(pendingConversion().people.size, 0);
+    assert.equal(await convertDbTree(), false, 'rien de plus à faire');
+  });
+
+  test('verrou d’un autre visiteur : on attend, en lisant les deux formes', async () => {
+    const { convertDbTree } = await import('../js/services/storage.js');
+    const db = services.db;
+    db.data.trees.set('autre-arbre', { name: 'X', createdAt: 0, migrating: { at: Date.now(), by: 'quelqu-un' } });
+    db.emit('trees');
+    S.tree = 'autre-arbre';
+    S.people = new Map([['z', { given: 'Zoé', sources: [{ id: 's', kind: 'birth', ref: 'Z1' }] }]]);
+    assert.equal(await convertDbTree(), false);
+    assert.equal(db.data.people.size, 0, 'rien écrit');
+    S.tree = 'principal';
   });
 
   test('écritures et synchronisation, par arbre', async () => {
