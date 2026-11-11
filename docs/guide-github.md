@@ -97,10 +97,11 @@ une fiche, une suppression, une fusion, un import, une annulation. Plusieurs mod
 rapprochées font une seule sauvegarde, dont le message dit ce qui a changé. L'arbre et ses photos
 partent ensemble.
 
-La toute première fois, si le dépôt contient une sauvegarde écrite ailleurs, cliquez sur
-**Sauvegarder sur GitHub** : une fenêtre montre ce qui changerait, et vous choisissez de fusionner
-ou de remplacer. Ensuite, tout part automatiquement. Si un envoi échoue (connexion coupée), la
-modification reste dans l'arbre et repart avec la suivante, ou avec le bouton.
+Il n'y a donc pas de bouton à cliquer. Le bouton **Sauvegarder sur GitHub** n'apparaît que la
+toute première fois, si le dépôt contient une sauvegarde écrite ailleurs : une fenêtre montre ce qui
+changerait, et vous choisissez de fusionner ou de remplacer. Si un envoi échoue (connexion coupée),
+la modification reste dans l'arbre et repart avec la suivante, ou avec le bouton **Réessayer
+l'envoi** qui apparaît alors.
 
 Sur GitHub, le dépôt garde l'historique de chaque sauvegarde : vous pouvez revenir à une version
 précédente.

@@ -113,7 +113,9 @@ export function renderRepoBanner() {
       + `<button class="btn small danger" type="button" data-act="repo-keep-mine">${t('repo.keepMine')}</button>`
       + `<button class="btn small" type="button" data-act="repo-keep-theirs">${t('repo.keepTheirs')}</button>`
       + `<button class="btn small" type="button" data-act="repo-save-no">${t('cancel')}</button>`
-    : `<button class="btn small danger" type="button" data-act="repo-save">${t('repo.save')}</button>${forget}`;
+    // The button only when needed: the first save of a backup written elsewhere, or after a failure;
+    // otherwise each change goes by itself
+    : (link.mustConfirm || S.repoError ? `<button class="btn small danger" type="button" data-act="repo-save">${t(S.repoError ? 'repo.retry' : 'repo.save')}</button>` : '') + forget;
   el.className = 'banner repo-banner write';
   el.innerHTML = `<p class="repo-alert">${t('repo.writeTitle')}</p><p title="${t('repo.write', name)}">${t('repo.writeShort', name)}</p>`
     + `<p>${S.repoSaving ? t('repo.saving') : link.mustConfirm ? t('repo.confirmFirst') : t('repo.autoOn')}`

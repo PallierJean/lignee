@@ -265,7 +265,8 @@ describe('bandeaux', () => {
     await load(true);
     renderRepoBanner();
     assert.ok(html('repoBanner').includes('ATTENTION : LECTURE ET ÉCRITURE'));
-    assert.ok(html('repoBanner').includes('data-act="repo-save"'));
+    assert.ok(!html('repoBanner').includes('data-act="repo-save"'), 'envoi automatique : pas de bouton');
+    assert.match(html('repoBanner'), /Chaque modification est enregistrée sur GitHub/);
     assert.ok(!html('repoBanner').includes('data-act="repo-save-yes"'));
     await saveRepo();
     assert.ok(calls.some((c) => c.url.endsWith('/git/refs/heads/main') && c.method === 'PATCH'));
@@ -574,6 +575,19 @@ describe('connecter l’arbre ouvert', () => {
 
   const sent = () => JSON.parse(calls.findLast((c) => c.url.endsWith('/git/trees')).body.tree.find((x) => x.path === 'agathe.json').content);
   const twoPeople = () => JSON.stringify({ format: 'lignee', version: 2, name: 'F', people: [{ id: 'a', given: 'Ana' }, { id: 'r', given: 'Rémi' }], unions: [] });
+
+  test('bouton seulement si besoin : première sauvegarde à vérifier, ou envoi qui a échoué', async () => {
+    await connect({ 'agathe.json': backup({ photo: '' }) });
+    await connectOpenedRepo();
+    renderRepoBanner();
+    assert.match(html('repoBanner'), /data-act="repo-save">Sauvegarder sur GitHub</, 'première sauvegarde');
+    await chooseRepoSave('replace');
+    assert.ok(!html('repoBanner').includes('data-act="repo-save"'), 'ensuite : automatique');
+    S.repoError = 'GitHub refuse l’accès';
+    renderRepoBanner();
+    assert.match(html('repoBanner'), /data-act="repo-save">Réessayer l’envoi</, 'après un échec');
+    S.repoError = '';
+  });
 
   test('sauvegarde pas encore confirmée : rien ne part tout seul', async () => {
     await connect({ 'agathe.json': backup({ photo: '' }) });
