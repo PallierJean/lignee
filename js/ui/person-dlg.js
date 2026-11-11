@@ -9,6 +9,7 @@ import {
 } from '../model/people.js';
 import { occupationLabel } from '../model/occupations.js';
 import { sourcesHTML, mediaGrid } from './record.js';
+import { sourcesOfPerson } from '../model/sources.js';
 
 let opener = null; // element that gets focus back on close
 
@@ -111,7 +112,7 @@ function personHTML(id) {
         ${group(t('siblings'), siblings, t('pd.none'))}
       </section>
       ${mediaOf(id).length ? `<section><h3>${t('media')}</h3>${mediaGrid(mediaOf(id), 'person:' + id)}</section>` : ''}
-      ${sourcesOf(p).length ? `<section><h3>${t('sources')}</h3>${sourcesHTML(id)}</section>` : ''}
+      ${sourcesOfPerson(id).length ? `<section><h3>${t('sources')}</h3>${sourcesHTML(id)}</section>` : ''}
       ${p.notes ? `<section><h3>${t('notes')}</h3><p class="pd-notes">${esc(p.notes)}</p></section>` : ''}
     </div>
     <footer class="pd-foot">

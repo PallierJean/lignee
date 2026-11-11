@@ -15,7 +15,8 @@ import { S } from '../state.js';
 import { rid, pool, markReported } from '../utils/helpers.js';
 import { failure } from './notify.js';
 import { dataChanged } from '../model/people.js';
-import { splitSources } from '../model/sources.js';
+import { planSources, orphanSources } from '../model/sources.js';
+import { canonical } from './merge.js';
 import { loadLocalTree, saveBrowserTree, deleteBrowserTree, saveTreesList } from './storage/local.js';
 import { loadFileTree, saveFile, createFileTree, renameFileTree, deleteFileTree } from './storage/file.js';
 import { dbSet, dbUpdate, dbDelete, refreshDb, setDbTree, deleteDbTree, holdSync } from './storage/db.js';
@@ -154,33 +155,46 @@ export async function opUpdate(collection, id, patch) {
 
 /**
  * Saves a person whose `sources` are documents (version 1 style, as the form produces them):
- * the documents go to the shared sources, the person keeps citations of them. Sources nobody
- * cites any more are deleted. All in one batch: saved whole or not at all.
+ * the documents go to the shared sources, the person keeps citations of them, and the marriage
+ * documents of their unions go to those unions (see planSources; `unionSources`: the unions whose
+ * documents the caller showed in full). Sources nobody cites any more are deleted. All in one
+ * batch: saved whole or not at all.
  */
 function setWithSources(id, data) {
   return inBatch(async () => {
-    const { sources, ...person } = data;
-    const { citations, writes, drops } = splitSources(id, sources, mapOf('people').get(id));
+    const { sources, unionSources, ...person } = data;
+    const before = mapOf('people').get(id);
+    const { citations, unions, writes } = planSources(id, sources, unionSources || []);
+    const candidates = listOf(before && before.citations).map((c) => c.source);
     for (const [sid, doc] of writes) await opSet('sources', sid, doc);
     if (citations.length) person.citations = citations;
     else delete person.citations;
     await opSet('people', id, person);
-    for (const sid of drops) await opDelete('sources', sid);
+    for (const [uid, list] of unions) {
+      const u = mapOf('unions').get(uid);
+      if (!u) continue;
+      candidates.push(...listOf(u.citations).map((c) => c.source));
+      const next = { ...u };
+      if (list.length) next.citations = list;
+      else delete next.citations;
+      if (canonical(next.citations || []) !== canonical(u.citations || [])) await opSet('unions', uid, next);
+    }
+    for (const sid of orphanSources(candidates)) await opDelete('sources', sid);
   });
 }
 
+const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') : []);
+
 /**
- * Deletes a document. A person's sources nobody else cites go with them, unless `raw`
- * (a merge that sets every collection itself).
+ * Deletes a document. The sources of a person or a union that nobody else cites go with
+ * them, unless `raw` (a merge that sets every collection itself).
  */
 export function opDelete(collection, id, { raw = false } = {}) {
-  const p = collection === 'people' && !raw ? mapOf('people').get(id) : null;
-  if (p && Array.isArray(p.citations) && p.citations.length) {
-    // The person's sources go with them, unless someone else cites them
+  const doc = !raw && (collection === 'people' || collection === 'unions') ? mapOf(collection).get(id) : null;
+  if (doc && listOf(doc.citations).length) {
     return inBatch(async () => {
-      const { drops } = splitSources(id, [], p);
-      await writeDoc('people', id, undefined, () => (S.mode === 'db' ? dbDelete('people', id) : saveLocal()));
-      for (const sid of drops) await opDelete('sources', sid);
+      await writeDoc(collection, id, undefined, () => (S.mode === 'db' ? dbDelete(collection, id) : saveLocal()));
+      for (const sid of orphanSources(listOf(doc.citations).map((c) => c.source))) await opDelete('sources', sid);
     });
   }
   return writeDoc(collection, id, undefined, () => (S.mode === 'db' ? dbDelete(collection, id) : saveLocal()));

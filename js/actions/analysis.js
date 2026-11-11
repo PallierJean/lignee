@@ -131,7 +131,7 @@ export async function mergePeople(keep, drop) {
         }
         if (Object.keys(patch).length) await opUpdate('people', id, patch);
       }
-      const merged = mergedData(P(keep), P(drop), unionIds);
+      const merged = mergedData(P(keep), P(drop), unionIds, { keep, drop });
       merged.updatedAt = Date.now();
       for (const key of ['fatherId', 'motherId']) if (merged[key] === keep || merged[key] === drop) merged[key] = null;
       await opSet('people', keep, merged);

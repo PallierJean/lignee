@@ -32,6 +32,7 @@ import {
 import {
   inseeAvailable, inseePending, inseeResults, inseeMatch, checkInsee, forgetInsee, inseeStatus, inseeRegister, inseeAuth,
 } from '../services/insee.js';
+import { sourcesOfPerson } from '../model/sources.js';
 
 const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['insee', 'an.insee'], ['acts', 'an.acts'], ['stats', 'an.stats'],
   ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery'], ['sources', 'an.sources']];
@@ -647,7 +648,7 @@ function timeView() {
 export function sourceLibrary() {
   const byKey = new Map();
   for (const [id, p] of S.people) {
-    for (const x of sourcesOf(p)) {
+    for (const x of sourcesOfPerson(id)) {
       const key = x.source || 'own:' + id + ':' + x.id;
       if (!byKey.has(key)) byKey.set(key, { src: x, cites: [] });
       byKey.get(key).cites.push({ id, fact: x.fact, role: x.role });

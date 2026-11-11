@@ -121,6 +121,7 @@ relue à l'import et ignorée par les autres logiciels.
 | `id` | `Id` | ✅ | Identifiant unique dans l'arbre | `@F…@` |
 | `a` | `Id` | ✅ | Premier conjoint | `HUSB` / `WIFE` |
 | `b` | `Id` | ✅ | Second conjoint | `HUSB` / `WIFE` |
+| `citations` | [`Citation[]`](#citation-citation) | | Actes du mariage ou de l'union, vus des deux conjoints ; sans `fact` | `SOUR` sous `MARR` |
 | `type` | `"married"` \| `"religious"` \| `"pacs"` \| `"cohabiting"` \| `"other"` | | Nature de l'union | `MARR TYPE` (libellé), `_UTYPE` (code) |
 | `date` | `Date` | | Début | `MARR DATE` |
 | `place` | `Place` | | Lieu | `MARR PLAC` |
@@ -201,7 +202,12 @@ Dans le formulaire, « Ou citer un document déjà dans l'arbre » ajoute une ci
 `kind` : `birth`, `baptism`, `marriage`, `death`, `burial`, `census`, `military`, `notary`,
 `family`, `book`, `web`, `other`.
 
-Les sources d'un mariage sont citées par la fiche d'un conjoint (ou des deux) et exportées sous `MARR`.
+Les actes d'un mariage sont cités par l'union (`union.citations`), et non par la fiche d'un conjoint :
+les deux conjoints les voient, et ils sont exportés une seule fois sous `MARR`. Une citation
+`union:<id>` encore posée sur la fiche d'un conjoint (Lignée 2.0 et 2.1, ou format 1) passe sur
+l'union à la lecture (`migrateUnions`), sans doublon ; une citation qui nomme une union dont la
+personne ne fait pas partie reste sur sa fiche. L'export au format 1 remet les actes de l'union sur
+le premier conjoint, comme le faisait ce format.
 
 ## Citation (`Citation`)
 

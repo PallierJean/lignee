@@ -4,10 +4,10 @@
  */
 import { S } from '../state.js';
 import { GM } from '../config.js';
-import { migratePeople } from '../model/sources.js';
+import { migratePeople, migrateUnions, sourcesOfPerson } from '../model/sources.js';
 import { rid } from '../utils/helpers.js';
 import { dateParts } from '../utils/dates.js';
-import { P, byBirth, maiden, SITUATIONS, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, unionType, unionTypeLabel, eventsOf, sourcesOf, factLabel } from '../model/people.js';
+import { P, byBirth, maiden, SITUATIONS, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, unionType, unionTypeLabel, eventsOf, factLabel } from '../model/people.js';
 import { t } from '../i18n.js';
 
 // A person's part in a document (model/sources.js) and its GEDCOM ROLE; a witness has no code of its own
@@ -134,8 +134,8 @@ export function buildGedcom() {
       ...(s.note ? textLines(level + 1, 'NOTE', s.note) : []),
     ];
   };
-  const citations = (id, fact, level) => sourcesOf(P(id)).filter((s) => s.fact === fact).flatMap((s) => cite(level, s));
-  const generalCitations = (id) => sourcesOf(P(id)).filter((s) => !factLabel(id, s.fact)).flatMap((s) => cite(1, s));
+  const citations = (id, fact, level) => sourcesOfPerson(id).filter((s) => s.fact === fact).flatMap((s) => cite(level, s));
+  const generalCitations = (id) => sourcesOfPerson(id).filter((s) => !factLabel(id, s.fact)).flatMap((s) => cite(1, s));
 
   // Families: a couple (or a single parent) and their children
   const fams = new Map();
@@ -244,7 +244,12 @@ export function buildGedcom() {
     out.push('0 ' + f.x + ' FAM');
     if (f.h) out.push('1 HUSB ' + xref.get(f.h));
     if (f.w) out.push('1 WIFE ' + xref.get(f.w));
-    const marrCites = f.u ? [f.h, f.w].filter(Boolean).flatMap((id) => citations(id, 'union:' + f.uid, 2)) : [];
+    // The union's documents, seen by both spouses, are cited once
+    const seenCites = new Set();
+    const marrCites = f.u ? [f.h, f.w].filter(Boolean)
+      .flatMap((id) => sourcesOfPerson(id).filter((x) => x.fact === 'union:' + f.uid))
+      .filter((x) => !seenCites.has(x.id + '|' + x.source) && seenCites.add(x.id + '|' + x.source))
+      .flatMap((x) => cite(2, x)) : [];
     const typeLabel = unionTypeLabel(f.u);
     if (f.u && (f.u.date || f.u.place || marrCites.length || typeLabel)) {
       out.push('1 MARR');
@@ -497,10 +502,12 @@ export function parseGedcom(text) {
   }
 
   // Documents cited under each fact become shared sources: the same SOUR record and PAGE, one source
+  // and marriage documents go to their union
   const migrated = migratePeople(new Map(people.map((x) => [x.id, x.data])));
+  const moved = migrateUnions(migrated.people, new Map(unions.map((x) => [x.id, x.data])));
   return {
-    people: people.map((x) => ({ ...x, data: migrated.people.get(x.id) })),
-    unions,
+    people: people.map((x) => ({ ...x, data: moved.people.get(x.id) })),
+    unions: unions.map((x) => ({ ...x, data: moved.unions.get(x.id) })),
     sources: [...migrated.sources].map(([id, data]) => ({ id, data })),
   };
 }

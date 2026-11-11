@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { sourcesOf } from '../js/model/sources.js';
+import { sourcesOfPerson } from '../js/model/sources.js';
 import { test, describe, beforeEach } from 'node:test';
 import { fire, FakeElement } from './setup.js';
 import { S, cardEls } from '../js/state.js';
@@ -43,7 +44,7 @@ function fill(values) {
     for (const [k, id] of [['type', 'ev-type-'], ['date', 'ev-date-'], ['place', 'ev-place-'], ['note', 'ev-note-']]) el(id + i).value = x[k];
   });
   S.edit.sources.forEach((x, i) => {
-    for (const [k, id] of [['kind', 'src-kind-'], ['fact', 'src-fact-'], ['title', 'src-title-'], ['place', 'src-place-'], ['ref', 'src-ref-'], ['note', 'src-note-']]) el(id + i).value = x[k];
+    for (const [k, id] of [['kind', 'src-kind-'], ['fact', 'src-fact-'], ['role', 'src-role-'], ['title', 'src-title-'], ['place', 'src-place-'], ['ref', 'src-ref-'], ['note', 'src-note-']]) el(id + i).value = x[k];
   });
   S.edit.media.forEach((x, i) => {
     for (const [k, id] of [['title', 'med-title-'], ['date', 'med-date-'], ['note', 'med-note-']]) el(id + i).value = x[k];
@@ -743,6 +744,52 @@ describe('suppression, exemples, fusion', () => {
     assert.equal(back.people[0].data.citations[0].role, 'witness', 'format 1 relu : rôle gardé');
   });
 
+  test('acte de mariage porté par l’union : vu des deux époux, jamais effacé par erreur', async () => {
+    const { opUpdate } = await import('../js/services/storage.js');
+    loadTree([
+      person('a', { given: 'Jean', surname: 'Roux', citations: [{ id: 'c0', source: 'S0', fact: 'birth' }] }),
+      person('b', { given: 'Marie', surname: 'Roux' }),
+    ], [{ id: 'u', a: 'a', b: 'b', citations: [{ id: 'c1', source: 'S1' }] }]);
+    S.sources = new Map([['S0', { kind: 'birth', ref: '1' }], ['S1', { kind: 'marriage', title: 'Mariage', ref: 'n°12' }]]);
+    // Une écriture qui ne voit que les documents de la fiche (INSEE…) ne touche pas à l'union
+    await opUpdate('people', 'a', { sources: [...sourcesOfPerson('a').filter((x) => x.fact === 'birth'), { kind: 'death', fact: 'death', ref: 'D' }] });
+    assert.deepEqual(S.unions.get('u').citations, [{ id: 'c1', source: 'S1' }]);
+    assert.ok(S.sources.has('S1'));
+    // Depuis le formulaire de l'épouse : l'acte de l'union est là, et l'enregistrer le garde
+    S.focus = 'b';
+    A.startEdit('b');
+    assert.deepEqual(S.edit.sources.map((x) => [x.source, x.fact]), [['S1', 'union:u']]);
+    renderAll(true);
+    fill({});
+    await A.submitEdit();
+    assert.deepEqual(S.unions.get('u').citations, [{ id: 'c1', source: 'S1' }]);
+    assert.equal(S.people.get('b').citations, undefined, 'rien de recopié sur la fiche');
+    // Le retirer depuis le formulaire de l'époux : l'union ne le cite plus, le document part
+    A.startEdit('a');
+    renderAll(true);
+    fill({});
+    const i = S.edit.sources.findIndex((x) => x.fact === 'union:u');
+    A.removeDraftSource(i);
+    renderAll(true);
+    fill({});
+    await A.submitEdit();
+    assert.equal(S.unions.get('u').citations, undefined);
+    assert.ok(!S.sources.has('S1'));
+    assert.deepEqual(S.people.get('a').citations.map((c) => [c.source, c.fact]).slice(0, 1), [['S0', 'birth']], 'la naissance reste sur la fiche');
+    await A.undo();
+    assert.deepEqual(S.unions.get('u').citations, [{ id: 'c1', source: 'S1' }], 'Ctrl+Z le remet');
+    assert.ok(S.sources.has('S1'));
+  });
+
+  test('supprimer une union : son acte de mariage part, sauf s’il est cité ailleurs', async () => {
+    const { opDelete } = await import('../js/services/storage.js');
+    loadTree([person('a', { given: 'A', citations: [{ id: 'c9', source: 'S2', fact: '' }] }), person('b', { given: 'B' })],
+      [{ id: 'u', a: 'a', b: 'b', citations: [{ id: 'c1', source: 'S1' }, { id: 'c2', source: 'S2' }] }]);
+    S.sources = new Map([['S1', { ref: '1' }], ['S2', { ref: '2' }]]);
+    await opDelete('unions', 'u');
+    assert.deepEqual([...S.sources.keys()], ['S2']);
+  });
+
   test('supprimer une fiche : ses sources partent, sauf celles citées ailleurs', async () => {
     loadTree([
       person('a', { given: 'A', citations: [{ id: 'c1', source: 'S1', fact: '' }, { id: 'c2', source: 'S2', fact: '' }] }),
@@ -776,7 +823,8 @@ describe('suppression, exemples, fusion', () => {
     assert.equal(S.people.get('k').fatherId, null, 'jamais son propre parent');
     assert.equal(S.unions.get('u1').date, '1920');
     assert.equal(S.unions.get('u3').a, 'k');
-    assert.equal(sourcesOf(S.people.get('w'))[0].fact, 'union:u1');
+    assert.equal(sourcesOfPerson('w')[0].fact, 'union:u1', 'l’acte suit l’union gardée');
+    assert.equal(S.unions.get('u1').citations.length, 1);
     assert.equal(S.people.get('w').media[0].tags[0].id, 'k');
     assert.ok(canUndo());
     await A.undo();

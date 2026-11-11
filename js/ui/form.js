@@ -202,8 +202,11 @@ function mediaRows(e) {
 /** Other people citing shared source `sid`: their names, for the warning in the form. */
 function alsoCitedBy(sid, self) {
   if (!sid) return [];
-  return [...S.people].filter(([id, p]) => id !== self && Array.isArray(p.citations) && p.citations.some((c) => c.source === sid))
-    .map(([, p]) => fullName(p));
+  const cites = (list) => Array.isArray(list) && list.some((c) => c && c.source === sid);
+  const ids = new Set([...S.people].filter(([id, p]) => id !== self && cites(p.citations)).map(([id]) => id));
+  // A union's document: both spouses see it
+  for (const u of S.unions.values()) if (cites(u.citations)) for (const id of [u.a, u.b]) if (id && id !== self) ids.add(id);
+  return [...ids].filter((id) => S.people.has(id)).map((id) => fullName(S.people.get(id)));
 }
 
 /** List of the tree's sources the draft doesn't cite yet, to cite one: by kind, then title. */
