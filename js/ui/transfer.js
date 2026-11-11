@@ -135,20 +135,17 @@ function exported() {
   renderHeader();
 }
 
-/**
- * Downloads the tree's backup. With `v1`, in the format older Lignée (before 2.0) and scripts
- * read: each person carries copies of the documents they cite.
- */
-export async function exportBackup(v1 = false) {
+/** Downloads the tree's backup. */
+export async function exportBackup() {
   if (!S.people.size) {
     $('#exportHint').textContent = t('tr.empty');
     return;
   }
   const saved = await saveFile({
-    filename: fileBase() + '-' + t('tr.backupSuffix') + (v1 ? '-v1' : '') + '.json',
+    filename: fileBase() + '-' + t('tr.backupSuffix') + '.json',
     type: 'application/json',
-    text: await buildPortableBackup({ v1 }),
-    hint: t(v1 ? 'tr.backupV1Hint' : 'tr.backupHint'),
+    text: await buildPortableBackup(),
+    hint: t('tr.backupHint'),
   });
   if (saved) exported();
 }
@@ -197,9 +194,9 @@ export async function readImportFile(input) {
     const text = await file.text();
     result = /^\s*\{/.test(text) ? parseBackup(text) : parseGedcom(text);
   } catch (e) {
-    if (e.code === 'newer') {
+    if (e.code === 'newer' || e.code === 'old') {
       S.pending = null;
-      info.innerHTML = `<p class="err">${t('backup.newer')}</p>`;
+      info.innerHTML = `<p class="err">${t(e.code === 'old' ? 'backup.old' : 'backup.newer')}</p>`;
       return;
     }
     result = null;

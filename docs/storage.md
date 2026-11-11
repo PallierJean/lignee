@@ -36,17 +36,12 @@ fichiers à l'ouverture de l'arbre. La sauvegarde .json exportée les réintègr
 
 Dans la base en ligne, les collections `people`, `unions` et `sources` portent un champ `tree`
 (identifiant de l'arbre) ; les documents qui n'en ont pas appartiennent à « Mon arbre », et les noms
-des arbres sont dans la collection `trees`. Un arbre enregistré avant Lignée 2.0 (documents sur les fiches,
-actes de mariage sur un conjoint) est converti d'un coup par le premier visiteur qui peut écrire,
-une fois tout reçu (`convertDbTree` dans `storage.js`) : un seul lot, défait en entier en cas
-d'échec, et hors de l'historique (Ctrl+Z ne revient pas à l'ancienne forme). Pendant ce temps, un
-verrou sur l'arbre (`migrating` dans `trees`, libéré après deux minutes s'il reste) fait attendre
-les autres visiteurs, qui lisent les deux formes. Les identifiants des sources converties viennent
-de leur contenu : deux conversions simultanées écriraient la même chose.
+des arbres sont dans la collection `trees`.
 
 Partout, les sources partagées (`S.sources`) passent par la même écriture que les fiches :
-`storage.js` découpe les documents d'une fiche en citations et en sources (`splitSources` dans
-`model/sources.js`), dans le même lot, et supprime les sources que plus personne ne cite.
+`storage.js` découpe les documents d'une fiche en citations et en sources (`planSources` dans
+`model/sources.js`), envoie les actes de mariage à l'union, dans le même lot, et supprime les sources
+que plus personne ne cite.
 
 En stockage navigateur, les données restent sur cet appareil et dans ce navigateur.
 Exportez régulièrement une sauvegarde (.json) ou un fichier GEDCOM.

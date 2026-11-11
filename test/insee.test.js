@@ -637,11 +637,16 @@ describe('actes de décès à demander, par commune', () => {
 
   test('acte déjà obtenu (photo dans une source de décès) : plus proposé', async () => {
     const photo = 'data:image/jpeg;base64,AAAA';
-    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'death', photo }] }), true);
-    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'burial', photo }] }), true);
-    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'other', fact: 'death', photo }] }), true);
-    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'death' }] }), false, 'sans photo : encore à demander');
-    assert.equal(hasDeathDocument({ sources: [{ id: 's', kind: 'birth', photo }] }), false, 'un autre acte');
+    // Une fiche qui cite ces documents
+    const withDocs = (docs) => {
+      S.sources = new Map(docs.map((d, i) => ['T' + i, d]));
+      return { citations: docs.map((d, i) => ({ id: 'c' + i, source: 'T' + i, fact: d.fact || '' })) };
+    };
+    assert.equal(hasDeathDocument(withDocs([{ id: 's', kind: 'death', photo }])), true);
+    assert.equal(hasDeathDocument(withDocs([{ id: 's', kind: 'burial', photo }])), true);
+    assert.equal(hasDeathDocument(withDocs([{ id: 's', kind: 'other', fact: 'death', photo }])), true);
+    assert.equal(hasDeathDocument(withDocs([{ id: 's', kind: 'death' }])), false, 'sans photo : encore à demander');
+    assert.equal(hasDeathDocument(withDocs([{ id: 's', kind: 'birth', photo }])), false, 'un autre acte');
     assert.equal(hasDeathDocument({}), false);
 
     S.mode = 'file';

@@ -568,7 +568,7 @@ describe('bibliothèque de sources', () => {
       person('b', { given: 'Marie', surname: 'Roux', citations: [{ id: 'c2', source: 'S1', fact: 'union:u' }] }),
       person('c', { given: 'Paul', sources: [{ id: 'old', kind: 'census', title: 'Recensement 1906' }] }),
     ], [{ id: 'u', a: 'a', b: 'b' }]);
-    S.sources = new Map([['S1', { kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12' }]]);
+    S.sources.set('S1', { kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12' });
     const lib = sourceLibrary();
     assert.deepEqual(lib.map((x) => [x.src.title, x.cites.map((c) => c.id)]), [['Mariage', ['a', 'b']], ['Recensement 1906', ['c']]]);
     S.focus = 'a';

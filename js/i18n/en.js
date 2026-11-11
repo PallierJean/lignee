@@ -94,8 +94,6 @@ export const EN = {
 
   'tr.exportText': 'GEDCOM is accepted by Geneanet, Ancestris, Gramps, Heredis and MyHeritage. A Lignée backup restores everything here.',
   'tr.exportGed': 'Export as GEDCOM',
-  'tr.exportJsonV1': 'Backup for a Lignée version older than 2.0',
-  'tr.backupV1Hint': 'Backup saved in the format of versions older than 2.0: each record carries its own documents. For Lignée 2, prefer the normal backup.',
   'tr.exportJson': 'Lignée backup (.json)',
   'tr.exported': 'Exported content',
   'tr.copy': 'Copy text',
@@ -198,9 +196,11 @@ export const EN = {
   'repo.undoCommit': 'undo',
   'repo.redoCommit': 'redo',
   'repo.forget': 'Disconnect repository',
+  'tr.repoErr.old': 'This repository holds a backup in the format from before Lignée 2.0. Convert it with Lignée 2.3 first.',
   'tr.repoErr.newer': 'This repository holds a backup from a newer version of Lignée. Update Lignée to open it or save to it.',
   'tr.repoErr.noBackup': 'No Lignée backup (.json) found in this repository.',
   'tr.repoErr.failed': 'The repository could not be read. Check your connection and try again.',
+  'backup.old': 'This file is in the format from before Lignée 2.0, which this version no longer reads. Open it with Lignée 2.3 first to convert it.',
   'backup.newer': 'This tree was saved by a newer version of Lignée. Update Lignée to open it: this version could lose part of it.',
   'backup.invalid': 'This file is not a Lignée backup.',
 

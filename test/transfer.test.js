@@ -55,8 +55,6 @@ describe('exports', () => {
     assert.match(el('exportHint').textContent, /\.ged/);
     await exportBackup();
     assert.match(el('exportHint').textContent, /Sauvegarde/);
-    await exportBackup(true);
-    assert.match(el('exportHint').textContent, /antérieures à la 2\.0/);
     await exportCsv();
     assert.match(el('exportHint').textContent, /registre\.csv/);
     closeTransfer();
@@ -104,7 +102,7 @@ describe('exports', () => {
 describe('imports', () => {
   test('sauvegarde : aperçu puis ajout, annulable', async () => {
     const before = S.people.size;
-    const extra = JSON.stringify({ format: 'lignee', name: 'Autre', people: [{ id: 'n1', given: 'Nina' }], unions: [] });
+    const extra = JSON.stringify({ format: 'lignee', version: 2, name: 'Autre', people: [{ id: 'n1', given: 'Nina' }], unions: [] });
     await readImportFile(file('autre.json', extra));
     assert.ok(html('importInfo').includes('data-act="import-go"'));
     await importGo(false);
@@ -150,7 +148,7 @@ describe('imports', () => {
   test('arrêt en cours : reprise proposée', async () => {
     S.mode = 'db';
     services.db = { collection: () => ({ doc: () => ({ set: async () => { throw { code: 'x' }; } }) }) };
-    await readImportFile(file('a.json', JSON.stringify({ format: 'lignee', people: [{ id: 'q1', given: 'Q' }], unions: [] })));
+    await readImportFile(file('a.json', JSON.stringify({ format: 'lignee', version: 2, people: [{ id: 'q1', given: 'Q' }], unions: [] })));
     await importGo(false);
     assert.ok(html('importInfo').includes('Reprendre l’import'));
     S.mode = 'local';

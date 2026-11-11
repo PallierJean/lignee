@@ -343,10 +343,6 @@ export function createServer({
         conflict = true;
         return;
       }
-      // First save in a newer format: the tree as it was is kept once, next to its photos
-      if (before && Number(before.version || 1) < FORMAT_VERSION && Number(o.version) >= FORMAT_VERSION) {
-        await keepOldFormat(id, before);
-      }
       const tmp = treeFile(id) + '.tmp';
       await fs.mkdir(dataDir, { recursive: true });
       await fs.writeFile(tmp, json, 'utf8');
@@ -357,20 +353,6 @@ export function createServer({
     });
     if (conflict) send(res, 409, 'Arbre modifié entre-temps');
     else send(res, 204, '', undefined, { ETag: versionOf(json) });
-  }
-
-  /**
-   * Copy of a tree saved in an older format, before its first save in the current one:
-   * data/arbres/<id>/avant-format-<n>.json. Written once, never overwritten; not listed as a tree.
-   */
-  async function keepOldFormat(id, before) {
-    const file = path.join(path.dirname(photoDir(id)), `avant-format-${FORMAT_VERSION}.json`);
-    await fs.mkdir(path.dirname(file), { recursive: true });
-    try {
-      await fs.writeFile(file, JSON.stringify(before, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
-    } catch (e) {
-      if (e.code !== 'EEXIST') throw e; // already kept: the first copy stays
-    }
   }
 
   async function deleteTree(res, id) {
