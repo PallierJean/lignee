@@ -108,6 +108,8 @@ async function readBody(req) {
 /* ---------- Photos ---------- */
 
 const PHOTO_REF = /^photos\/([^/\\]+\.(?:jpg|png|webp|gif))$/;
+// Backup format this server knows (= FORMAT_VERSION in js/services/backup.js, checked by the tests)
+const FORMAT_VERSION = 1;
 const PHOTO_EXT = { jpeg: '.jpg', png: '.png', webp: '.webp', gif: '.gif' };
 
 /** Text usable as a file or folder name (without / \ : * ? " < > |). */
@@ -124,19 +126,17 @@ export function safeName(s, fallback) {
 /** Photo files cited by a tree's records: portraits, source documents, gallery (backs included). */
 function photoRefs(o) {
   const refs = new Set();
-  const add = (photo) => {
-    const m = PHOTO_REF.exec(String(photo || ''));
-    if (m) refs.add(m[1]);
-  };
-  for (const p of (o && Array.isArray(o.people) ? o.people : [])) {
-    if (!p) continue;
-    add(p.photo);
-    for (const s of [...(Array.isArray(p.sources) ? p.sources : []), ...(Array.isArray(p.media) ? p.media : [])]) {
-      if (!s) continue;
-      add(s.photo);
-      add(s.back); // back of a gallery image
+  // Every "photos/…" string of the tree, wherever it is: a field added later (a newer format)
+  // still keeps its photos
+  const walk = (x) => {
+    if (typeof x === 'string') {
+      const m = PHOTO_REF.exec(x);
+      if (m) refs.add(m[1]);
+    } else if (x && typeof x === 'object') {
+      for (const v of Object.values(x)) walk(v);
     }
-  }
+  };
+  walk(o);
   return refs;
 }
 
@@ -336,6 +336,11 @@ export function createServer({
         }
       }
       const before = await readTree(id);
+      // A tree from a newer Lignée is never overwritten by this one, nor its photos deleted
+      if (before && Number(before.version) > FORMAT_VERSION && !(Number(o.version) > FORMAT_VERSION)) {
+        conflict = true;
+        return;
+      }
       const tmp = treeFile(id) + '.tmp';
       await fs.mkdir(dataDir, { recursive: true });
       await fs.writeFile(tmp, json, 'utf8');
@@ -383,6 +388,7 @@ export function createServer({
     await enqueue(async () => {
       const tree = await readTree(id);
       if (!tree) return; // unreadable tree: nothing is touched
+      if (Number(tree.version) > FORMAT_VERSION) return; // written by a newer Lignée: nothing is touched
       const kept = photoRefs(tree);
       let names = [];
       try {

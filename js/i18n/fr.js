@@ -162,8 +162,10 @@ export const FR = {
   'repo.keepMine': 'Mes modifications',
   'repo.keepTheirs': 'Celles du dépôt',
   'repo.forget': 'Déconnecter le dépôt',
+  'tr.repoErr.newer': 'Ce dépôt contient une sauvegarde d’une version plus récente de Lignée. Mettez Lignée à jour pour l’ouvrir ou y sauvegarder.',
   'tr.repoErr.noBackup': 'Aucune sauvegarde Lignée (.json) trouvée dans ce dépôt.',
   'tr.repoErr.failed': 'Le dépôt n’a pas pu être lu. Vérifiez votre connexion et réessayez.',
+  'backup.newer': 'Cet arbre a été enregistré par une version plus récente de Lignée. Mettez Lignée à jour pour l’ouvrir : cette version risquerait d’en perdre une partie.',
   'backup.invalid': 'Ce fichier n’est pas une sauvegarde Lignée.',
 
   // My trees dialog

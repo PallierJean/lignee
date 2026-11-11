@@ -105,16 +105,20 @@ export async function openRepo(input, token, forSave = false) {
     .slice(0, MAX_BACKUPS);
 
   const backups = [];
+  let newer = false;
   await pool(candidates, 4, async (file) => {
     const text = await (await read(file)).text();
     let backup = null;
     try {
       backup = parseBackup(text);
     } catch (e) {
-      /* another .json file in the repository */
+      // A backup from a newer Lignée: refused whole, rather than overwritten by a save
+      if (e.code === 'newer') newer = true;
+      /* otherwise, another .json file in the repository */
     }
     if (backup && backup.people.length) backups.push({ path: file.path, ...backup });
   });
+  if (newer) throw fail('newer');
   if (!backups.length && !forSave) throw fail('noBackup');
   backups.sort((a, b) => a.path.localeCompare(b.path));
 

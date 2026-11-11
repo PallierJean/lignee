@@ -71,6 +71,15 @@ describe('adresse du dépôt', () => {
 });
 
 describe('lecture du dépôt', () => {
+  test('sauvegarde d’une version plus récente : refusée, jamais écrasée', async () => {
+    serve({ 'arbre.json': JSON.stringify({ format: 'lignee', version: 99, people: [{ id: 'a', given: 'A' }], unions: [] }) }, 0, true);
+    await assert.rejects(openRepo('compte/depot', 'jeton', true), { code: 'newer' });
+    el('repoToken').value = 'jeton';
+    await connectRepo(el('repoConnect'));
+    assert.ok(html('importInfo').includes('version plus récente'));
+    assert.equal(S.repoLink, null);
+  });
+
   test('dépôt public : fichiers lus sans jeton sur raw', async () => {
     serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img', 'package.json': '{}' });
     const repo = await openRepo('compte/depot', '');
