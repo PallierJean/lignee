@@ -696,6 +696,25 @@ export function setLibraryFilter(kind, query) {
   if (el) el.innerHTML = libraryList(sourceLibrary());
 }
 
+/** One document of the Sources view: its thumbnail(s), what it is, and who cites it. */
+function libraryItem({ src, cites }, kind) {
+  const pic = photoSrc(src.photo);
+  const what = [src.title, src.place, src.ref].filter(Boolean).map((x) => esc(String(x))).join(' · ') || `<span class="muted">${t('lib.untitled')}</span>`;
+  const who = cites.map((c) => {
+    const part = [factLabel(c.id, c.fact), c.role ? t('role.' + c.role) : ''].filter(Boolean).join(', ');
+    return personLink(c.id) + (part ? ` <small>(${esc(part)})</small>` : '');
+  }).join(', ');
+  // The document, and its back if it has one: a click shows it full size, as on the record
+  const back = pic && photoSrc(src.back);
+  const name = esc(String(src.title || t('src.' + kind)));
+  const zoom = (url, label) => `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom">`;
+  return `<li class="lib-item">${pic ? zoom(pic, name) + (back ? zoom(back, `${name} (${t('med.back')})`) : '') : '<span class="lib-pic none" aria-hidden="true"></span>'}`
+    + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p></div></li>`;
+}
+
+/** Family a document is filed under: the name shown of the first person citing it, or '' (no name). */
+const familyOf = ({ cites }) => (cites[0] ? surname(P(cites[0].id)) || maiden(P(cites[0].id)) : '');
+
 function libraryList(all) {
   const q = norm(libQuery).trim();
   const text = ({ src, cites }) => norm([src.title, src.place, src.ref, src.note, ...cites.map((c) => fullName(P(c.id)))].filter(Boolean).join(' '));
@@ -704,21 +723,14 @@ function libraryList(all) {
   const kinds = [...new Set(list.map((x) => kindOf(x.src)))];
   return kinds.map((kind) => {
     const items = list.filter((x) => kindOf(x.src) === kind);
-    return `<section class="rel lib-kind"><h3>${esc(t('src.' + kind))} <span class="n">${items.length}</span></h3><ul class="lib-list">`
-      + items.map(({ src, cites }) => {
-        const pic = photoSrc(src.photo);
-        const what = [src.title, src.place, src.ref].filter(Boolean).map((x) => esc(String(x))).join(' · ') || `<span class="muted">${t('lib.untitled')}</span>`;
-        const who = cites.map((c) => {
-          const part = [factLabel(c.id, c.fact), c.role ? t('role.' + c.role) : ''].filter(Boolean).join(', ');
-          return personLink(c.id) + (part ? ` <small>(${esc(part)})</small>` : '');
-        }).join(', ');
-        // The document, and its back if it has one: a click shows it full size, as on the record
-        const back = pic && photoSrc(src.back);
-        const name = esc(String(src.title || t('src.' + kind)));
-        const zoom = (url, label) => `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom">`;
-        return `<li class="lib-item">${pic ? zoom(pic, name) + (back ? zoom(back, `${name} (${t('med.back')})`) : '') : '<span class="lib-pic none" aria-hidden="true"></span>'}`
-          + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p></div></li>`;
-      }).join('') + '</ul></section>';
+    // Within the kind, one group per family, its name and count above (the list is already in that order)
+    const families = [...new Set(items.map(familyOf))];
+    const groups = families.map((family) => {
+      const members = items.filter((x) => familyOf(x) === family);
+      return `<li class="lib-family"><h4>${esc(family || t('lib.noName'))} <span class="n">${members.length}</span></h4>`
+        + `<ul class="lib-list">${members.map((x) => libraryItem(x, kind)).join('')}</ul></li>`;
+    }).join('');
+    return `<section class="rel lib-kind"><h3>${esc(t('src.' + kind))} <span class="n">${items.length}</span></h3><ul class="lib-families">${groups}</ul></section>`;
   }).join('');
 }
 
