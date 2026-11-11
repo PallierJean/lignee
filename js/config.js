@@ -37,7 +37,7 @@ export const SG = 32;   // gap between two spouses
 export const PAD = 48;  // margin around the tree
 
 // Available zoom levels
-export const ZOOMS = [0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.6, 2, 2.5, 3];
+export const ZOOMS = [0.35, 0.45, 0.55, 0.7, 0.85, 1, 1.15, 1.3, 1.6, 2, 2.5, 3]; // 35 %: the whole of a big tree at a glance
 
 // Colour themes (css/tokens.css); "auto" follows the system, "season" changes with the date
 export const THEMES = ['auto', 'season', 'light', 'dark', 'noel', 'halloween', 'printemps', 'ete', 'automne', 'maraudeur', 'constellations', 'porcelaine', 'matrix', 'grandline', 'galaxie', 'daltonisme', 'contraste', 'contraste-sombre'];

@@ -74,6 +74,13 @@ describe('navigation et affichage', () => {
     const zoom = S.zoom;
     A.zoomBy(1);
     assert.ok(S.zoom > zoom);
+    // Down to 35 % for an overview, and no lower; the choice is kept
+    for (let i = 0; i < 20; i++) A.zoomBy(-1);
+    assert.equal(S.zoom, 0.35);
+    assert.equal(el('zoomVal').textContent, '35 %');
+    assert.equal(JSON.parse(localStorage.getItem('lignee.view.v1')).zoom, 0.35);
+    A.zoomBy(1);
+    assert.equal(S.zoom, 0.45);
     A.recenter();
   });
 
