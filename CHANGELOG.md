@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.2.0](https://github.com/PallierJean/lignee/compare/v3.1.0...v3.2.0) (2026-11-11)
+
+### Features
+
+* Show the GitHub save button only when needed ([1176af9](https://github.com/PallierJean/lignee/commit/1176af9f809e7a1fc00f49bf459b51a63c11c11e))
+
+---
+
+### Nouveautés
+
+* Le bouton « Sauvegarder sur GitHub » n'apparaît plus que lorsqu'il sert : la première sauvegarde d'un dépôt, ou « Réessayer l'envoi » après un échec. Le reste du temps, tout part tout seul. ([1176af9](https://github.com/PallierJean/lignee/commit/1176af9f809e7a1fc00f49bf459b51a63c11c11e))
+
 ## [3.1.0](https://github.com/PallierJean/lignee/compare/v3.0.0...v3.1.0) (2026-11-11)
 
 ### Features
