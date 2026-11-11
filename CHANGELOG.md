@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.4.0](https://github.com/PallierJean/lignee/compare/v3.3.2...v3.4.0) (2026-11-11)
+
+### Features
+
+* Sort the Sources view by the person cited ([61520fc](https://github.com/PallierJean/lignee/commit/61520fc5d47a5e2154f15df82696daed49074092))
+
+### Bug Fixes
+
+* Sort women known by their maiden name with their family ([c8efe08](https://github.com/PallierJean/lignee/commit/c8efe087e10a080fa1bbf3aea60ba07161534186))
+* Open the documents of the Sources view full size ([3876d79](https://github.com/PallierJean/lignee/commit/3876d799642642bb8cc253a1c2160d2a60c6325a))
+
+---
+
+### Nouveautés
+
+* Dans la vue Sources, les actes sont rangés par personne citée (nom puis prénom), puis par numéro dans l'ordre. ([61520fc](https://github.com/PallierJean/lignee/commit/61520fc5d47a5e2154f15df82696daed49074092))
+
+### Corrections
+
+* Dans la vue Sources, une femme enregistrée avec son seul nom de jeune fille est rangée à ce nom, avec sa famille. ([c8efe08](https://github.com/PallierJean/lignee/commit/c8efe087e10a080fa1bbf3aea60ba07161534186))
+* Dans la vue Sources, un clic sur la photo d'un acte l'affiche en grand, comme sur la fiche ; le verso a aussi sa vignette. ([3876d79](https://github.com/PallierJean/lignee/commit/3876d799642642bb8cc253a1c2160d2a60c6325a))
+
 ## [3.3.2](https://github.com/PallierJean/lignee/compare/v3.3.1...v3.3.2) (2026-11-11)
 
 ### Bug Fixes
