@@ -1001,3 +1001,12 @@
   margin: 0 0 6px;
   color: var(--accent);
 }
+
+/* Deleting an image from the viewer */
+.media-delete {
+  margin: 12px 0 0;
+}
+
+.media-delete .link {
+  color: var(--danger, #c0392b);
+}

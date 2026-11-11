@@ -15,7 +15,7 @@ import {
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
-  openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia } from './ui/media.js';
+  openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, deleteMedia } from './ui/media.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
 import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
@@ -246,6 +246,9 @@ const CLICK_ACTIONS = {
   'ev-remove': (el) => A.removeDraftEvent(+el.dataset.i),
   'src-add': () => A.addDraftSource(),
   'med-tag': (el) => openDraftMedia(+el.dataset.i),
+  'media-delete': () => askMediaDelete(true),
+  'media-delete-no': () => askMediaDelete(false),
+  'media-delete-yes': once(() => deleteMedia()),
   'med-remove': (el) => A.removeDraftMedia(+el.dataset.i),
   'med-back-remove': (el) => A.removeDraftMediaBack(+el.dataset.i),
   'src-back-remove': (el) => A.removeDraftSourceBack(+el.dataset.i),

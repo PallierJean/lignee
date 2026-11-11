@@ -29,3 +29,31 @@ describe('galerie', () => {
     assert.deepEqual(peopleNamedIn(''), []);
   });
 });
+
+describe('supprimer une image depuis la visionneuse', () => {
+  test('confirmation, disparue partout, annulable ; la visionneuse passe à la suivante', async () => {
+    const { S } = await import('../js/state.js');
+    const media = await import('../js/ui/media.js');
+    const { mediaGroups } = await import('../js/ui/record.js');
+    const { undoAction } = await import('../js/services/storage.js');
+    const { resetApp } = await import('./helpers.js');
+    resetApp();
+    loadTree([
+      person('a', { given: 'Anne', surname: 'Roux', media: [{ id: 'm1', photo: 'data:image/png;base64,A', tags: [{ id: 'b', x: 1, y: 1 }] }, { id: 'm2', photo: 'data:image/png;base64,B' }] }),
+      person('b', { given: 'Paul', surname: 'Roux' }),
+    ]);
+    mediaGroups.set('g', [{ owner: 'a', id: 'm1' }, { owner: 'a', id: 'm2' }]);
+    media.openMedia('a', 'm1', 'g');
+    const card = () => document.getElementById('mediaCard').innerHTML;
+    assert.match(card(), /data-act="media-delete">Supprimer l’image/);
+    media.askMediaDelete(true);
+    assert.match(card(), /galerie de Anne ROUX, et de celles des personnes identifiées/);
+    await media.deleteMedia();
+    assert.deepEqual(S.people.get('a').media.map((m) => m.id), ['m2']);
+    assert.equal(mediaOf('b').length, 0, 'plus dans la galerie de la personne identifiée');
+    assert.match(card(), /data:image\/png;base64,B/, 'la suivante s’affiche');
+    await undoAction();
+    assert.deepEqual(S.people.get('a').media.map((m) => m.id), ['m1', 'm2'], 'Ctrl+Z la remet');
+    media.closeMedia();
+  });
+});
