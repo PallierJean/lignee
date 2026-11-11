@@ -6,7 +6,8 @@
 import assert from 'node:assert/strict';
 import { test, describe, after } from 'node:test';
 import { Buffer } from 'node:buffer';
-import { openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
+import { openRepo, attachPhotos, pushBackup, readLatest } from '../js/services/github.js';
+import { mergeRecords, backupRecords } from '../js/services/merge.js';
 import { sleep } from '../js/utils/helpers.js';
 
 const { LIGNEE_TEST_REPO: REPO, LIGNEE_TEST_READ_TOKEN: READ, LIGNEE_TEST_WRITE_TOKEN: WRITE } = process.env;
@@ -32,8 +33,8 @@ async function reopen() {
     repo = await openRepo(REPO, WRITE, true);
   }
   const saved = repo.backups.find((b) => b.path === path);
-  const { photos } = saved ? await attachPhotos(repo, saved) : { photos: new Map() };
-  return { repo, saved, target: { path, photos } };
+  const { photos, base } = saved ? await attachPhotos(repo, saved) : { photos: new Map() };
+  return { repo, saved, target: { path, photos, base } };
 }
 
 describe('vrai GitHub', { skip: !(REPO && READ && WRITE) && 'jetons absents : voir .env.test' }, () => {
@@ -115,6 +116,30 @@ describe('vrai GitHub', { skip: !(REPO && READ && WRITE) && 'jetons absents : vo
     await assert.rejects(pushBackup(stale.repo, stale.target, backup([{ id: 'x', given: 'Écrase' }]), 'test: refusé'), { code: 'conflict' });
     const { saved } = await reopen();
     assert.equal(saved.people[0].data.given, 'Zoé');
+  });
+
+  test('dépôt modifié entretemps : fusion avec sa dernière version, puis envoi', async () => {
+    const stale = await reopen();
+    const fresh = await reopen();
+    await push(fresh.repo, fresh.target, backup([{ ...people('')[0], occupation: 'Notaire' }]), 'test: autre appareil');
+    const mine = backupRecords({ people: [{ ...people('')[0], birthPlace: 'Lyon' }] }).people;
+    // Comme saveRepo : relire, fusionner, envoyer ; GitHub peut encore relire l'ancien commit
+    for (let i = 0; ; i++) {
+      const latest = await readLatest(stale.repo, stale.target);
+      const { result, conflicts } = mergeRecords(stale.target.base.people, mine, backupRecords(latest.backup).people);
+      assert.deepEqual(conflicts, []);
+      latest.moveTo();
+      try {
+        await push(stale.repo, stale.target, backup([...result].map(([id, data]) => ({ id, ...data }))), 'test: fusion');
+        break;
+      } catch (e) {
+        if (e.code !== 'conflict' || i > 4) throw e;
+        await sleep(500);
+      }
+    }
+    const { saved } = await reopen();
+    assert.equal(saved.people[0].data.occupation, 'Notaire');
+    assert.equal(saved.people[0].data.birthPlace, 'Lyon');
   });
 
   test('jeton invalide : refusé clairement', async () => {

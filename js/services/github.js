@@ -9,6 +9,7 @@ import { convertPhotos, keptMedia } from './storage.js';
 import { parseBackup } from './backup.js';
 import { isPhotoFile, isPhotoData, photoLabel } from '../model/people.js';
 import { pool, sleep } from '../utils/helpers.js';
+import { backupRecords } from './merge.js';
 
 const API = 'https://api.github.com/repos/';
 const RAW = 'https://raw.githubusercontent.com/';
@@ -97,10 +98,7 @@ export async function openRepo(input, token, forSave = false) {
     if (forSave && e.code === 'empty') return '';
     throw e;
   });
-  const read = (file) => raw(file, head);
-  const { tree } = head ? await (await api(`/git/trees/${head}?recursive=1`)).json() : { tree: [] };
-
-  const blobs = tree.filter((x) => x.type === 'blob');
+  const { read, blobs, files } = await snapshot(api, raw, head);
   const depth = (x) => x.path.split('/').length;
   const candidates = blobs.filter((x) => /\.json$/i.test(x.path) && !/(^|\/)package(-lock)?\.json$/.test(x.path))
     .sort((a, b) => depth(a) - depth(b) || a.path.localeCompare(b.path))
@@ -120,11 +118,31 @@ export async function openRepo(input, token, forSave = false) {
   if (!backups.length && !forSave) throw fail('noBackup');
   backups.sort((a, b) => a.path.localeCompare(b.path));
 
-  // File names may differ in the form of their accents
-  const files = new Map(blobs.map((x) => [x.path.normalize('NFC'), x]));
   const write = !!token && await canWrite(send);
   const branch = write ? (await (await api('')).json()).default_branch : '';
-  return { name: `${target.owner}/${target.repo}`, read, files, backups, write, head, branch, api, send };
+  return { name: `${target.owner}/${target.repo}`, read, files, backups, write, head, branch, api, send, raw };
+}
+
+/** Files of the repository at `head`: { read, blobs, files } (files: path -> blob). */
+async function snapshot(api, raw, head) {
+  const { tree } = head ? await (await api(`/git/trees/${head}?recursive=1`)).json() : { tree: [] };
+  const blobs = tree.filter((x) => x.type === 'blob');
+  // File names may differ in the form of their accents
+  const files = new Map(blobs.map((x) => [x.path.normalize('NFC'), x]));
+  return { read: (file) => raw(file, head), blobs, files };
+}
+
+/**
+ * Reads target.path at the repository's latest commit. Returns { backup, moveTo }: backup as
+ * stored ({ people: [{id, ...}], unions }), or an empty one if the file is gone; moveTo() makes
+ * `repo` start from that commit, once its changes are in the open tree.
+ */
+export async function readLatest(repo, target) {
+  const head = await headCommit(repo.api);
+  const { read, files } = await snapshot(repo.api, repo.raw, head);
+  const file = files.get(target.path.normalize('NFC'));
+  const backup = file ? JSON.parse(await (await read(file)).text()) : JSON.parse(EMPTY_BACKUP);
+  return { backup, files, read, moveTo: () => Object.assign(repo, { head, read, files }) };
 }
 
 async function dataUrl(res, photo) {
@@ -137,14 +155,20 @@ async function dataUrl(res, photo) {
 /**
  * Replaces the backup's "photos/…" paths with the repository's images, looked up in
  * <backup name>/photos/ then next to the file. A missing image is removed from the record.
- * Returns { found, missing, photos }; photos maps each image to its file, for sending back.
+ * Returns { found, missing, photos, base }; photos maps each image to its file, for sending back;
+ * base holds the records as stored, the starting point of a later merge.
  * Any other error (network, access) interrupts the read.
  */
 export async function attachPhotos(repo, backup) {
   const base = backup.path.replace(/\.json$/i, '/');
   const dir = backup.path.replace(/[^/]*$/, '');
   const find = (photo) => repo.files.get((base + photo).normalize('NFC')) || repo.files.get((dir + photo).normalize('NFC'));
-  const count = { found: 0, missing: 0, photos: new Map() };
+  // Records as stored, before their photos are loaded: the starting point of a later merge
+  const stored = backupRecords({
+    people: backup.people.map((x) => ({ ...x.data, id: x.id })),
+    unions: (backup.unions || []).map((x) => ({ ...x.data, id: x.id })),
+  });
+  const count = { found: 0, missing: 0, photos: new Map(), base: stored };
 
   const load = async (photo) => {
     if (!isPhotoFile(photo)) return photo;
@@ -211,9 +235,9 @@ export async function pushBackup(repo, target, text, message) {
   backup.people = people;
 
   const kept = new Set([...photos.values()].map((x) => x.path));
-  for (const { path } of target.photos.values()) {
-    if (!kept.has(path)) entries.push({ path, mode: '100644', type: 'blob', sha: null });
-  }
+  // Only files still in the repository: someone else may have removed one already
+  const gone = [...target.photos.values()].map((x) => x.path).filter((path) => !kept.has(path) && repo.files.has(path.normalize('NFC')));
+  for (const path of gone) entries.push({ path, mode: '100644', type: 'blob', sha: null });
   entries.push({ path: target.path, mode: '100644', type: 'blob', content: JSON.stringify(backup, null, 2) });
 
   const { tree: { sha: baseTree } } = await (await repo.api(`/git/commits/${repo.head}`)).json();
@@ -221,5 +245,8 @@ export async function pushBackup(repo, target, text, message) {
   const { sha } = await repo.send('POST', '/git/commits', { message, tree, parents: [repo.head] });
   await repo.send('PATCH', `/git/refs/heads/${repo.branch.split('/').map(encodeURIComponent).join('/')}`, { sha });
   repo.head = sha;
+  for (const path of gone) repo.files.delete(path.normalize('NFC'));
+  for (const x of entries) if (x.sha) repo.files.set(x.path.normalize('NFC'), { type: 'blob', path: x.path, sha: x.sha });
   target.photos = photos;
+  target.base = backupRecords(backup);
 }

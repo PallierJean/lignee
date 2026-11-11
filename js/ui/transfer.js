@@ -221,8 +221,8 @@ const connectChoice = (repo) => (repo.write && ownTree()
 /** Loads the photos of the chosen backup and opens it in a new tree, unless a choice remains to be made. */
 async function offerRepoBackup(repo, backup) {
   $('#importInfo').innerHTML = `<p>${t('tr.repoLoading')}</p>`;
-  const { found, missing, photos } = await attachPhotos(repo, backup);
-  pendingRepo = { repo, backup, photos };
+  const { found, missing, photos, base } = await attachPhotos(repo, backup);
+  pendingRepo = { repo, backup, photos, base };
   backup.fileName = backup.path.split('/').pop().replace(/\.json$/i, '');
   const note = (found || missing ? `<p>${t('tr.repoPhotos', found, missing)}</p>` : '')
     + `<p>${t(repo.write ? 'tr.repoMode.write' : 'tr.repoMode.read')}</p>`;
@@ -343,7 +343,7 @@ export async function importGo(asNew) {
     commitAction();
 
     // A tree that already had other people doesn't go back to the repository
-    if (pendingRepo && pendingRepo.backup === result && (asNew || wasEmpty)) linkRepo(pendingRepo.repo, result, pendingRepo.photos);
+    if (pendingRepo && pendingRepo.backup === result && (asNew || wasEmpty)) linkRepo(pendingRepo.repo, result, pendingRepo.photos, pendingRepo.base);
     pendingRepo = null;
     S.pending = null;
     const n = result.people.length;

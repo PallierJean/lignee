@@ -18,7 +18,12 @@ remplacera qu'après confirmation. Le bandeau
 « ATTENTION : LECTURE ET ÉCRITURE » apparaît, avec le bouton « Sauvegarder sur GitHub » : le `.json` et les photos
 partent en un seul commit sur la branche par défaut, et une photo retirée de l'arbre quitte le dépôt (elle reste
 dans son historique). Remplacer une sauvegarde que ce navigateur n'a pas écrite demande une confirmation.
-L'envoi est refusé si le dépôt a changé depuis sa lecture.
+Si le dépôt a changé depuis sa lecture, par exemple parce qu'une autre personne a sauvegardé entre-temps, Lignée relit
+sa dernière version et fusionne champ par champ ([merge.js](../../js/services/merge.js)), en partant de la version
+chargée. Un champ modifié d'un seul côté garde cette modification, et les ajouts et suppressions des deux côtés sont
+conservés. La fusion entre dans l'arbre ouvert en une seule action, annulable avec Ctrl+Z, puis l'arbre part. Si un
+même champ a été modifié différemment des deux côtés, ou si une fiche a été supprimée d'un côté et modifiée de l'autre,
+rien n'est envoyé : le bandeau nomme ces fiches et demande de garder « Mes modifications » ou « Celles du dépôt ».
 
 Le site retient le dépôt de chaque arbre, jamais le jeton : il reste en mémoire jusqu'à la fermeture de la page.
 Après un rechargement, le bandeau propose de reconnecter l'arbre avec le jeton. Une importation avec « Charger le
