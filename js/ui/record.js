@@ -44,8 +44,9 @@ export function sourcesHTML(id) {
     const where = [s.place, s.ref].map((x) => String(x || '').trim()).filter(Boolean).join(' · ');
     const fact = [factLabel(id, s.fact), s.role ? t('role.' + s.role) : ''].filter(Boolean).join(' · ');
     return '<li class="src">'
-      + (img ? `<img class="src-doc zoomable" src="${esc(img)}" alt="${esc(s.title || kind)}${back ? ' (' + t('med.front') + ')' : ''}" data-act="photo-zoom">` : '')
-      + (img && back ? `<img class="src-doc zoomable" src="${esc(back)}" alt="${esc(s.title || kind)} (${t('med.back')})" data-act="photo-zoom">` : '')
+      // Front and back share data-pair: enlarged, one switches to the other (ui/events.js)
+      + (img ? `<img class="src-doc zoomable" src="${esc(img)}" alt="${esc(s.title || kind)}${back ? ' (' + t('med.front') + ')' : ''}" data-act="photo-zoom"${back ? ` data-pair="${esc(s.id)}" data-side="0"` : ''}>` : '')
+      + (img && back ? `<img class="src-doc zoomable" src="${esc(back)}" alt="${esc(s.title || kind)} (${t('med.back')})" data-act="photo-zoom" data-pair="${esc(s.id)}" data-side="1">` : '')
       + `<div><b>${esc(s.title || kind)}</b>${fact ? ` <span class="src-fact">${esc(fact)}</span>` : ''}`
       + (where ? `<small>${esc(where)}</small>` : '') + (s.note ? `<p>${esc(s.note)}</p>` : '') + '</div></li>';
   });
