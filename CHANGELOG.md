@@ -14,11 +14,11 @@
 
 ### ⚠ Changements incompatibles
 
-* Backups are written in format 2. Lignée older than 1.31 would read them without their sources; 1.31 and later refuse them. Use "Backup for a Lignée version older than 2.0" in Export to write format 1. ([08206fd](https://github.com/PallierJean/lignee/commit/08206fd4fc0deb09f2540b60aa129af42b463ad5))
+* Les sauvegardes passent au format 2. Une Lignée antérieure à la 1.31 les lirait sans leurs sources ; la 1.31 et les suivantes les refusent. Pour produire l'ancien format, utilisez « Sauvegarde pour une version de Lignée antérieure à la 2.0 » dans Exporter. ([08206fd](https://github.com/PallierJean/lignee/commit/08206fd4fc0deb09f2540b60aa129af42b463ad5))
 
 ### Nouveautés
 
-* Les sources sont maintenant partagées : un acte cité par plusieurs ([08206fd](https://github.com/PallierJean/lignee/commit/08206fd4fc0deb09f2540b60aa129af42b463ad5))
+* Les sources sont maintenant partagées : un acte cité par plusieurs personnes, comme un acte de mariage, n'existe qu'une fois, avec sa photo. Nouvelle vue « Sources » dans l'onglet Analyse. Les sauvegardes passent au format 2 ; vos fichiers actuels sont convertis automatiquement, et l'export peut encore produire l'ancien format. ([08206fd](https://github.com/PallierJean/lignee/commit/08206fd4fc0deb09f2540b60aa129af42b463ad5))
 
 ## [1.31.0](https://github.com/PallierJean/lignee/compare/v1.30.0...v1.31.0) (2026-11-11)
 
@@ -30,7 +30,7 @@
 
 ### Nouveautés
 
-* Lignée refuse maintenant les arbres enregistrés par une version ([ab6f2e8](https://github.com/PallierJean/lignee/commit/ab6f2e814339e25e7f073b9f363155ba04c57e7e))
+* Lignée refuse maintenant les arbres enregistrés par une version plus récente, avec un message clair, au lieu d'en perdre une partie. Cela prépare la version 2. ([ab6f2e8](https://github.com/PallierJean/lignee/commit/ab6f2e814339e25e7f073b9f363155ba04c57e7e))
 
 ## [1.30.0](https://github.com/PallierJean/lignee/compare/v1.29.0...v1.30.0) (2026-11-11)
 
@@ -51,16 +51,16 @@
 
 ### Nouveautés
 
-* Les fiches de l'arbre passent en portrait, avec la photo ronde ([44ba0eb](https://github.com/PallierJean/lignee/commit/44ba0ebc264a8ef1fae9080b83e870495ffbf6a8))
-* Nouveau bouton « Photos » : l'arbre montre seulement les photos, ([71e944e](https://github.com/PallierJean/lignee/commit/71e944e9d0ef8a08a000ee2e7d6362f325111490))
+* Les fiches de l'arbre passent en portrait, avec la photo ronde au-dessus du nom. Le halo de la lignée directe entoure maintenant la fiche sans cacher le bleu ou le rose, aussi en mode photos. ([44ba0eb](https://github.com/PallierJean/lignee/commit/44ba0ebc264a8ef1fae9080b83e870495ffbf6a8))
+* Nouveau bouton « Photos » : l'arbre montre seulement les photos, en rond, et le nom apparaît au survol. Plus de personnes tiennent à l'écran ; l'impression garde les fiches complètes. ([71e944e](https://github.com/PallierJean/lignee/commit/71e944e9d0ef8a08a000ee2e7d6362f325111490))
 
 ### Corrections
 
-* En éventail, les filtres « Vivants » et « N° d'acte » estompent ([2f242f2](https://github.com/PallierJean/lignee/commit/2f242f2fdc953a4aa505c4163af63dc776b6229d))
+* En éventail, les filtres « Vivants » et « N° d'acte » estompent maintenant les secteurs, et le mode « Photos » y montre les photos. « Lignée directe » y est grisé : tout l'éventail est déjà la lignée directe. ([2f242f2](https://github.com/PallierJean/lignee/commit/2f242f2fdc953a4aa505c4163af63dc776b6229d))
 
 ### Refontes
 
-* Le code des décors animés est rangé en un fichier par thème, sans ([e6722d7](https://github.com/PallierJean/lignee/commit/e6722d7836a76f404287ed39f0cb83a23ad18d56))
+* Le code des décors animés est rangé en un fichier par thème, sans changement visible. ([e6722d7](https://github.com/PallierJean/lignee/commit/e6722d7836a76f404287ed39f0cb83a23ad18d56))
 
 ## [1.29.0](https://github.com/PallierJean/lignee/compare/v1.28.0...v1.29.0) (2026-11-11)
 
@@ -73,7 +73,7 @@
 
 ### Nouveautés
 
-* Plusieurs personnes peuvent sauvegarder le même arbre sur GitHub : ([5d71581](https://github.com/PallierJean/lignee/commit/5d71581a4bb6a4d6f334ace50f8d7a2a7965f26f))
+* Plusieurs personnes peuvent sauvegarder le même arbre sur GitHub : si le dépôt a changé, Lignée reprend ses modifications avant d'envoyer les vôtres, et demande laquelle garder quand une même information a été modifiée des deux côtés. ([5d71581](https://github.com/PallierJean/lignee/commit/5d71581a4bb6a4d6f334ace50f8d7a2a7965f26f))
 * « Tout l'arbre » garde les familles groupées : enfants sous leurs parents, beaucoup moins de traits qui se croisent ([91544ba](https://github.com/PallierJean/lignee/commit/91544baee0fff35b7d8b2f3af418917e5143aceb))
 
 ## [1.28.0](https://github.com/PallierJean/lignee/compare/v1.27.0...v1.28.0) (2026-11-10)
