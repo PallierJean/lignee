@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.3.2](https://github.com/PallierJean/lignee/compare/v3.3.1...v3.3.2) (2026-11-11)
+
+### Bug Fixes
+
+* Make an image's title easy to set, and ignore camera file names ([8952f43](https://github.com/PallierJean/lignee/commit/8952f43ae7b8376338042cfad91c19473587bc73))
+
+---
+
+### Corrections
+
+* Dans la visionneuse, un crayon à côté du titre permet de le modifier. Les titres qui ne sont qu'un nom de fichier d'appareil sont ignorés à l'affichage. ([8952f43](https://github.com/PallierJean/lignee/commit/8952f43ae7b8376338042cfad91c19473587bc73))
+
 ## [3.3.1](https://github.com/PallierJean/lignee/compare/v3.3.0...v3.3.1) (2026-11-11)
 
 ### Bug Fixes
