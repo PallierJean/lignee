@@ -148,3 +148,32 @@ describe('nom d’une image', () => {
     assert.equal(mediaLabel({ title: 'Noces d’or', tags: [{ id: 'b', x: 1, y: 1 }] }), 'Noces d’or');
   });
 });
+
+describe('galerie à la place de l’arbre', () => {
+  test('le bouton de la barre montre toutes les images, Échap ou « Revenir à l’arbre » ramène l’arbre', async () => {
+    const { S } = await import('../js/state.js');
+    const A = await import('../js/actions.js');
+    const { renderAll } = await import('../js/ui/render.js');
+    const { resetApp } = await import('./helpers.js');
+    resetApp();
+    loadTree([
+      person('a', { given: 'Anne', surname: 'Roux', media: [{ id: 'm1', photo: 'data:image/png;base64,A' }, { id: 'm2', photo: 'data:image/png;base64,B', tags: [{ id: 'b', x: 1, y: 1 }] }] }),
+      person('b', { given: 'Paul', surname: 'Roux' }),
+    ]);
+    S.focus = 'a';
+    renderAll();
+    const el = (id) => document.getElementById(id);
+    assert.equal(el('stageGallery').hidden, true);
+    A.toggleStageGallery();
+    assert.equal(el('stageGallery').hidden, false);
+    assert.equal(el('canvas').hidden, true, 'l’arbre reste dessous, caché');
+    assert.equal(el('btnGallery').getAttribute('aria-pressed'), 'true');
+    assert.match(el('stageGallery').innerHTML, /Galerie <span class="n">2<\/span>/);
+    assert.match(el('stageGallery').innerHTML, /data-group="stage"/);
+    assert.match(el('stageGallery').innerHTML, /Revenir à l’arbre/);
+    A.toggleStageGallery();
+    assert.equal(el('stageGallery').hidden, true);
+    assert.equal(el('canvas').hidden, false);
+    S.gallery = false;
+  });
+});

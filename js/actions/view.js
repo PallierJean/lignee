@@ -4,7 +4,7 @@ import { S, savePrefs } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { undoAction, redoAction } from '../services/storage.js';
 import { renderTree, scrollToFocus, treeMargins } from '../tree/render.js';
-import { renderAll, renderSide, afterData } from '../ui/render.js';
+import { renderAll, renderSide, afterData, renderStageGallery } from '../ui/render.js';
 import { renderControls } from '../ui/header.js';
 import { captureDraft } from '../ui/form.js';
 import { toast, reportError } from '../ui/toast.js';
@@ -98,6 +98,13 @@ export function toggleFull() {
 }
 
 /** Switches between the tree and the fan chart. */
+/** Shows the whole gallery in place of the tree, or the tree again. */
+export function toggleStageGallery() {
+  S.gallery = !S.gallery;
+  renderControls();
+  renderStageGallery();
+}
+
 export function toggleFan() {
   S.fan = !S.fan;
   savePrefs();

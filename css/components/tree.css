@@ -156,6 +156,38 @@
   position: relative;
 }
 
+/* The whole gallery in place of the tree (toolbar button) */
+.stage-gallery {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 16px 16px;
+  background: var(--paper);
+}
+
+.stage-gallery .sg-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stage-gallery h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.stage-gallery h2 .n {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.stage-gallery .meds {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
 .tree {
   position: absolute;
   left: 0;
