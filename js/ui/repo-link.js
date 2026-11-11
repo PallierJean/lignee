@@ -116,7 +116,8 @@ export function renderRepoBanner() {
     : `<button class="btn small danger" type="button" data-act="repo-save">${t('repo.save')}</button>${forget}`;
   el.className = 'banner repo-banner write';
   el.innerHTML = `<p class="repo-alert">${t('repo.writeTitle')}</p><p title="${t('repo.write', name)}">${t('repo.writeShort', name)}</p>`
-    + (S.repoSavedAt ? `<p>${t('repo.savedAt', esc(S.repoSavedAt))}</p>` : '')
+    + `<p>${S.repoSaving ? t('repo.saving') : link.mustConfirm ? t('repo.confirmFirst') : t('repo.autoOn')}`
+    + (S.repoSavedAt && !S.repoSaving ? ' ' + t('repo.savedAt', esc(S.repoSavedAt)) : '') + '</p>'
     + (S.repoError ? `<p class="err">${S.repoError}</p>` : '')
     + `<div class="acts">${actions}</div>`;
 }
@@ -324,20 +325,37 @@ export async function chooseRepoSave(how) {
  * If the repository changed since it was read, its changes are merged into the open tree first;
  * records changed differently on both sides wait for `prefer` ('mine' or 'theirs').
  */
-export async function saveRepo(confirmed, prefer) {
+// Saves go one after the other, manual or automatic: two sends at once would mix their merges
+let saveQueue = Promise.resolve();
+
+export function saveRepo(confirmed, prefer, options = {}) {
+  if (!options.auto) clearTimeout(autoTimer); // a manual save takes the waiting changes along
+  const run = saveQueue.then(() => sendRepo(confirmed, prefer, options));
+  saveQueue = run.catch(() => {});
+  return run;
+}
+
+async function sendRepo(confirmed, prefer, { auto = false, label = '' } = {}) {
   const link = S.repoLink;
   if (!link || !link.repo || link.tree !== S.tree) return;
   if (link.mustConfirm && !confirmed) {
-    await openRepoDiff();
+    if (!auto) await openRepoDiff();
     return;
   }
   S.repoConflicts = null;
   S.repoError = '';
+  S.repoSaving = true;
+  renderRepoBanner();
   let changed = 0;
   try {
     for (let attempt = 1; ; attempt++) {
       try {
-        await pushBackup(link.repo, link, await buildPortableBackup(), t('repo.commit'));
+        const text = await buildPortableBackup();
+        // Nothing new since the last send (the date of the backup aside): no empty commit
+        const content = text.replace(/\n\s*"exportedAt": "[^"]*",/, '');
+        if (auto && content === link.lastSent) break;
+        await pushBackup(link.repo, link, text, commitMessage(label));
+        link.lastSent = content;
         break;
       } catch (e) {
         if (e.code !== 'conflict' || attempt >= MERGE_TRIES) throw e;
@@ -356,11 +374,59 @@ export async function saveRepo(confirmed, prefer) {
     markExported();
     changed += link.merged || 0;
     link.merged = 0;
-    toast(changed ? t('repo.merged', changed) : t('repo.saved'));
+    if (changed || !auto) toast(changed ? t('repo.merged', changed) : t('repo.saved'));
   } catch (e) {
     S.repoError = t('tr.repoErr.' + (e.code || 'failed'));
+    if (auto) toast(t('repo.autoFailed'), true);
+  } finally {
+    S.repoSaving = false;
   }
   renderRepoBanner();
+}
+
+/** Commit message: what changed, when known. */
+function commitMessage(label) {
+  const what = { 'hist.undone': t('repo.undoCommit'), 'hist.redone': t('repo.redoCommit') }[label] || (label ? t(label) : '');
+  return what && typeof what === 'string' ? `${t('repo.commit')} : ${what}` : t('repo.commit');
+}
+
+/* ---------- Each change goes to the repository ---------- */
+
+export const AUTOSAVE_DELAY = 1500; // ms: changes made close together make one commit
+let autoTimer = null;
+let autoLabel = '';
+let autoRunning = false;
+let autoAgain = false;
+
+/** True if changes go to the repository by themselves: a write link, confirmed, with no choice waiting. */
+const autoSaving = (link = S.repoLink) => !!(link && link.repo && link.tree === S.tree && !link.mustConfirm && !S.repoConflicts);
+
+/** After a change (notify 'changed'): sends the tree to the repository a moment later. */
+export function scheduleRepoSave(label = '') {
+  if (!autoSaving()) return;
+  autoLabel = label;
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(flushRepoSave, AUTOSAVE_DELAY);
+}
+
+/** Sends now what is waiting; one send at a time, the changes made meanwhile follow. */
+export async function flushRepoSave() {
+  clearTimeout(autoTimer);
+  autoTimer = null;
+  if (autoRunning) {
+    autoAgain = true;
+    return;
+  }
+  autoRunning = true;
+  try {
+    if (autoSaving()) await saveRepo(false, undefined, { auto: true, label: autoLabel });
+  } finally {
+    autoRunning = false;
+    if (autoAgain) {
+      autoAgain = false;
+      await flushRepoSave();
+    }
+  }
 }
 
 /** Forgets the open tree's repository and, with it, the token. */

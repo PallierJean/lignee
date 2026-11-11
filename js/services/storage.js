@@ -13,7 +13,7 @@
  */
 import { S } from '../state.js';
 import { rid, pool, markReported } from '../utils/helpers.js';
-import { failure } from './notify.js';
+import { failure, emit } from './notify.js';
 import { dataChanged } from '../model/people.js';
 import { planSources, orphanSources, migratePeople, migrateUnions } from '../model/sources.js';
 import { canonical } from './merge.js';
@@ -281,6 +281,7 @@ export async function undoAction() {
     throw e;
   }
   pushUndone(action);
+  emit('changed', 'hist.undone');
   return action;
 }
 
@@ -295,6 +296,7 @@ export async function redoAction() {
     throw e;
   }
   pushDone(action);
+  emit('changed', 'hist.redone');
   return action;
 }
 

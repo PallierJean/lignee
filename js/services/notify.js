@@ -5,7 +5,8 @@
  *
  * - 'message' (text, isError): short message at the bottom of the screen;
  * - 'data': documents received, the indexes and the page must follow;
- * - 'access' (force): write permission changed, the page is redrawn.
+ * - 'access' (force): write permission changed, the page is redrawn;
+ * - 'changed' (label): an action changed the tree (saved, deleted, undone…): label is its i18n key.
  */
 import { t } from '../i18n.js';
 import { markReported } from '../utils/helpers.js';

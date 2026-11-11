@@ -7,6 +7,7 @@
  * overwriting what other people changed elsewhere in the tree.
  */
 import { S } from '../state.js';
+import { emit } from './notify.js';
 
 const MAX = 50;
 
@@ -40,6 +41,7 @@ export function commitAction() {
   done.push({ label: action.label, focus: action.focus, after: S.focus, changes });
   if (done.length > MAX) done.shift();
   undone = [];
+  emit('changed', action.label);
 }
 
 export const canUndo = () => done.length > 0;

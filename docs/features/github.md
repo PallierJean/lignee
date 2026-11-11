@@ -15,7 +15,12 @@ Contents en lecture et écriture, puis cliquez sur « Connecter le dépôt » : 
 famille d'exemple, un nouvel arbre porte le nom du dépôt. Si le dépôt contient une autre sauvegarde et que l'arbre
 ouvert est le vôtre, Lignée propose de l'ouvrir dans un nouvel arbre ou de relier quand même l'arbre ouvert, qui ne la
 remplacera qu'après confirmation. Le bandeau
-« ATTENTION : LECTURE ET ÉCRITURE » apparaît, avec le bouton « Sauvegarder sur GitHub » : le `.json` et les photos
+« ATTENTION : LECTURE ET ÉCRITURE » apparaît. Chaque action terminée (événement `changed` de `notify.js` :
+fiche enregistrée, suppression, fusion, import, annuler, rétablir) programme un envoi 1,5 s plus tard
+(`scheduleRepoSave` dans `ui/repo-link.js`) : les changements rapprochés font un seul commit, dont le message
+nomme l'action ; un contenu inchangé n'en fait aucun. Les envois, automatiques ou par le bouton
+« Sauvegarder sur GitHub », passent un par un. Rien ne part seul avant la première sauvegarde confirmée
+d'une sauvegarde écrite ailleurs, ni tant qu'un choix de conflit attend. Le `.json` et les photos
 partent en un seul commit sur la branche par défaut, et une photo retirée de l'arbre quitte le dépôt (elle reste
 dans son historique). Une photo déjà dans le dépôt n'est pas renvoyée : elle est reconnue à son contenu.
 Les fichiers que Lignée a nommés dans le dossier des photos de la sauvegarde (`<nom>-<uuid>.jpg`) et

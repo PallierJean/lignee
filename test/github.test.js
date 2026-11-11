@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
 import { parseRepo, openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
-import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner, chooseRepoSave } from '../js/ui/repo-link.js';
+import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner, chooseRepoSave, flushRepoSave, scheduleRepoSave } from '../js/ui/repo-link.js';
+import { beginAction, commitAction, opUpdate } from '../js/services/storage.js';
 import { readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo, openTransfer, closeTransfer } from '../js/ui/transfer.js';
 import { photoOf } from '../js/model/people.js';
 import { REPO_KEY } from '../js/config.js';
@@ -300,6 +301,38 @@ describe('bandeaux', () => {
     assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')), 'photo connue : pas renvoyée');
   });
 
+  test('chaque modification part sur GitHub, une fois, avec ce qui a changé ; rien si rien n’a changé', async () => {
+    const files = { 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' };
+    serve(files, 0, true);
+    el('repoToken').value = 'jeton';
+    await connectRepo(el('repoConnect'));
+    await importGo(true);
+    await flushRepoSave(); // l'import lui-même part
+    head = S.repoLink.repo.head;
+    calls.length = 0;
+    // Deux modifications rapprochées : un seul commit, qui dit ce qui a changé
+    const [id] = S.people.keys();
+    beginAction('hist.edit');
+    await opUpdate('people', id, { occupation: 'Tisserand' });
+    commitAction();
+    beginAction('hist.edit');
+    await opUpdate('people', id, { notes: 'Lyon' });
+    commitAction();
+    assert.ok(!calls.some((c) => c.method === 'PATCH'), 'pas tout de suite');
+    await flushRepoSave();
+    const commits = calls.filter((c) => c.url.endsWith('/git/commits'));
+    assert.equal(commits.length, 1);
+    assert.match(commits[0].body.message, /Mise à jour de l’arbre depuis Lignée : modification/);
+    assert.equal(pushed().people[0].notes, 'Lyon');
+    assert.match(html('repoBanner'), /Chaque modification est enregistrée sur GitHub/);
+    // Rien de changé : pas de commit vide
+    head = S.repoLink.repo.head;
+    calls.length = 0;
+    scheduleRepoSave('hist.edit');
+    await flushRepoSave();
+    assert.ok(!calls.some((c) => c.method === 'POST'), 'aucun envoi');
+  });
+
   test('même champ changé des deux côtés : choix demandé, rien n’est écrit avant', async () => {
     const files = { 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' };
     serve(files, 0, true);
@@ -540,6 +573,19 @@ describe('connecter l’arbre ouvert', () => {
 
   const sent = () => JSON.parse(calls.findLast((c) => c.url.endsWith('/git/trees')).body.tree.find((x) => x.path === 'agathe.json').content);
   const twoPeople = () => JSON.stringify({ format: 'lignee', name: 'F', people: [{ id: 'a', given: 'Ana' }, { id: 'r', given: 'Rémi' }], unions: [] });
+
+  test('sauvegarde pas encore confirmée : rien ne part tout seul', async () => {
+    await connect({ 'agathe.json': backup({ photo: '' }) });
+    await connectOpenedRepo();
+    assert.equal(S.repoLink.mustConfirm, true);
+    calls.length = 0;
+    beginAction('hist.edit');
+    await opUpdate('people', [...S.people.keys()][0], { notes: 'x' });
+    commitAction();
+    await flushRepoSave();
+    assert.ok(calls.every((c) => c.method === 'GET'));
+    assert.match(html('repoBanner'), /Première sauvegarde/);
+  });
 
   test('connecté après l’aperçu d’import : les photos du dépôt sont reconnues, pas renvoyées ; les doublons partent', async () => {
     // Même photo que celle de l'arbre ouvert (beforeEach), plus un doublon laissé par une ancienne version

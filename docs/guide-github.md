@@ -91,10 +91,16 @@ Avec un dépôt vide, Lignée relie directement l'arbre ouvert.
 
 ## 6. Sauvegarder
 
-Modifiez l'arbre comme d'habitude : ajoutez une personne, une photo… Les changements restent
-dans votre navigateur tant que vous ne les envoyez pas. Pour les garder sur GitHub, cliquez sur
-**Sauvegarder sur GitHub**, dans le bandeau en haut de la page. L'arbre et ses photos partent
-ensemble.
+Modifiez l'arbre comme d'habitude : ajoutez une personne, une photo… Avec un jeton en écriture,
+**chaque modification part sur GitHub toute seule**, quelques instants après l'avoir enregistrée :
+une fiche, une suppression, une fusion, un import, une annulation. Plusieurs modifications
+rapprochées font une seule sauvegarde, dont le message dit ce qui a changé. L'arbre et ses photos
+partent ensemble.
+
+La toute première fois, si le dépôt contient une sauvegarde écrite ailleurs, cliquez sur
+**Sauvegarder sur GitHub** : une fenêtre montre ce qui changerait, et vous choisissez de fusionner
+ou de remplacer. Ensuite, tout part automatiquement. Si un envoi échoue (connexion coupée), la
+modification reste dans l'arbre et repart avec la suivante, ou avec le bouton.
 
 Sur GitHub, le dépôt garde l'historique de chaque sauvegarde : vous pouvez revenir à une version
 précédente.

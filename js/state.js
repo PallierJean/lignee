@@ -48,6 +48,7 @@ export const S = {
   repoConflicts: null,   // names of the records changed on both sides, waiting for a choice
   repoError: '',         // last save failed
   repoSavedAt: '',       // time of the last save
+  repoSaving: false,     // a save to the repository is under way
   confirmEx: false,      // confirmation of removing the examples shown
   query: '',             // register search
 
