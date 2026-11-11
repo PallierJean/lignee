@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.30.0](https://github.com/PallierJean/lignee/compare/v1.29.0...v1.30.0) (2026-11-11)
+
+### Features
+
+* Show tree cards as portraits with a round photo ([44ba0eb](https://github.com/PallierJean/lignee/commit/44ba0ebc264a8ef1fae9080b83e870495ffbf6a8))
+* Add a photo mode to the tree ([71e944e](https://github.com/PallierJean/lignee/commit/71e944e9d0ef8a08a000ee2e7d6362f325111490))
+
+### Bug Fixes
+
+* Apply the tree filters and photo mode to the fan chart ([2f242f2](https://github.com/PallierJean/lignee/commit/2f242f2fdc953a4aa505c4163af63dc776b6229d))
+
+### Code Refactoring
+
+* Split the animated scenes into one file per theme ([e6722d7](https://github.com/PallierJean/lignee/commit/e6722d7836a76f404287ed39f0cb83a23ad18d56))
+
+---
+
+### Nouveautés
+
+* Les fiches de l'arbre passent en portrait, avec la photo ronde ([44ba0eb](https://github.com/PallierJean/lignee/commit/44ba0ebc264a8ef1fae9080b83e870495ffbf6a8))
+* Nouveau bouton « Photos » : l'arbre montre seulement les photos, ([71e944e](https://github.com/PallierJean/lignee/commit/71e944e9d0ef8a08a000ee2e7d6362f325111490))
+
+### Corrections
+
+* En éventail, les filtres « Vivants » et « N° d'acte » estompent ([2f242f2](https://github.com/PallierJean/lignee/commit/2f242f2fdc953a4aa505c4163af63dc776b6229d))
+
+### Refontes
+
+* Le code des décors animés est rangé en un fichier par thème, sans ([e6722d7](https://github.com/PallierJean/lignee/commit/e6722d7836a76f404287ed39f0cb83a23ad18d56))
+
 ## [1.29.0](https://github.com/PallierJean/lignee/compare/v1.28.0...v1.29.0) (2026-11-11)
 
 ### Features
