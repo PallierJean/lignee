@@ -630,9 +630,13 @@ describe('bibliothèque de sources : ordre', () => {
       person('o', { given: 'Olivier', surname: 'BOURREL', citations: [{ id: 'c2', source: 'D1094', fact: 'death' }] }),
       person('a', { given: 'Alice', surname: 'BOURREL', citations: [{ id: 'c3', source: 'D14', fact: 'death' }, { id: 'c4', source: 'D3', fact: 'death' }] }),
       person('m', { given: 'Monique', surname: 'LAMBORRE', citations: [{ id: 'c5', source: 'B2', fact: 'birth' }] }),
+      // Une femme enregistrée avec son seul nom de jeune fille : rangée à ce nom, pas en tête
+      person('z', { given: 'Anna', surname: '', maidenName: 'BOURREL', sex: 'F', citations: [{ id: 'c6', source: 'D757', fact: 'death' }] }),
+      person('x', { given: 'Sans nom', citations: [{ id: 'c7', source: 'D1', fact: 'death' }] }),
     ]);
     S.sources = new Map([['D10', { kind: 'death', title: 'Acte n°10' }], ['D1094', { kind: 'death', title: 'Acte n°1094' }],
-      ['D14', { kind: 'death', title: 'Acte n°14' }], ['D3', { kind: 'death', title: 'Acte n°3' }], ['B2', { kind: 'birth', title: 'Acte n°2' }]]);
-    assert.deepEqual(sourceLibrary().map((x) => x.src.title), ['Acte n°2', 'Acte n°3', 'Acte n°14', 'Acte n°10', 'Acte n°1094']);
+      ['D14', { kind: 'death', title: 'Acte n°14' }], ['D3', { kind: 'death', title: 'Acte n°3' }], ['B2', { kind: 'birth', title: 'Acte n°2' }],
+      ['D757', { kind: 'death', title: 'Acte n°757' }], ['D1', { kind: 'death', title: 'Acte n°1' }]]);
+    assert.deepEqual(sourceLibrary().map((x) => x.src.title), ['Acte n°2', 'Acte n°3', 'Acte n°14', 'Acte n°757', 'Acte n°10', 'Acte n°1094', 'Acte n°1']);
   });
 });
