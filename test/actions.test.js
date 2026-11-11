@@ -5,7 +5,7 @@ import { fire, FakeElement } from './setup.js';
 import { S, cardEls } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { bindEvents } from '../js/events.js';
-import { afterData } from '../js/ui/render.js';
+import { afterData, renderAll } from '../js/ui/render.js';
 import { openPersonDlg } from '../js/ui/person-dlg.js';
 import { currentSituation, unionCauseText, hasDeathNumber, passesFilter } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
@@ -703,6 +703,26 @@ describe('suppression, exemples, fusion', () => {
     await A.undo();
     assert.deepEqual(S.people.get('d').citations.map((c) => c.source), ['S2', 'S3']);
     assert.equal(S.sources.size, 3);
+  });
+
+  test('citer un document déjà dans l’arbre : partagé, pas recopié', async () => {
+    loadTree([
+      person('a', { given: 'Jean', surname: 'Roux', citations: [{ id: 'c1', source: 'S1', fact: '' }] }),
+      person('b', { given: 'Marie', surname: 'Roux' }),
+    ]);
+    S.sources = new Map([['S1', { kind: 'marriage', title: 'Mariage', ref: 'n°12', photo: 'data:image/jpeg;base64,AAAA' }], ['S2', { kind: 'census', title: 'Recensement' }]]);
+    S.focus = 'b';
+    A.startEdit('b');
+    renderAll(true);
+    assert.match(html('paneRecord'), /<select id="src-cite">.*Mariage, n°12/s);
+    A.citeDraftSource('S1');
+    assert.ok(!html('paneRecord').includes('value="S1"'), 'déjà cité : plus proposé');
+    assert.match(html('paneRecord'), /aussi cité par Jean ROUX/);
+    fill({});
+    await A.submitEdit();
+    assert.deepEqual(S.people.get('b').citations.map((c) => c.source), ['S1']);
+    assert.equal(S.sources.size, 2, 'aucune copie du document');
+    assert.equal(S.sources.get('S1').photo, 'data:image/jpeg;base64,AAAA');
   });
 
   test('supprimer une fiche : ses sources partent, sauf celles citées ailleurs', async () => {

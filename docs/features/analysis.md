@@ -96,3 +96,5 @@
   puis par titre, avec sa vignette et les fiches qui le citent, et pour quel fait (`sourceLibrary`
   dans `ui/analysis.js`). Un acte de mariage cité par les deux époux n'apparaît qu'une fois. Dans
   le formulaire, un document partagé l'indique : le modifier le modifie pour toutes ces fiches.
+  Deux filtres : la nature du document, et une recherche dans le titre, le lieu, la cote, la note et
+  les noms des personnes qui le citent.

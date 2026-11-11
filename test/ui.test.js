@@ -583,3 +583,29 @@ describe('bibliothèque de sources', () => {
     A.cancelEdit();
   });
 });
+
+describe('bibliothèque de sources : filtres', () => {
+  beforeEach(openExample);
+
+  test('par nature et par texte, sans redessiner le champ de recherche', async () => {
+    const { setLibraryFilter } = await import('../js/ui/analysis.js');
+    loadTree([
+      person('a', { given: 'Jean', surname: 'Roux', citations: [{ id: 'c1', source: 'S1', fact: '' }, { id: 'c2', source: 'S2', fact: '' }] }),
+      person('b', { given: 'Marie', surname: 'Durand', citations: [{ id: 'c3', source: 'S3', fact: '' }] }),
+    ]);
+    S.sources = new Map([['S1', { kind: 'marriage', title: 'Mariage', place: 'Lyon' }], ['S2', { kind: 'census', title: 'Recensement 1906' }], ['S3', { kind: 'birth', title: 'Naissance', place: 'Paris' }]]);
+    S.focus = 'a';
+    const out = view('sources');
+    assert.ok(out.includes('id="lib-kind"') && out.includes('id="lib-q"'));
+    const list = () => document.getElementById('libList').innerHTML;
+    setLibraryFilter('census');
+    assert.ok(list().includes('Recensement 1906') && !list().includes('Mariage'));
+    setLibraryFilter('', 'lyon');
+    assert.ok(list().includes('Mariage') && !list().includes('Recensement'));
+    setLibraryFilter('', 'durand');
+    assert.ok(list().includes('Naissance') && !list().includes('Mariage'), 'recherche par personne');
+    setLibraryFilter('', 'zzz');
+    assert.ok(list().includes('Aucun document ne correspond'));
+    setLibraryFilter('', '');
+  });
+});

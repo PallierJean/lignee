@@ -185,6 +185,7 @@ décès. Une inhumation marque tout de même la personne comme décédée. Le ch
 Un document (acte, page de recensement, livret…), rangé une seule fois dans la liste `sources` de
 la sauvegarde avec sa photo, et cité par une ou plusieurs fiches. Le modifier depuis une fiche le
 modifie pour toutes celles qui le citent ; une source que plus personne ne cite est supprimée.
+Dans le formulaire, « Ou citer un document déjà dans l'arbre » ajoute une citation d'une source existante.
 
 | Champ | Type | Requis | Description | GEDCOM |
 | --- | --- | --- | --- | --- |

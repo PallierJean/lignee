@@ -205,6 +205,20 @@ function alsoCitedBy(sid, self) {
     .map(([, p]) => fullName(p));
 }
 
+/** List of the tree's sources the draft doesn't cite yet, to cite one: by kind, then title. */
+function citeSourceField(e) {
+  const cited = new Set(e.sources.filter((x) => !x.removed && x.source).map((x) => x.source));
+  const list = [...S.sources].filter(([sid]) => !cited.has(sid));
+  if (!list.length) return '';
+  const label = (src) => [src.title, src.place, src.ref].filter(Boolean).map(String).join(', ') || t('lib.untitled');
+  const groups = SOURCE_KINDS.map((kind) => {
+    const items = list.filter(([, src]) => (SOURCE_KINDS.includes(src.kind) ? src.kind : 'other') === kind)
+      .sort(([, a], [, b]) => label(a).localeCompare(label(b), getLang()));
+    return items.length ? `<optgroup label="${esc(t('src.' + kind))}">${items.map(([sid, src]) => `<option value="${esc(sid)}">${esc(label(src))}</option>`).join('')}</optgroup>` : '';
+  }).join('');
+  return `<label class="fld src-cite"><span>${t('f.citeSource')}</span><select id="src-cite"><option value="">${t('f.citeSourcePick')}</option>${groups}</select></label>`;
+}
+
 /** Source rows of the form. */
 function sourceRows(e) {
   return e.sources.map((x, i) => {
@@ -345,6 +359,7 @@ export function formHTML() {
     <div class="gt">${t('sources')}</div>
     ${sourceRows(e)}
     <button class="addline" type="button" data-act="src-add">+ ${t('f.addSource')}</button>
+    ${citeSourceField(e)}
 
     <div class="gt">${t('media')}</div>
     ${mediaRows(e)}

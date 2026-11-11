@@ -11,7 +11,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
 import {
-  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc,
+  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc, setLibraryFilter,
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
@@ -408,6 +408,8 @@ export function bindEvents() {
     if (el.id === 'fanKids' && el.value) A.setFocus(el.value);
     if (el.id === 'themeSel') A.setTheme(el.value);
     if (el.id === 'actsCc') setActsCc(el.value);
+    if (el.id === 'src-cite' && el.value) A.citeDraftSource(el.value);
+    if (el.id === 'lib-kind') setLibraryFilter(el.value);
     if (el.id === 'textSel') A.setTextSize(el.value);
     if (el.name === 'f-sex') updateNames(false);
     if (el.id === 'f-father' || el.id === 'f-mother') updateNames(true);
@@ -442,6 +444,7 @@ export function bindEvents() {
       const label = document.getElementById(ev.target.id + 'name');
       if (label) label.textContent = departmentHint(ev.target.id.slice(0, -'-dept'.length));
     }
+    if (ev.target.id === 'lib-q') setLibraryFilter(undefined, ev.target.value);
     if (ev.target.id === 'q') {
       S.query = ev.target.value;
       renderRegister();

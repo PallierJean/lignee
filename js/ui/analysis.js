@@ -24,7 +24,7 @@ import { buildActsCsv } from '../services/csv.js';
 import { findTownHall, townHallSearchUrl, findArchives, archivesSearchUrl } from '../services/town-hall.js';
 import { departmentName } from '../model/departments.js';
 import { CC_KEY } from '../config.js';
-import { sleep } from '../utils/helpers.js';
+import { sleep, norm } from '../utils/helpers.js';
 import { longDate, dateParts } from '../utils/dates.js';
 import {
   inseeQuery, inseeSignature, deathDifferences, actDateText, actPlace, deathActsByCommune, recordDeathAct, hasDeathDocument,
@@ -658,23 +658,49 @@ export function sourceLibrary() {
     || String(a.src.title || '').localeCompare(String(b.src.title || ''), t('locale')));
 }
 
+// Filters of the Sources view: kind ('' = all) and text (title, place, number, who cites it)
+let libKind = '';
+let libQuery = '';
+
+const kindOf = (src) => (SOURCE_KINDS.includes(src.kind) ? src.kind : 'other');
+
 function sourcesView() {
   const list = sourceLibrary();
   if (!list.length) return `<p class="nofocus">${t('lib.none')}</p>`;
   const shared = list.filter((x) => new Set(x.cites.map((c) => c.id)).size > 1).length;
-  const kinds = [...new Set(list.map((x) => x.src.kind || 'other'))];
+  const kinds = SOURCE_KINDS.filter((k) => list.some((x) => kindOf(x.src) === k));
   return `<p class="hint an-hint">${t('lib.hint', list.length, shared)}</p>`
-    + kinds.map((kind) => {
-      const items = list.filter((x) => (x.src.kind || 'other') === kind);
-      return `<section class="rel lib-kind"><h3>${esc(t('src.' + (SOURCE_KINDS.includes(kind) ? kind : 'other')))} <span class="n">${items.length}</span></h3><ul class="lib-list">`
-        + items.map(({ src, cites }) => {
-          const pic = photoSrc(src.photo);
-          const what = [src.title, src.place, src.ref].filter(Boolean).map((x) => esc(String(x))).join(' · ') || `<span class="muted">${t('lib.untitled')}</span>`;
-          const who = cites.map((c) => personLink(c.id) + (factLabel(c.id, c.fact) ? ` <small>(${esc(factLabel(c.id, c.fact))})</small>` : '')).join(', ');
-          return `<li class="lib-item">${pic ? `<img class="lib-pic" src="${esc(pic)}" alt="" loading="lazy">` : '<span class="lib-pic none" aria-hidden="true"></span>'}`
-            + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p></div></li>`;
-        }).join('') + '</ul></section>';
-    }).join('');
+    + `<div class="row2 lib-filters"><label class="fld"><span>${t('lib.kind')}</span><select id="lib-kind"><option value="">${t('lib.allKinds')}</option>`
+    + kinds.map((k) => `<option value="${k}"${k === libKind ? ' selected' : ''}>${esc(t('src.' + k))}</option>`).join('') + '</select></label>'
+    + `<label class="fld"><span>${t('lib.search')}</span><input id="lib-q" type="search" value="${esc(libQuery)}" placeholder="${t('lib.searchPlaceholder')}" autocomplete="off"></label></div>`
+    + `<div id="libList">${libraryList(list)}</div>`;
+}
+
+/** Sets the Sources view's filters; the list alone is redrawn, the search field keeps the cursor. */
+export function setLibraryFilter(kind, query) {
+  if (kind !== undefined) libKind = kind;
+  if (query !== undefined) libQuery = query;
+  const el = document.getElementById('libList');
+  if (el) el.innerHTML = libraryList(sourceLibrary());
+}
+
+function libraryList(all) {
+  const q = norm(libQuery).trim();
+  const text = ({ src, cites }) => norm([src.title, src.place, src.ref, src.note, ...cites.map((c) => fullName(P(c.id)))].filter(Boolean).join(' '));
+  const list = all.filter((x) => (!libKind || kindOf(x.src) === libKind) && (!q || text(x).includes(q)));
+  if (!list.length) return `<p class="nofocus">${t('lib.noMatch')}</p>`;
+  const kinds = [...new Set(list.map((x) => kindOf(x.src)))];
+  return kinds.map((kind) => {
+    const items = list.filter((x) => kindOf(x.src) === kind);
+    return `<section class="rel lib-kind"><h3>${esc(t('src.' + kind))} <span class="n">${items.length}</span></h3><ul class="lib-list">`
+      + items.map(({ src, cites }) => {
+        const pic = photoSrc(src.photo);
+        const what = [src.title, src.place, src.ref].filter(Boolean).map((x) => esc(String(x))).join(' · ') || `<span class="muted">${t('lib.untitled')}</span>`;
+        const who = cites.map((c) => personLink(c.id) + (factLabel(c.id, c.fact) ? ` <small>(${esc(factLabel(c.id, c.fact))})</small>` : '')).join(', ');
+        return `<li class="lib-item">${pic ? `<img class="lib-pic" src="${esc(pic)}" alt="" loading="lazy">` : '<span class="lib-pic none" aria-hidden="true"></span>'}`
+          + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p></div></li>`;
+      }).join('') + '</ul></section>';
+  }).join('');
 }
 
 function galleryView() {

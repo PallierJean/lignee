@@ -228,6 +228,19 @@ export function addDraftSource() {
   renderSide(true);
 }
 
+/** Cites a source already in the tree (shared): its document is the same for every record citing it. */
+export function citeDraftSource(sid) {
+  const src = S.sources.get(sid);
+  if (!S.edit || !src) return;
+  captureDraft();
+  const text = (k) => (src[k] == null ? '' : String(src[k]));
+  S.edit.sources.push({
+    id: rid('s'), source: sid, fact: '', kind: src.kind || 'other', title: text('title'), place: text('place'),
+    ref: text('ref'), note: text('note'), photo: src.photo || '', back: src.photo && src.back ? src.back : '', removed: false,
+  });
+  renderSide(true);
+}
+
 export function removeDraftSource(i) {
   captureDraft();
   if (S.edit && S.edit.sources[i]) S.edit.sources[i].removed = true;
