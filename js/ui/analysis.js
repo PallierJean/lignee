@@ -2,7 +2,7 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
-import { P, fullName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS, cmpName } from '../model/people.js';
+import { P, fullName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS, surname, maiden, given } from '../model/people.js';
 import { relationship } from '../model/kinship.js';
 import { currentIssues } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
@@ -655,8 +655,14 @@ export function sourceLibrary() {
     }
   }
   const order = (k) => (SOURCE_KINDS.includes(k) ? SOURCE_KINDS.indexOf(k) : SOURCE_KINDS.length);
-  // Within a kind, by the person cited (surname, then given name); then by title, numbers in order
-  const byName = (a, b) => cmpName(P(a.id), P(b.id));
+  // Within a kind, by the person cited: the name shown (surname, or else maiden name), then the
+  // given name, people without a name last; then by title, numbers in order
+  const nameKey = (id) => surname(P(id)) || maiden(P(id));
+  const byName = (a, b) => {
+    const [na, nb] = [nameKey(a.id), nameKey(b.id)];
+    if (!na !== !nb) return na ? -1 : 1;
+    return na.localeCompare(nb, t('locale')) || given(P(a.id)).localeCompare(given(P(b.id)), t('locale'));
+  };
   const list = [...byKey.values()];
   for (const x of list) x.cites.sort(byName);
   return list.sort((a, b) => order(a.src.kind) - order(b.src.kind)
