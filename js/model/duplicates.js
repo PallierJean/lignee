@@ -102,9 +102,10 @@ export function mergedData(keep, drop, unionIds = new Map(), ids = {}) {
     return union ? 'union:' + union : eventIds.get(f) || f;
   };
   // Documents as the form has them (shared sources resolved): saving turns them back into citations
-  // With the ids, the unions' marriage documents come too, and follow the union kept
-  const all = (p, id) => (id ? sourcesOfPerson(id) : sourcesOf(p));
-  const sources = [...all(keep, ids.keep), ...all(drop, ids.drop).map((s) => ({ ...s, fact: fact(s.fact) }))];
+  // With the ids, the unions' marriage documents come too, and follow the union kept; `keepDocs`
+  // and `dropDocs`: the documents read before the unions changed
+  const all = (p, docs, id) => docs || (id ? sourcesOfPerson(id) : sourcesOf(p));
+  const sources = [...all(keep, ids.keepDocs, ids.keep), ...all(drop, ids.dropDocs, ids.drop).map((s) => ({ ...s, fact: fact(s.fact) }))];
   const media = [...(keep.media || []), ...(drop.media || [])];
   for (const [key, list] of [['events', events], ['media', media]]) {
     if (list.length) out[key] = list;

@@ -5,6 +5,7 @@ import { opSet, opUpdate, opDelete, inBatch, beginAction, commitAction } from '.
 import { closeUnionsAtDeath } from '../services/person-save.js';
 import { relationship } from '../model/kinship.js';
 import { mergedData } from '../model/duplicates.js';
+import { sourcesOfPerson } from '../model/sources.js';
 import { renamePatches } from '../model/places.js';
 import { deathDifferences } from '../model/insee.js';
 import { inseeMatch, ignoreInsee, confirmInsee } from '../services/insee.js';
@@ -94,6 +95,9 @@ export async function mergePeople(keep, drop) {
   beginAction('hist.merge');
   try {
     await inBatch(async () => {
+      // Both records' documents, read before the unions change: a union merged into its twin
+      // goes, and the marriage documents it cites must not go with it
+      const docs = { keep, drop, keepDocs: sourcesOfPerson(keep), dropDocs: sourcesOfPerson(drop) };
       const unionIds = new Map();
       for (const [uid, u] of [...S.unions]) {
         if (u.a !== drop && u.b !== drop) continue;
@@ -131,7 +135,7 @@ export async function mergePeople(keep, drop) {
         }
         if (Object.keys(patch).length) await opUpdate('people', id, patch);
       }
-      const merged = mergedData(P(keep), P(drop), unionIds, { keep, drop });
+      const merged = mergedData(P(keep), P(drop), unionIds, docs);
       merged.updatedAt = Date.now();
       for (const key of ['fatherId', 'motherId']) if (merged[key] === keep || merged[key] === drop) merged[key] = null;
       await opSet('people', keep, merged);

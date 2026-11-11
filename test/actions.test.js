@@ -804,6 +804,25 @@ describe('suppression, exemples, fusion', () => {
     assert.deepEqual([...S.sources.keys()].sort(), ['S1', 'S2']);
   });
 
+  test('fusion : l’acte de mariage porté par l’union fondue dans sa jumelle n’est pas perdu', async () => {
+    loadTree([
+      person('k', { given: 'Jean', surname: 'Roux', sex: 'M' }),
+      person('d', { given: 'Jean', surname: 'Roux', sex: 'M' }),
+      person('w', { given: 'Ana', sex: 'F' }),
+    ], [
+      { id: 'u1', a: 'k', b: 'w', date: '', place: '' },
+      { id: 'u2', a: 'd', b: 'w', date: '1920', place: 'Lyon', citations: [{ id: 'c1', source: 'S1' }] },
+    ]);
+    S.sources = new Map([['S1', { kind: 'marriage', title: 'Contrat de mariage', ref: 'n°7', photo: 'data:image/png;base64,AAAA' }]]);
+    await A.mergePeople('k', 'd');
+    assert.ok(!S.unions.has('u2'));
+    assert.deepEqual(S.unions.get('u1').citations.map((c) => c.source), ['S1'], 'l’acte suit l’union gardée');
+    assert.deepEqual(S.sources.get('S1'), { kind: 'marriage', title: 'Contrat de mariage', ref: 'n°7', photo: 'data:image/png;base64,AAAA' }, 'document intact');
+    assert.deepEqual(sourcesOfPerson('w').map((x) => [x.fact, x.title]), [['union:u1', 'Contrat de mariage']], 'l’épouse le voit toujours');
+    await A.undo();
+    assert.deepEqual(S.unions.get('u2').citations, [{ id: 'c1', source: 'S1' }], 'Ctrl+Z remet tout');
+  });
+
   test('fusion : enfants, unions, identifications et sources suivent', async () => {
     loadTree([
       person('k', { given: 'Jean', surname: 'Roux', sex: 'M', birthDate: '1900' }),
