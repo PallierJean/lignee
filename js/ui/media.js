@@ -5,7 +5,8 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, given, surname, maiden, fullName, lifeYears, mediaList, mediaLabel, photoSrc, peopleNamedIn, fileTitle } from '../model/people.js';
+import { P, given, surname, maiden, fullName, lifeYears, mediaList, mediaLabel, photoSrc, peopleNamedIn, fileTitle, SOURCE_KINDS } from '../model/people.js';
+import { sourcesOf } from '../model/sources.js';
 import { opUpdate, beginAction, commitAction, storePhoto } from '../services/storage.js';
 import { cropFree, cropTags } from './crop-free.js';
 import { photoFromFile, DOCUMENT_SIDE } from '../utils/image.js';
@@ -25,6 +26,7 @@ let editing = false; // caption being edited
 let sequence = [];    // [{ owner, id }]: the images of the grid it was opened from, in order
 let back = false;     // the back of the image is shown (contract, annotated photo)
 let askDelete = false; // the deletion of the image waits for its confirmation
+let askArchive = false; // moving the image to the archives waits for its kind
 
 const isDraft = () => !!current && current.draft !== undefined;
 const item = () => {
@@ -141,7 +143,15 @@ function deleteBlock() {
     ? `<label class="link"><input type="file" accept="image/*" class="sr" data-media-back="1">${t('med.backChange')}</label> · `
       + `<button class="link" type="button" data-act="media-back-remove">${t('med.backRemove')}</button> · `
     : `<label class="link"><input type="file" accept="image/*" class="sr" data-media-back="1">${t('med.backAdd')}</label> · `;
-  if (!askDelete) return `<p class="media-delete">${crop}${side}<button class="link" type="button" data-act="media-delete">${t('med.delete')}</button></p>`;
+  if (askArchive) {
+    const kinds = SOURCE_KINDS.map((k) => `<option value="${k}"${k === 'family' ? ' selected' : ''}>${esc(t('src.' + k))}</option>`).join('');
+    return `<div class="confirm media-delete"><p>${t('med.archiveAsk')}</p>`
+      + `<label class="fld"><span>${t('f.srcKind')}</span><select id="archiveKind">${kinds}</select></label>`
+      + `<button class="btn small primary" type="button" data-act="media-archive-yes">${t('med.archiveYes')}</button>`
+      + `<button class="btn small" type="button" data-act="media-archive-no">${t('cancel')}</button></div>`;
+  }
+  const archive = `<button class="link" type="button" data-act="media-archive">${t('med.archive')}</button> · `;
+  if (!askDelete) return `<p class="media-delete">${crop}${side}${archive}<button class="link" type="button" data-act="media-delete">${t('med.delete')}</button></p>`;
   return `<div class="confirm media-delete"><p>${t('med.deleteAsk', esc(fullName(P(current.owner))))}</p>`
     + `<button class="btn small danger" type="button" data-act="media-delete-yes">${t('med.deleteYes')}</button>`
     + `<button class="btn small" type="button" data-act="media-delete-no">${t('cancel')}</button></div>`;
@@ -268,7 +278,65 @@ export function askMediaDelete(on) {
     return;
   }
   askDelete = on;
+  askArchive = false;
   renderMedia();
+}
+
+/** Asks (true) or no longer asks the kind of document, before moving the image to the archives. */
+export function askMediaArchive(on) {
+  const busy = on && item() && [current.owner, ...tagsOf(item()).map((x) => x.id)].some((id) => S.edit && S.edit.id === id);
+  if (busy) {
+    toast(t('finishFirst')); // the record form would bring the image back, or drop the source, when saving
+    return;
+  }
+  askArchive = on;
+  askDelete = false;
+  renderMedia();
+}
+
+/** After the image shown left the gallery: the viewer goes on to the next image, or closes. */
+function leaveCurrent(owner, id) {
+  // The next image first: the page redrawn afterwards would close a viewer showing a gone image
+  const at = sequence.findIndex((x) => x.owner === owner && x.id === id);
+  sequence = sequence.filter((x) => !(x.owner === owner && x.id === id));
+  if (sequence.length) {
+    current = { ...sequence[Math.max(0, Math.min(at, sequence.length - 1))] };
+    back = false;
+  } else closeMedia();
+  afterData();
+  if (current) renderMedia();
+}
+
+/**
+ * Moves the image shown to the archives: it leaves the gallery and becomes a source of `kind`
+ * (front, back, title, date and note kept), cited by its owner and by the people identified on
+ * it, for their whole record. One undoable action.
+ */
+export async function archiveMedia(kind) {
+  const m = item();
+  if (!m || isDraft() || !S.canWrite) return;
+  const { owner, id } = current;
+  askArchive = false;
+  const source = rid('S');
+  const doc = {
+    source, fact: '', kind: SOURCE_KINDS.includes(kind) ? kind : 'other', title: m.title || '',
+    note: [m.date, m.note].filter(Boolean).join(' — '), photo: m.photo, ...(photoSrc(m.back) ? { back: m.back } : {}),
+  };
+  const citers = [...new Set([owner, ...tagsOf(m).map((x) => x.id)])].filter((pid) => P(pid));
+  beginAction('hist.mediaArchive');
+  try {
+    for (const pid of citers) {
+      const patch = { sources: [...sourcesOf(P(pid)), { ...doc, id: rid('c') }] };
+      if (pid === owner) patch.media = mediaList(P(owner)).filter((x) => x.id !== id);
+      await opUpdate('people', pid, patch);
+    }
+  } catch (e) {
+    reportError(e);
+  } finally {
+    commitAction();
+  }
+  leaveCurrent(owner, id);
+  toast(t('med.archived'));
 }
 
 /**
@@ -280,6 +348,7 @@ export async function deleteMedia() {
   if (!m || isDraft() || !S.canWrite) return;
   const { owner, id } = current;
   askDelete = false;
+  askArchive = false;
   beginAction('hist.mediaDelete');
   try {
     await opUpdate('people', owner, { media: mediaList(P(owner)).filter((x) => x.id !== id) });
@@ -288,15 +357,7 @@ export async function deleteMedia() {
   } finally {
     commitAction();
   }
-  // The next image first: the page redrawn afterwards would close a viewer showing a deleted image
-  const at = sequence.findIndex((x) => x.owner === owner && x.id === id);
-  sequence = sequence.filter((x) => !(x.owner === owner && x.id === id));
-  if (sequence.length) {
-    current = { ...sequence[Math.max(0, Math.min(at, sequence.length - 1))] };
-    back = false;
-  } else closeMedia();
-  afterData();
-  if (current) renderMedia();
+  leaveCurrent(owner, id);
   toast(t('med.deleted'));
 }
 
@@ -393,6 +454,7 @@ export function openMedia(owner, id, group = '') {
   sequence = (mediaGroups.get(group) || []).filter((x) => P(x.owner));
   back = false;
   askDelete = false;
+  askArchive = false;
   pin = null;
   editing = false;
   $('#mediaDlg').hidden = false;
@@ -410,6 +472,7 @@ export function stepMedia(d) {
   current = { ...sequence[(at + d + sequence.length) % sequence.length] };
   back = false;
   askDelete = false;
+  askArchive = false;
   renderMedia();
   return true;
 }
