@@ -1,8 +1,8 @@
 /** "Import" and "Export" dialogs: GEDCOM, Lignée backup and GitHub repository. */
-import { S, services, treeName } from '../state.js';
+import { S, treeName } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { pool, norm } from '../utils/helpers.js';
-import { mapOf, dbSet, saveLocal, storePhotos, buildPortableBackup, beginAction, commitAction, track } from '../services/storage.js';
+import { mapOf, saveLocal, storePhotos, buildPortableBackup, beginAction, commitAction, track } from '../services/storage.js';
 import { buildRegisterCsv } from '../services/csv.js';
 import { buildGedcom, parseGedcom } from '../services/gedcom.js';
 import { parseBackup } from '../services/backup.js';
@@ -14,8 +14,6 @@ import { linkRepo, connectTree, holdsTree, savedRepo } from './repo-link.js';
 import { markExported } from '../services/exported.js';
 import { renderHeader } from './header.js';
 import { t } from '../i18n.js';
-
-const inClaude = () => !!(window.claude && window.claude.use);
 
 /** Start of exported file names, from the tree name: "lignee-famille-dupont". */
 export const fileBase = () => ['lignee', norm(treeName()).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')]
@@ -35,8 +33,6 @@ export function openTransfer(mode) {
   $('#exportSection').hidden = mode === 'import';
   $('#importSection').hidden = mode !== 'import';
   $('#exportHint').textContent = '';
-  $('#exportText').hidden = true;
-  $('#copyRow').hidden = true;
   if (!S.pending) $('#importInfo').innerHTML = '';
   $('#importFile').value = '';
   $('#repoToken').value = '';
@@ -57,7 +53,7 @@ export function closeTransfer() {
 
 /* ---------- Export ---------- */
 
-/** Direct download (regular browser, outside claude.ai). */
+/** Direct download of a text file. */
 export function downloadBlob(filename, text, type) {
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement('a');
@@ -69,47 +65,11 @@ export function downloadBlob(filename, text, type) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/**
- * Offers the file to the user.
- * - Outside claude.ai: direct download.
- * - In claude.ai: the platform's download service,
- *   otherwise the text is shown for copying.
- */
-/** Offers the file to the user; returns true if it was handed over (downloaded or saved). */
-async function saveFile({ filename, standaloneName = filename, type, text, hint, standaloneHint = hint }) {
-  const hintEl = $('#exportHint');
-  $('#exportText').hidden = true;
-  $('#copyRow').hidden = true;
-
-  if (!inClaude()) {
-    downloadBlob(standaloneName, text, type);
-    hintEl.textContent = standaloneHint;
-    return true;
-  }
-
-  if (services.downloads) {
-    try {
-      await services.downloads.save({ filename, data: text });
-      hintEl.textContent = hint;
-      return true;
-    } catch (e) {
-      const code = e && e.code;
-      if (code === 'declined') {
-        hintEl.textContent = t('tr.declined');
-        return;
-      }
-      if (code === 'rate_limited') {
-        hintEl.textContent = t('tr.rateLimited');
-        return;
-      }
-    }
-  }
-
-  hintEl.textContent = t('tr.noDownload');
-  const textarea = $('#exportText');
-  textarea.value = text;
-  textarea.hidden = false;
-  $('#copyRow').hidden = false;
+/** Downloads the file and says where it went; returns true. */
+function saveFile({ filename, type, text, hint }) {
+  downloadBlob(filename, text, type);
+  $('#exportHint').textContent = hint;
+  return true;
 }
 
 export async function exportGedcom() {
@@ -118,14 +78,7 @@ export async function exportGedcom() {
     return;
   }
   const name = fileBase() + '.ged';
-  const saved = await saveFile({
-    filename: name + '.txt',               // claude.ai doesn't accept the .ged extension
-    standaloneName: name,
-    type: 'text/plain;charset=utf-8',
-    text: buildGedcom(),
-    hint: t('tr.gedHint', name),
-    standaloneHint: t('tr.gedHintStandalone', name),
-  });
+  const saved = saveFile({ filename: name, type: 'text/plain;charset=utf-8', text: buildGedcom(), hint: t('tr.gedHint', name) });
   if (saved) exported();
 }
 
@@ -141,7 +94,7 @@ export async function exportBackup() {
     $('#exportHint').textContent = t('tr.empty');
     return;
   }
-  const saved = await saveFile({
+  const saved = saveFile({
     filename: fileBase() + '-' + t('tr.backupSuffix') + '.json',
     type: 'application/json',
     text: await buildPortableBackup(),
@@ -156,19 +109,7 @@ export async function exportCsv() {
     return;
   }
   const name = fileBase() + '-' + t('tr.csvSuffix') + '.csv';
-  await saveFile({ filename: name, type: 'text/csv;charset=utf-8', text: buildRegisterCsv(), hint: t('tr.csvHint', name) });
-}
-
-export async function copyExport() {
-  const textarea = $('#exportText');
-  try {
-    await navigator.clipboard.writeText(textarea.value);
-    toast(t('tr.copied'));
-  } catch (e) {
-    textarea.focus();
-    textarea.select();
-    toast(t('tr.selected'));
-  }
+  saveFile({ filename: name, type: 'text/csv;charset=utf-8', text: buildRegisterCsv(), hint: t('tr.csvHint', name) });
 }
 
 /* ---------- Import ---------- */
@@ -338,7 +279,6 @@ export async function importGo(asNew) {
     const write = async ([collection, x]) => {
       track(collection, x.id);
       mapOf(collection).set(x.id, x.data);
-      if (S.mode === 'db') await dbSet(collection, x.id, x.data);
       x.done = true;
       done++;
       if (done % 10 === 0 || done === total) showProgress();
@@ -347,7 +287,7 @@ export async function importGo(asNew) {
     await pool(items.filter(([c]) => c === 'people'), 4, write);
     await pool(items.filter(([c]) => c === 'unions'), 4, write);
     await storePhotos(); // file mode: imported photos become files
-    if (S.mode !== 'db') await saveLocal();
+    await saveLocal();
     commitAction();
 
     // A tree that already had other people doesn't go back to the repository
@@ -363,7 +303,7 @@ export async function importGo(asNew) {
     if (asNew) closeTransfer();
   } catch (e) {
     reportError(e);
-    if (S.mode !== 'db') await Promise.resolve(saveLocal()).catch(() => {}); // message already shown
+    await Promise.resolve().then(saveLocal).catch(() => {}); // message already shown
     commitAction();
     info.innerHTML = `<p class="err">${t('tr.stopped', done, total)}</p>`
       + `<button class="btn primary" type="button" data-act="import-go">${t('tr.resume')}</button>`;

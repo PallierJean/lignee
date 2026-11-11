@@ -9,7 +9,7 @@ import { avatarOf, birthSurname, DATED_SITUATIONS, situationOfUnion } from './mo
 import { situationOptions } from './ui/form.js';
 import * as A from './actions.js';
 import {
-  openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo,
+  openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo,
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
 import {
@@ -327,7 +327,6 @@ const CLICK_ACTIONS = {
     openTransfer('export');
     exportCsv();
   },
-  'copy-export': () => copyExport(),
   'repo-connect': (el) => connectRepo(el),
   'repo-connect-open': once(connectOpenedRepo),
   'repo-link-open': () => {

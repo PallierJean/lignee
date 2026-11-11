@@ -3,11 +3,11 @@ import { test, describe, before, after, beforeEach } from 'node:test';
 import { mkdtemp, rm, readdir, readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { S, services, loadPrefs, savePrefs, treeName } from '../js/state.js';
+import { S, loadPrefs, savePrefs, treeName } from '../js/state.js';
 import { createServer } from '../server.js';
 import {
   loadFile, loadLocal, seedExample, saveLocal, inBatch, opSet, opUpdate, opDelete, openTree, createTree, renameTree, deleteTree, storePhoto, storePhotos,
-  buildPortableBackup, withRetry, subscribe, beginAction, commitAction, undoAction,
+  buildPortableBackup, beginAction, commitAction, undoAction,
 } from '../js/services/storage.js';
 import { PREF_KEY, TREES_KEY, TREE_KEY } from '../js/config.js';
 import { loadTree, person, resetApp } from './helpers.js';
@@ -307,122 +307,6 @@ describe('mode navigateur', () => {
     await opUpdate('people', 'big', { given: 'Bigger' });
     assert.equal(el('toast').textContent, '');
     await opDelete('people', 'big');
-  });
-});
-
-describe('base en ligne', () => {
-  /** Fausse base : collections en mémoire, abonnements relancés à chaque écriture. */
-  function fakeDb() {
-    const data = { people: new Map(), unions: new Map(), sources: new Map(), trees: new Map() };
-    const subs = {};
-    const emit = (c) => (subs[c] || []).forEach((fn) => fn({ docs: [...data[c]].map(([id, d]) => ({ id, data: () => d })) }));
-    return {
-      data,
-      emit,
-      collection: (c) => ({
-        doc: (id) => ({
-          set: async (d) => { data[c].set(id, d); emit(c); },
-          update: async (p) => { data[c].set(id, { ...data[c].get(id), ...p }); emit(c); },
-          delete: async () => { data[c].delete(id); emit(c); },
-        }),
-        onSnapshot: (fn, err) => { (subs[c] = subs[c] || []).push(fn); subs['err' + c] = err; fn({ docs: [] }); },
-      }),
-      fail: (c, e) => subs['err' + c](e),
-    };
-  }
-
-  beforeEach(() => {
-    resetApp();
-    S.mode = 'db';
-    S.loadedP = S.loadedU = S.loadedS = S.loadedT = false;
-    services.db = fakeDb();
-    subscribe();
-  });
-
-  test('écritures et synchronisation, par arbre', async () => {
-    assert.ok(S.trees.has('principal'));
-    await opSet('people', 'a', { given: 'Ana' });
-    await opUpdate('people', 'a', { surname: 'Roux' });
-    assert.equal(S.people.get('a').surname, 'Roux');
-    assert.equal(services.db.data.people.get('a').tree, 'principal');
-    const id = await createTree('Autre');
-    await openTree(id);
-    assert.equal(S.people.size, 0);
-    await opSet('people', 'b', { given: 'Bob' });
-    await renameTree(id, 'Nouveau');
-    await openTree('principal');
-    assert.ok(S.people.has('a') && !S.people.has('b'));
-    await deleteTree(id);
-    assert.ok(!services.db.data.people.has('b'));
-    await opDelete('people', 'a');
-    assert.equal(S.people.size, 0);
-  });
-
-  test('batch: patches keep others\' fields, snapshots wait, a failure is undone', async () => {
-    await opSet('people', 'a', { given: 'Ana', notes: 'old' });
-    await opSet('people', 'b', { given: 'Bob' });
-    // Someone else changes the notes: the batch's patch doesn't bring the old ones back
-    services.db.data.people.set('a', { ...services.db.data.people.get('a'), notes: 'theirs' });
-    let seen;
-    await inBatch(async () => {
-      await opUpdate('people', 'a', { surname: 'Roux' });
-      await opSet('people', 'c', { given: 'Cy' });
-      services.db.emit('people'); // a snapshot during the batch
-      seen = S.people.has('c');
-    });
-    assert.equal(seen, true, 'the snapshot didn\'t wipe the batch\'s writes');
-    assert.equal(services.db.data.people.get('a').notes, 'theirs');
-    assert.equal(services.db.data.people.get('a').surname, 'Roux');
-    assert.ok(S.people.has('c'));
-    // The second write fails: the first one is put back
-    const real = services.db.collection;
-    services.db.collection = (c) => {
-      const col = real(c);
-      return { ...col, doc: (id) => (id === 'b' ? { ...col.doc(id), update: async () => { throw Object.assign(new Error('x'), { code: 'internal' }); } } : col.doc(id)) };
-    };
-    try {
-      await assert.rejects(inBatch(async () => {
-        await opUpdate('people', 'a', { surname: 'Noir' });
-        await opUpdate('people', 'b', { surname: 'Noir' });
-      }));
-    } finally {
-      services.db.collection = real;
-    }
-    assert.equal(services.db.data.people.get('a').surname, 'Roux');
-    assert.equal(S.people.get('a').surname, 'Roux');
-    assert.equal(S.people.get('b').surname, undefined);
-  });
-
-  test('annuler réécrit les documents touchés', async () => {
-    await opSet('people', 'a', { given: 'Ana' });
-    beginAction('hist.delete');
-    await opDelete('people', 'a');
-    commitAction();
-    await undoAction();
-    assert.equal(S.people.get('a').given, 'Ana');
-    assert.ok(services.db.data.people.has('a'));
-  });
-
-  test('erreurs d’écriture : réessai, droits, quota, message', async () => {
-    let n = 0;
-    assert.equal(await withRetry(async () => {
-      if (n++ === 0) throw { code: 'unavailable' };
-      return 'ok';
-    }), 'ok');
-    await assert.rejects(withRetry(async () => { throw { code: 'invalid_argument' }; }));
-    assert.equal(S.canWrite, false);
-    S.canWrite = true;
-    await assert.rejects(withRetry(async () => { throw { code: 'quota_exceeded' }; }));
-    assert.match(el('toast').textContent, /pleine/);
-    await assert.rejects(withRetry(async () => { throw { code: 'revoked' }; }));
-    assert.equal(S.canWrite, false);
-    await assert.rejects(withRetry(async () => { throw new Error('x'); }));
-    assert.match(el('toast').textContent, /échoué/);
-  });
-
-  test('abonnement révoqué : lecture seule', () => {
-    services.db.fail('people', { code: 'revoked' });
-    assert.equal(S.canWrite, false);
   });
 });
 

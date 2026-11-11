@@ -1,4 +1,4 @@
-/** Tree collection: rules shared by the three storage modes. */
+/** Tree collection: rules shared by the storage modes. */
 import { S } from '../../state.js';
 import { DEFAULT_TREE } from '../../config.js';
 import { t } from '../../i18n.js';

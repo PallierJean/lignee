@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 test('shown inside another site: only a link to open the application on its own', async () => {
-  delete window.claude;
   window.top = {};
   globalThis.location = { href: 'https://example.org/lignee/' };
   await import('../js/main.js');

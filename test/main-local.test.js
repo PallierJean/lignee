@@ -6,8 +6,7 @@ import { EXAMPLE_FILE } from '../js/config.js';
 
 const settle = () => new Promise((r) => setTimeout(r, 30));
 
-test('startup outside claude.ai without the local server: browser storage and example family', async () => {
-  delete window.claude;
+test('startup without the local server: browser storage and example family', async () => {
   const fetched = [];
   globalThis.fetch = async (url) => {
     fetched.push(String(url));
@@ -18,7 +17,6 @@ test('startup outside claude.ai without the local server: browser storage and ex
   await import('../js/main.js');
   await settle();
   assert.equal(S.mode, 'local');
-  assert.ok(S.loadedP && S.loadedU);
   assert.ok(S.people.size > 0, 'the example family is shown');
   assert.equal(document.getElementById('appVersion').textContent, 'v9.9.9');
   assert.ok(fetched.includes('package.json'));
