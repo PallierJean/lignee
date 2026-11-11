@@ -258,13 +258,56 @@ describe('bandeaux', () => {
     assert.ok(html('repoBanner').includes('Dernière sauvegarde'));
   });
 
-  test('dépôt changé entretemps : rien n’est écrit, message affiché', async () => {
-    await load(true);
+  const pushed = () => JSON.parse(calls.find((c) => c.url.endsWith('/git/trees')).body.tree.find((x) => x.path === 'principal.json').content);
+
+  test('dépôt changé entretemps : ses modifications sont fusionnées, puis l’arbre part', async () => {
+    const files = { 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' };
+    serve(files, 0, true);
+    el('repoToken').value = 'jeton';
+    await connectRepo(el('repoConnect'));
+    await importGo(true);
+    const [id] = S.people.keys();
+    S.people.set(id, { ...S.people.get(id), birthPlace: 'Lyon' });
+    files['principal.json'] = JSON.stringify({
+      format: 'lignee', name: 'Famille',
+      people: [{ id, given: 'Ana', surname: 'Durand', photo: 'photos/Ané.jpg' }, { id: 'b', given: 'Bruno' }],
+      unions: [],
+    });
+    head = 'c1';
+    calls.length = 0;
+    await saveRepo();
+    assert.equal(S.repoError, '');
+    assert.deepEqual(calls.find((c) => c.url.endsWith('/git/commits')).body.parents, ['c1']);
+    const json = pushed();
+    assert.deepEqual(json.people.find((p) => p.id === id), { id, given: 'Ana', surname: 'Durand', birthPlace: 'Lyon', photo: 'photos/Ané.jpg' });
+    assert.ok(json.people.some((p) => p.id === 'b'));
+    assert.equal(S.people.get(id).surname, 'Durand');
+    assert.match(S.people.get(id).photo, /^data:image\/jpeg/);
+    assert.equal(S.people.get('b').given, 'Bruno');
+    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')), 'photo connue : pas renvoyée');
+  });
+
+  test('même champ changé des deux côtés : choix demandé, rien n’est écrit avant', async () => {
+    const files = { 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img' };
+    serve(files, 0, true);
+    el('repoToken').value = 'jeton';
+    await connectRepo(el('repoConnect'));
+    await importGo(true);
+    const [id] = S.people.keys();
+    S.people.set(id, { ...S.people.get(id), given: 'Anne' });
+    files['principal.json'] = JSON.stringify({ format: 'lignee', people: [{ id, given: 'Anna', photo: 'photos/Ané.jpg' }], unions: [] });
     head = 'c1';
     calls.length = 0;
     await saveRepo();
     assert.ok(calls.every((c) => c.method === 'GET'));
-    assert.ok(html('repoBanner').includes('a changé'));
+    assert.ok(html('repoBanner').includes('des deux côtés'));
+    assert.ok(html('repoBanner').includes('Anne'));
+    assert.equal(S.people.get(id).given, 'Anne');
+
+    await saveRepo(true, 'theirs');
+    assert.equal(S.repoConflicts, null);
+    assert.equal(S.people.get(id).given, 'Anna');
+    assert.equal(pushed().people[0].given, 'Anna');
   });
 
   test('un autre arbre ouvert : ni bandeau ni envoi', async () => {

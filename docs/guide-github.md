@@ -99,6 +99,11 @@ ensemble.
 Sur GitHub, le dépôt garde l'historique de chaque sauvegarde : vous pouvez revenir à une version
 précédente.
 
+**À plusieurs sur le même arbre.** Invitez vos proches sur le dépôt : chacun crée son propre jeton.
+Si quelqu'un a sauvegardé depuis que vous avez chargé l'arbre, Lignée reprend ses modifications
+avant d'envoyer les vôtres. Si vous avez changé tous les deux la même information d'une fiche,
+le bandeau vous demande laquelle garder.
+
 ## Les fois suivantes
 
 Lignée retient à quel dépôt chaque arbre est relié, mais jamais le jeton. Après avoir rechargé
@@ -114,7 +119,7 @@ Sur un autre ordinateur, refaites l'étape 5 : Lignée ouvre la dernière sauveg
 | « GitHub refuse ce jeton : il est incorrect ou expiré » | Vérifiez que le jeton est copié en entier, ou créez-en un nouveau (étape 4) |
 | « GitHub refuse l'accès… » | Le jeton n'a pas accès à ce dépôt, ou pas en écriture : revoyez **Repository access** et **Contents** |
 | Bandeau « Lecture seule » | Le jeton n'a que la lecture : réglez **Contents** sur **Read and write** |
-| « Le dépôt a changé depuis son chargement » | Le dépôt a été modifié ailleurs (autre ordinateur, autre onglet). Rechargez-le avant de sauvegarder |
+| « Le dépôt a changé depuis son chargement » | Le dépôt a encore changé pendant la fusion, plusieurs fois de suite. Réessayez dans un instant, ou rechargez-le |
 
 Pour les détails techniques (dispositions de fichiers acceptées, conflits), voir
 [GitHub](features/github.md).

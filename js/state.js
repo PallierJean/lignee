@@ -43,6 +43,7 @@ export const S = {
   confirmDel: false,     // delete confirmation shown
   repoLink: null,        // GitHub repository linked to a tree; never stored, the token stays in memory
   repoConfirm: false,    // confirmation of the save to the repository shown
+  repoConflicts: null,   // names of the records changed on both sides, waiting for a choice
   repoError: '',         // last save failed
   repoSavedAt: '',       // time of the last save
   confirmEx: false,      // confirmation of removing the examples shown
