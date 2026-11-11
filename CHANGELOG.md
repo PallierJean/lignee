@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.3.0](https://github.com/PallierJean/lignee/compare/v3.2.0...v3.3.0) (2026-11-11)
+
+### Features
+
+* Add, crop and identify photos more easily in the gallery ([446c2d8](https://github.com/PallierJean/lignee/commit/446c2d8fbaad05ad23dad20965e20cf2c531dc25))
+* Delete an image from the gallery viewer ([f30a696](https://github.com/PallierJean/lignee/commit/f30a69631ce001e7051dfc37cc010157e7ac090f))
+* Identify people when adding a photo, and drop meaningless titles ([b1a7e0f](https://github.com/PallierJean/lignee/commit/b1a7e0f0c3fe5da5b02dca1f629d5b41784dcc18))
+
+---
+
+### Nouveautés
+
+* La galerie commence par une case « Ajouter des photos ». Les images se recadrent librement, dès l'ajout ou plus tard. Pour identifier une personne sur une photo, un champ de recherche remplace la longue liste de noms. ([446c2d8](https://github.com/PallierJean/lignee/commit/446c2d8fbaad05ad23dad20965e20cf2c531dc25))
+* La visionneuse de la galerie permet maintenant de supprimer une image, après confirmation ; Ctrl+Z l'annule. ([f30a696](https://github.com/PallierJean/lignee/commit/f30a69631ce001e7051dfc37cc010157e7ac090f))
+* Vous pouvez identifier les personnes sur une photo dès son ajout, depuis le formulaire. L'intitulé devient facultatif : sans lui, Lignée affiche les personnes identifiées et la date, et ne reprend plus les noms de fichier comme « IMG_1234 ». ([b1a7e0f](https://github.com/PallierJean/lignee/commit/b1a7e0f0c3fe5da5b02dca1f629d5b41784dcc18))
+
 ## [3.2.0](https://github.com/PallierJean/lignee/compare/v3.1.0...v3.2.0) (2026-11-11)
 
 ### Features
