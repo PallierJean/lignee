@@ -6,8 +6,7 @@ import { renderHeader } from '../js/ui/header.js';
 import { renderAll, afterData, renderRecord } from '../js/ui/render.js';
 import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
 import {
-  openMedia, closeMedia, stepMedia, showMediaSide, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption,
-} from '../js/ui/media.js';
+  openMedia, closeMedia, stepMedia, showMediaSide, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption, onTagFind } from '../js/ui/media.js';
 import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind } from '../js/ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from '../js/ui/spouse-pick.js';
 import { resetHistory } from '../js/services/history.js';
@@ -351,14 +350,20 @@ describe('fiche : événements, sources, galerie', () => {
     const pic = el('mediaPic');
     pic.querySelector = () => ({ getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 100 }) });
     placePin(pic, { target: { closest: () => null }, clientX: 100, clientY: 50 });
-    assert.ok(html('mediaCard').includes('id="tagPerson"'));
-    assert.doesNotMatch(html('mediaCard'), /Nommés dans la légende/, 'pas de nom complet dans la légende');
+    assert.ok(html('mediaCard').includes('id="tagFind"'), 'un champ de recherche, pas une liste de 200 noms');
+    assert.match(html('mediaCard'), /Tapez un nom/, 'personne nommée dans la légende : rien à proposer d’office');
     S.people.get('a').media[0].note = 'Avec Léa Blanc';
     S.people.get('c').surname = 'Blanc';
     placePin(pic, { target: { closest: () => null }, clientX: 100, clientY: 50 });
-    assert.match(html('mediaCard'), /<optgroup label="Nommés dans la légende"><option value="c">Léa BLANC<\/option><\/optgroup>/);
+    assert.match(html('mediaCard'), /data-act="tag-pick" data-id="c">Léa BLANC/, 'nommée dans la légende : proposée d’office');
+    // La recherche ne redessine que les résultats ; les personnes déjà identifiées ne sont pas proposées
+    onTagFind('blanc');
+    assert.match(el('tagHits').innerHTML, /data-id="c">Léa BLANC/);
+    assert.doesNotMatch(el('tagHits').innerHTML, /Paul BLANC/, 'déjà identifié');
+    onTagFind('zzz');
+    assert.match(el('tagHits').innerHTML, /Personne ne correspond/);
     cancelPin();
-    assert.ok(!html('mediaCard').includes('id="tagPerson"'));
+    assert.ok(!html('mediaCard').includes('id="tagFind"'));
     placePin(pic, { target: { closest: () => null }, clientX: 100, clientY: 50 });
     await addTag('c');
     assert.equal(S.people.get('a').media[0].tags.length, 2);

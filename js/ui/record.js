@@ -14,7 +14,7 @@ import { occupationLabel } from '../model/occupations.js';
 /** Images of each grid shown, in order: group -> [{ owner, id }] (see ui/media.js). */
 export const mediaGroups = new Map();
 
-export function mediaGrid(items, group = '') {
+export function mediaGrid(items, group = '', lead = '') {
   // On each thumbnail, the number of people identified
   const count = (m) => (Array.isArray(m.tags) ? m.tags.filter((x) => x && P(x.id)).length : 0);
   const shown = items.filter(({ m }) => photoSrc(m.photo));
@@ -25,7 +25,14 @@ export function mediaGrid(items, group = '') {
     + `<img src="${esc(photoSrc(m.photo))}" alt="${esc(mediaLabel(m))}">`
     + (count(m) ? `<span class="med-n" title="${esc(t('med.taggedN', count(m)))}">${count(m)}</span>` : '')
     + (photoSrc(m.back) ? `<span class="med-rv" title="${t('med.hasBack')}">${t('med.rv')}</span>` : '') + '</button>');
-  return cells.length ? `<div class="meds">${cells.join('')}</div>` : '';
+  return cells.length || lead ? `<div class="meds">${lead}${cells.join('')}</div>` : '';
+}
+
+/** First cell of a gallery: adds photos to `owner`'s gallery (they open in the viewer, to identify the people). */
+export function addMediaTile(owner) {
+  if (!S.canWrite || !P(owner)) return '';
+  return `<label class="med med-add" title="${esc(t('med.addTo', fullName(P(owner))))}"><input type="file" accept="image/*" multiple class="sr" data-gal-add="${esc(owner)}">`
+    + `<span class="plus" aria-hidden="true">+</span><small>${t('med.add')}</small></label>`;
 }
 
 /** A person's sources: certificate, supported fact, reference, note and document. */
@@ -161,7 +168,7 @@ export function recordHTML(id) {
       </div>
     </section>` : ''}
 
-    ${mediaOf(id).length ? `<section class="rel"><h3>${t('media')} <span class="n">${mediaOf(id).length}</span></h3>${mediaGrid(mediaOf(id), 'person:' + id)}`
+    ${mediaOf(id).length || S.canWrite ? `<section class="rel"><h3>${t('media')} <span class="n">${mediaOf(id).length || ''}</span></h3>${mediaGrid(mediaOf(id), 'person:' + id, addMediaTile(id))}`
       + `${S.canWrite ? `<p class="hint">${t('med.galleryHint')}</p>` : ''}</section>` : ''}
 
     ${sourcesOfPerson(id).length ? `<section class="rel"><h3>${t('sources')} <span class="n">${sourcesOfPerson(id).length}</span></h3>${sourcesHTML(id)}</section>` : ''}

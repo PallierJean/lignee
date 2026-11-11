@@ -5,10 +5,14 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, given, surname, maiden, fullName, lifeYears, mediaList, mediaLabel, photoSrc, peopleNamedIn } from '../model/people.js';
-import { opUpdate, beginAction, commitAction } from '../services/storage.js';
+import { P, given, surname, maiden, fullName, lifeYears, mediaList, mediaLabel, photoSrc, peopleNamedIn, fileTitle } from '../model/people.js';
+import { opUpdate, beginAction, commitAction, storePhoto } from '../services/storage.js';
+import { cropFree, cropTags } from './crop-free.js';
+import { photoFromFile, DOCUMENT_SIDE } from '../utils/image.js';
+import { rid } from '../utils/helpers.js';
 import { emit } from '../services/notify.js';
-import { personOptions, captureDraft } from './form.js';
+import { captureDraft } from './form.js';
+import { searchPeople } from './search.js';
 import { toast, reportError } from './toast.js';
 import { mediaGroups } from './record.js';
 
@@ -63,13 +67,10 @@ export function renderMedia() {
   // People named in the caption, not yet identified, at the top of the list
   const tagged = new Set(tags.map((x) => x.id));
   const named = peopleNamedIn([m.title, m.note].join(' ')).filter((id) => !tagged.has(id));
-  const options = named.length
-    ? `<optgroup label="${t('med.named')}">${named.map((id) => `<option value="${esc(id)}">${esc(fullName(P(id)))}</option>`).join('')}</optgroup>`
-      + `<optgroup label="${t('med.everyone')}">${personOptions('')}</optgroup>`
-    : personOptions('');
   const picker = pin
-    ? `<div class="row-btns tag-pick"><select id="tagPerson" aria-label="${t('med.who')}"><option value="">${t('med.who')}</option>${options}</select>`
-      + `<button class="btn small" type="button" data-act="tag-cancel">${t('cancel')}</button></div>`
+    ? `<div class="tag-pick"><input id="tagFind" type="search" autocomplete="off" placeholder="${t('med.whoSearch')}" aria-label="${t('med.who')}">`
+      + `<button class="btn small" type="button" data-act="tag-cancel">${t('cancel')}</button>`
+      + `<ul class="tag-hits" id="tagHits">${tagHits('', named, tagged)}</ul></div>`
     : '';
   // The instruction above the image: that's where you click
   const hint = back ? `<p class="hint tag-hint">${t('med.backHint')}</p>`
@@ -97,12 +98,118 @@ export function renderMedia() {
     + (isDraft() || !S.canWrite || editing ? '' : deleteBlock()));
 }
 
-/** Deleting the image: a link, then a confirmation that says where it disappears. */
+const TAG_HITS = 12; // people listed while searching whom to identify
+
+/**
+ * People to identify, as buttons: those matching `query` (name, places, dates), or, with an empty
+ * query, those named in the caption. People already identified on the image aren't offered.
+ */
+function tagHits(query, named, tagged) {
+  const ids = String(query || '').trim()
+    ? searchPeople(query, TAG_HITS, tagged).ids
+    : named;
+  if (!ids.length) return `<li class="hint">${t(String(query || '').trim() ? 'med.noHit' : 'med.typeName')}</li>`;
+  return ids.map((id) => {
+    const years = lifeYears(P(id));
+    return `<li><button type="button" data-act="tag-pick" data-id="${esc(id)}">${esc(fullName(P(id)))}${years ? ` <small>${esc(years)}</small>` : ''}</button></li>`;
+  }).join('');
+}
+
+/** Search typed in the "who is it?" field: only the results are redrawn, the field keeps the cursor. */
+export function onTagFind(query) {
+  const m = item();
+  const list = document.getElementById('tagHits');
+  if (!m || !list) return;
+  const tagged = new Set(tagsOf(m).map((x) => x.id));
+  list.innerHTML = tagHits(query, [], tagged);
+}
+
+/** Enter in the "who is it?" field: the first result. */
+export function pickFirstTag() {
+  const first = document.querySelector('#tagHits [data-act="tag-pick"]');
+  if (first) addTag(first.dataset.id);
+}
+
+/** Cropping and deleting the image: links, then a confirmation that says where it disappears. */
 function deleteBlock() {
-  if (!askDelete) return `<p class="media-delete"><button class="link" type="button" data-act="media-delete">${t('med.delete')}</button></p>`;
+  const crop = back ? '' : `<button class="link" type="button" data-act="media-crop">${t('med.crop')}</button> · `;
+  if (!askDelete) return `<p class="media-delete">${crop}<button class="link" type="button" data-act="media-delete">${t('med.delete')}</button></p>`;
   return `<div class="confirm media-delete"><p>${t('med.deleteAsk', esc(fullName(P(current.owner))))}</p>`
     + `<button class="btn small danger" type="button" data-act="media-delete-yes">${t('med.deleteYes')}</button>`
     + `<button class="btn small" type="button" data-act="media-delete-no">${t('cancel')}</button></div>`;
+}
+
+/**
+ * Crops the image shown (free frame): the cropped image replaces it, the people identified keep
+ * their place on it (those left outside go); one undoable action.
+ */
+export async function cropMedia() {
+  const m = item();
+  if (!m || isDraft() || !S.canWrite) return;
+  if (S.edit && S.edit.id === current.owner) {
+    toast(t('finishFirst'));
+    return;
+  }
+  const { owner, id } = current;
+  let res;
+  try {
+    res = await cropFree(photoSrc(m.photo));
+  } catch (e) {
+    toast(e.message, true);
+    return;
+  }
+  if (!res) return;
+  beginAction('hist.mediaCrop');
+  try {
+    const photo = await storePhoto(res.photo, P(owner));
+    await opUpdate('people', owner, { media: mediaList(P(owner)).map((x) => (x.id === id ? { ...x, photo, tags: cropTags(x.tags, res.rect) } : x)) });
+  } catch (e) {
+    reportError(e);
+  } finally {
+    commitAction();
+    afterData();
+  }
+  renderMedia();
+}
+
+/**
+ * Adds image files to `owner`'s gallery, as one undoable action: a single image can be cropped
+ * first. The first one added opens in the viewer, to identify the people on it.
+ */
+export async function addGalleryPhotos(owner, files) {
+  const list = [...(files || [])];
+  if (!S.canWrite || !P(owner) || !list.length) return;
+  if (S.edit && S.edit.id === owner) {
+    toast(t('finishFirst')); // the record form would rewrite the gallery when saving
+    return;
+  }
+  const added = [];
+  for (const file of list) {
+    try {
+      let photo = await photoFromFile(file, DOCUMENT_SIDE);
+      if (list.length === 1) {
+        const res = await cropFree(photo);
+        if (!res) return; // cancelled: nothing added
+        photo = res.photo;
+      }
+      added.push({ id: rid('m'), photo: await storePhoto(photo, P(owner)), title: fileTitle(file.name), date: '', note: '', tags: [] });
+    } catch (e) {
+      toast(e.message, true);
+    }
+  }
+  if (!added.length) return;
+  beginAction('hist.mediaAdd');
+  try {
+    await opUpdate('people', owner, { media: [...mediaList(P(owner)), ...added] });
+  } catch (e) {
+    reportError(e);
+    return;
+  } finally {
+    commitAction();
+    afterData();
+  }
+  toast(t('med.added', added.length));
+  openMedia(owner, added[0].id, 'person:' + owner);
 }
 
 /** Asks (true) or no longer asks to confirm the deletion of the image shown. */
@@ -283,6 +390,8 @@ export function placePin(el, ev) {
     y: Math.round(((ev.clientY - box.top) / box.height) * 1000) / 10,
   };
   renderMedia();
+  const find = document.getElementById('tagFind');
+  if (find) find.focus(); // type the name right away
 }
 
 export function cancelPin() {

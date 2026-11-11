@@ -4,6 +4,7 @@ import { test, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { closeCrop } from '../js/ui/crop.js';
+import { closeCropFree, cropFreeOpen } from '../js/ui/crop-free.js';
 import { loadTree, person, resetApp } from './helpers.js';
 
 const realCreate = document.createElement;
@@ -82,7 +83,12 @@ test('gallery: once saved, the viewer opens on the new images to identify the pe
 });
 
 test('gallery: the back of an image is added, changed, saved and removed', async () => {
-  await A.addDraftMedia([png('contrat.png')]);
+  // A single image: the crop opens, and is confirmed as it is
+  const adding = A.addDraftMedia([png('contrat.png')]);
+  for (let i = 0; i < 50 && !cropFreeOpen(); i++) await tick();
+  assert.ok(cropFreeOpen(), 'recadrage proposé');
+  closeCropFree(true);
+  await adding;
   assert.match(document.getElementById('paneRecord').innerHTML, /data-med-back="0">Ajouter le verso/);
   await A.setDraftMediaBack(0, text);
   assert.equal(S.edit.media[0].back, '', 'not an image: refused');

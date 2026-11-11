@@ -359,6 +359,27 @@
     </div>
   </div>
 
+  <!-- Free cropping of a gallery image (ui/crop-free.js) -->
+  <div class="overlay" id="freeCropDlg" hidden>
+    <div class="sheet free-crop-sheet" role="dialog" aria-modal="true" aria-labelledby="freeCropTitle">
+      <h2 id="freeCropTitle" data-i18n="fcrop.title">Recadrer l’image</h2>
+      <p class="hint" data-i18n="fcrop.hint">Faites glisser le cadre ou ses coins : seule la partie encadrée est gardée.</p>
+      <div class="free-crop-stage" id="freeCropStage"><img id="freeCropImg" src="" alt="" draggable="false">
+        <div class="free-crop-shade" id="shadeTop"></div><div class="free-crop-shade" id="shadeBottom"></div>
+        <div class="free-crop-shade" id="shadeLeft"></div><div class="free-crop-shade" id="shadeRight"></div>
+        <div class="free-crop-box" id="freeCropBox" data-crop="move">
+          <span class="h nw" data-crop="nw"></span><span class="h ne" data-crop="ne"></span>
+          <span class="h sw" data-crop="sw"></span><span class="h se" data-crop="se"></span>
+        </div>
+      </div>
+      <div class="row-btns">
+        <button class="btn primary" type="button" data-act="freecrop-ok" data-i18n="fcrop.ok">Valider</button>
+        <button class="btn" type="button" data-act="freecrop-reset" data-i18n="fcrop.all">Toute l’image</button>
+        <button class="btn" type="button" data-act="freecrop-cancel" data-i18n="cancel">Annuler</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Cropping a record's photo when choosing it (ui/crop.js) -->
   <div class="overlay" id="cropDlg" hidden>
     <div class="sheet crop-sheet" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
