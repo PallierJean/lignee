@@ -102,6 +102,24 @@ export function holdSync(on) {
   emit('data');
 }
 
+// Called once everything has arrived, after each refresh (storage.js: format conversion)
+let afterLoad = null;
+export function onDbLoaded(fn) {
+  afterLoad = fn;
+}
+
+/** Lock document of a tree (its entry in "trees"): { at, by } while someone converts it, or null. */
+export const treeLock = (id) => (docs.trees.get(id) || {}).migrating || null;
+
+/** Sets or clears a tree's lock, keeping its name. */
+export async function setTreeLock(id, lock) {
+  const d = { ...(docs.trees.get(id) || { name: t('ts.default'), createdAt: 0 }) };
+  if (lock) d.migrating = lock;
+  else delete d.migrating;
+  await withRetry(() => doc('trees', id).set(d));
+  docs.trees.set(id, d);
+}
+
 export function subscribe() {
   const loaded = { people: 'loadedP', unions: 'loadedU', sources: 'loadedS', trees: 'loadedT' };
   const listen = (collection) => services.db.collection(collection).onSnapshot(
@@ -116,6 +134,7 @@ export function subscribe() {
       }
       refreshDb();
       emit('data');
+      if (afterLoad && S.loadedP && S.loadedU && S.loadedS && S.loadedT) afterLoad();
     },
     (err) => {
       const code = err && err.code;
