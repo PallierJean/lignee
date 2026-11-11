@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.7.0](https://github.com/PallierJean/lignee/compare/v3.6.0...v3.7.0) (2026-11-11)
+
+### Features
+
+* Read the handwriting of documents on this computer ([36e5511](https://github.com/PallierJean/lignee/commit/36e5511b35fa01b5d4f68572123693b7bbacd27d))
+
+---
+
+### Nouveautés
+
+* Lecture des écritures anciennes, sur l'ordinateur : avec npm start et Kraken installé, « Lire le texte » lit un document des sources (recto et verso). L'image s'affiche à côté du texte lu ; survoler une ligne l'éclaire sur l'image, chaque ligne se corrige sur place (Entrée passe à la suivante). Les lignes douteuses sont en orange. La vue Sources lit tous les documents d'un coup et cherche aussi dans le texte lu. Rien n'est envoyé sur Internet ; le texte est gardé dans l'arbre. ([36e5511](https://github.com/PallierJean/lignee/commit/36e5511b35fa01b5d4f68572123693b7bbacd27d))
+
 ## [3.6.0](https://github.com/PallierJean/lignee/compare/v3.5.0...v3.6.0) (2026-11-11)
 
 ### Features
