@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0](https://github.com/PallierJean/lignee/compare/v2.2.0...v2.3.0) (2026-11-11)
+
+### Features
+
+* Save each change to the linked GitHub repository ([8b57531](https://github.com/PallierJean/lignee/commit/8b57531084831d605139b4be177784fd8e4a5abe))
+
+---
+
+### Nouveautés
+
+* Avec un jeton en écriture, chaque modification de l'arbre part sur GitHub toute seule, quelques instants après l'avoir enregistrée. ([8b57531](https://github.com/PallierJean/lignee/commit/8b57531084831d605139b4be177784fd8e4a5abe))
+
 ## [2.2.0](https://github.com/PallierJean/lignee/compare/v2.1.1...v2.2.0) (2026-11-11)
 
 ### Features
