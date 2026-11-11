@@ -1,5 +1,6 @@
 import { test, describe } from 'node:test';
 import { sourcesOf } from '../js/model/sources.js';
+import { sourcesOfPerson } from '../js/model/sources.js';
 import assert from 'node:assert/strict';
 import { buildBackup, parseBackup, FORMAT_VERSION } from '../js/services/backup.js';
 import { example } from './helpers.js';
@@ -77,20 +78,23 @@ describe('format 2 : sources partagées', () => {
   };
 
   test('format 1 converti : le même acte devient une source partagée, les actes vides restent à part', () => {
-    const { sources, people } = read(v1);
+    const { sources, people, r } = read(v1);
+    const unions = new Map(r.unions.map((x) => [x.id, x.data]));
     assert.equal(people.get('a').sources, undefined);
-    const [ma, na] = people.get('a').citations;
-    const [mb, nb] = people.get('b').citations;
-    assert.equal(ma.source, mb.source, 'acte de mariage partagé');
+    // L'acte de mariage, cité par les deux époux, n'est plus qu'une citation de l'union
+    const [ma] = unions.get('u').citations;
+    assert.deepEqual(unions.get('u').citations, [{ id: 's1', source: ma.source }]);
+    const [na] = people.get('a').citations;
+    const [nb] = people.get('b').citations;
     assert.notEqual(na.source, nb.source, 'deux naissances sans cote ni image : deux actes distincts');
     assert.equal(sources.size, 3);
     assert.deepEqual(sources.get(ma.source), { kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12', photo: 'data:image/png;base64,AAAA' });
-    assert.deepEqual(ma, { id: 's1', source: ma.source, fact: 'union:u' });
-    // Les documents vus par l'application : comme en format 1
-    const resolved = sourcesOf(people.get('a'), sources).map(({ source, ...x }) => x);
+    // Les documents vus par l'application : comme en format 1, pour chacun des deux époux
+    const resolved = sourcesOfPerson('a', { people, unions, sources }).map(({ source, ...x }) => x);
+    assert.deepEqual(sourcesOfPerson('b', { people, unions, sources }).map((x) => [x.fact, x.ref || '']), [['birth', ''], ['union:u', 'n°12']]);
     assert.deepEqual(resolved, [
-      { kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12', photo: 'data:image/png;base64,AAAA', id: 's1', fact: 'union:u' },
       { kind: 'birth', id: 's2', fact: 'birth' },
+      { kind: 'marriage', title: 'Mariage', place: 'Lyon', ref: 'n°12', photo: 'data:image/png;base64,AAAA', id: 's1', fact: 'union:u' },
     ]);
   });
 
@@ -109,7 +113,10 @@ describe('format 2 : sources partagées', () => {
     assert.equal(old.version, 1);
     assert.equal(old.sources, undefined);
     assert.equal(old.people[0].citations, undefined);
-    assert.deepEqual(old.people[1].sources.map((x) => [x.id, x.fact, x.ref || '']), [['s9', 'union:u', 'n°12'], ['s3', 'birth', '']]);
+    // Format 1 : l'acte de mariage revient sur le premier époux, comme avant
+    assert.deepEqual(old.people[0].sources.map((x) => [x.fact, x.ref || '']), [['birth', ''], ['union:u', 'n°12']]);
+    assert.deepEqual(old.people[1].sources.map((x) => [x.fact, x.ref || '']), [['birth', '']]);
+    assert.equal(old.unions[0].citations, undefined);
     // Retour en format 2 : les mêmes sources
     assert.deepEqual(read(old).sources, sources);
   });

@@ -19,6 +19,7 @@ import { askLeave, closeLeave } from '../ui/leave-dlg.js';
 import { showSide, setFocus, setTab } from './view.js';
 import { openMedia } from '../ui/media.js';
 import { mediaGroups } from '../ui/record.js';
+import { sourcesOfPerson } from '../model/sources.js';
 
 /** Edits person `id` from outside their record (person dialog). */
 export function editPerson(id) {
@@ -132,13 +133,15 @@ export function startEdit(id) {
   // Strings, even if the record comes from a malformed imported file
   const texts = (x, keys) => Object.fromEntries(keys.map((k) => [k, x[k] == null ? '' : String(x[k])]));
   const events = eventsOf(p).map((x) => ({ ...x, ...texts(x, ['date', 'place', 'note']), removed: false }));
-  const sources = sourcesOf(p).map((x) => ({
+  const sources = sourcesOfPerson(id).map((x) => ({
     ...x, kind: 'other', ...texts(x, ['fact', 'role', 'title', 'place', 'ref', 'note']), ...(x.kind ? { kind: String(x.kind) } : {}),
     photo: photoSrc(x.photo) ? x.photo : '', back: photoSrc(x.photo) && photoSrc(x.back) ? x.back : '', removed: false,
   }));
   const media = mediaList(p).filter((x) => photoSrc(x.photo))
     .map((x) => ({ tags: [], ...x, ...texts(x, ['title', 'date', 'note']), back: photoSrc(x.back) ? x.back : '', removed: false }));
-  openEdit({ id, rel: null, of: null, draft: d, unions, events, sources, media });
+  // The unions whose marriage documents the form shows: saving replaces them with the form's
+  const unionSources = [...S.unions].filter(([, u]) => u.a === id || u.b === id).map(([uid]) => uid);
+  openEdit({ id, rel: null, of: null, draft: d, unions, events, sources, media, unionSources });
 }
 
 export function cancelEdit() {

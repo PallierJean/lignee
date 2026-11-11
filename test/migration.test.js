@@ -4,7 +4,7 @@ import { S } from '../js/state.js';
 import { buildBackup, parseBackup } from '../js/services/backup.js';
 import { buildGedcom } from '../js/services/gedcom.js';
 import { reindex } from '../js/model/people.js';
-import { sourcesOf } from '../js/model/sources.js';
+import { sourcesOfPerson } from '../js/model/sources.js';
 
 /**
  * Arbre synthétique au format 1, de 3 000 personnes : chaque couple partage son acte de mariage
@@ -54,13 +54,16 @@ describe('migration au format 2 : 3 000 personnes', () => {
     assert.equal(r.sources.length, 7500);
     open(r);
     for (const p of v1.people) {
-      const got = sourcesOf(S.people.get(p.id)).map(({ source, ...x }) => x);
-      const want = p.sources.map((x) => Object.fromEntries(Object.entries(x).filter(([, v]) => v !== '')));
-      assert.deepEqual(got, want, p.id);
+      // Chaque personne voit tous ses documents, contenu identique (le mariage par son union)
+      const byFact = (list) => [...list].sort((x, y) => x.fact.localeCompare(y.fact));
+      const got = byFact(sourcesOfPerson(p.id).map(({ source, ...x }) => x));
+      const want = byFact(p.sources.map((x) => Object.fromEntries(Object.entries(x).filter(([, v]) => v !== ''))));
+      assert.deepEqual(got.map(({ id, ...x }) => x), want.map(({ id, ...x }) => x), p.id);
     }
     const [a, b] = [S.people.get('p0'), S.people.get('p1')];
-    assert.equal(a.citations[1].source, b.citations[1].source, 'un seul acte de mariage pour le couple');
-    assert.notEqual(a.citations[2].source, b.citations[2].source, 'deux actes de décès vides restent distincts');
+    assert.deepEqual(S.unions.get('u0').citations.map((c) => c.source).length, 1, 'un seul acte de mariage pour le couple, sur l’union');
+    assert.equal(a.citations.length, 2, 'naissance et décès sur la fiche');
+    assert.notEqual(a.citations[1].source, b.citations[1].source, 'deux actes de décès vides restent distincts');
   });
 
   test('stable : convertir deux fois, relire le format 2, revenir au format 1', () => {

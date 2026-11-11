@@ -96,61 +96,170 @@ export function migratePeople(people, sources = new Map()) {
   return { people: out, sources };
 }
 
-/** Back to version 1: each person carries copies of the documents they cite (JSON for older Lignée). */
-export function inlineSources(people, sources) {
+/**
+ * Marriage documents cited by a spouse ('union:<id>' on the person) move to the union, which
+ * both spouses share: returns { people, unions } (new Maps; records not concerned stay as they are).
+ * The same document cited by both spouses becomes one citation. Nothing is dropped: a fact naming a
+ * union the person isn't part of stays on the person.
+ */
+export function migrateUnions(people, unions) {
+  const outPeople = new Map(people);
+  const outUnions = new Map(unions);
+  for (const [id, p] of people) {
+    if (!p || !Array.isArray(p.citations)) continue;
+    const moving = p.citations.filter((c) => {
+      const u = unions.get(unionOfFact(c && c.fact));
+      return u && (u.a === id || u.b === id);
+    });
+    if (!moving.length) continue;
+    const rest = p.citations.filter((c) => !moving.includes(c));
+    const next = { ...p };
+    if (rest.length) next.citations = rest;
+    else delete next.citations;
+    outPeople.set(id, next);
+    for (const c of moving) {
+      const uid = unionOfFact(c.fact);
+      const u = { ...outUnions.get(uid) };
+      const list = listOf(u.citations);
+      if (!list.some((x) => x.source === c.source && roleOf(x.role) === roleOf(c.role))) {
+        const citation = { id: c.id, source: c.source };
+        if (roleOf(c.role)) citation.role = roleOf(c.role);
+        u.citations = [...list, citation];
+        outUnions.set(uid, u);
+      }
+    }
+  }
+  return { people: outPeople, unions: outUnions };
+}
+
+/**
+ * Back to version 1: each person carries copies of the documents they cite (JSON for older
+ * Lignée); a union's documents go to its first spouse, as version 1 kept them.
+ */
+export function inlineSources(people, sources, unions = new Map()) {
   const out = new Map();
   for (const [id, p] of people) {
-    if (!p || !Array.isArray(p.citations)) {
+    const own = sourcesOf(p, sources);
+    const fromUnions = [];
+    for (const [uid, u] of unions) {
+      if (!u || listOf(u.citations).length === 0) continue;
+      const holder = people.has(u.a) ? u.a : u.b;
+      if (holder !== id) continue;
+      for (const c of listOf(u.citations)) {
+        fromUnions.push({ ...(sources.get(c.source) || {}), id: c.id, fact: 'union:' + uid, ...(roleOf(c.role) ? { role: roleOf(c.role) } : {}) });
+      }
+    }
+    if (!p || (!Array.isArray(p.citations) && !fromUnions.length)) {
       out.set(id, p);
       continue;
     }
     const { citations, ...rest } = p;
-    const list = sourcesOf(p, sources).map(({ source, role, ...x }) => (role ? { ...x, role } : x));
+    const list = [...own.map(({ source, ...x }) => x), ...fromUnions];
     if (list.length) rest.sources = list;
+    else delete rest.sources;
     out.set(id, rest);
   }
   return out;
 }
 
-/** Ids of the sources cited by the people of `people` (a Map), other than `except` (a person id). */
-export function citedSources(people = S.people, except = null) {
+/** A union without its citations (format 1 has none): the marriage documents went to a spouse. */
+export const unionWithoutCitations = (u) => {
+  const { citations, ...rest } = u || {};
+  return rest;
+};
+
+/** Ids of the sources cited by anyone: people (but `exceptPerson`) and unions. */
+export function citedSources(people = S.people, exceptPerson = null, unions = S.unions) {
   const used = new Set();
   for (const [id, p] of people) {
-    if (id === except || !p) continue;
+    if (id === exceptPerson || !p) continue;
     for (const c of listOf(p.citations)) used.add(c.source);
   }
+  for (const u of unions.values()) for (const c of listOf(u && u.citations)) used.add(c.source);
   return used;
 }
 
+/** Union of a fact 'union:<id>', or null. */
+export const unionOfFact = (fact) => {
+  const m = /^union:(.+)$/.exec(String(fact || ''));
+  return m ? m[1] : null;
+};
+
 /**
- * A person's sources as documents (version 1 style, as the form or a merge produce them) to save:
- * returns { citations, writes: [[source id, document]], drops: [source id] }. A document keeps its
- * source when it has one: changing it changes it for everyone who cites it. `before`: the person
- * before the change; their sources nobody cites any more are dropped.
+ * All of a person's sources as documents: their own, and those of their unions (a marriage
+ * certificate is cited by the union, so both spouses see it), with fact 'union:<id>'.
+ * The same document cited both ways (a record from before unions held citations) shows once.
  */
-export function splitSources(id, list, before) {
+export function sourcesOfPerson(id, { people = S.people, unions = S.unions, sources = S.sources } = {}) {
+  const own = sourcesOf(people.get(id), sources);
+  const seen = new Set(own.filter((x) => x.source).map((x) => x.source + '|' + x.fact));
+  const fromUnions = [];
+  for (const [uid, u] of unions) {
+    if (!u || (u.a !== id && u.b !== id)) continue;
+    for (const c of listOf(u.citations)) {
+      const fact = 'union:' + uid;
+      if (seen.has(c.source + '|' + fact)) continue;
+      seen.add(c.source + '|' + fact);
+      fromUnions.push({ ...(sources.get(c.source) || {}), id: c.id, fact, ...(roleOf(c.role) ? { role: roleOf(c.role) } : {}), source: c.source });
+    }
+  }
+  return [...own, ...fromUnions];
+}
+
+/**
+ * Documents (version 1 style, as the form or a merge produce them) to citations:
+ * { citations, docs: Map source id -> document }. A document keeps its source when it has one:
+ * changing it changes it for everyone who cites it. `withFact`: citations keep their fact
+ * (a person's), or not (a union's: always its marriage).
+ */
+export function toCitations(list, withFact = true, chosen = new Map()) {
   const citations = [];
-  const chosen = new Map();
   const seen = new Set();
   for (const x of listOf(list)) {
     if (x.removed) continue;
     const sid = x.source && typeof x.source === 'string' ? x.source : rid('S');
     // The same source cited twice for the same fact (two records merged): once is enough
-    const key = sid + '|' + (x.fact || '') + '|' + roleOf(x.role);
+    const key = sid + '|' + (withFact ? x.fact || '' : '') + '|' + roleOf(x.role);
     if (x.source && seen.has(key)) continue;
     seen.add(key);
     const data = sourceData(x);
-    // The same source cited twice by the form: the copy that changed wins
+    // The same source cited twice: the copy that changed wins
     const current = S.sources.get(sid);
     if (!chosen.has(sid) || (current && keyOf(chosen.get(sid)) === keyOf(current))) chosen.set(sid, data);
-    const citation = { id: x.id || rid('c'), source: sid, fact: x.fact || '' };
+    const citation = { id: x.id || rid('c'), source: sid };
+    if (withFact) citation.fact = x.fact || '';
     if (roleOf(x.role)) citation.role = roleOf(x.role);
     citations.push(citation);
   }
-  const writes = [...chosen].filter(([sid, data]) => !S.sources.has(sid) || keyOf(S.sources.get(sid)) !== keyOf(data));
-  const kept = new Set(citations.map((c) => c.source));
-  const others = citedSources(S.people, id);
-  const drops = [...new Set(listOf(before && before.citations).map((c) => c.source))]
-    .filter((sid) => !kept.has(sid) && !others.has(sid) && S.sources.has(sid));
-  return { citations, writes, drops };
+  return { citations, docs: chosen };
 }
+
+/** Documents of `docs` (Map) that are new or changed compared with S.sources: [[id, document]]. */
+export const changedDocs = (docs) => [...docs].filter(([sid, data]) => !S.sources.has(sid) || keyOf(S.sources.get(sid)) !== keyOf(data));
+
+/**
+ * Plan for saving person `id` whose `sources` are documents: { person citations, unions: Map union
+ * id -> citations, writes }. A document of fact 'union:<id>' of one of the person's unions goes to
+ * that union. A union's citations are replaced only if the caller saw them all: listed in
+ * `shownUnions` (the form), or cited in the list (a list built with sourcesOfPerson); otherwise
+ * the union keeps its own.
+ */
+export function planSources(id, list, shownUnions = []) {
+  const member = new Set([...S.unions].filter(([, u]) => u && (u.a === id || u.b === id)).map(([uid]) => uid));
+  const unionOf = (x) => {
+    const uid = unionOfFact(x.fact);
+    return uid && member.has(uid) ? uid : null;
+  };
+  const items = listOf(list).filter((x) => !x.removed);
+  const docs = new Map();
+  const person = toCitations(items.filter((x) => !unionOf(x)), true, docs);
+  const touched = new Set([...shownUnions.filter((uid) => member.has(uid)), ...items.map(unionOf).filter(Boolean)]);
+  const unions = new Map([...touched].map((uid) => [uid, toCitations(items.filter((x) => unionOf(x) === uid), false, docs).citations]));
+  return { citations: person.citations, unions, writes: changedDocs(docs) };
+}
+
+/** Sources among `candidates` nobody cites any more (after the changes, in memory): to delete. */
+export const orphanSources = (candidates) => {
+  const used = citedSources();
+  return [...new Set(candidates)].filter((sid) => sid && !used.has(sid) && S.sources.has(sid));
+};

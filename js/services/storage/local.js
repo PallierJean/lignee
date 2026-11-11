@@ -7,7 +7,7 @@ import { TREES_KEY, TREE_KEY, DEFAULT_TREE, EXAMPLE_FILE } from '../../config.js
 import { t } from '../../i18n.js';
 import { say, failure } from '../notify.js';
 import { parseBackup } from '../backup.js';
-import { migratePeople } from '../../model/sources.js';
+import { migratePeople, migrateUnions } from '../../model/sources.js';
 import { ensureTree, sortTrees } from './trees.js';
 
 function readJSON(key) {
@@ -28,8 +28,9 @@ export function readLocalTrees() {
 /** Data of a browser tree, as Maps; a tree saved before shared sources is converted on the way. */
 export function readLocalData(id) {
   const data = readJSON(TREE_KEY + id) || {};
-  const { people, sources } = migratePeople(new Map(Object.entries(data.people || {})), new Map(Object.entries(data.sources || {})));
-  return { people, unions: new Map(Object.entries(data.unions || {})), sources };
+  const migrated = migratePeople(new Map(Object.entries(data.people || {})), new Map(Object.entries(data.sources || {})));
+  const { people, unions } = migrateUnions(migrated.people, new Map(Object.entries(data.unions || {})));
+  return { people, unions, sources: migrated.sources };
 }
 
 function writeLocalTrees() {

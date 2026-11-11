@@ -7,6 +7,7 @@ import { S } from '../state.js';
 import { fullDate, yearOf } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
 import { P, partnersOf, sourcesOf } from './people.js';
+import { sourcesOfPerson } from './sources.js';
 
 const MIN_SCORE = 3;
 const YEAR_MARGIN = 2;
@@ -80,7 +81,7 @@ export function findDuplicates(ignored = new Set()) {
  * Events, sources and documents are added, without repeating an identical event.
  * `unionIds`: former unions of `drop` -> kept unions (for the sources).
  */
-export function mergedData(keep, drop, unionIds = new Map()) {
+export function mergedData(keep, drop, unionIds = new Map(), ids = {}) {
   const out = { ...keep };
   for (const [key, value] of Object.entries(drop)) {
     if (['createdAt', 'updatedAt', 'notes', 'events', 'sources', 'citations', 'media', 'example'].includes(key)) continue;
@@ -101,7 +102,9 @@ export function mergedData(keep, drop, unionIds = new Map()) {
     return union ? 'union:' + union : eventIds.get(f) || f;
   };
   // Documents as the form has them (shared sources resolved): saving turns them back into citations
-  const sources = [...sourcesOf(keep), ...sourcesOf(drop).map((s) => ({ ...s, fact: fact(s.fact) }))];
+  // With the ids, the unions' marriage documents come too, and follow the union kept
+  const all = (p, id) => (id ? sourcesOfPerson(id) : sourcesOf(p));
+  const sources = [...all(keep, ids.keep), ...all(drop, ids.drop).map((s) => ({ ...s, fact: fact(s.fact) }))];
   const media = [...(keep.media || []), ...(drop.media || [])];
   for (const [key, list] of [['events', events], ['media', media]]) {
     if (list.length) out[key] = list;

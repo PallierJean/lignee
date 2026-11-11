@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { sourcesOf } from '../js/model/sources.js';
+import { sourcesOfPerson } from '../js/model/sources.js';
 import { S } from '../js/state.js';
 import { toGedDate, fromGedDate, buildGedcom, parseGedcom } from '../js/services/gedcom.js';
 import { example, loadTree, person } from './helpers.js';
@@ -223,7 +224,8 @@ describe('import de fichiers d’autres logiciels', () => {
       '0 TRLR',
     ].join('\n'));
     const p = people[0].data;
-    const docs = sourcesOf(p, new Map(sources.map((x) => [x.id, x.data])));
+    const tree = { people: new Map(people.map((x) => [x.id, x.data])), unions: new Map(unions.map((x) => [x.id, x.data])), sources: new Map(sources.map((x) => [x.id, x.data])) };
+    const docs = sourcesOfPerson(people[0].id, tree);
     assert.equal(p.occupation, 'Tisserand');
     assert.deepEqual(p.events.map((e) => [e.type, e.note, e.label]), [['occupation', 'Maire', undefined], ['other', '', 'Service militaire']]);
     const [birth, death, marriage] = docs;
@@ -260,8 +262,9 @@ describe('événements et sources à l’aller-retour', () => {
     assert.ok(Math.max(...ged.split('\r\n').map((l) => Buffer.byteLength(l))) <= 255);
 
     const { people, unions, sources } = parseGedcom(ged);
-    const p = people.find((x) => x.data.given === 'Jean').data;
-    const docs = sourcesOf(p, new Map(sources.map((x) => [x.id, x.data])));
+    const jean = people.find((x) => x.data.given === 'Jean');
+    const p = jean.data;
+    const docs = sourcesOfPerson(jean.id, { people: new Map(people.map((x) => [x.id, x.data])), unions: new Map(unions.map((x) => [x.id, x.data])), sources: new Map(sources.map((x) => [x.id, x.data])) });
     const got = new Map(p.events.map((e) => [e.type, e]));
     assert.equal(got.get('baptism').note, 'Parrain : Jean');
     assert.equal(got.get('occupation').note, 'Ajusteur');

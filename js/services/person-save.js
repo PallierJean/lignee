@@ -92,6 +92,7 @@ async function recordData(e, id, previous) {
     sources.push(s);
   }
   data.sources = sources; // even empty: the sources nobody cites any more are then deleted
+  data.unionSources = e.unionSources || [];
   const media = [];
   for (const { removed, ...x } of e.media) {
     if (removed) continue;

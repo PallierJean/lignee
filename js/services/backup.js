@@ -6,7 +6,7 @@
  */
 import { S, treeName } from '../state.js';
 import { t } from '../i18n.js';
-import { migratePeople, inlineSources } from '../model/sources.js';
+import { migratePeople, migrateUnions, inlineSources, unionWithoutCitations } from '../model/sources.js';
 
 // Version of the backup format this Lignée writes and reads; a newer file is refused
 export const FORMAT_VERSION = 2;
@@ -27,7 +27,9 @@ export function buildBackup(src, { v1 = false } = {}) {
     unions: S.unions,
     sources: S.sources,
   };
-  const { people, sources } = migratePeople(t.people, new Map(t.sources || []));
+  const migrated = migratePeople(t.people, new Map(t.sources || []));
+  const { people, unions } = migrateUnions(migrated.people, t.unions);
+  const { sources } = migrated;
   const list = (map) => [...map].map(([id, x]) => Object.assign({ id }, x));
   return JSON.stringify({
     format: 'lignee',
@@ -35,8 +37,8 @@ export function buildBackup(src, { v1 = false } = {}) {
     name: t.name,
     createdAt: t.createdAt || undefined,
     exportedAt: new Date().toISOString(),
-    people: list(v1 ? inlineSources(people, sources) : people),
-    unions: list(t.unions),
+    people: list(v1 ? inlineSources(people, sources, unions) : people),
+    unions: v1 ? [...unions].map(([id, u]) => Object.assign({ id }, unionWithoutCitations(u))) : list(unions),
     ...(v1 ? {} : { sources: list(sources) }),
   }, null, 2);
 }
@@ -62,7 +64,8 @@ export function parseBackup(text) {
     });
   const name = typeof o.name === 'string' ? o.name.trim().slice(0, 80) : '';
   const known = new Map(convert(o.sources).map((x) => [x.id, x.data]));
-  const { people, sources } = migratePeople(new Map(convert(o.people).map((x) => [x.id, x.data])), known);
+  const migrated = migratePeople(new Map(convert(o.people).map((x) => [x.id, x.data])), known);
+  const { people, unions } = migrateUnions(migrated.people, new Map(convert(o.unions).map((x) => [x.id, x.data])));
   const entries = (map) => [...map].map(([id, data]) => ({ id, data }));
-  return { name, people: entries(people), unions: convert(o.unions), sources: entries(sources) };
+  return { name, people: entries(people), unions: entries(unions), sources: entries(migrated.sources) };
 }

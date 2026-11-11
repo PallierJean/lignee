@@ -7,6 +7,7 @@ import {
 } from './people.js';
 import { occupationLabel } from './occupations.js';
 import { generationMap } from './generations.js';
+import { sourcesOfPerson } from './sources.js';
 
 const clean = (x) => String(x || '').trim();
 
@@ -56,7 +57,7 @@ export function personStory(id) {
 
 /** "Sources: …" for a person, or empty. */
 export function personSources(id) {
-  const sources = sourcesOf(P(id)).map((s) => clean(s.title) || t('src.' + (SOURCE_KINDS.includes(s.kind) ? s.kind : 'other')));
+  const sources = sourcesOfPerson(id).map((s) => clean(s.title) || t('src.' + (SOURCE_KINDS.includes(s.kind) ? s.kind : 'other')));
   return sources.length ? t('nar.sources', [...new Set(sources)].join(', ')) : '';
 }
 

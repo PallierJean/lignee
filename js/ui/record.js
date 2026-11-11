@@ -7,6 +7,7 @@ import {
   P, given, surname, maiden, fullName, photoOf, photoSrc, avatarOf, lifeYears, ageInfo,
   partnersOf, childrenOf, siblingsOf, isMinor, UNION_AGE, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, unionTypeLabel, unionCauseText, unionEndText,
 } from '../model/people.js';
+import { sourcesOfPerson } from '../model/sources.js';
 import { occupationLabel } from '../model/occupations.js';
 
 /** Gallery thumbnails; a click opens the viewer. */
@@ -29,7 +30,7 @@ export function mediaGrid(items, group = '') {
 
 /** A person's sources: certificate, supported fact, reference, note and document. */
 export function sourcesHTML(id) {
-  const items = sourcesOf(P(id)).map((s) => {
+  const items = sourcesOfPerson(id).map((s) => {
     const img = photoSrc(s.photo);
     const back = photoSrc(s.back); // second side: a marriage contract, a two-sided certificate
     const kind = t('src.' + (SOURCE_KINDS.includes(s.kind) ? s.kind : 'other'));
@@ -163,7 +164,7 @@ export function recordHTML(id) {
     ${mediaOf(id).length ? `<section class="rel"><h3>${t('media')} <span class="n">${mediaOf(id).length}</span></h3>${mediaGrid(mediaOf(id), 'person:' + id)}`
       + `${S.canWrite ? `<p class="hint">${t('med.galleryHint')}</p>` : ''}</section>` : ''}
 
-    ${sourcesOf(p).length ? `<section class="rel"><h3>${t('sources')} <span class="n">${sourcesOf(p).length}</span></h3>${sourcesHTML(id)}</section>` : ''}
+    ${sourcesOfPerson(id).length ? `<section class="rel"><h3>${t('sources')} <span class="n">${sourcesOfPerson(id).length}</span></h3>${sourcesHTML(id)}</section>` : ''}
 
     ${p.notes ? `<section class="rel"><h3>${t('notes')}</h3><p class="notes">${esc(p.notes)}</p></section>` : ''}
 
