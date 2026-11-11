@@ -1,5 +1,6 @@
 /** Form to add or edit a person. */
 import { S } from '../state.js';
+import { CITATION_ROLES } from '../model/sources.js';
 import { narrow } from '../config.js';
 import { esc } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
@@ -231,6 +232,7 @@ function sourceRows(e) {
         <label class="fld"><span>${t('f.srcKind')}</span><select id="src-kind-${i}">${SOURCE_KINDS.map((c) => `<option value="${c}"${x.kind === c ? ' selected' : ''}>${esc(t('src.' + c))}</option>`).join('')}</select></label>
         <label class="fld"><span>${t('f.srcFact')}</span><select id="src-fact-${i}">${factOptions(e, x.fact)}</select></label>
       </div>
+      <label class="fld"><span>${t('f.srcRole')}</span><select id="src-role-${i}">${CITATION_ROLES.map((r) => `<option value="${r === 'subject' ? '' : r}"${(x.role || '') === (r === 'subject' ? '' : r) ? ' selected' : ''}>${esc(t('role.' + r))}</option>`).join('')}</select></label>
       <label class="fld"><span>${t('f.srcTitle')}</span><input id="src-title-${i}" value="${esc(x.title)}" placeholder="${t('f.srcTitlePlaceholder')}"></label>
       <div class="row2">
         <label class="fld"><span>${t('f.srcPlace')}</span><input id="src-place-${i}" value="${esc(x.place)}" placeholder="${t('f.srcPlacePlaceholder')}"></label>
@@ -443,6 +445,7 @@ export function captureDraft() {
     if (x.removed || !document.getElementById('src-kind-' + i)) return;
     x.kind = value('src-kind-' + i);
     x.fact = value('src-fact-' + i);
+    x.role = value('src-role-' + i);
     x.title = value('src-title-' + i);
     x.place = value('src-place-' + i);
     x.ref = value('src-ref-' + i);

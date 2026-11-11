@@ -725,6 +725,24 @@ describe('suppression, exemples, fusion', () => {
     assert.equal(S.sources.get('S1').photo, 'data:image/jpeg;base64,AAAA');
   });
 
+  test('rôle dans l’acte : choisi dans le formulaire, gardé à l’enregistrement et à l’export format 1', async () => {
+    const { buildBackup, parseBackup } = await import('../js/services/backup.js');
+    loadTree([person('a', { given: 'Jean', surname: 'Roux' })]);
+    S.sources = new Map([['S1', { kind: 'marriage', title: 'Mariage Durand', ref: 'n°7' }]]);
+    S.focus = 'a';
+    A.startEdit('a');
+    A.citeDraftSource('S1');
+    renderAll(true);
+    fill({});
+    el('src-role-0').value = 'witness';
+    await A.submitEdit();
+    assert.deepEqual(S.people.get('a').citations.map((c) => [c.source, c.role]), [['S1', 'witness']]);
+    renderAll(true);
+    assert.match(html('paneRecord'), /Mariage Durand<\/b> <span class="src-fact">Témoin<\/span>/);
+    const back = parseBackup(buildBackup(undefined, { v1: true }));
+    assert.equal(back.people[0].data.citations[0].role, 'witness', 'format 1 relu : rôle gardé');
+  });
+
   test('supprimer une fiche : ses sources partent, sauf celles citées ailleurs', async () => {
     loadTree([
       person('a', { given: 'A', citations: [{ id: 'c1', source: 'S1', fact: '' }, { id: 'c2', source: 'S2', fact: '' }] }),

@@ -212,6 +212,7 @@ Le renvoi d'une fiche vers une source, avec le fait qu'elle appuie.
 | `id` | `Id` | ✅ | Identifiant, unique sur la fiche | |
 | `source` | `Id` | ✅ | La [source](#source-source) citée | `SOUR @S…@` |
 | `fact` | `string` | | Fait appuyé : `birth`, `death`, l'`id` d'un événement, `union:<id d'union>`, ou vide pour toute la fiche | source citée sous ce fait |
+| `role` | `"father"` \| `"mother"` \| `"spouse"` \| `"witness"` | | Rôle de la personne dans l'acte ; absent : la personne concernée | `EVEN` puis `ROLE` (`FATH`, `MOTH`, `SPOU`, `(Witness)`) |
 
 ```json
 "people": [

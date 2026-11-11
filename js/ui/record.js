@@ -34,7 +34,7 @@ export function sourcesHTML(id) {
     const back = photoSrc(s.back); // second side: a marriage contract, a two-sided certificate
     const kind = t('src.' + (SOURCE_KINDS.includes(s.kind) ? s.kind : 'other'));
     const where = [s.place, s.ref].map((x) => String(x || '').trim()).filter(Boolean).join(' · ');
-    const fact = factLabel(id, s.fact);
+    const fact = [factLabel(id, s.fact), s.role ? t('role.' + s.role) : ''].filter(Boolean).join(' · ');
     return '<li class="src">'
       + (img ? `<img class="src-doc zoomable" src="${esc(img)}" alt="${esc(s.title || kind)}${back ? ' (' + t('med.front') + ')' : ''}" data-act="photo-zoom">` : '')
       + (img && back ? `<img class="src-doc zoomable" src="${esc(back)}" alt="${esc(s.title || kind)} (${t('med.back')})" data-act="photo-zoom">` : '')

@@ -650,7 +650,7 @@ export function sourceLibrary() {
     for (const x of sourcesOf(p)) {
       const key = x.source || 'own:' + id + ':' + x.id;
       if (!byKey.has(key)) byKey.set(key, { src: x, cites: [] });
-      byKey.get(key).cites.push({ id, fact: x.fact });
+      byKey.get(key).cites.push({ id, fact: x.fact, role: x.role });
     }
   }
   const order = (k) => (SOURCE_KINDS.includes(k) ? SOURCE_KINDS.indexOf(k) : SOURCE_KINDS.length);
@@ -696,7 +696,10 @@ function libraryList(all) {
       + items.map(({ src, cites }) => {
         const pic = photoSrc(src.photo);
         const what = [src.title, src.place, src.ref].filter(Boolean).map((x) => esc(String(x))).join(' · ') || `<span class="muted">${t('lib.untitled')}</span>`;
-        const who = cites.map((c) => personLink(c.id) + (factLabel(c.id, c.fact) ? ` <small>(${esc(factLabel(c.id, c.fact))})</small>` : '')).join(', ');
+        const who = cites.map((c) => {
+          const part = [factLabel(c.id, c.fact), c.role ? t('role.' + c.role) : ''].filter(Boolean).join(', ');
+          return personLink(c.id) + (part ? ` <small>(${esc(part)})</small>` : '');
+        }).join(', ');
         return `<li class="lib-item">${pic ? `<img class="lib-pic" src="${esc(pic)}" alt="" loading="lazy">` : '<span class="lib-pic none" aria-hidden="true"></span>'}`
           + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p></div></li>`;
       }).join('') + '</ul></section>';
