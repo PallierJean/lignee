@@ -1113,3 +1113,108 @@
 .lib-family:first-child h4 {
   margin-top: 4px;
 }
+
+/* Reading a document (ui/reading.js): the image, and the text read line by line beside it */
+.sheet.read-sheet {
+  max-width: 1280px;
+  margin-top: 2vh;
+  gap: 12px;
+}
+
+.rd-body {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.rd-pic {
+  position: relative;
+  line-height: 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rd-pic img {
+  width: 100%;
+  height: auto;
+}
+
+.rd-box {
+  position: absolute;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.rd-box.on {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  outline: 2px solid var(--accent);
+}
+
+.rd-text {
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.rd-lines {
+  margin: 0;
+  padding-left: 2.4em;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rd-lines li::marker {
+  color: var(--muted);
+  font-size: 0.8em;
+}
+
+.rd-lines input {
+  width: 100%;
+  font: 1rem/1.4 Georgia, serif;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+}
+
+.rd-lines li.on input,
+.rd-lines input:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.rd-lines li.doubt input {
+  border-left: 3px solid var(--warn);
+}
+
+.rd-lines li.ok input {
+  border-left: 3px solid var(--ok);
+}
+
+.rd-busy {
+  color: var(--muted);
+}
+
+.rd-link {
+  display: block;
+  margin-top: 4px;
+}
+
+.rd-batch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .rd-body {
+    grid-template-columns: 1fr;
+  }
+
+  .rd-text {
+    max-height: none;
+  }
+}

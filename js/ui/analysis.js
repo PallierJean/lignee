@@ -18,6 +18,7 @@ import {
   officialCommune, cityDepartments,
 } from '../model/communes.js';
 import { mediaGrid, addMediaTile } from './record.js';
+import { readLink, readText, unread, batchState } from './reading.js';
 import { toast } from './toast.js';
 import { downloadBlob, fileBase } from './transfer.js';
 import { buildActsCsv } from '../services/csv.js';
@@ -681,7 +682,13 @@ function sourcesView() {
   if (!list.length) return `<p class="nofocus">${t('lib.none')}</p>`;
   const shared = list.filter((x) => new Set(x.cites.map((c) => c.id)).size > 1).length;
   const kinds = SOURCE_KINDS.filter((k) => list.some((x) => kindOf(x.src) === k));
-  return `<p class="hint an-hint">${t('lib.hint', list.length, shared)}</p>`
+  // Reading on this computer every document not read yet, one after the other
+  const batch = batchState();
+  const todo = S.canWrite && !batch ? unread().length : 0;
+  const reading = batch
+    ? `<p class="rd-batch" role="status">${t('htr.batch', batch.done, batch.total)} <button class="link" type="button" data-act="read-stop">${t('htr.stop')}</button></p>`
+    : todo ? `<p class="rd-batch"><button class="btn small" type="button" data-act="read-all">${t('htr.readAll', todo)}</button> <span class="hint">${t('htr.allHint')}</span></p>` : '';
+  return `<p class="hint an-hint">${t('lib.hint', list.length, shared)}</p>${reading}`
     + `<div class="row2 lib-filters"><label class="fld"><span>${t('lib.kind')}</span><select id="lib-kind"><option value="">${t('lib.allKinds')}</option>`
     + kinds.map((k) => `<option value="${k}"${k === libKind ? ' selected' : ''}>${esc(t('src.' + k))}</option>`).join('') + '</select></label>'
     + `<label class="fld"><span>${t('lib.search')}</span><input id="lib-q" type="search" value="${esc(libQuery)}" placeholder="${t('lib.searchPlaceholder')}" autocomplete="off"></label></div>`
@@ -711,7 +718,7 @@ function libraryItem({ src, cites }, kind) {
   const pair = (side) => (back ? ` data-pair="${esc(src.source || src.id || name)}" data-side="${side}"` : '');
   const zoom = (url, label, side) => `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom"${pair(side)}>`;
   return `<li class="lib-item">${pic ? zoom(pic, name, 0) + (back ? zoom(back, `${name} (${t('med.back')})`, 1) : '') : '<span class="lib-pic none" aria-hidden="true"></span>'}`
-    + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p></div></li>`;
+    + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p>${readLink(src.source, S.sources.get(src.source))}</div></li>`;
 }
 
 /** Family a document is filed under: the name shown of the first person citing it, or '' (no name). */
@@ -719,7 +726,7 @@ const familyOf = ({ cites }) => (cites[0] ? surname(P(cites[0].id)) || maiden(P(
 
 function libraryList(all) {
   const q = norm(libQuery).trim();
-  const text = ({ src, cites }) => norm([src.title, src.place, src.ref, src.note, ...cites.map((c) => fullName(P(c.id)))].filter(Boolean).join(' '));
+  const text = ({ src, cites }) => norm([src.title, src.place, src.ref, src.note, readText(src), ...cites.map((c) => fullName(P(c.id)))].filter(Boolean).join(' '));
   const list = all.filter((x) => (!libKind || kindOf(x.src) === libKind) && (!q || text(x).includes(q)));
   if (!list.length) return `<p class="nofocus">${t('lib.noMatch')}</p>`;
   const kinds = [...new Set(list.map((x) => kindOf(x.src)))];

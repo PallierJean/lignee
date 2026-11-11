@@ -13,6 +13,7 @@ import { loadCommunes } from './model/communes.js';
 import { loadLocal, seedExample, loadFile } from './services/storage.js';
 import { applyTheme } from './ui/theme.js';
 import { connectServices } from './ui/connect.js';
+import { checkHtr } from './services/htr.js';
 
 /** Shows the version number, taken from package.json. Without it, nothing is shown. */
 async function showVersion() {
@@ -41,7 +42,10 @@ async function init() {
   }
   afterData();
 
-  // 2. French communes, loaded after opening: the consistency check then verifies places' departments
+  // 2. Reading handwriting on this computer (local server with Kraken): the buttons appear once known
+  checkHtr().then(({ ready }) => ready && renderAll()).catch(() => {});
+
+  // 3. French communes, loaded after opening: the consistency check then verifies places' departments
   loadCommunes().then(() => renderAll()).catch(() => {});
 }
 

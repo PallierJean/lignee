@@ -19,7 +19,18 @@ export const CITATION_ROLES = ['subject', 'father', 'mother', 'spouse', 'witness
 const roleOf = (r) => (CITATION_ROLES.includes(r) && r !== 'subject' ? r : '');
 
 /** Fields of the document itself, shared by all who cite it. */
-export const SOURCE_FIELDS = ['kind', 'title', 'place', 'ref', 'note', 'photo', 'back'];
+export const SOURCE_FIELDS = ['kind', 'title', 'place', 'ref', 'note', 'photo', 'back', 'text', 'backText'];
+
+/**
+ * Text read on a side of document `src` (the front, or the back if `back`): { of, model, date,
+ * lines: [{ box: [x, y, w, h] in fractions of the image, text, conf, ok? }] }, or null. A text read
+ * from another image (the photo was replaced since) counts as none.
+ */
+export function readingOf(src, back = false) {
+  const r = src && src[back ? 'backText' : 'text'];
+  const img = src && src[back ? 'back' : 'photo'];
+  return r && typeof r === 'object' && Array.isArray(r.lines) && img && r.of === img ? r : null;
+}
 
 const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') : []);
 

@@ -13,6 +13,7 @@ import { refreshFind } from './search.js';
 import { renderTrees } from './trees.js';
 import { renderPersonDlg } from './person-dlg.js';
 import { renderMedia } from './media.js';
+import { renderReading } from './reading.js';
 
 /**
  * "Record" tab: the form being edited, or the record of the focus person.
@@ -78,6 +79,7 @@ export function renderAll(force) {
   if (!S.treeEdit) renderTrees(); // not while typing in the "My trees" dialog
   renderPersonDlg();
   renderMedia();
+  renderReading();
   if (S.scrollPending) requestAnimationFrame(scrollToFocus);
 }
 

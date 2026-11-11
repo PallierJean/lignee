@@ -197,9 +197,22 @@ Dans le formulaire, « Ou citer un document déjà dans l'arbre » ajoute une ci
 | `note` | `string` | | Note | `NOTE` |
 | `photo` | `Image` | | Document, 1400 pixels de côté au plus | non exporté |
 | `back` | `Image` | | Verso du document (second côté d'un contrat de mariage, d'un acte) ; seulement avec `photo` | non exporté |
+| `text` | `Reading` | | Texte lu sur `photo` (voir ci-dessous) | non exporté |
+| `backText` | `Reading` | | Texte lu sur `back` | non exporté |
 
 `kind` : `birth`, `baptism`, `marriage`, `death`, `burial`, `census`, `military`, `notary`,
 `family`, `book`, `web`, `other`.
+
+`Reading` (texte lu par [la lecture des écritures anciennes](features/htr.md)) :
+`{ of, model, date, lines: [{ box: [x, y, w, h], text, conf, ok? }] }`. `of` est l'image lue : si
+l'image a changé depuis, le texte ne compte plus. `box` est le cadre de la ligne en fractions de
+l'image (0 à 1), `conf` la confiance la plus basse du modèle sur la ligne (0 à 1), `ok` une ligne
+corrigée à la main.
+
+```json
+{ "of": "photos/Contrat-1a2b….jpg", "model": "ManuMcFrenchV3", "date": "2026-11-11",
+  "lines": [{ "box": [0.14, 0.17, 0.18, 0.02], "text": "L'an mil huit cent", "conf": 0.97, "ok": true }] }
+```
 
 Les actes d'un mariage sont cités par l'union (`union.citations`), et non par la fiche d'un conjoint :
 les deux conjoints les voient, et ils sont exportés une seule fois sous `MARR`. Une citation

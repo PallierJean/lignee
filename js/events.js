@@ -19,6 +19,7 @@ import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
   openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, askMediaArchive, archiveMedia, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack } from './ui/media.js';
 import { closeCropFree, resetCropFree, cropFreeDrag, cropFreeOpen } from './ui/crop-free.js';
+import { openReading, closeReading, readingSide, runReading, lightLine, editLine, readAll, stopBatch, readingOpen } from './ui/reading.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
 import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
@@ -232,6 +233,12 @@ const CLICK_ACTIONS = {
   'media-step': (el) => stepMedia(Number(el.dataset.d)),
   'media-side': (el) => showMediaSide(el.dataset.back === '1'),
   'media-close': () => closeMedia(),
+  'read-open': (el) => openReading(el.dataset.source, el.dataset.back === '1'),
+  'read-close': () => closeReading(),
+  'read-side': (el) => readingSide(el.dataset.back === '1'),
+  'read-run': () => runReading(),
+  'read-all': () => readAll(),
+  'read-stop': () => stopBatch(),
   'media-person': (el) => {
     closeMedia();
     openPersonDlg(el.dataset.id);
@@ -372,6 +379,7 @@ const DIALOGS = () => [
   appearanceMenu(),
   { id: 'photoZoom', close: closePhotoZoom },
   { id: 'mediaDlg', close: closeMedia, backdrop: true },
+  { id: 'readDlg', close: closeReading, backdrop: true, isOpen: readingOpen },
   { id: 'personDlg', close: closePersonDlg, backdrop: true },
   { id: 'repoDiffDlg', close: closeRepoDiff, backdrop: true },
   { id: 'transfer', close: closeTransfer, backdrop: true },
@@ -393,6 +401,11 @@ export function bindEvents() {
   });
   // Viewer: hovering an identified name lights up the person on the photo
   document.addEventListener('mouseover', (ev) => highlightTag(ev.target, true));
+  // Reading a document: hovering a line of text lights it up on the image
+  document.addEventListener('mouseover', (ev) => {
+    const line = ev.target.closest && ev.target.closest('#readCard [data-line]');
+    if (line) lightLine(+line.dataset.line);
+  });
   document.addEventListener('mouseout', (ev) => highlightTag(ev.target, false));
   // Fan chart: label and path on hover, double-click to recentre
   document.addEventListener('mouseover', (ev) => fanHover(ev.target, true, ev));
@@ -419,6 +432,7 @@ export function bindEvents() {
 
   document.addEventListener('focusin', (ev) => {
     highlightTag(ev.target, true);
+    if (ev.target.dataset && ev.target.dataset.rdLine !== undefined) lightLine(+ev.target.dataset.rdLine);
     fanHover(ev.target, true);
     if (ev.target.id === 'f-spouse') onSpouseInput();
   });
@@ -446,6 +460,10 @@ export function bindEvents() {
 
   document.addEventListener('change', (ev) => {
     const el = ev.target;
+    if (el.dataset && el.dataset.rdLine !== undefined) {
+      editLine(+el.dataset.rdLine, el.value);
+      return;
+    }
     if (el.name === 'f-sex') {
       document.getElementById('f-maiden-row').hidden = el.value !== 'F';
       updateFormAvatar(el.value);
@@ -521,6 +539,14 @@ export function bindEvents() {
   });
 
   document.addEventListener('keydown', (ev) => {
+    // Reading a document: Enter keeps the line and goes to the next one, arrows go up and down
+    if (ev.target.dataset && ev.target.dataset.rdLine !== undefined && ['Enter', 'ArrowDown', 'ArrowUp'].includes(ev.key)) {
+      const next = document.querySelector(`#readCard [data-rd-line="${+ev.target.dataset.rdLine + (ev.key === 'ArrowUp' ? -1 : 1)}"]`);
+      ev.preventDefault();
+      if (next) next.focus();
+      else ev.target.blur();
+      return;
+    }
     // Enlarged document with a back: the arrow keys switch sides
     if (!document.getElementById('photoZoom').hidden && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
       if (stepZoomFace(ev.key === 'ArrowRight' ? 1 : -1)) ev.preventDefault();

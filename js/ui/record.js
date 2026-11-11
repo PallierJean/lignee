@@ -8,6 +8,7 @@ import {
   partnersOf, childrenOf, siblingsOf, isMinor, UNION_AGE, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, mediaLabel, unionTypeLabel, unionCauseText, unionEndText,
 } from '../model/people.js';
 import { sourcesOfPerson } from '../model/sources.js';
+import { readLink } from './reading.js';
 import { occupationLabel } from '../model/occupations.js';
 
 /** Gallery thumbnails; a click opens the viewer. */
@@ -48,7 +49,7 @@ export function sourcesHTML(id) {
       + (img ? `<img class="src-doc zoomable" src="${esc(img)}" alt="${esc(s.title || kind)}${back ? ' (' + t('med.front') + ')' : ''}" data-act="photo-zoom"${back ? ` data-pair="${esc(s.id)}" data-side="0"` : ''}>` : '')
       + (img && back ? `<img class="src-doc zoomable" src="${esc(back)}" alt="${esc(s.title || kind)} (${t('med.back')})" data-act="photo-zoom" data-pair="${esc(s.id)}" data-side="1">` : '')
       + `<div><b>${esc(s.title || kind)}</b>${fact ? ` <span class="src-fact">${esc(fact)}</span>` : ''}`
-      + (where ? `<small>${esc(where)}</small>` : '') + (s.note ? `<p>${esc(s.note)}</p>` : '') + '</div></li>';
+      + (where ? `<small>${esc(where)}</small>` : '') + (s.note ? `<p>${esc(s.note)}</p>` : '') + readLink(s.source, S.sources.get(s.source)) + '</div></li>';
   });
   return items.length ? `<ul class="srcs">${items.join('')}</ul>` : '';
 }
