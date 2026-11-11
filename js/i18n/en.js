@@ -681,6 +681,7 @@ export const EN = {
   'lib.search': 'Search',
   'lib.searchPlaceholder': 'Title, place, number, person…',
   'lib.noMatch': 'No document matches.',
+  'lib.zoom': 'Show the document full size',
   'lib.untitled': 'untitled',
   'lib.citedBy': 'Cited by',
   'an.gallery': 'Gallery',

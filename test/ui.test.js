@@ -581,6 +581,10 @@ describe('bibliothèque de sources', () => {
     const out = view('sources');
     assert.ok(out.includes('2 documents, dont 1 partagé'));
     assert.ok(out.includes('Mariage · Lyon · n°12'));
+    S.sources.set('S1', { ...S.sources.get('S1'), photo: 'data:image/png;base64,A', back: 'data:image/png;base64,B' });
+    const zoomable = view('sources');
+    assert.match(zoomable, /<img class="lib-pic zoomable" src="data:image\/png;base64,A" alt="Mariage"[^>]*data-act="photo-zoom">/, 'le document s’agrandit au clic');
+    assert.match(zoomable, /src="data:image\/png;base64,B" alt="Mariage \(Verso\)"/, 'son verso aussi');
     assert.ok(out.includes('data-id="b"'));
     S.tab = 'record';
     A.startEdit('a');

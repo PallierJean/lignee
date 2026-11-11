@@ -1082,3 +1082,7 @@
   margin-left: 4px;
   margin-right: auto;
 }
+
+.lib-pic.zoomable {
+  cursor: zoom-in;
+}
