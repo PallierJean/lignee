@@ -104,3 +104,20 @@ test('French check: reads the commits of a range, or the last one without a know
   const count = Number(execGit('rev-list', '--count', '--no-merges', `${from}..HEAD`));
   assert.equal(commitMessages(from, 'HEAD').length, count);
 });
+
+test('release notes: the French text may run over several lines, up to the next trailer', () => {
+  const notes = generateNotes({}, context([
+    'feat: share sources\n\nBody.\n\nFr: Les sources sont maintenant partagées : un acte cité\npar plusieurs personnes n’existe qu’une fois.\n\nCo-Authored-By: Someone <a@b.c>',
+    'fix: one\n\nFr: Première ligne\nseconde ligne.\nCo-Authored-By: Someone <a@b.c>',
+  ]));
+  assert.match(notes, /\* Les sources sont maintenant partagées : un acte cité par plusieurs personnes n’existe qu’une fois\. /);
+  assert.match(notes, /\* Première ligne seconde ligne\. /);
+});
+
+test('release notes: a breaking change translated with Fr-Breaking', () => {
+  const notes = generateNotes({}, context([
+    'feat!: format 2\n\nBREAKING CHANGE: backups are written\nin format 2.\n\nFr: Format 2.\n\nFr-Breaking: les sauvegardes passent\nau format 2.',
+  ]));
+  assert.match(notes, /### ⚠ BREAKING CHANGES\n\n\* Backups are written in format 2\. /);
+  assert.match(notes, /### ⚠ Changements incompatibles\n\n\* Les sauvegardes passent au format 2\. /);
+});

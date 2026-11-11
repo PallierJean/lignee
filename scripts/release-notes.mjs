@@ -1,5 +1,6 @@
 // semantic-release plugin: release notes in English, then in French, from the commits.
-// The French text comes from an `Fr:` trailer in the commit body; without it the English line is reused.
+// The French text comes from an `Fr:` trailer in the commit body, which may run over several lines;
+// without it the English line is reused. A breaking change can be translated by an `Fr-Breaking:` trailer.
 // Each line starts with a capital letter. No dependency: it reads the commits semantic-release passes.
 
 const SECTIONS = [
@@ -12,9 +13,13 @@ const SECTIONS = [
 const BREAKING = { en: '⚠ BREAKING CHANGES', fr: '⚠ Changements incompatibles' };
 
 const HEADER = /^(\w+)(?:\(([^)]*)\))?(!)?: (.+)$/;
-const FRENCH = /^Fr:[ \t]*(.+)$/im;
-// The note runs until a blank line, another trailer or the end of the message
-const BREAKING_NOTE = /^BREAKING[ -]CHANGE:[ \t]*([\s\S]+?)(?=\n[ \t]*\n|\n[\w-]+: |(?![\s\S]))/m;
+// A trailer's text runs until a blank line, another trailer or the end of the message
+const UNTIL_END = '([\\s\\S]+?)(?=\\n[ \\t]*\\n|\\n[\\w-]+: |(?![\\s\\S]))';
+const FRENCH = new RegExp('^Fr:[ \\t]*' + UNTIL_END, 'im');
+const FRENCH_BREAKING = new RegExp('^Fr-Breaking:[ \\t]*' + UNTIL_END, 'im');
+const BREAKING_NOTE = new RegExp('^BREAKING[ -]CHANGE:[ \\t]*' + UNTIL_END, 'm');
+/** A trailer's text on one line. */
+const oneLine = (text) => text.trim().replace(/\s*\n\s*/g, ' ');
 
 export const capitalize = (text) => text.charAt(0).toLocaleUpperCase('fr') + text.slice(1);
 
@@ -35,15 +40,21 @@ export function parseCommit(message) {
   if (!match) return null;
   const [, type, scope, bang, subject] = match;
   const body = rest.join('\n');
-  const fr = FRENCH.exec(body)?.[1].trim();
-  const note = BREAKING_NOTE.exec(body)?.[1].trim().replace(/\s*\n\s*/g, ' ');
+  const found = (re) => {
+    const m = re.exec(body);
+    return m ? oneLine(m[1]) : '';
+  };
+  const fr = found(FRENCH);
+  const note = found(BREAKING_NOTE);
+  const breaking = note || (bang ? subject.trim() : null);
   return {
     type: type.toLowerCase(),
     scope,
     en: subject.trim(),
     fr: fr || subject.trim(),
     translated: Boolean(fr),
-    breaking: note || (bang ? subject.trim() : null),
+    breaking,
+    breakingFr: breaking && (found(FRENCH_BREAKING) || breaking),
   };
 }
 
@@ -68,7 +79,7 @@ export function generateNotes(pluginConfig, context) {
     const out = [];
     const breaking = entries.filter((entry) => entry.breaking);
     if (breaking.length) {
-      out.push(`### ${BREAKING[lang]}`, '', ...breaking.map((entry) => line(entry, entry.breaking)), '');
+      out.push(`### ${BREAKING[lang]}`, '', ...breaking.map((entry) => line(entry, lang === 'fr' ? entry.breakingFr : entry.breaking)), '');
     }
     for (const section of SECTIONS) {
       const list = entries.filter((entry) => entry.type === section.type);
