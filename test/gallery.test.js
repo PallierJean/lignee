@@ -96,3 +96,45 @@ describe('verso depuis la visionneuse', () => {
     media.closeMedia();
   });
 });
+
+describe('classer une image aux archives', () => {
+  test('elle quitte la galerie et devient une source citée par les personnes identifiées ; annulable', async () => {
+    const { S } = await import('../js/state.js');
+    const media = await import('../js/ui/media.js');
+    const { mediaGroups } = await import('../js/ui/record.js');
+    const { sourcesOf } = await import('../js/model/sources.js');
+    const { undoAction } = await import('../js/services/storage.js');
+    const { resetApp } = await import('./helpers.js');
+    resetApp();
+    loadTree([
+      person('a', { given: 'Anne', surname: 'Roux', media: [
+        { id: 'm1', photo: 'data:image/png;base64,A', back: 'data:image/png;base64,V', title: 'Contrat', date: '1912', note: 'chez le notaire', tags: [{ id: 'b', x: 1, y: 1 }] },
+        { id: 'm2', photo: 'data:image/png;base64,B' }] }),
+      person('b', { given: 'Paul', surname: 'Roux' }),
+    ]);
+    mediaGroups.set('g', [{ owner: 'a', id: 'm1' }, { owner: 'a', id: 'm2' }]);
+    media.openMedia('a', 'm1', 'g');
+    const card = () => document.getElementById('mediaCard').innerHTML;
+    assert.match(card(), /data-act="media-archive">Classer aux archives/);
+    media.askMediaArchive(true);
+    assert.match(card(), /<select id="archiveKind">/);
+    await media.archiveMedia('notary');
+    assert.deepEqual(S.people.get('a').media.map((m) => m.id), ['m2'], 'plus dans la galerie');
+    const [doc] = sourcesOf(S.people.get('a'));
+    assert.equal(doc.kind, 'notary');
+    assert.equal(doc.title, 'Contrat');
+    assert.equal(doc.note, '1912 — chez le notaire');
+    assert.equal(doc.photo, 'data:image/png;base64,A');
+    assert.equal(doc.back, 'data:image/png;base64,V', 'le verso suit');
+    assert.equal(doc.fact, '');
+    assert.equal(sourcesOf(S.people.get('b'))[0].source, doc.source, 'la personne identifiée cite la même source');
+    assert.equal(S.sources.size, 1);
+    assert.match(card(), /data:image\/png;base64,B/, 'la suivante s’affiche');
+    await undoAction();
+    assert.deepEqual(S.people.get('a').media.map((m) => m.id), ['m1', 'm2'], 'Ctrl+Z la remet');
+    assert.equal(sourcesOf(S.people.get('a')).length, 0);
+    assert.equal(sourcesOf(S.people.get('b')).length, 0);
+    assert.equal(S.sources.size, 0);
+    media.closeMedia();
+  });
+});

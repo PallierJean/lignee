@@ -3,6 +3,7 @@
  * Each clickable element carries a data-act attribute naming the action to run.
  */
 import { S } from './state.js';
+import { $ } from './utils/dom.js';
 import { t } from './i18n.js';
 import { avatarOf, birthSurname, DATED_SITUATIONS, situationOfUnion } from './model/people.js';
 import { situationOptions } from './ui/form.js';
@@ -16,7 +17,7 @@ import {
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
-  openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack } from './ui/media.js';
+  openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, askMediaArchive, archiveMedia, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack } from './ui/media.js';
 import { closeCropFree, resetCropFree, cropFreeDrag, cropFreeOpen } from './ui/crop-free.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
@@ -285,6 +286,9 @@ const CLICK_ACTIONS = {
   'freecrop-reset': () => resetCropFree(),
   'media-delete-no': () => askMediaDelete(false),
   'media-delete-yes': once(() => deleteMedia()),
+  'media-archive': () => askMediaArchive(true),
+  'media-archive-no': () => askMediaArchive(false),
+  'media-archive-yes': once(() => archiveMedia(($('#archiveKind') || {}).value)),
   'med-remove': (el) => A.removeDraftMedia(+el.dataset.i),
   'med-back-remove': (el) => A.removeDraftMediaBack(+el.dataset.i),
   'src-back-remove': (el) => A.removeDraftSourceBack(+el.dataset.i),
