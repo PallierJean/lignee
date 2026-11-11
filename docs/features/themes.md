@@ -90,6 +90,7 @@ l'impression ne changent pas ; l'arbre a son propre zoom.
 | `css/tokens.css` | Couleurs des thèmes clair, sombre et d'accessibilité, polices |
 | `css/themes.css` | Palettes et motifs des Univers, générés par `scripts/build-themes.py` |
 | `js/ui/ambient.js`, `js/ui/ambient/scenes.js` | Décors des fêtes et saisons ; les scènes ne sont chargées que quand un de ces thèmes est affiché |
+| `js/ui/ambient/scenes/<thème>.js`, `scenes/shared.js` | Une scène par thème animé, et les dessins partagés (chutes, vols, hasard) |
 | `js/ui/footprints.js` | Empreintes de la Carte du Maraudeur |
 | `js/model/sky.js`, `js/ui/sky.js` | Position des constellations (temps sidéral), animation du ciel |
 | `js/ui/rain.js` | Pluie de signes de Matrix |
