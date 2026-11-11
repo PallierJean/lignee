@@ -44,6 +44,19 @@ describe('arbres', () => {
     assert.equal((await api('a1')).status, 404);
   });
 
+  test('premier enregistrement au format 2 : l’arbre au format 1 est gardé une fois, à part', async () => {
+    const v1 = backup('Ancien', [{ id: 'p1', given: 'Jean', sources: [{ id: 's1', title: 'Acte' }] }]);
+    assert.equal((await put('mig', v1)).status, 204);
+    const v2 = (given) => JSON.stringify({ format: 'lignee', version: 2, name: 'Ancien', people: [{ id: 'p1', given }], unions: [], sources: [] });
+    assert.equal((await put('mig', v2('Jean'))).status, 204);
+    const kept = path.join(dataDir, 'mig', 'avant-format-2.json');
+    assert.deepEqual(JSON.parse(await readFile(kept, 'utf8')), JSON.parse(v1));
+    assert.equal((await put('mig', v2('Jeanne'))).status, 204);
+    assert.deepEqual(JSON.parse(await readFile(kept, 'utf8')), JSON.parse(v1), 'la première copie reste');
+    assert.deepEqual((await (await api('')).json()).map((x) => x.id), ['mig'], 'la copie n’est pas un arbre');
+    assert.equal((await api('mig', { method: 'DELETE' })).status, 204);
+  });
+
   test('refuse ce qui n’est pas une sauvegarde Lignée', async () => {
     assert.equal((await put('a2', 'pas du JSON')).status, 400);
     assert.equal((await put('a2', '{"format":"autre","people":[],"unions":[]}')).status, 400);
