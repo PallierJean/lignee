@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { sourcesOf } from '../js/model/sources.js';
+import { S } from '../js/state.js';
 import { toGedDate, fromGedDate, buildGedcom, parseGedcom } from '../js/services/gedcom.js';
 import { example, loadTree, person } from './helpers.js';
 
@@ -289,5 +290,23 @@ describe('type d’union', () => {
     assert.equal(type('Concubinage'), 'cohabiting');
     assert.equal(type('Fiançailles'), 'other');
     assert.equal(type(''), '');
+  });
+});
+
+describe('rôle dans l’acte', () => {
+  test('exporté en EVEN / ROLE, relu à l’identique ; la fiche et le formulaire le montrent', () => {
+    loadTree([
+      person('p', { given: 'Pierre', sex: 'M', citations: [{ id: 'c1', source: 'S1', fact: 'birth' }, { id: 'c2', source: 'S2', fact: '', role: 'witness' }] }),
+      person('f', { given: 'Paul', sex: 'M', citations: [{ id: 'c3', source: 'S1', fact: '', role: 'father' }] }),
+    ]);
+    S.sources = new Map([['S1', { kind: 'birth', title: 'Naissance de Pierre', ref: 'n°5' }], ['S2', { kind: 'marriage', title: 'Mariage Roux', ref: 'n°9' }]]);
+    const ged = buildGedcom();
+    assert.match(ged, /1 SOUR @S\d+@\r\n2 PAGE n°5\r\n2 EVEN\r\n3 ROLE FATH/);
+    assert.match(ged, /1 SOUR @S\d+@\r\n2 PAGE n°9\r\n2 EVEN\r\n3 ROLE \(Witness\)/);
+    const { people, sources } = parseGedcom(ged);
+    const docs = new Map(sources.map((x) => [x.id, x.data]));
+    const roles = (given) => sourcesOf(people.find((x) => x.data.given === given).data, docs).map((x) => [x.fact, x.role || '']).sort();
+    assert.deepEqual(roles('Pierre'), [['', 'witness'], ['birth', '']]);
+    assert.deepEqual(roles('Paul'), [['', 'father']]);
   });
 });

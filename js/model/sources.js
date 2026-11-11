@@ -2,9 +2,10 @@
  * Shared sources (format version 2).
  *
  * A source is a document (a birth certificate, a census page…), kept once in S.sources with
- * its photo. A person cites it: person.citations = [{ id, source, fact }], where `fact` is the
- * fact the document supports ('birth', 'death', an event id, 'union:<union id>', or '' for
- * the whole record). Two people citing the same certificate share it: one photo, one place.
+ * its photo. A person cites it: person.citations = [{ id, source, fact, role? }], where `fact` is
+ * the fact the document supports ('birth', 'death', an event id, 'union:<union id>', or '' for
+ * the whole record), and `role` the person's part in it (CITATION_ROLES; missing: the person
+ * the document is about). Two people citing the same certificate share it: one photo, one place.
  *
  * The rest of the application still sees each person's sources as one list of documents,
  * as in version 1: sourcesOf() joins each citation with its source. Writers keep handing
@@ -13,6 +14,10 @@
  */
 import { S } from '../state.js';
 import { rid } from '../utils/helpers.js';
+
+/** A person's part in a document: the one it is about, a parent, the spouse, a witness. */
+export const CITATION_ROLES = ['subject', 'father', 'mother', 'spouse', 'witness'];
+const roleOf = (r) => (CITATION_ROLES.includes(r) && r !== 'subject' ? r : '');
 
 /** Fields of the document itself, shared by all who cite it. */
 export const SOURCE_FIELDS = ['kind', 'title', 'place', 'ref', 'note', 'photo', 'back'];
@@ -34,7 +39,9 @@ export function sourceData(x) {
 export function sourcesOf(p, sources = S.sources) {
   if (!p) return [];
   if (!Array.isArray(p.citations)) return listOf(p.sources);
-  return listOf(p.citations).map((c) => ({ ...(sources.get(c.source) || {}), id: c.id, fact: c.fact || '', source: c.source }));
+  return listOf(p.citations).map((c) => ({
+    ...(sources.get(c.source) || {}), id: c.id, fact: c.fact || '', ...(roleOf(c.role) ? { role: roleOf(c.role) } : {}), source: c.source,
+  }));
 }
 
 /** Short stable hash of a text (cyrb53): the same document always gets the same id. */
@@ -80,7 +87,9 @@ export function migratePeople(people, sources = new Map()) {
       const data = sourceData(x);
       const sid = legacyId(data, id + '|' + (x.id || i));
       if (!sources.has(sid)) sources.set(sid, data);
-      return { id: x.id || 'c' + i, source: sid, fact: x.fact || '' };
+      const citation = { id: x.id || 'c' + i, source: sid, fact: x.fact || '' };
+      if (roleOf(x.role)) citation.role = roleOf(x.role); // a format 1 file written by Lignée 2 keeps it
+      return citation;
     });
     out.set(id, rest);
   }
@@ -96,7 +105,7 @@ export function inlineSources(people, sources) {
       continue;
     }
     const { citations, ...rest } = p;
-    const list = sourcesOf(p, sources).map(({ source, ...x }) => x);
+    const list = sourcesOf(p, sources).map(({ source, role, ...x }) => (role ? { ...x, role } : x));
     if (list.length) rest.sources = list;
     out.set(id, rest);
   }
@@ -127,14 +136,16 @@ export function splitSources(id, list, before) {
     if (x.removed) continue;
     const sid = x.source && typeof x.source === 'string' ? x.source : rid('S');
     // The same source cited twice for the same fact (two records merged): once is enough
-    const key = sid + '|' + (x.fact || '');
+    const key = sid + '|' + (x.fact || '') + '|' + roleOf(x.role);
     if (x.source && seen.has(key)) continue;
     seen.add(key);
     const data = sourceData(x);
     // The same source cited twice by the form: the copy that changed wins
     const current = S.sources.get(sid);
     if (!chosen.has(sid) || (current && keyOf(chosen.get(sid)) === keyOf(current))) chosen.set(sid, data);
-    citations.push({ id: x.id || rid('c'), source: sid, fact: x.fact || '' });
+    const citation = { id: x.id || rid('c'), source: sid, fact: x.fact || '' };
+    if (roleOf(x.role)) citation.role = roleOf(x.role);
+    citations.push(citation);
   }
   const writes = [...chosen].filter(([sid, data]) => !S.sources.has(sid) || keyOf(S.sources.get(sid)) !== keyOf(data));
   const kept = new Set(citations.map((c) => c.source));

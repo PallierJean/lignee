@@ -133,7 +133,7 @@ export function startEdit(id) {
   const texts = (x, keys) => Object.fromEntries(keys.map((k) => [k, x[k] == null ? '' : String(x[k])]));
   const events = eventsOf(p).map((x) => ({ ...x, ...texts(x, ['date', 'place', 'note']), removed: false }));
   const sources = sourcesOf(p).map((x) => ({
-    ...x, kind: 'other', ...texts(x, ['fact', 'title', 'place', 'ref', 'note']), ...(x.kind ? { kind: String(x.kind) } : {}),
+    ...x, kind: 'other', ...texts(x, ['fact', 'role', 'title', 'place', 'ref', 'note']), ...(x.kind ? { kind: String(x.kind) } : {}),
     photo: photoSrc(x.photo) ? x.photo : '', back: photoSrc(x.photo) && photoSrc(x.back) ? x.back : '', removed: false,
   }));
   const media = mediaList(p).filter((x) => photoSrc(x.photo))
@@ -224,7 +224,7 @@ export function removeDraftEvent(i) {
 export function addDraftSource() {
   if (!S.edit) return;
   captureDraft();
-  S.edit.sources.push({ id: rid('s'), fact: '', kind: 'birth', title: '', place: '', ref: '', note: '', photo: '', removed: false });
+  S.edit.sources.push({ id: rid('s'), fact: '', role: '', kind: 'birth', title: '', place: '', ref: '', note: '', photo: '', removed: false });
   renderSide(true);
 }
 
@@ -235,7 +235,7 @@ export function citeDraftSource(sid) {
   captureDraft();
   const text = (k) => (src[k] == null ? '' : String(src[k]));
   S.edit.sources.push({
-    id: rid('s'), source: sid, fact: '', kind: src.kind || 'other', title: text('title'), place: text('place'),
+    id: rid('s'), source: sid, fact: '', role: '', kind: src.kind || 'other', title: text('title'), place: text('place'),
     ref: text('ref'), note: text('note'), photo: src.photo || '', back: src.photo && src.back ? src.back : '', removed: false,
   });
   renderSide(true);

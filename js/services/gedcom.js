@@ -10,6 +10,17 @@ import { dateParts } from '../utils/dates.js';
 import { P, byBirth, maiden, SITUATIONS, SOURCE_KINDS, UNION_TYPES, UNION_ENDS, unionType, unionTypeLabel, eventsOf, sourcesOf, factLabel } from '../model/people.js';
 import { t } from '../i18n.js';
 
+// A person's part in a document (model/sources.js) and its GEDCOM ROLE; a witness has no code of its own
+const ROLE_TO_GEDCOM = { father: 'FATH', mother: 'MOTH', spouse: 'SPOU', witness: '(Witness)' };
+function roleFromGedcom(v) {
+  const r = String(v || '').trim().toUpperCase();
+  if (r === 'FATH') return 'father';
+  if (r === 'MOTH') return 'mother';
+  if (['SPOU', 'HUSB', 'WIFE'].includes(r)) return 'spouse';
+  if (/WIT|TÉMOIN|TEMOIN/.test(r)) return 'witness';
+  return '';
+}
+
 /** GEDCOM tag of each event type (the 'other' type is written EVEN + TYPE). */
 const EVENT_TAGS = {
   baptism: 'BAPM', burial: 'BURI', cremation: 'CREM', census: 'CENS', residence: 'RESI', occupation: 'OCCU',
@@ -118,6 +129,8 @@ export function buildGedcom() {
     return [
       level + ' SOUR ' + sourceRecords.get(key).x,
       ...(s.ref ? textLines(level + 1, 'PAGE', s.ref) : []),
+      // The person's part in the document: EVEN then ROLE, as GEDCOM 5.5.1 has it
+      ...(ROLE_TO_GEDCOM[s.role] ? [(level + 1) + ' EVEN', (level + 2) + ' ROLE ' + ROLE_TO_GEDCOM[s.role]] : []),
       ...(s.note ? textLines(level + 1, 'NOTE', s.note) : []),
     ];
   };
@@ -334,8 +347,10 @@ export function parseGedcom(text) {
   const citationsOf = (node, fact) => node.kids.filter((k) => k.tag === 'SOUR').map((k) => {
     const rec = sourceRecords.get(k.val.trim()) || { kind: 'other', title: textOf(k), place: '' };
     const data = first(k, 'DATA');
+    const even = first(k, 'EVEN');
+    const role = roleFromGedcom(val(even && first(even, 'ROLE')));
     return {
-      id: rid('s'), fact, ...rec,
+      id: rid('s'), fact, ...rec, ...(role ? { role } : {}),
       ref: textOf(first(k, 'PAGE')),
       note: textOf(first(k, 'NOTE')) || textOf(data && first(data, 'TEXT')),
     };
