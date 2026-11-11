@@ -638,5 +638,10 @@ describe('bibliothèque de sources : ordre', () => {
       ['D14', { kind: 'death', title: 'Acte n°14' }], ['D3', { kind: 'death', title: 'Acte n°3' }], ['B2', { kind: 'birth', title: 'Acte n°2' }],
       ['D757', { kind: 'death', title: 'Acte n°757' }], ['D1', { kind: 'death', title: 'Acte n°1' }]]);
     assert.deepEqual(sourceLibrary().map((x) => x.src.title), ['Acte n°2', 'Acte n°3', 'Acte n°14', 'Acte n°757', 'Acte n°10', 'Acte n°1094', 'Acte n°1']);
+    // Un en-tête par famille, avec son nombre d'actes ; les fiches sans nom à la fin
+    S.focus = 'g';
+    const out = view('sources');
+    const heads = [...out.matchAll(/<h4>([^<]*) <span class="n">(\d+)<\/span><\/h4>/g)].map((m) => m[1] + ' ' + m[2]);
+    assert.deepEqual(heads, ['LAMBORRE 1', 'BOURREL 5', 'Sans nom 1']);
   });
 });

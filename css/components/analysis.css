@@ -1086,3 +1086,30 @@
 .lib-pic.zoomable {
   cursor: zoom-in;
 }
+
+/* Sources view: one group per family, its name and count, then a line */
+.lib-families {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lib-family h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 2px;
+  font-size: .8125rem;
+  letter-spacing: .08em;
+  color: var(--accent);
+}
+
+.lib-family h4::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+
+.lib-family:first-child h4 {
+  margin-top: 4px;
+}

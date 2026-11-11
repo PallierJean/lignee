@@ -93,7 +93,8 @@
   un par seconde. Rien ne part sans ce clic. Les coordonnées sont gardées dans ce navigateur
   (clé `lignee.geo.v1`). Le fond est un contour simplifié de la France, sans fichier externe.
 - **Sources** : chaque document de l'arbre, une seule fois, rangé par nature (naissance, mariage…),
-  puis par personne citée (nom puis prénom), puis par titre (les numéros dans l'ordre : n°3 avant n°10), avec sa vignette et les fiches qui le citent, et pour quel fait (`sourceLibrary`
+  puis par personne citée (nom puis prénom), puis par titre (les numéros dans l'ordre : n°3 avant n°10) ;
+  dans chaque nature, un en-tête par famille (« BOURREL 7 ») précède ses actes, les fiches sans nom à la fin ; avec sa vignette et les fiches qui le citent, et pour quel fait (`sourceLibrary`
   dans `ui/analysis.js`). Un acte de mariage cité par les deux époux n'apparaît qu'une fois. Dans
   le formulaire, un document partagé l'indique : le modifier le modifie pour toutes ces fiches.
   Deux filtres : la nature du document, et une recherche dans le titre, le lieu, la cote, la note et

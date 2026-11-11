@@ -710,6 +710,7 @@ export const FR = {
   'lib.searchPlaceholder': 'Titre, lieu, cote, personne…',
   'lib.noMatch': 'Aucun document ne correspond.',
   'lib.zoom': 'Agrandir le document',
+  'lib.noName': 'Sans nom',
   'lib.untitled': 'sans titre',
   'lib.citedBy': 'Cité par',
   'an.gallery': 'Galerie',
