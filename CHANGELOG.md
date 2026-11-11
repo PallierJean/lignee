@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.29.0](https://github.com/PallierJean/lignee/compare/v1.28.0...v1.29.0) (2026-11-11)
+
+### Features
+
+* Merge the repository's changes before saving to GitHub ([5d71581](https://github.com/PallierJean/lignee/commit/5d71581a4bb6a4d6f334ace50f8d7a2a7965f26f))
+* Order the whole tree to keep families together ([91544ba](https://github.com/PallierJean/lignee/commit/91544baee0fff35b7d8b2f3af418917e5143aceb))
+
+---
+
+### Nouveautés
+
+* Plusieurs personnes peuvent sauvegarder le même arbre sur GitHub : ([5d71581](https://github.com/PallierJean/lignee/commit/5d71581a4bb6a4d6f334ace50f8d7a2a7965f26f))
+* « Tout l'arbre » garde les familles groupées : enfants sous leurs parents, beaucoup moins de traits qui se croisent ([91544ba](https://github.com/PallierJean/lignee/commit/91544baee0fff35b7d8b2f3af418917e5143aceb))
+
 ## [1.28.0](https://github.com/PallierJean/lignee/compare/v1.27.0...v1.28.0) (2026-11-10)
 
 ### Features
