@@ -17,7 +17,16 @@ ouvert est le vôtre, Lignée propose de l'ouvrir dans un nouvel arbre ou de rel
 remplacera qu'après confirmation. Le bandeau
 « ATTENTION : LECTURE ET ÉCRITURE » apparaît, avec le bouton « Sauvegarder sur GitHub » : le `.json` et les photos
 partent en un seul commit sur la branche par défaut, et une photo retirée de l'arbre quitte le dépôt (elle reste
-dans son historique). Remplacer une sauvegarde que ce navigateur n'a pas écrite demande une confirmation.
+dans son historique). Une photo déjà dans le dépôt n'est pas renvoyée : elle est reconnue à son contenu.
+Les fichiers que Lignée a nommés dans le dossier des photos de la sauvegarde (`<nom>-<uuid>.jpg`) et
+que l'arbre ne cite plus sont retirés aussi ; un fichier posé à la main dans ce dossier reste.
+
+Avant d'envoyer sur une sauvegarde que ce navigateur n'a pas écrite, une fenêtre liste ce que l'arbre
+ouvert changerait dans le dépôt (`repoPreview` dans `ui/repo-link.js`) : fiches ajoutées, fiches
+seulement dans le dépôt, fiches différentes avec les champs concernés, unions, sources, photos
+envoyées et retirées. « Fusionner » reprend d'abord dans l'arbre ouvert ce que seul le dépôt
+contient (l'arbre ouvert l'emporte là où les deux diffèrent), puis envoie ; « Remplacer le dépôt »
+envoie l'arbre tel quel.
 Si le dépôt a changé depuis sa lecture, par exemple parce qu'une autre personne a sauvegardé entre-temps, Lignée relit
 sa dernière version et fusionne champ par champ ([merge.js](../../js/services/merge.js)), en partant de la version
 chargée. Un champ modifié d'un seul côté garde cette modification, et les ajouts et suppressions des deux côtés sont

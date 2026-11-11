@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
 import { parseRepo, openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
-import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner } from '../js/ui/repo-link.js';
+import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner, chooseRepoSave } from '../js/ui/repo-link.js';
 import { readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo, openTransfer, closeTransfer } from '../js/ui/transfer.js';
 import { photoOf } from '../js/model/people.js';
 import { REPO_KEY } from '../js/config.js';
@@ -525,14 +525,63 @@ describe('connecter l’arbre ouvert', () => {
     assert.equal(S.repoLink.path, 'agathe.json');
     calls.length = 0;
     await saveRepo();
-    assert.ok(calls.every((c) => c.method === 'GET'));
-    assert.ok(html('repoBanner').includes('data-act="repo-save-yes"'));
-    await saveRepo(true);
+    assert.ok(calls.every((c) => c.method === 'GET'), 'rien n’est envoyé avant le choix');
+    assert.equal(el('repoDiffDlg').hidden, false);
+    assert.match(html('repoDiffBody'), /Différentes : votre version est envoyée/);
+    assert.match(html('repoDiffBody'), /Agathe <small>\(prénoms, photo\)<\/small>/);
+    await chooseRepoSave('replace');
+    assert.equal(el('repoDiffDlg').hidden, true);
     assert.ok(calls.some((c) => c.method === 'PATCH'));
     head = S.repoLink.repo.head;
     calls.length = 0;
     await saveRepo();
     assert.ok(calls.some((c) => c.method === 'PATCH'));
+  });
+
+  const sent = () => JSON.parse(calls.findLast((c) => c.url.endsWith('/git/trees')).body.tree.find((x) => x.path === 'agathe.json').content);
+  const twoPeople = () => JSON.stringify({ format: 'lignee', name: 'F', people: [{ id: 'a', given: 'Ana' }, { id: 'r', given: 'Rémi' }], unions: [] });
+
+  test('connecté après l’aperçu d’import : les photos du dépôt sont reconnues, pas renvoyées ; les doublons partent', async () => {
+    // Même photo que celle de l'arbre ouvert (beforeEach), plus un doublon laissé par une ancienne version
+    await connect({
+      'agathe.json': JSON.stringify({ format: 'lignee', name: 'F', people: [{ id: 'a', given: 'Agathe', photo: 'photos/Agathe-1.jpg' }], unions: [] }),
+      'agathe/photos/Agathe-1.jpg': 'img', 'agathe/photos/Agathe-0db90881-c80d-4a4f-a99a-632f168b33cd.jpg': 'img',
+      'agathe/photos/posée-à-la-main.jpg': 'img', 'autre/photos/x-0db90881-c80d-4a4f-a99a-632f168b33cd.jpg': 'img',
+    });
+    await connectOpenedRepo();
+    await saveRepo();
+    assert.match(html('repoDiffBody'), /Photos : 0 envoyée, 1 retirée/);
+    calls.length = 0;
+    await chooseRepoSave('replace');
+    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')), 'photo identique : pas renvoyée');
+    const { tree } = calls.find((c) => c.url.endsWith('/git/trees')).body;
+    assert.equal(JSON.parse(tree.find((x) => x.path === 'agathe.json').content).people[0].photo, 'photos/Agathe-1.jpg');
+    assert.deepEqual(tree.filter((x) => x.sha === null).map((x) => x.path), ['agathe/photos/Agathe-0db90881-c80d-4a4f-a99a-632f168b33cd.jpg'], 'seul le doublon nommé par Lignée, dans son dossier, part');
+  });
+
+  test('avant de remplacer : la liste de ce qui change ; « Remplacer » retire ce qui n’est que dans le dépôt', async () => {
+    await connect({ 'agathe.json': twoPeople() });
+    await connectOpenedRepo();
+    await saveRepo();
+    const body = html('repoDiffBody');
+    assert.match(body, /Seulement dans le dépôt[^<]*<span class="n">1<\/span><\/h3><ul class="diff-list"><li>Rémi<\/li>/);
+    assert.match(body, /Photos : 1 envoyée/);
+    await chooseRepoSave('replace');
+    assert.deepEqual(sent().people.map((p) => p.id), ['a']);
+    assert.ok(!S.people.has('r'));
+  });
+
+  test('« Fusionner » : ce qui n’est que dans le dépôt est gardé, votre version l’emporte ailleurs', async () => {
+    await connect({ 'agathe.json': twoPeople() });
+    await connectOpenedRepo();
+    await saveRepo();
+    calls.length = 0;
+    await chooseRepoSave('merge');
+    assert.equal(S.people.get('r').given, 'Rémi', 'repris dans l’arbre ouvert');
+    assert.equal(S.people.get('a').given, 'Agathe');
+    assert.deepEqual(sent().people.map((p) => [p.id, p.given]).sort(), [['a', 'Agathe'], ['r', 'Rémi']]);
+    assert.match(el('toast').textContent, /1 fiche reprise/);
+    assert.equal(S.repoLink.mustConfirm, false);
   });
 
   test('plusieurs sauvegardes : celle de l’arbre, sinon un nouveau fichier', async () => {

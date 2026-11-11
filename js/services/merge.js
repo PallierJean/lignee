@@ -80,3 +80,43 @@ export function backupRecords(backup) {
     .map(({ id, ...data }) => [id, data]));
   return { people: index(backup && backup.people), unions: index(backup && backup.unions), sources: index(backup && backup.sources) };
 }
+
+// Fields that change on every save without meaning anything to the reader
+const NOISE = new Set(['updatedAt']);
+
+/**
+ * What `mine` changes compared with `theirs` (Maps id -> record): { added: [id], removed: [id],
+ * changed: [{ id, fields: [key] }] }. `added`: only in mine; `removed`: only in theirs.
+ */
+export function diffRecords(theirs, mine) {
+  const added = [...mine.keys()].filter((id) => !theirs.has(id));
+  const removed = [...theirs.keys()].filter((id) => !mine.has(id));
+  const changed = [];
+  for (const [id, m] of mine) {
+    const t = theirs.get(id);
+    if (!t) continue;
+    const fields = [...new Set([...Object.keys(m), ...Object.keys(t)])]
+      .filter((k) => !NOISE.has(k) && canonical(m[k]) !== canonical(t[k]));
+    if (fields.length) changed.push({ id, fields });
+  }
+  return { added, removed, changed };
+}
+
+/** Image files and data URLs a set of records cites: portraits, documents, gallery images and backs. */
+export function imagesOf(records) {
+  const out = new Set();
+  const add = (x) => { if (typeof x === 'string' && x) out.add(x); };
+  for (const map of [records.people, records.sources]) {
+    for (const r of (map || new Map()).values()) {
+      add(r.photo);
+      add(r.back);
+      for (const list of [r.sources, r.media]) {
+        for (const x of Array.isArray(list) ? list : []) {
+          add(x && x.photo);
+          add(x && x.back);
+        }
+      }
+    }
+  }
+  return out;
+}

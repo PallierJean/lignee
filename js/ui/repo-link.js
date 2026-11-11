@@ -9,9 +9,9 @@ import { norm } from '../utils/helpers.js';
 import {
   buildPortableBackup, convertPhotos, opSet, opDelete, inBatch, storePhotos, saveLocal, beginAction, commitAction, mapOf,
 } from '../services/storage.js';
-import { pushBackup, attachPhotos, readLatest } from '../services/github.js';
-import { mergeRecords, backupRecords, canonical } from '../services/merge.js';
-import { fullName } from '../model/people.js';
+import { pushBackup, attachPhotos, readLatest, SENT_NAME } from '../services/github.js';
+import { mergeRecords, backupRecords, canonical, diffRecords, imagesOf } from '../services/merge.js';
+import { fullName, isPhotoData } from '../model/people.js';
 import { afterData } from './render.js';
 import { toast } from './toast.js';
 import { markExported } from '../services/exported.js';
@@ -44,7 +44,6 @@ const MERGE_TRIES = 3; // the repository may change again while we merge
 
 function setLink(repo, path, photos, mustConfirm, base) {
   S.repoLink = { tree: S.tree, name: repo.name, path, repo, photos, mustConfirm, base: base || NO_BASE() };
-  S.repoConfirm = false;
   S.repoError = '';
   S.repoConflicts = null;
   S.repoSavedAt = '';
@@ -114,10 +113,6 @@ export function renderRepoBanner() {
       + `<button class="btn small danger" type="button" data-act="repo-keep-mine">${t('repo.keepMine')}</button>`
       + `<button class="btn small" type="button" data-act="repo-keep-theirs">${t('repo.keepTheirs')}</button>`
       + `<button class="btn small" type="button" data-act="repo-save-no">${t('cancel')}</button>`
-    : S.repoConfirm
-    ? `<span>${t('repo.confirm', esc(link.path))}</span>`
-      + `<button class="btn small danger" type="button" data-act="repo-save-yes">${t('repo.saveYes')}</button>`
-      + `<button class="btn small" type="button" data-act="repo-save-no">${t('cancel')}</button>`
     : `<button class="btn small danger" type="button" data-act="repo-save">${t('repo.save')}</button>${forget}`;
   el.className = 'banner repo-banner write';
   el.innerHTML = `<p class="repo-alert">${t('repo.writeTitle')}</p><p title="${t('repo.write', name)}">${t('repo.writeShort', name)}</p>`
@@ -126,8 +121,8 @@ export function renderRepoBanner() {
     + `<div class="acts">${actions}</div>`;
 }
 
-export function confirmRepoSave(show) {
-  S.repoConfirm = show;
+/** Leaves the choice the banner asks for (records changed on both sides). */
+export function confirmRepoSave() {
   S.repoConflicts = null;
   S.repoError = '';
   renderRepoBanner();
@@ -165,11 +160,10 @@ async function localRecord(link, latest, collection, id, next, mine) {
 }
 
 /**
- * Merges the repository's latest version into the open tree. Returns { conflicts: [names] } when
- * fields were changed differently on both sides and `prefer` doesn't settle them; otherwise
- * applies the merge locally, as one undoable action, and returns { changed: number of records }.
+ * The repository's latest version next to the open tree, both with the repository's photo paths
+ * (a photo not yet in the repository stays a data URL): { latest, theirs, mine, both }.
  */
-async function mergeLatest(link, prefer) {
+async function compareLatest(link) {
   const latest = await readLatest(link.repo, link);
   const theirs = backupRecords(latest.backup);
   const portable = JSON.parse(await buildPortableBackup());
@@ -180,10 +174,22 @@ async function mergeLatest(link, prefer) {
     sources: await Promise.all((portable.sources || []).map((s) => convertPhotos(s, toRef))),
   });
   const both = Object.fromEntries(COLLECTIONS.map((c) => [c, new Map([...theirs[c], ...mine[c]])]));
+  return { latest, theirs, mine, both };
+}
+
+/**
+ * Merges the repository's latest version into the open tree. Returns { conflicts: [names] } when
+ * fields were changed differently on both sides and `prefer` doesn't settle them; otherwise
+ * applies the merge locally, as one undoable action, and returns { changed: number of records }.
+ * `base`: the version both sides started from (by default, the one read or sent last); with an
+ * empty base, nothing is deleted: what only one side has is kept.
+ */
+async function mergeLatest(link, prefer, base = link.base) {
+  const { latest, theirs, mine, both } = await compareLatest(link);
   const merged = {};
   const conflicts = [];
   for (const collection of COLLECTIONS) {
-    const { result, conflicts: ids } = mergeRecords(link.base[collection] || new Map(), mine[collection], theirs[collection], prefer);
+    const { result, conflicts: ids } = mergeRecords(base[collection] || new Map(), mine[collection], theirs[collection], prefer);
     merged[collection] = result;
     for (const id of ids) conflicts.push(conflictName(collection, id, both));
   }
@@ -218,6 +224,101 @@ async function mergeLatest(link, prefer) {
   return { changed: writes.length };
 }
 
+/* ---------- Before replacing a backup written elsewhere: what would change ---------- */
+
+const SHOWN = 25; // names listed per section, the others counted
+
+/**
+ * What saving would do to the repository: { people, unions, sources } (see diffRecords), the
+ * photos sent and removed, and the names to show. Reads the repository's latest version.
+ */
+export async function repoPreview(link = S.repoLink) {
+  const { latest, theirs, mine, both } = await compareLatest(link);
+  const diff = Object.fromEntries(COLLECTIONS.map((c) => [c, diffRecords(theirs[c], mine[c])]));
+  const ours = imagesOf(mine);
+  const sent = [...ours].filter(isPhotoData).length;
+  // Removed: the repository's photos the tree no longer cites, and the files left in its photos folder
+  const folder = link.path.replace(/\.json$/i, '/').normalize('NFC');
+  const files = [...latest.files.values()].map((x) => x.path.normalize('NFC'))
+    .filter((path) => path.startsWith(folder + 'photos/') && SENT_NAME.test(path)).map((path) => path.slice(folder.length));
+  const removed = new Set([...imagesOf(theirs)].filter((x) => !isPhotoData(x)).concat(files).filter((x) => !ours.has(x))).size;
+  return { diff, photos: { sent, removed }, name: (c, id) => conflictName(c, id, both) };
+}
+
+/** Field names, for the changed records. */
+const fieldName = (key) => {
+  const label = t('diff.f.' + key);
+  return label === 'diff.f.' + key ? key : label;
+};
+
+function namesList(items, label) {
+  if (!items.length) return '';
+  const shown = items.slice(0, SHOWN).map((x) => `<li>${x}</li>`).join('');
+  const more = items.length > SHOWN ? `<li class="hint">${t('diff.more', items.length - SHOWN)}</li>` : '';
+  return `<h3>${label} <span class="n">${items.length}</span></h3><ul class="diff-list">${shown}${more}</ul>`;
+}
+
+/** Content of the dialog listing what saving would change in the repository. */
+export function repoDiffHTML(preview, path) {
+  const { diff, photos, name } = preview;
+  const p = diff.people;
+  const changed = p.changed.map(({ id, fields }) => `${esc(name('people', id))} <small>(${esc(fields.map(fieldName).join(', '))})</small>`);
+  const others = ['unions', 'sources'].map((c) => {
+    const d = diff[c];
+    const n = d.added.length + d.removed.length + d.changed.length;
+    return n ? `<li>${t('diff.' + c, d.added.length, d.removed.length, d.changed.length)}</li>` : '';
+  }).join('');
+  const nothing = !COLLECTIONS.some((c) => diff[c].added.length || diff[c].removed.length || diff[c].changed.length) && !photos.sent && !photos.removed;
+  return `<p>${t('diff.intro', esc(path))}</p>`
+    + (nothing ? `<p class="okmsg">${t('diff.same')}</p>` : '')
+    + namesList(p.added.map((id) => esc(name('people', id))), t('diff.added'))
+    + namesList(p.removed.map((id) => esc(name('people', id))), t('diff.removed'))
+    + namesList(changed, t('diff.changed'))
+    + (others ? `<ul class="diff-list">${others}</ul>` : '')
+    + (photos.sent || photos.removed ? `<p>${t('diff.photos', photos.sent, photos.removed)}</p>` : '')
+    + `<p class="hint">${t('diff.choice')}</p>`;
+}
+
+/** Opens the dialog: what replacing the repository's backup would change, and the choice. */
+export async function openRepoDiff() {
+  const link = S.repoLink;
+  if (!link || !link.repo || link.tree !== S.tree) return;
+  const dlg = $('#repoDiffDlg');
+  dlg.hidden = false;
+  $('#repoDiffBody').innerHTML = `<p>${t('tr.repoLoading')}</p>`;
+  try {
+    $('#repoDiffBody').innerHTML = repoDiffHTML(await repoPreview(link), link.path);
+  } catch (e) {
+    $('#repoDiffBody').innerHTML = `<p class="err">${t('tr.repoErr.' + (e.code || 'failed'))}</p>`;
+  }
+}
+
+export function closeRepoDiff() {
+  $('#repoDiffDlg').hidden = true;
+}
+
+/**
+ * Choice made in the dialog: 'replace' sends the open tree as it is; 'merge' first takes in
+ * what only the repository has (the open tree wins where both differ), then sends.
+ */
+export async function chooseRepoSave(how) {
+  const link = S.repoLink;
+  closeRepoDiff();
+  if (!link || !link.repo) return;
+  if (how === 'merge') {
+    S.repoError = '';
+    try {
+      const { changed } = await mergeLatest(link, 'mine', NO_BASE());
+      link.merged = changed;
+    } catch (e) {
+      S.repoError = t('tr.repoErr.' + (e.code || 'failed'));
+      renderRepoBanner();
+      return;
+    }
+  }
+  await saveRepo(true);
+}
+
 /**
  * Saves the open tree to the linked repository, after confirmation if a backup must be replaced.
  * If the repository changed since it was read, its changes are merged into the open tree first;
@@ -227,10 +328,9 @@ export async function saveRepo(confirmed, prefer) {
   const link = S.repoLink;
   if (!link || !link.repo || link.tree !== S.tree) return;
   if (link.mustConfirm && !confirmed) {
-    confirmRepoSave(true);
+    await openRepoDiff();
     return;
   }
-  S.repoConfirm = false;
   S.repoConflicts = null;
   S.repoError = '';
   let changed = 0;
@@ -254,6 +354,8 @@ export async function saveRepo(confirmed, prefer) {
     remember(link);
     S.repoSavedAt = new Date().toLocaleTimeString();
     markExported();
+    changed += link.merged || 0;
+    link.merged = 0;
     toast(changed ? t('repo.merged', changed) : t('repo.saved'));
   } catch (e) {
     S.repoError = t('tr.repoErr.' + (e.code || 'failed'));
@@ -266,7 +368,6 @@ export function forgetRepo() {
   if (S.repoLink && S.repoLink.tree === S.tree) S.repoLink = null;
   const { [S.tree]: dropped, ...others } = savedRepos();
   writeRepos(others);
-  S.repoConfirm = false;
   S.repoConflicts = null;
   S.repoError = '';
   renderRepoBanner();
