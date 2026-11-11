@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe, before, after, beforeEach } from 'node:test';
-import { mkdtemp, rm, readdir, readFile, access } from 'node:fs/promises';
+import { mkdtemp, rm, readdir, readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { S, services, loadPrefs, savePrefs, treeName } from '../js/state.js';
@@ -90,6 +90,29 @@ describe('mode fichier, sur le vrai serveur', () => {
     await deleteTree(id);
     assert.equal(S.tree, 'principal');
     assert.ok(S.people.has('a'));
+  });
+
+  test('arbre d’une version plus récente : vide et en lecture seule, fichier et photos intacts', async () => {
+    const future = JSON.stringify({ format: 'lignee', version: 99, name: 'Futur', people: [{ id: 'z', given: 'Zoé' }], unions: [], sources: [{ id: 's', photo: 'photos/acte.jpg' }] });
+    await writeFile(path.join(dataDir, 'futur.json'), future);
+    await mkdir(path.join(dataDir, 'futur', 'photos'), { recursive: true });
+    await writeFile(path.join(dataDir, 'futur', 'photos', 'acte.jpg'), 'img');
+    await loadFile();
+    await openTree('futur');
+    assert.equal(S.canWrite, false);
+    assert.equal(S.people.size, 0);
+    assert.match(el('toast').textContent, /version plus récente/);
+    // Même un envoi direct au serveur ne l'écrase pas, et le ménage des photos n'y touche pas
+    const put = await fetch('api/trees/futur', { method: 'PUT', body: JSON.stringify({ format: 'lignee', version: 1, people: [], unions: [] }) });
+    assert.equal(put.status, 409);
+    await fetch('api/trees/futur/photos/sweep', { method: 'POST' });
+    assert.equal(await readFile(path.join(dataDir, 'futur.json'), 'utf8'), future);
+    await access(path.join(dataDir, 'futur', 'photos', 'acte.jpg'));
+    await openTree('principal');
+    assert.equal(S.canWrite, true);
+    assert.ok(S.people.has('a'));
+    await rm(path.join(dataDir, 'futur.json'));
+    await loadFile();
   });
 
   test('conflit : l’autre version n’est pas écrasée, et l’échec est signalé', async () => {

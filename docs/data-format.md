@@ -24,7 +24,7 @@ L'enveloppe d'une sauvegarde `.json` et d'un fichier de `data/arbres/`.
 | Champ | Type | Requis | Description |
 | --- | --- | --- | --- |
 | `format` | `"lignee"` | ✅ | Reconnaît une sauvegarde Lignée ; sinon le fichier est refusé |
-| `version` | `number` | ✅ | Version du format, actuellement `1` |
+| `version` | `number` | ✅ | Version du format, actuellement `1`. Une sauvegarde d'une version plus récente est refusée (import, dépôt GitHub, mode fichier) : la lire ferait perdre ce que cette version ne connaît pas. En mode fichier, l'arbre s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
 | `name` | `string` | | Nom de l'arbre |
 | `createdAt` | `number` | | Création de l'arbre, en millisecondes depuis 1970 |
 | `exportedAt` | `string` | | Date de l'export, ISO 8601 |

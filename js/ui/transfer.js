@@ -193,6 +193,11 @@ export async function readImportFile(input) {
     const text = await file.text();
     result = /^\s*\{/.test(text) ? parseBackup(text) : parseGedcom(text);
   } catch (e) {
+    if (e.code === 'newer') {
+      S.pending = null;
+      info.innerHTML = `<p class="err">${t('backup.newer')}</p>`;
+      return;
+    }
     result = null;
   }
 

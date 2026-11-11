@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildBackup, parseBackup } from '../js/services/backup.js';
+import { buildBackup, parseBackup, FORMAT_VERSION } from '../js/services/backup.js';
 import { example } from './helpers.js';
 
 test('sauvegarde puis relecture à l’identique', () => {
@@ -36,4 +36,17 @@ test('identifiants dangereux écartés, nom raccourci', () => {
   assert.deepEqual(back.people.map((x) => x.id), ['ok_1']);
   assert.deepEqual(back.unions, []);
   assert.equal(back.name.length, 80);
+});
+
+test('format plus récent : refusé clairement, sans rien lire', () => {
+  const v = (version) => JSON.stringify({ format: 'lignee', version, people: [{ id: 'a', given: 'A' }], unions: [] });
+  assert.throws(() => parseBackup(v(FORMAT_VERSION + 1)), { code: 'newer', message: /version plus récente/ });
+  assert.equal(parseBackup(v(FORMAT_VERSION)).people.length, 1);
+  assert.equal(parseBackup(JSON.stringify({ format: 'lignee', people: [], unions: [] })).people.length, 0, 'sans version : lu');
+  assert.equal(JSON.parse(buildBackup()).version, FORMAT_VERSION);
+});
+
+test('le serveur connaît la même version du format', async () => {
+  const src = (await import('node:fs')).readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  assert.equal(Number(/const FORMAT_VERSION = (\d+);/.exec(src)[1]), FORMAT_VERSION);
 });

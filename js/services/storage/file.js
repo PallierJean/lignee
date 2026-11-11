@@ -85,7 +85,17 @@ export async function loadFileTree() {
     say('st.readFailed', true);
     return;
   }
-  const data = parseBackup(text);
+  let data;
+  try {
+    data = parseBackup(text);
+  } catch (e) {
+    if (e.code !== 'newer') throw e;
+    // Saved by a newer Lignée: shown empty and read-only, so that nothing overwrites the file or its photos
+    S.canWrite = false;
+    say('backup.newer', true);
+    return;
+  }
+  S.canWrite = true;
   S.people = new Map(data.people.map((x) => [x.id, x.data]));
   S.unions = new Map(data.unions.map((x) => [x.id, x.data]));
   // Photos still embedded in the record (saved before photo files existed): they are moved out

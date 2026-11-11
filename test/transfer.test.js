@@ -112,6 +112,14 @@ describe('imports', () => {
     assert.equal(S.people.size, before);
   });
 
+  test('sauvegarde d’une version plus récente : refusée, message clair', async () => {
+    const newer = JSON.stringify({ format: 'lignee', version: 99, people: [{ id: 'n1', given: 'Nina' }], unions: [] });
+    await readImportFile(file('futur.json', newer));
+    assert.ok(html('importInfo').includes('version plus récente'));
+    assert.ok(!html('importInfo').includes('import-go'));
+    assert.equal(S.pending, null);
+  });
+
   test('GEDCOM dans un nouvel arbre, nommé d’après le fichier', async () => {
     await readImportFile(file('dupont.ged', '0 HEAD\n0 @I1@ INDI\n1 NAME Jean /Dupont/\n0 TRLR\n'));
     await importGo(true);

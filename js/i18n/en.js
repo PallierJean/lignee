@@ -157,8 +157,10 @@ export const EN = {
   'repo.keepMine': 'My changes',
   'repo.keepTheirs': 'The repository’s',
   'repo.forget': 'Disconnect repository',
+  'tr.repoErr.newer': 'This repository holds a backup from a newer version of Lignée. Update Lignée to open it or save to it.',
   'tr.repoErr.noBackup': 'No Lignée backup (.json) found in this repository.',
   'tr.repoErr.failed': 'The repository could not be read. Check your connection and try again.',
+  'backup.newer': 'This tree was saved by a newer version of Lignée. Update Lignée to open it: this version could lose part of it.',
   'backup.invalid': 'This file is not a Lignée backup.',
 
   'ts.title': 'My trees',
