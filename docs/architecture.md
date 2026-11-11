@@ -19,6 +19,7 @@ lignee/
 ├── CHANGELOG.md                Historique des versions (généré)
 ├── docs/                       Documentation technique (sommaire : DEVELOPMENT.md)
 ├── server.js                   Serveur local : sert l'application, écrit data/arbres/
+├── htr.js                      Lecture des écritures anciennes sur cet ordinateur (Kraken), pour server.js
 ├── assets/
 │   └── favicon.svg             Icône de l'onglet
 ├── images/
@@ -88,6 +89,7 @@ lignee/
 │   │   │   ├── trees.js        Règles communes à la collection d'arbres
 │   │   │   ├── file.js         Mode fichier (server.js), photos en fichiers
 │   │   │   └── local.js        Mode navigateur (localStorage)
+│   │   ├── htr.js              Lecture d'une photo par le serveur local (Kraken)
 │   │   ├── gedcom.js           Export et import GEDCOM 5.5.1
 │   │   ├── github.js           Lecture d'une sauvegarde et de ses photos dans un dépôt GitHub, envoi
 │   │   ├── merge.js            Fusion à trois voies des fiches (sauvegarde GitHub)
@@ -121,6 +123,7 @@ lignee/
 │       ├── analysis.js         Onglet Analyse
 │       ├── places.js           Carte des lieux en SVG
 │       ├── media.js            Visionneuse de la galerie, identification sur les photos
+│       ├── reading.js          Lecture d'un document : image, texte lu, corrections
 │       ├── trees.js            Fenêtre Mes arbres : ouvrir, créer, renommer, supprimer
 │       ├── spouse-pick.js      Choix d'un conjoint existant
 │       ├── theme.js            Thème choisi, couleurs, calque animé

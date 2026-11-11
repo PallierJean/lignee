@@ -37,6 +37,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { htrStatus, readImage } from './htr.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -284,6 +285,7 @@ function paths(dataDir) {
 export function createServer({
   root = ROOT, dataDir = path.join(root, 'data', 'arbres'), tokenFile = path.join(root, 'data', 'matchid.json'),
   deaths = matchidClient(tokenFile),
+  htr = { status: htrStatus, read: readImage },
 } = {}) {
   const { treeFile, photoDir, readTree, treeIds } = paths(dataDir);
 
@@ -413,6 +415,18 @@ export function createServer({
     }
   }
 
+  /** Reads the handwriting of a photo of the tree, on this computer (htr.js): { model, lines }. */
+  async function readPhoto(res, id, file) {
+    if (!PHOTO_REF.test('photos/' + file)) return send(res, 400, 'Nom de photo invalide');
+    const full = path.join(photoDir(id), file);
+    try {
+      await fs.access(full);
+    } catch (e) {
+      return send(res, 404, 'Photo introuvable');
+    }
+    send(res, 200, JSON.stringify(await htr.read(full)), TYPES['.json']);
+  }
+
   async function api(req, res, rel, query) {
     if (rel === '') {
       if (req.method === 'GET') return listTrees(res);
@@ -424,6 +438,8 @@ export function createServer({
         if (req.method === 'GET') return getTree(res, id);
         if (req.method === 'PUT') return putTree(req, res, id, query.includes('keepPhotos=1'));
         if (req.method === 'DELETE') return deleteTree(res, id);
+      } else if (sub === 'photos' && filePart && rest.length === 1 && rest[0] === 'read') {
+        if (req.method === 'POST') return readPhoto(res, id, decodeURIComponent(filePart));
       } else if (sub === 'photos' && !rest.length) {
         if (!filePart && req.method === 'POST') return postPhoto(req, res, id);
         if (filePart === 'sweep' && req.method === 'POST') return sweepPhotos(res, id);
@@ -505,6 +521,9 @@ export function createServer({
       const route = pathname.match(/^\/api\/trees\/?(.*)$/);
       if (route) {
         await api(req, res, route[1], query);
+      } else if (pathname === '/api/htr') {
+        if (req.method === 'GET') send(res, 200, JSON.stringify(await htr.status()), TYPES['.json']);
+        else send(res, 405, 'Méthode non autorisée');
       } else if (pathname === '/api/insee') {
         if (req.method === 'GET') await insee(res, query);
         else send(res, 405, 'Méthode non autorisée');

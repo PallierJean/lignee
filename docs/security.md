@@ -36,6 +36,10 @@ local ou au navigateur accède aux arbres. Ne l'exposez pas sur un réseau.
   de chemin (`/`, `\`, `..` et caractères interdits retirés). Seules les références de la forme
   `photos/<fichier>.jpg|png|webp|gif` sont acceptées pour les images.
 - **Taille des envois limitée** à 20 Mo (réponse 413 au-delà).
+- **Lecture des écritures** (`htr.js`) : le serveur lance le programme `kraken` installé sur
+  l'ordinateur, sans passer par un shell, sur une photo de l'arbre désignée par son nom vérifié
+  (`photos/<fichier>`) ; une lecture à la fois, arrêtée au bout de dix minutes. Rien ne sort sur
+  Internet.
 - **Pas d'écrasement silencieux** : chaque arbre a une version (empreinte SHA-256, en-tête
   `ETag`). Un enregistrement envoie la version reçue au chargement (`If-Match`) ; si l'arbre a
   changé entre-temps (autre onglet, fichier modifié à la main), il est refusé (409) et un message
