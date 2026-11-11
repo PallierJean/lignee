@@ -727,7 +727,7 @@ function libraryList(all) {
     const families = [...new Set(items.map(familyOf))];
     const groups = families.map((family) => {
       const members = items.filter((x) => familyOf(x) === family);
-      return `<li class="lib-family"><h4>${esc(family || t('lib.noName'))} <span class="n">${members.length}</span></h4>`
+      return `<li class="lib-family"><h4>${esc(family || t('lib.noName'))} - ${t('lib.count', members.length)}</h4>`
         + `<ul class="lib-list">${members.map((x) => libraryItem(x, kind)).join('')}</ul></li>`;
     }).join('');
     return `<section class="rel lib-kind"><h3>${esc(t('src.' + kind))} <span class="n">${items.length}</span></h3><ul class="lib-families">${groups}</ul></section>`;

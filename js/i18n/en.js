@@ -682,6 +682,7 @@ export const EN = {
   'lib.searchPlaceholder': 'Title, place, number, person…',
   'lib.noMatch': 'No document matches.',
   'lib.zoom': 'Show the document full size',
+  'lib.count': (n) => `${n} document${sEn(n)}`,
   'lib.noName': 'No name',
   'lib.untitled': 'untitled',
   'lib.citedBy': 'Cited by',
