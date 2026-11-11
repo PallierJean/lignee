@@ -147,6 +147,32 @@ describe('mode fichier, sur le vrai serveur', () => {
     await access(path.join(dataDir, 'principal', photo));
   });
 
+  test('serveur lancé avant la mise à jour : lecture seule, rien n’est écrit ni balayé', async () => {
+    const real = globalThis.fetch;
+    const calls = [];
+    globalThis.fetch = async (url, init = {}) => {
+      calls.push([String(url), init.method || 'GET']);
+      const res = await real(url, init);
+      // Un ancien serveur n'annonce pas la version de son format
+      const headers = new Headers(res.headers);
+      headers.delete('X-Lignee-Format');
+      return new Response(await res.arrayBuffer(), { status: res.status, headers });
+    };
+    try {
+      resetApp();
+      assert.equal(await loadFile(), true);
+      assert.equal(S.canWrite, false);
+      assert.match(el('toast').textContent, /lancé avant la mise à jour/);
+      assert.ok(S.people.size > 0, 'l’arbre reste lisible');
+      assert.ok(calls.every(([, method]) => method === 'GET'), 'aucune écriture, aucun balayage des photos');
+    } finally {
+      globalThis.fetch = real;
+    }
+    resetApp();
+    await loadFile();
+    assert.equal(S.canWrite, true, 'serveur à jour : écriture permise');
+  });
+
   test('serveur absent : le mode fichier est écarté', async () => {
     const saved = globalThis.fetch;
     globalThis.fetch = async () => { throw new Error('hors ligne'); };

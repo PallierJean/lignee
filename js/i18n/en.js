@@ -459,6 +459,7 @@ export const EN = {
   'st.renameFailed': 'Renaming failed. Is the local server still running?',
   'st.deleteFailed': 'Deleting failed. Is the local server still running?',
   'err.unexpected': 'An unexpected error stopped the action. Reload the page, then check the record before trying again.',
+  'st.oldServer': 'The Lignée server was started before the update: stop it (Ctrl+C in its terminal) and run npm start again. Until then, the tree is read-only, so nothing is lost.',
   'st.conflict': 'Not saved: the tree was changed elsewhere (another tab?). Reload the page. Your last change will need redoing.',
 
   'ctl.undo': 'Undo',
