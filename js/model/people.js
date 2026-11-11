@@ -204,11 +204,17 @@ export const mediaList = (p) => listOf(p && p.media);
 // File names a camera, a phone or a scanner gives: they say nothing of the image
 const DEVICE_NAME = /^(img|image|photo|pic|picture|dsc|dscn|dcim|pxl|mvimg|scan|scanned|numérisation|capture|screenshot|whatsapp image|signal|wp|p)?[\s_\-.]*[\d\s_\-.:()]*$/i;
 
-/** Title from a file's name, when it means something ("mariage.jpg"); '' for "IMG_1234.jpg" or "photo.jpg". */
+// One word of letters, digits and underscores with a long number: "PART_1474012919711_DSC_0936"
+const CODE_NAME = /^(?=[^\s]*(_[^\s]*\d{3}|\d{6}))[\w\-.]+$/;
+
+/**
+ * Title from a file's name, when it means something ("mariage.jpg"); '' for a name a device or an
+ * application gives ("IMG_1234.jpg", "photo.jpg", "PART_1474012919711_DSC_0936.jpg").
+ */
 export function fileTitle(name) {
   // Every image extension goes, even doubled ("20260730_210013.heic.jpg")
   const base = String(name || '').replace(/(\.(jpe?g|png|gif|webp|heic|heif|tiff?|bmp|avif))+$/i, '').replace(/\.[^.\s]{1,5}$/, '').trim();
-  return !base || DEVICE_NAME.test(base) || /^whatsapp image /i.test(base) ? '' : base;
+  return !base || DEVICE_NAME.test(base) || CODE_NAME.test(base) || /^whatsapp image /i.test(base) ? '' : base;
 }
 
 /**
