@@ -7,6 +7,7 @@ import { TREES_KEY, TREE_KEY, DEFAULT_TREE, EXAMPLE_FILE } from '../../config.js
 import { t } from '../../i18n.js';
 import { say, failure } from '../notify.js';
 import { parseBackup } from '../backup.js';
+import { migratePeople } from '../../model/sources.js';
 import { ensureTree, sortTrees } from './trees.js';
 
 function readJSON(key) {
@@ -24,13 +25,11 @@ export function readLocalTrees() {
   return Array.isArray(list) ? list.filter((t) => t && typeof t.id === 'string') : [];
 }
 
-/** Data of a browser tree, as Maps. */
+/** Data of a browser tree, as Maps; a tree saved before shared sources is converted on the way. */
 export function readLocalData(id) {
   const data = readJSON(TREE_KEY + id) || {};
-  return {
-    people: new Map(Object.entries(data.people || {})),
-    unions: new Map(Object.entries(data.unions || {})),
-  };
+  const { people, sources } = migratePeople(new Map(Object.entries(data.people || {})), new Map(Object.entries(data.sources || {})));
+  return { people, unions: new Map(Object.entries(data.unions || {})), sources };
 }
 
 function writeLocalTrees() {
@@ -45,9 +44,9 @@ export async function seedExample() {
   try {
     const res = await fetch(EXAMPLE_FILE, { cache: 'no-store' });
     if (!res.ok) return;
-    const { name, people, unions } = parseBackup(await res.text());
+    const { name, people, unions, sources } = parseBackup(await res.text());
     const byId = (list) => Object.fromEntries(list.map((x) => [x.id, x.data]));
-    localStorage.setItem(TREE_KEY + DEFAULT_TREE, JSON.stringify({ people: byId(people), unions: byId(unions) }));
+    localStorage.setItem(TREE_KEY + DEFAULT_TREE, JSON.stringify({ people: byId(people), unions: byId(unions), sources: byId(sources) }));
     localStorage.setItem(TREES_KEY, JSON.stringify([{ id: DEFAULT_TREE, name, createdAt: 0 }]));
   } catch (e) {
     /* file missing or storage blocked: the application starts with an empty tree */
@@ -68,6 +67,7 @@ export function loadLocalTree() {
   const data = readLocalData(S.tree);
   S.people = data.people;
   S.unions = data.unions;
+  S.sources = data.sources;
 }
 
 // Browsers keep about 5 million characters per site: past this size, the user is warned once
@@ -84,6 +84,7 @@ export function saveBrowserTree() {
   const json = JSON.stringify({
     people: Object.fromEntries(S.people),
     unions: Object.fromEntries(S.unions),
+    sources: Object.fromEntries(S.sources),
   });
   try {
     localStorage.setItem(TREE_KEY + S.tree, json);

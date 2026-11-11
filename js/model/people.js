@@ -23,6 +23,7 @@ import { S, idx } from '../state.js';
 import { yearOf, shortDate, longDate, fullDate, dateBounds, yearsBetween } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
 import { t, getLang } from '../i18n.js';
+import { sourcesOf } from './sources.js';
 
 /* ---------- Access and names ---------- */
 
@@ -197,7 +198,7 @@ export const SOURCE_KINDS = ['birth', 'baptism', 'marriage', 'death', 'burial', 
 
 const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') : []);
 
-export const sourcesOf = (p) => listOf(p && p.sources);
+export { sourcesOf } from './sources.js';
 export const mediaList = (p) => listOf(p && p.media);
 
 /** A person's gallery: their images, and those where they are identified: [{ owner, m }]. */
@@ -353,7 +354,7 @@ export const isDead = (p) =>
  * Whether a death certificate number is known for `p`: a source of the death (a death record, or
  * one citing the death) with a number in its reference, or in its title ("Acte n°412", as INSEE adds it).
  */
-export const hasDeathNumber = (p) => listOf(p && p.sources).some((s) => (s.kind === 'death' || s.fact === 'death')
+export const hasDeathNumber = (p) => sourcesOf(p).some((s) => (s.kind === 'death' || s.fact === 'death')
   && (/\d/.test(String(s.ref || '')) || /\b(n|no|num[ée]ro)\s*[°º.]?\s*\d/i.test(String(s.title || ''))));
 
 /** Whether `p` passes tree filter `filter` ('' lets everyone through). */

@@ -12,8 +12,10 @@ export const S = {
   treeEdit: null,        // "My trees" dialog: { id, kind: 'rename' | 'delete' } or null
   people: new Map(),     // id -> person
   unions: new Map(),     // id -> union { a, b, date, place }
+  sources: new Map(),    // id -> source document, cited by people (model/sources.js)
   loadedP: false,        // people received from the database
   loadedU: false,        // unions received from the database
+  loadedS: false,        // sources received from the database
 
   focus: null,           // id of the person at the centre of the tree
   foci: {},              // tree id -> focus person, restored when coming back to the tree

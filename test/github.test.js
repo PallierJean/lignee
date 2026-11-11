@@ -117,7 +117,11 @@ describe('lecture du dépôt', () => {
     const p = repo.backups[0].people[0].data;
     assert.equal(count.found, 2);
     assert.equal(count.missing, 1);
-    assert.match(p.sources[0].photo, /^data:image\/png;base64,/);
+    // Format 1 in the repository: the document becomes a shared source, its photo loaded there
+    assert.equal(p.sources, undefined);
+    const src = repo.backups[0].sources.find((x) => x.id === p.citations[0].source).data;
+    assert.match(src.photo, /^data:image\/png;base64,/);
+    assert.equal(count.base.sources.get(p.citations[0].source).photo, 'photos/acte.png', 'base : chemins du dépôt');
     assert.deepEqual(p.media, []);
   });
 

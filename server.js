@@ -109,7 +109,7 @@ async function readBody(req) {
 
 const PHOTO_REF = /^photos\/([^/\\]+\.(?:jpg|png|webp|gif))$/;
 // Backup format this server knows (= FORMAT_VERSION in js/services/backup.js, checked by the tests)
-const FORMAT_VERSION = 1;
+const FORMAT_VERSION = 2;
 const PHOTO_EXT = { jpeg: '.jpg', png: '.png', webp: '.webp', gif: '.gif' };
 
 /** Text usable as a file or folder name (without / \ : * ? " < > |). */

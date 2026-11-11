@@ -15,6 +15,7 @@ import { S } from '../state.js';
 import { rid, pool, markReported } from '../utils/helpers.js';
 import { failure } from './notify.js';
 import { dataChanged } from '../model/people.js';
+import { splitSources } from '../model/sources.js';
 import { loadLocalTree, saveBrowserTree, deleteBrowserTree, saveTreesList } from './storage/local.js';
 import { loadFileTree, saveFile, createFileTree, renameFileTree, deleteFileTree } from './storage/file.js';
 import { dbSet, dbUpdate, dbDelete, refreshDb, setDbTree, deleteDbTree, holdSync } from './storage/db.js';
@@ -35,7 +36,7 @@ export function saveLocal() {
 
 /* ---------- Writes (all modes) ---------- */
 
-export const mapOf = (collection) => (collection === 'people' ? S.people : S.unions);
+export const mapOf = (collection) => ({ people: S.people, unions: S.unions, sources: S.sources })[collection];
 
 // Writes grouped by inBatch(): collection/id -> { collection, id, before, after, patch, replaced }
 let batch = null;
@@ -136,6 +137,7 @@ async function writeDoc(collection, id, next, write, patch) {
 
 /** Creates or replaces a document. */
 export function opSet(collection, id, data) {
+  if (collection === 'people' && data && 'sources' in data) return setWithSources(id, data);
   return writeDoc(collection, id, data, () => (S.mode === 'db' ? dbSet(collection, id, data) : saveLocal()));
 }
 
@@ -143,10 +145,44 @@ export function opSet(collection, id, data) {
 export async function opUpdate(collection, id, patch) {
   const current = mapOf(collection).get(id);
   if (!current) return;
+  if (collection === 'people' && 'sources' in patch) {
+    await setWithSources(id, Object.assign({}, current, patch));
+    return;
+  }
   await writeDoc(collection, id, Object.assign({}, current, patch), () => (S.mode === 'db' ? dbUpdate(collection, id, patch) : saveLocal()), patch);
 }
 
-export function opDelete(collection, id) {
+/**
+ * Saves a person whose `sources` are documents (version 1 style, as the form produces them):
+ * the documents go to the shared sources, the person keeps citations of them. Sources nobody
+ * cites any more are deleted. All in one batch: saved whole or not at all.
+ */
+function setWithSources(id, data) {
+  return inBatch(async () => {
+    const { sources, ...person } = data;
+    const { citations, writes, drops } = splitSources(id, sources, mapOf('people').get(id));
+    for (const [sid, doc] of writes) await opSet('sources', sid, doc);
+    if (citations.length) person.citations = citations;
+    else delete person.citations;
+    await opSet('people', id, person);
+    for (const sid of drops) await opDelete('sources', sid);
+  });
+}
+
+/**
+ * Deletes a document. A person's sources nobody else cites go with them, unless `raw`
+ * (a merge that sets every collection itself).
+ */
+export function opDelete(collection, id, { raw = false } = {}) {
+  const p = collection === 'people' && !raw ? mapOf('people').get(id) : null;
+  if (p && Array.isArray(p.citations) && p.citations.length) {
+    // The person's sources go with them, unless someone else cites them
+    return inBatch(async () => {
+      const { drops } = splitSources(id, [], p);
+      await writeDoc('people', id, undefined, () => (S.mode === 'db' ? dbDelete('people', id) : saveLocal()));
+      for (const sid of drops) await opDelete('sources', sid);
+    });
+  }
   return writeDoc(collection, id, undefined, () => (S.mode === 'db' ? dbDelete(collection, id) : saveLocal()));
 }
 

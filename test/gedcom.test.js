@@ -1,5 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { sourcesOf } from '../js/model/sources.js';
 import { toGedDate, fromGedDate, buildGedcom, parseGedcom } from '../js/services/gedcom.js';
 import { example, loadTree, person } from './helpers.js';
 
@@ -211,7 +212,7 @@ describe('import de fichiers d’autres logiciels', () => {
   });
 
   test('sources : fiches SOUR, citation en ligne, PAGE, NOTE, mariage porté par un conjoint', () => {
-    const { people, unions } = parseGedcom([
+    const { people, unions, sources } = parseGedcom([
       '0 @S1@ SOUR', '1 TITL Registre de Lyon',
       '0 @I1@ INDI', '1 NAME A /B/', '1 SEX M', '1 BIRT', '2 DATE 1820', '2 SOUR @S1@', '3 PAGE vue 12', '3 NOTE Lu',
       '1 DEAT', '2 SOUR Souvenir de famille', '1 OCCU Tisserand', '1 OCCU Maire', '2 DATE 1860',
@@ -221,10 +222,12 @@ describe('import de fichiers d’autres logiciels', () => {
       '0 TRLR',
     ].join('\n'));
     const p = people[0].data;
+    const docs = sourcesOf(p, new Map(sources.map((x) => [x.id, x.data])));
     assert.equal(p.occupation, 'Tisserand');
     assert.deepEqual(p.events.map((e) => [e.type, e.note, e.label]), [['occupation', 'Maire', undefined], ['other', '', 'Service militaire']]);
-    const [birth, death, marriage] = p.sources;
+    const [birth, death, marriage] = docs;
     assert.deepEqual([birth.fact, birth.title, birth.ref, birth.note], ['birth', 'Registre de Lyon', 'vue 12', 'Lu']);
+    assert.equal(p.sources, undefined, 'format 2 : des citations');
     assert.deepEqual([death.fact, death.title], ['death', 'Souvenir de famille']);
     assert.deepEqual([marriage.fact, marriage.ref], ['union:' + unions[0].id, 'vue 40']);
   });
@@ -255,14 +258,15 @@ describe('événements et sources à l’aller-retour', () => {
     assert.match(ged, /1 EVEN\r\n2 TYPE Service militaire/);
     assert.ok(Math.max(...ged.split('\r\n').map((l) => Buffer.byteLength(l))) <= 255);
 
-    const { people, unions } = parseGedcom(ged);
+    const { people, unions, sources } = parseGedcom(ged);
     const p = people.find((x) => x.data.given === 'Jean').data;
+    const docs = sourcesOf(p, new Map(sources.map((x) => [x.id, x.data])));
     const got = new Map(p.events.map((e) => [e.type, e]));
     assert.equal(got.get('baptism').note, 'Parrain : Jean');
     assert.equal(got.get('occupation').note, 'Ajusteur');
     assert.equal(got.get('other').label, 'Service militaire');
-    const by = (fact) => p.sources.find((x) => x.fact === fact);
-    assert.deepEqual([by('birth').kind, by('birth').place, by('birth').ref, by('birth').note, by('birth').title],
+    const by = (fact) => docs.find((x) => x.fact === fact);
+    assert.deepEqual([by('birth').kind, by('birth').place, by('birth').ref, by('birth').note, by('birth').title || ''],
       ['birth', 'AD Rhône', '3 E 1, vue 2', 'Transcription', '']);
     assert.equal(by(got.get('baptism').id).title, 'Registre paroissial');
     assert.equal(by('').kind, 'family');

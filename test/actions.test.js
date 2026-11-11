@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { sourcesOf } from '../js/model/sources.js';
 import { test, describe, beforeEach } from 'node:test';
 import { fire, FakeElement } from './setup.js';
 import { S, cardEls } from '../js/state.js';
@@ -425,8 +426,10 @@ describe('formulaire', () => {
     await A.submitEdit();
     const p = S.people.get(camille);
     assert.equal(p.events.length, 1);
-    assert.equal(p.sources[0].title, 'Acte');
-    assert.equal(p.sources[0].fact, p.events[0].id);
+    assert.equal(sourcesOf(p)[0].title, 'Acte');
+    assert.equal(sourcesOf(p)[0].fact, p.events[0].id);
+    assert.equal(p.sources, undefined, 'format 2 : des citations sur la fiche');
+    assert.equal(S.sources.get(p.citations[0].source).title, 'Acte', 'le document dans les sources partagées');
     assert.equal(p.media[0].title, 'Noce');
     A.startEdit(camille);
     assert.equal(S.edit.media.length, 1);
@@ -434,7 +437,7 @@ describe('formulaire', () => {
     A.removeDraftMedia(0);
     fill({});
     await A.submitEdit();
-    assert.equal(S.people.get(camille).sources[0].fact, '', 'source gardée pour la fiche entière');
+    assert.equal(sourcesOf(S.people.get(camille))[0].fact, '', 'source gardée pour la fiche entière');
     assert.equal(S.people.get(camille).media, undefined);
   });
 
@@ -685,6 +688,37 @@ describe('suppression, exemples, fusion', () => {
     assert.equal(S.people.size, ex.people.length);
   });
 
+  test('fusion de deux fiches au format 2 : leurs sources, partagées ou non, restent', async () => {
+    loadTree([
+      person('k', { given: 'Jean', surname: 'Roux', citations: [{ id: 'c1', source: 'S1', fact: 'birth' }, { id: 'c2', source: 'S2', fact: 'death' }] }),
+      person('d', { given: 'Jean', surname: 'Roux', citations: [{ id: 'c3', source: 'S2', fact: 'death' }, { id: 'c4', source: 'S3', fact: '' }] }),
+      person('x', { given: 'Autre', citations: [{ id: 'c5', source: 'S3', fact: '' }] }),
+    ]);
+    S.sources = new Map([['S1', { kind: 'birth', ref: '1' }], ['S2', { kind: 'death', ref: '2' }], ['S3', { kind: 'census', ref: '3' }]]);
+    await A.mergePeople('k', 'd');
+    const k = S.people.get('k');
+    assert.deepEqual(sourcesOf(k).map((x) => [x.source, x.fact]), [['S1', 'birth'], ['S2', 'death'], ['S3', '']]);
+    assert.equal(k.sources, undefined);
+    assert.deepEqual([...S.sources.keys()].sort(), ['S1', 'S2', 'S3'], 'aucune source perdue');
+    await A.undo();
+    assert.deepEqual(S.people.get('d').citations.map((c) => c.source), ['S2', 'S3']);
+    assert.equal(S.sources.size, 3);
+  });
+
+  test('supprimer une fiche : ses sources partent, sauf celles citées ailleurs', async () => {
+    loadTree([
+      person('a', { given: 'A', citations: [{ id: 'c1', source: 'S1', fact: '' }, { id: 'c2', source: 'S2', fact: '' }] }),
+      person('b', { given: 'B', citations: [{ id: 'c3', source: 'S2', fact: '' }] }),
+    ]);
+    S.sources = new Map([['S1', { ref: '1' }], ['S2', { ref: '2' }]]);
+    S.focus = 'a';
+    await A.doDelete('a');
+    assert.ok(!S.people.has('a'));
+    assert.deepEqual([...S.sources.keys()], ['S2']);
+    await A.undo();
+    assert.deepEqual([...S.sources.keys()].sort(), ['S1', 'S2']);
+  });
+
   test('fusion : enfants, unions, identifications et sources suivent', async () => {
     loadTree([
       person('k', { given: 'Jean', surname: 'Roux', sex: 'M', birthDate: '1900' }),
@@ -704,7 +738,7 @@ describe('suppression, exemples, fusion', () => {
     assert.equal(S.people.get('k').fatherId, null, 'jamais son propre parent');
     assert.equal(S.unions.get('u1').date, '1920');
     assert.equal(S.unions.get('u3').a, 'k');
-    assert.equal(S.people.get('w').sources[0].fact, 'union:u1');
+    assert.equal(sourcesOf(S.people.get('w'))[0].fact, 'union:u1');
     assert.equal(S.people.get('w').media[0].tags[0].id, 'k');
     assert.ok(canUndo());
     await A.undo();

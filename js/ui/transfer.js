@@ -135,16 +135,20 @@ function exported() {
   renderHeader();
 }
 
-export async function exportBackup() {
+/**
+ * Downloads the tree's backup. With `v1`, in the format older Lignée (before 2.0) and scripts
+ * read: each person carries copies of the documents they cite.
+ */
+export async function exportBackup(v1 = false) {
   if (!S.people.size) {
     $('#exportHint').textContent = t('tr.empty');
     return;
   }
   const saved = await saveFile({
-    filename: fileBase() + '-' + t('tr.backupSuffix') + '.json',
+    filename: fileBase() + '-' + t('tr.backupSuffix') + (v1 ? '-v1' : '') + '.json',
     type: 'application/json',
-    text: await buildPortableBackup(),
-    hint: t('tr.backupHint'),
+    text: await buildPortableBackup({ v1 }),
+    hint: t(v1 ? 'tr.backupV1Hint' : 'tr.backupHint'),
   });
   if (saved) exported();
 }
@@ -323,6 +327,7 @@ export async function importGo(asNew) {
   const wasEmpty = S.people.size === 0;
 
   const items = [
+    ...(result.sources || []).map((x) => ['sources', x]),
     ...result.people.map((x) => ['people', x]),
     ...result.unions.map((x) => ['unions', x]),
   ].filter(([, x]) => !x.done);
@@ -341,6 +346,7 @@ export async function importGo(asNew) {
       done++;
       if (done % 10 === 0 || done === total) showProgress();
     };
+    await pool(items.filter(([c]) => c === 'sources'), 4, write); // before the people who cite them
     await pool(items.filter(([c]) => c === 'people'), 4, write);
     await pool(items.filter(([c]) => c === 'unions'), 4, write);
     await storePhotos(); // file mode: imported photos become files

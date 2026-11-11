@@ -1,6 +1,6 @@
 /**
  * "db" mode: online database provided by claude.ai (window.claude).
- * Collections "trees" (name of each tree), "people" and "unions": each
+ * Collections "trees" (name of each tree), "people", "unions" and "sources": each
  * document carries the `tree` field (missing = starting tree). Synced live.
  */
 import { S, services } from '../../state.js';
@@ -60,7 +60,7 @@ export const dbDelete = (collection, id) => withRetry(() => doc(collection, id).
 /* ---------- Live sync ---------- */
 
 // All documents received, across all trees
-const docs = { people: new Map(), unions: new Map(), trees: new Map() };
+const docs = { people: new Map(), unions: new Map(), sources: new Map(), trees: new Map() };
 const treeOf = (d) => d.tree || DEFAULT_TREE;
 
 function withoutTree(d) {
@@ -86,6 +86,7 @@ export function refreshDb() {
   const pick = (map) => new Map([...map].filter(([, d]) => treeOf(d) === S.tree).map(([id, d]) => [id, withoutTree(d)]));
   S.people = pick(docs.people);
   S.unions = pick(docs.unions);
+  S.sources = pick(docs.sources);
 }
 
 // While a batch of writes is running (storage.js inBatch), received snapshots wait:
@@ -102,7 +103,7 @@ export function holdSync(on) {
 }
 
 export function subscribe() {
-  const loaded = { people: 'loadedP', unions: 'loadedU', trees: 'loadedT' };
+  const loaded = { people: 'loadedP', unions: 'loadedU', sources: 'loadedS', trees: 'loadedT' };
   const listen = (collection) => services.db.collection(collection).onSnapshot(
     (snap) => {
       const map = new Map();
@@ -127,6 +128,7 @@ export function subscribe() {
   );
   listen('people');
   listen('unions');
+  listen('sources');
   listen('trees');
 }
 
@@ -141,7 +143,7 @@ export async function setDbTree(id, tree) {
 
 /** Deletes a tree and all its records from the database. */
 export async function deleteDbTree(id) {
-  for (const collection of ['unions', 'people']) {
+  for (const collection of ['unions', 'people', 'sources']) {
     const ids = [...docs[collection]].filter(([, d]) => treeOf(d) === id).map(([k]) => k);
     await pool(ids, 3, async (k) => {
       await dbDelete(collection, k);

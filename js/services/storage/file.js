@@ -5,7 +5,7 @@
  */
 import { S, treeName } from '../../state.js';
 import { buildBackup, parseBackup } from '../backup.js';
-import { sourcesOf, mediaList, isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
+import { mediaList, isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
 import { pool } from '../../utils/helpers.js';
 import { say, failure } from '../notify.js';
 import { ensureTree, sortTrees } from './trees.js';
@@ -35,7 +35,7 @@ async function putFileTree(id, body, keepPhotos, ifMatch) {
   return res.headers.get('ETag');
 }
 
-const emptyBackup = (name, createdAt) => buildBackup({ name, createdAt, people: new Map(), unions: new Map() });
+const emptyBackup = (name, createdAt) => buildBackup({ name, createdAt, people: new Map(), unions: new Map(), sources: new Map() });
 
 /**
  * Loads the list of trees in data/arbres/ then the open tree, through the local
@@ -74,6 +74,7 @@ export async function loadFileTree() {
   version = null;
   S.people = new Map();
   S.unions = new Map();
+  S.sources = new Map();
   let text;
   try {
     const res = await fetch(API + encodeURIComponent(S.tree), { cache: 'no-store' });
@@ -98,6 +99,7 @@ export async function loadFileTree() {
   S.canWrite = true;
   S.people = new Map(data.people.map((x) => [x.id, x.data]));
   S.unions = new Map(data.unions.map((x) => [x.id, x.data]));
+  S.sources = new Map(data.sources.map((x) => [x.id, x.data]));
   // Photos still embedded in the record (saved before photo files existed): they are moved out
   if (await storePhotos()) await saveFile().catch(() => {}); // message already shown
   // Photos removed during the previous session: nothing can restore them any more
@@ -126,16 +128,26 @@ export async function storePhoto(photo, p) {
   }
 }
 
-/** Images attached to a record besides its portrait: source documents, gallery images and their backs. */
-const attached = (p) => [...sourcesOf(p), ...mediaList(p)].flatMap((x) => [x.photo, x.back]).filter(Boolean);
+// Documents a record carries itself: those of a format 1 record (before shared sources)
+const ownSources = (p) => (Array.isArray(p.sources) ? p.sources.filter((x) => x && typeof x === 'object') : []);
+
+/**
+ * Images of a record besides its portrait: its own documents (format 1), gallery images and their
+ * backs; for a shared source, the back of its document.
+ */
+const attached = (p) => [p.back, ...[...ownSources(p), ...mediaList(p)].flatMap((x) => [x.photo, x.back])].filter(Boolean);
 /** True if the record contains a photo or a document still embedded. */
 const hasPhotoData = (p) => isPhotoData(p.photo) || attached(p).some(isPhotoData);
 
-/** Record whose photo, source documents and gallery images (backs included) have gone through `convert`. */
+/**
+ * Record whose images have gone through `convert`: a person's photo, documents and gallery
+ * images (backs included), or a shared source's document and its back.
+ */
 export async function convertPhotos(p, convert) {
   const out = Object.assign({}, p);
   if (p.photo) out.photo = await convert(p.photo);
-  for (const [key, list] of [['sources', sourcesOf(p)], ['media', mediaList(p)]]) {
+  if (p.back) out.back = await convert(p.back); // back of a shared source's document
+  for (const [key, list] of [['sources', ownSources(p)], ['media', mediaList(p)]]) {
     if (!list.length) continue;
     out[key] = [];
     for (const x of list) {
@@ -154,21 +166,26 @@ export const keptMedia = (list) => list.filter((m) => m.photo).map((m) => {
   return front;
 });
 
-/** Moves the open tree's embedded photos out to files. Returns the number of records changed. */
+/** Name a shared source's image file starts with: its title, or its kind. */
+const sourceLabel = (s) => ({ given: s.title || s.kind || 'source' });
+
+/** Moves the open tree's embedded photos out to files: people's and shared sources'. Returns the number of records changed. */
 export async function storePhotos() {
   if (S.mode !== 'file') return 0;
-  const ids = [...S.people].filter(([, p]) => hasPhotoData(p)).map(([id]) => id);
   let n = 0;
-  await pool(ids, 4, async (id) => {
-    const p = S.people.get(id);
-    try {
-      const stored = await convertPhotos(p, (photo) => storePhoto(photo, p));
-      if (S.people.get(id) === p) S.people.set(id, stored);
-      n++;
-    } catch (e) {
-      /* the photo stays embedded: it still shows, another try on the next load */
-    }
-  });
+  for (const [map, label] of [[S.people, (p) => p], [S.sources, sourceLabel]]) {
+    const ids = [...map].filter(([, p]) => hasPhotoData(p)).map(([id]) => id);
+    await pool(ids, 4, async (id) => {
+      const p = map.get(id);
+      try {
+        const stored = await convertPhotos(p, (photo) => storePhoto(photo, label(p)));
+        if (map.get(id) === p) map.set(id, stored);
+        n++;
+      } catch (e) {
+        /* the photo stays embedded: it still shows, another try on the next load */
+      }
+    });
+  }
   return n;
 }
 
@@ -186,18 +203,22 @@ async function photoData(photo) {
 }
 
 /** Standalone .json backup: in file mode, photos are embedded in it as data URLs. */
-export async function buildPortableBackup() {
-  if (S.mode !== 'file') return buildBackup();
+export async function buildPortableBackup(options = {}) {
+  if (S.mode !== 'file') return buildBackup(undefined, options);
   const people = new Map(S.people);
+  const sources = new Map(S.sources);
   const hasFile = (p) => isPhotoFile(p.photo) || attached(p).some(isPhotoFile);
-  await pool([...people].filter(([, p]) => hasFile(p)), 4, async ([id, p]) => {
-    // File not found: the record goes without this photo
-    const portable = await convertPhotos(p, (photo) => (isPhotoFile(photo) ? photoData(photo).catch(() => '') : photo));
-    if (!portable.photo) delete portable.photo;
-    if (portable.media) portable.media = keptMedia(portable.media); // image not found
-    people.set(id, portable);
-  });
-  return buildBackup({ name: treeName(), createdAt: (S.trees.get(S.tree) || {}).createdAt, people, unions: S.unions });
+  for (const map of [people, sources]) {
+    await pool([...map].filter(([, p]) => hasFile(p)), 4, async ([id, p]) => {
+      // File not found: the record goes without this photo
+      const portable = await convertPhotos(p, (photo) => (isPhotoFile(photo) ? photoData(photo).catch(() => '') : photo));
+      if (!portable.photo) delete portable.photo;
+      if (!portable.photo || !portable.back) delete portable.back; // a back alone means nothing
+      if (portable.media) portable.media = keptMedia(portable.media); // image not found
+      map.set(id, portable);
+    });
+  }
+  return buildBackup({ name: treeName(), createdAt: (S.trees.get(S.tree) || {}).createdAt, people, unions: S.unions, sources }, options);
 }
 
 /* ---------- Saving and tree management ---------- */

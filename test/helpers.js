@@ -12,6 +12,7 @@ export const example = () =>
 export function loadTree(people, unions = []) {
   S.people = new Map(people.map(({ id, ...p }) => [id, p]));
   S.unions = new Map(unions.map(({ id, ...u }, i) => [id || 'u' + i, u]));
+  S.sources = new Map(); // people given with `sources` stay in format 1, read as they are
   reindex();
 }
 

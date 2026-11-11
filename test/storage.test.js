@@ -11,6 +11,7 @@ import {
 } from '../js/services/storage.js';
 import { PREF_KEY, TREES_KEY, TREE_KEY } from '../js/config.js';
 import { loadTree, person, resetApp } from './helpers.js';
+import { sourcesOf } from '../js/model/sources.js';
 import { NEARLY_FULL, loadLocalTree } from '../js/services/storage/local.js';
 
 const el = (id) => document.getElementById(id);
@@ -60,14 +61,19 @@ describe('mode fichier, sur le vrai serveur', () => {
     const stored = await storePhoto(PNG, S.people.get('b'));
     assert.match(stored, /^photos\/ROUX-Bob-/);
     await opUpdate('people', 'b', { photo: stored, sources: [{ id: 's', photo: PNG }, { id: 't' }], media: [{ id: 'm', photo: PNG }] });
-    assert.equal(await storePhotos(), 1);
+    assert.equal(await storePhotos(), 2, 'la fiche et la source partagée');
     const p = S.people.get('b');
-    assert.ok(p.sources[0].photo.startsWith('photos/'));
+    assert.ok(sourcesOf(p)[0].photo.startsWith('photos/'));
     assert.ok(p.media[0].photo.startsWith('photos/'));
     await saveLocal();
-    const portable = JSON.parse(await buildPortableBackup()).people.find((x) => x.id === 'b');
+    const backup = JSON.parse(await buildPortableBackup());
+    const portable = backup.people.find((x) => x.id === 'b');
     assert.ok(portable.photo.startsWith('data:image'));
     assert.ok(portable.media[0].photo.startsWith('data:image'));
+    assert.equal(backup.version, 2);
+    assert.ok(backup.sources.find((x) => x.id === portable.citations[0].source).photo.startsWith('data:image'), 'document de la source');
+    const saved = JSON.parse(await readFile(path.join(dataDir, 'principal.json'), 'utf8'));
+    assert.ok(saved.sources.some((x) => x.photo && x.photo.startsWith('photos/')), 'fichier : la source garde son chemin');
     assert.equal(await storePhoto('photos/a.jpg', p), 'photos/a.jpg');
   });
 

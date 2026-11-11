@@ -91,7 +91,7 @@ async function recordData(e, id, previous) {
     else delete s.back;
     sources.push(s);
   }
-  if (sources.length) data.sources = sources;
+  data.sources = sources; // even empty: the sources nobody cites any more are then deleted
   const media = [];
   for (const { removed, ...x } of e.media) {
     if (removed) continue;
