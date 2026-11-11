@@ -72,3 +72,27 @@ describe('ajouter des photos depuis la galerie', () => {
     S.canWrite = true;
   });
 });
+
+describe('verso depuis la visionneuse', () => {
+  test('ajouter, changer ou retirer le verso sans passer par la fiche ; annulable', async () => {
+    const { S } = await import('../js/state.js');
+    const media = await import('../js/ui/media.js');
+    const { undoAction } = await import('../js/services/storage.js');
+    const { resetApp } = await import('./helpers.js');
+    resetApp();
+    loadTree([person('a', { given: 'Anne', surname: 'Roux', media: [{ id: 'm1', photo: 'data:image/png;base64,A' }] })]);
+    media.openMedia('a', 'm1');
+    const card = () => document.getElementById('mediaCard').innerHTML;
+    assert.match(card(), /data-media-back="1">Ajouter le verso</);
+    S.people.set('a', { ...S.people.get('a'), media: [{ id: 'm1', photo: 'data:image/png;base64,A', back: 'data:image/png;base64,B' }] });
+    media.renderMedia();
+    assert.match(card(), />Changer le verso</);
+    assert.match(card(), /data-act="media-back-remove">Retirer le verso</);
+    await media.setMediaBack(null);
+    assert.equal(S.people.get('a').media[0].back, undefined);
+    assert.match(card(), /Ajouter le verso/);
+    await undoAction();
+    assert.equal(S.people.get('a').media[0].back, 'data:image/png;base64,B', 'Ctrl+Z le remet');
+    media.closeMedia();
+  });
+});

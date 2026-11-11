@@ -16,7 +16,7 @@ import {
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
-  openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag } from './ui/media.js';
+  openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack } from './ui/media.js';
 import { closeCropFree, resetCropFree, cropFreeDrag, cropFreeOpen } from './ui/crop-free.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
@@ -278,6 +278,7 @@ const CLICK_ACTIONS = {
   'media-delete': () => askMediaDelete(true),
   'tag-pick': once((el) => addTag(el.dataset.id)),
   'media-crop': once(() => cropMedia()),
+  'media-back-remove': once(() => setMediaBack(null)),
   'med-crop': (el) => A.cropDraftMedia(+el.dataset.i),
   'freecrop-ok': () => closeCropFree(true),
   'freecrop-cancel': () => closeCropFree(false),
@@ -468,6 +469,10 @@ export function bindEvents() {
     if (el.id === 'f-photo' && el.files[0]) A.setDraftPhoto(el.files[0]);
     if (el.matches('[data-src-photo]') && el.files[0]) A.setDraftSourcePhoto(+el.dataset.srcPhoto, el.files[0]);
     if (el.matches('[data-med-back]') && el.files[0]) A.setDraftMediaBack(+el.dataset.medBack, el.files[0]);
+    if (el.matches('[data-media-back]') && el.files[0]) {
+      setMediaBack(el.files[0]);
+      el.value = '';
+    }
     if (el.matches('[data-gal-add]') && el.files.length) {
       addGalleryPhotos(el.dataset.galAdd, el.files);
       el.value = '';
