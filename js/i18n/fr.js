@@ -736,6 +736,7 @@ export const FR = {
   'ctl.line': 'Lignée directe',
   'ctl.photos': 'Photos',
   'ctl.photosTitle': 'Montrer seulement les photos, le nom au survol',
+  'ctl.lineFanTitle': 'En éventail, toutes les personnes sont des ancêtres directs : le halo ne sert pas',
   'ctl.lineTitle': 'Halo vert sur les ancêtres directs de la personne centrale',
   'ctl.living': 'Vivants',
   'ctl.livingTitle': 'Estomper les personnes décédées : seules les personnes en vie restent nettes',

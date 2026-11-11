@@ -39,7 +39,10 @@ export function renderControls() {
   $('#segDown').innerHTML = generationButtons('down', S.down, Math.max(focus ? descendantDepth(focus) : 0, DOWN_MIN), off);
   $('#btnFull').setAttribute('aria-pressed', String(S.full && !S.fan));
   $('#btnFan').setAttribute('aria-pressed', String(S.fan));
-  $('#btnLine').setAttribute('aria-pressed', String(S.line));
+  // In the fan chart everyone is on the direct line: the halo has nothing to single out
+  $('#btnLine').setAttribute('aria-pressed', String(S.line && !S.fan));
+  $('#btnLine').disabled = S.fan;
+  $('#btnLine').title = t(S.fan ? 'ctl.lineFanTitle' : 'ctl.lineTitle');
   $('#btnPhotos').setAttribute('aria-pressed', String(S.photos));
   $('#btnLiving').setAttribute('aria-pressed', String(S.filter === 'living'));
   $('#btnCertificate').setAttribute('aria-pressed', String(S.filter === 'certificate'));

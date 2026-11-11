@@ -537,6 +537,24 @@
   stroke-width: 2.5;
 }
 
+/* Photo mode: the outline of each round photo */
+.fan-pic {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+/* Tree filter: the sectors left out fade, as the cards do */
+.fan-s.is-faded {
+  opacity: .3;
+  filter: grayscale(.6);
+}
+
+.fan-s.is-faded:hover,
+.fan-s.is-faded:focus-visible {
+  opacity: .8;
+}
+
 /* Hovering an ancestor: its path to the centre stays sharp, the rest fades (ui/fan-hover.js) */
 .fan-s,
 .fan-empty {

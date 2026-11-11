@@ -171,6 +171,8 @@ describe('navigation et affichage', () => {
     assert.equal(S.full, true);
     A.toggleFan();
     assert.equal(S.fan, true);
+    assert.equal(el('btnLine').disabled, true, 'halo sans objet en éventail');
+    assert.match(el('btnLine').title, /éventail/);
     A.toggleFull();
     assert.deepEqual([S.full, S.fan], [true, false]);
     A.toggleLine();

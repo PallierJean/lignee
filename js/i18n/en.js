@@ -708,6 +708,7 @@ export const EN = {
   'ctl.line': 'Direct line',
   'ctl.photos': 'Photos',
   'ctl.photosTitle': 'Show only the photos, the name on hover',
+  'ctl.lineFanTitle': 'In the fan chart, everyone is a direct ancestor: the halo isn’t needed',
   'ctl.lineTitle': 'Green halo on the direct ancestors of the central person',
   'ctl.living': 'Living',
   'ctl.livingTitle': 'Fade the deceased: only the living stay sharp',

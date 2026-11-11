@@ -1,11 +1,12 @@
 /**
  * Fan chart: a half-disc, the focus person in the middle, each ring
  * a generation. Father on the left and mother on the right of each sector, in Sosa order.
- * The same drawing is used on screen and in print: only the colours change.
+ * The same drawing is used on screen and in print: only the colours change. On screen, the
+ * tree filters fade the sectors left out, and photo mode puts a round photo in each sector.
  */
 import { S } from '../state.js';
 import { esc } from '../utils/dom.js';
-import { P, given, surname, maiden, lifeYears } from '../model/people.js';
+import { P, given, surname, maiden, lifeYears, fullName, passesFilter, photoOf, avatarOf } from '../model/people.js';
 
 export const MAX_FAN_GENS = 10;
 
@@ -77,6 +78,23 @@ function sectorText(id, cx, cy, r0, r1, mid, g, c) {
   return `<text transform="translate(${x},${y}) rotate(${angle.toFixed(1)})" text-anchor="middle" dominant-baseline="middle" ${paint(c, 'text')}>${spans}</text>`;
 }
 
+/**
+ * Round photo of a person (the avatar without one), centred on (x, y), radius r; the name
+ * shows on hover. Screen only: in print, sectors keep their text.
+ */
+function sectorPhoto(id, x, y, r, sosa) {
+  const p = P(id);
+  const clip = 'fan-pic-' + sosa;
+  const href = esc(photoOf(p) || avatarOf(p.sex));
+  return `<title>${esc(fullName(p) + (lifeYears(p) ? ', ' + lifeYears(p) : ''))}</title>`
+    + `<clipPath id="${clip}"><circle cx="${x}" cy="${y}" r="${r}"/></clipPath>`
+    + `<image href="${href}" x="${x - r}" y="${y - r}" width="${2 * r}" height="${2 * r}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${clip})"/>`
+    + `<circle class="fan-pic" cx="${x}" cy="${y}" r="${r}"/>`;
+}
+
+/** Classes of a person's sector on screen: faded when the tree filter leaves them out. */
+const sectorClass = (id, c) => 'fan-s' + (!c && S.filter && !passesFilter(P(id), S.filter) ? ' is-faded' : '');
+
 /** Drawn sector: an ancestor, or the empty slot just above a known ancestor (where to search next). */
 const drawn = (levels, g, i) => !!(levels[g][i] || levels[g - 1][i >> 1]);
 
@@ -125,14 +143,24 @@ export function fanSVG(c = null, scale = 1, focus = S.focus, maxGens = MAX_FAN_G
         return;
       }
       const sex = P(id).sex === 'M' || P(id).sex === 'F' ? P(id).sex : 'U';
-      out += `<g class="fan-s" role="button" tabindex="0" data-act="person-open" data-id="${esc(id)}" data-sosa="${n + i}"><path d="${d}" ${paint(c, 'sector', sex)}/>`
-        + sectorText(id, cx, cy, r0, r1, (a0 + a1) / 2, g, c) + '</g>';
+      const mid = (a0 + a1) / 2;
+      let inside;
+      if (!c && S.photos) {
+        // As large as the sector allows: its thickness and its width at the middle
+        const r = Math.min((r1 - r0) * 0.42, (r0 + (r1 - r0) / 2) * (Math.PI / n) * 0.42, 44);
+        const [x, y] = point(cx, cy, r0 + (r1 - r0) / 2, mid);
+        inside = sectorPhoto(id, +x, +y, +r.toFixed(1), n + i);
+      } else inside = sectorText(id, cx, cy, r0, r1, mid, g, c);
+      out += `<g class="${sectorClass(id, c)}" role="button" tabindex="0" data-act="person-open" data-id="${esc(id)}" data-sosa="${n + i}"><path d="${d}" ${paint(c, 'sector', sex)}/>`
+        + inside + '</g>';
     });
     r0 = r1;
   }
   const p = P(focus);
   const sex = p.sex === 'M' || p.sex === 'F' ? p.sex : 'U';
-  out += `<g class="fan-s" role="button" tabindex="0" data-act="person-open" data-id="${esc(focus)}" data-sosa="1"><circle cx="${cx}" cy="${cy}" r="${CENTER}" ${paint(c, 'center', sex)}/>`
+  const center = `<g class="${sectorClass(focus, c)}" role="button" tabindex="0" data-act="person-open" data-id="${esc(focus)}" data-sosa="1"><circle cx="${cx}" cy="${cy}" r="${CENTER}" ${paint(c, 'center', sex)}/>`;
+  if (!c && S.photos) out += center + sectorPhoto(focus, cx, cy, CENTER - 12, 1) + '</g>';
+  else out += center
     + `<text x="${cx}" y="${cy - 8}" text-anchor="middle" font-size="14" font-weight="700" ${paint(c, 'text')}>${esc(cut(given(p) || '—', 16))}</text>`
     + `<text x="${cx}" y="${cy + 10}" text-anchor="middle" font-size="12" ${paint(c, 'text')}>${esc(cut(surname(p) || maiden(p), 18))}</text>`
     + `<text x="${cx}" y="${cy + 27}" text-anchor="middle" font-size="11" ${paint(c, 'muted')}>${esc(lifeYears(p))}</text></g>`;
