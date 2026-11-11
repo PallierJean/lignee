@@ -48,6 +48,27 @@ export function cropTags(tags, rect) {
   })).filter((tag) => tag.x >= 0 && tag.x <= 100 && tag.y >= 0 && tag.y <= 100);
 }
 
+// Room for the image in the dialog: its width, and at most this share of the window's height
+const MAX_HEIGHT = 0.65;
+
+/**
+ * Gives the stage the exact size of the image as shown (fitted to the dialog, never enlarged):
+ * the frame's percentages are then those of the image, whatever its shape.
+ */
+export function stageSize(natural, room) {
+  const k = Math.min(1, room.w / natural.w, room.h / natural.h);
+  return { w: Math.max(1, Math.round(natural.w * k)), h: Math.max(1, Math.round(natural.h * k)) };
+}
+
+function fitStage() {
+  const stage = $('#freeCropStage');
+  const sheet = stage.parentElement;
+  const pad = sheet ? parseFloat(getComputedStyle(sheet).paddingLeft || 0) + parseFloat(getComputedStyle(sheet).paddingRight || 0) : 0;
+  const room = { w: (sheet ? sheet.clientWidth - pad : 640) || 640, h: (window.innerHeight || 800) * MAX_HEIGHT };
+  const { w, h } = stageSize({ w: state.img.naturalWidth, h: state.img.naturalHeight }, room);
+  Object.assign(stage.style, { width: `${w}px`, height: `${h}px` });
+}
+
 function show() {
   const { x, y, w, h } = state.rect;
   const box = $('#freeCropBox');
@@ -77,8 +98,9 @@ export async function cropFree(src) {
   }
   state = { img, rect: { x: 0, y: 0, w: 1, h: 1 }, drag: null };
   $('#freeCropImg').src = src;
-  show();
   $('#freeCropDlg').hidden = false;
+  fitStage();
+  show();
   return new Promise((resolve) => {
     state.resolve = resolve;
   });
