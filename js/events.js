@@ -189,6 +189,7 @@ const CLICK_ACTIONS = {
   center: () => A.recenter(),
   full: () => A.toggleFull(),
   fan: () => A.toggleFan(),
+  'stage-gallery': () => A.toggleStageGallery(),
   line: () => A.toggleLine(),
   photos: () => A.togglePhotos(),
   filter: (el) => A.toggleFilter(el.dataset.filter),
@@ -581,6 +582,7 @@ export function bindEvents() {
     if (ev.key !== 'Escape') return;
     if (closeTopDialog()) return;
     if (S.edit && !S.busy) A.cancelEdit();
+    else if (S.gallery) A.toggleStageGallery();
     else if (S.sheet) A.closeSheet();
   });
 }

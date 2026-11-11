@@ -22,6 +22,7 @@ export const S = {
   fan: false,            // fan chart instead of the tree
   line: true,            // halo on the focus person's direct line
   photos: false,         // photo mode: round photos only, the name on hover
+  gallery: false,        // the whole gallery shown in place of the tree
   filter: '',            // tree filter: '' | 'living' | 'certificate' (other cards faded)
   panel: true,           // record/register panel shown
   sheet: false,          // phone: record/register panel open over the tree

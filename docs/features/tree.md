@@ -46,7 +46,10 @@
   d'acte, dans sa cote ou dans son titre (« Acte n°412 », comme l'ajoute la vérification INSEE :
   `hasDeathNumber`). Un seul filtre à la fois ; un second clic l'enlève. Le choix est gardé avec
   les préférences d'affichage (`filter`) ; l'éventail estompe aussi ses secteurs, l'impression l'ignore.
-- Quand la barre manque de place, « Lignée directe », « Photos », les filtres et « Éventail » passent en
+- « Galerie » montre toutes les images de l'arbre à la place de l'arbre (`renderStageGallery`,
+  `ui/render.js`), avec la case d'ajout pour la personne centrale ; l'arbre reste dessiné dessous, à
+  sa place. « Revenir à l'arbre », le bouton de nouveau ou Échap le ramènent.
+- Quand la barre manque de place, « Lignée directe », « Photos », les filtres « Éventail » et « Galerie » passent en
   icônes (le nom reste en infobulle et pour les lecteurs d'écran), comme Imprimer ou Recentrer.
 - « Éventail » (`tree/fan.js`) remplace l'arbre par la roue d'ascendance de la personne
   centrale, jusqu'à 10 générations, père à gauche et mère à droite de chaque secteur. Seuls les
