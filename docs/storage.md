@@ -17,7 +17,6 @@ Les exports (GEDCOM, .json) portent sur l'arbre ouvert et sont nommés d'après 
 | --- | --- |
 | Avec `npm start` (server.js) | Un fichier par arbre dans `data/arbres/` du projet, photos dans `data/arbres/<id>/photos/` |
 | Avec un autre serveur ou un hébergement web | Navigateur (`localStorage`, clés `lignee.trees.v1` et `lignee.tree.<id>`) |
-| Publiée dans claude.ai | Base de données en ligne de l'artefact, partagée avec les personnes invitées |
 
 Chaque fichier de `data/arbres/` a le même format que la sauvegarde .json (avec le
 nom de l'arbre dans `name`) : il se réimporte tel quel. Il est réécrit en entier à
@@ -33,10 +32,6 @@ photo retirée ou remplacée, ou celle d'une personne supprimée, reste sur le d
 que l'action puisse être annulée, puis est effacée à la prochaine ouverture de l'arbre. Les photos
 encore intégrées (arbre importé, ou enregistré avant ce changement) sont sorties en
 fichiers à l'ouverture de l'arbre. La sauvegarde .json exportée les réintègre en data URL.
-
-Dans la base en ligne, les collections `people`, `unions` et `sources` portent un champ `tree`
-(identifiant de l'arbre) ; les documents qui n'en ont pas appartiennent à « Mon arbre », et les noms
-des arbres sont dans la collection `trees`.
 
 Partout, les sources partagées (`S.sources`) passent par la même écriture que les fiches :
 `storage.js` découpe les documents d'une fiche en citations et en sources (`planSources` dans

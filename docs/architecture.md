@@ -86,7 +86,6 @@ lignee/
 │   │   ├── storage.js          Enregistrement et collection d'arbres : choisit le mode ci-dessous
 │   │   ├── storage/
 │   │   │   ├── trees.js        Règles communes à la collection d'arbres
-│   │   │   ├── db.js           Mode base en ligne (claude.ai), synchronisation en direct
 │   │   │   ├── file.js         Mode fichier (server.js), photos en fichiers
 │   │   │   └── local.js        Mode navigateur (localStorage)
 │   │   ├── gedcom.js           Export et import GEDCOM 5.5.1
@@ -163,7 +162,6 @@ flowchart LR
   A --> SV[services/]
   SV -->|opSet, opUpdate, opDelete| ST[storage.js]
   ST --> S[(S : state.js)]
-  ST -->|mode db| DB[(Base en ligne claude.ai)]
   ST -->|mode file| F[(server.js : data/arbres/)]
   ST -->|mode local| L[(localStorage)]
   SV -->|emit via notify.js| C[ui/connect.js]
@@ -174,28 +172,20 @@ flowchart LR
 
 ### Démarrage : choix du stockage
 
-`main.js` choisit le mode une fois pour toutes : la base en ligne si la page tourne dans claude.ai,
-sinon le serveur local s'il répond, sinon le navigateur.
+`main.js` choisit le mode une fois pour toutes : le serveur local s'il répond, sinon le navigateur.
 
 ```mermaid
 sequenceDiagram
   participant M as main.js
-  participant C as window.claude
   participant SR as server.js
   participant ST as storage.js
   participant R as ui/render.js
   M->>M: connectServices, loadPrefs, applyTheme, bindEvents
-  M->>C: use('db')
-  alt dans claude.ai
-    C-->>M: base en ligne
-    M->>ST: subscribe() : écoute people, unions, trees
-  else hors claude.ai
-    M->>SR: loadFile() : GET de l'arbre
-    alt serveur local présent
-      SR-->>M: arbre en JSON (mode file)
-    else pas de serveur
-      M->>ST: seedExample(), loadLocal() (mode local)
-    end
+  M->>SR: loadFile() : GET de l'arbre
+  alt serveur local présent
+    SR-->>M: arbre en JSON (mode file)
+  else pas de serveur
+    M->>ST: seedExample(), loadLocal() (mode local)
   end
   M->>R: afterData()
   M->>M: loadCommunes() en arrière-plan, puis renderAll()
@@ -223,7 +213,7 @@ sequenceDiagram
   PS->>ST: opSet('people'), puis unions et situations
   ST->>H: track() : état d'avant de chaque fiche
   ST->>ST: changement appliqué dans S tout de suite
-  ST-->>A: fin du lot : une seule écriture (fichier, navigateur ou base)
+  ST-->>A: fin du lot : une seule écriture (fichier ou navigateur)
   alt écriture refusée
     ST->>ST: chaque fiche reprend son état d'avant
   end
@@ -234,29 +224,6 @@ sequenceDiagram
   ST->>H: takeUndo()
   ST->>ST: fiches remises à leur état d'avant, puis enregistrées
   ST->>R: afterData()
-```
-
-### Plusieurs personnes sur la base en ligne
-
-En mode db, chaque visiteur écoute les collections. Une écriture d'un autre visiteur arrive par
-`onSnapshot` ; pendant un lot, la synchronisation attend (`holdSync`) pour ne pas mélanger les états.
-
-```mermaid
-sequenceDiagram
-  actor B as Autre visiteur
-  participant DB as Base en ligne
-  participant D as storage/db.js
-  participant N as notify.js
-  participant R as ui/render.js
-  B->>DB: modifie une fiche
-  DB-->>D: onSnapshot(people)
-  alt lot en cours (holdSync)
-    D->>D: mise à jour gardée pour la fin du lot
-  else
-    D->>D: refreshDb() : S.people et S.unions à jour
-    D->>N: emit('data')
-    N->>R: afterData()
-  end
 ```
 
 ### Importer un fichier ou un dépôt
@@ -382,7 +349,7 @@ sequenceDiagram
   d'affichage (onglet, zoom), `renderAll()` suffit.
 - Une action qui touche plusieurs fiches (enregistrer, supprimer, fusionner, renommer un lieu…)
   passe par `inBatch()` : ses changements s'appliquent tout de suite en mémoire, mais sont
-  enregistrés ensemble à la fin, en une seule écriture hors base en ligne. Si l'enregistrement
+  enregistrés ensemble à la fin, en une seule écriture. Si l'enregistrement
   échoue, tout revient en arrière : l'action est enregistrée entière ou pas du tout.
 - Le HTML est construit en chaînes : toute donnée saisie passe par `esc()` (`utils/dom.js`).
 
@@ -402,5 +369,4 @@ Les boutons Annuler et Rétablir de la barre d'outils, ou Ctrl+Z, Ctrl+Maj+Z et 
 d'un champ de saisie), portent sur les enregistrements, suppressions, fusions, imports et
 identifications sur les photos. Une action retient uniquement les fiches qu'elle a modifiées,
 avant et après. L'historique (50 actions) reste en mémoire : il disparaît au rechargement de la
-page et au changement d'arbre. Avec plusieurs personnes sur la base en ligne, annuler ne touche
-donc que les fiches de l'action, mais remet celles-ci dans leur état d'avant l'action.
+page et au changement d'arbre.

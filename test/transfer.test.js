@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test, describe, beforeEach } from 'node:test';
-import { S, services } from '../js/state.js';
+import { S } from '../js/state.js';
 import {
-  openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, copyExport, readImportFile, importGo,
+  openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, readImportFile, importGo,
 } from '../js/ui/transfer.js';
 import { openTrees, closeTrees, switchTree, newTree, askTree, cancelTreeEdit, submitRename, confirmDeleteTree, renderTrees } from '../js/ui/trees.js';
 import { afterData } from '../js/ui/render.js';
@@ -22,8 +22,6 @@ beforeEach(() => {
   S.focus = ex.people[0].id;
   afterData();
   S.pending = null;
-  delete window.claude;
-  services.downloads = null;
   globalThis.URL.createObjectURL = () => 'blob:x';
   globalThis.URL.revokeObjectURL = () => {};
 });
@@ -48,7 +46,7 @@ describe('fenêtres séparées', () => {
 });
 
 describe('exports', () => {
-  test('téléchargement direct hors de claude.ai', async () => {
+  test('téléchargement direct', async () => {
     openTransfer();
     assert.equal(el('transfer').hidden, false);
     await exportGedcom();
@@ -68,34 +66,6 @@ describe('exports', () => {
       await fn();
       assert.match(el('exportHint').textContent, /vide/);
     }
-  });
-
-  test('dans claude.ai : service, refus, limite, secours par copie', async () => {
-    window.claude = { use() {} };
-    const saved = [];
-    services.downloads = { save: async (x) => saved.push(x) };
-    await exportGedcom();
-    assert.ok(saved[0].filename.endsWith('.ged.txt'));
-    services.downloads = { save: async () => { throw { code: 'declined' }; } };
-    await exportBackup();
-    assert.match(el('exportHint').textContent, /annulé/);
-    services.downloads = { save: async () => { throw { code: 'rate_limited' }; } };
-    await exportBackup();
-    assert.match(el('exportHint').textContent, /déjà ouverte/);
-    services.downloads = { save: async () => { throw new Error('x'); } };
-    await exportCsv();
-    assert.equal(el('exportText').hidden, false);
-    assert.ok(el('exportText').value.includes('Bertrand') || el('exportText').value.includes('BERTRAND'));
-    assert.equal(el('copyRow').hidden, false);
-  });
-
-  test('copier : presse-papiers, sinon sélection', async () => {
-    Object.defineProperty(globalThis, 'navigator', { value: { clipboard: { writeText: async () => {} } }, configurable: true });
-    await copyExport();
-    assert.match(el('toast').textContent, /copié/);
-    navigator.clipboard.writeText = async () => { throw new Error('non'); };
-    await copyExport();
-    assert.match(el('toast').textContent, /sélectionné/);
   });
 });
 
@@ -146,13 +116,16 @@ describe('imports', () => {
   });
 
   test('arrêt en cours : reprise proposée', async () => {
-    S.mode = 'db';
-    services.db = { collection: () => ({ doc: () => ({ set: async () => { throw { code: 'x' }; } }) }) };
-    await readImportFile(file('a.json', JSON.stringify({ format: 'lignee', version: 2, people: [{ id: 'q1', given: 'Q' }], unions: [] })));
-    await importGo(false);
+    // The browser refuses to save: the import stops and offers to resume
+    const set = localStorage.setItem;
+    localStorage.setItem = () => { throw new Error('quota'); };
+    try {
+      await readImportFile(file('a.json', JSON.stringify({ format: 'lignee', version: 2, people: [{ id: 'q1', given: 'Q' }], unions: [] })));
+      await importGo(false);
+    } finally {
+      localStorage.setItem = set;
+    }
     assert.ok(html('importInfo').includes('Reprendre l’import'));
-    S.mode = 'local';
-    services.db = null;
   });
 });
 

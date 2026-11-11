@@ -10,10 +10,10 @@ test('notify: services talk to the interface without importing it', () => {
   assert.deepEqual(got, [[1, 2]]);
 
   // ui/connect.js (wired by test/setup.js) shows the messages
-  say('st.failed', true);
-  assert.match(document.getElementById('toast').textContent, /échoué/);
+  say('st.renameFailed', true);
+  assert.match(document.getElementById('toast').textContent, /changement de nom a échoué/);
   const e = new Error('x');
-  assert.equal(failure('st.full', e), e);
+  assert.equal(failure('st.deleteFailed', e), e);
   assert.equal(e.reported, true);
-  assert.match(document.getElementById('toast').textContent, /pleine/);
+  assert.match(document.getElementById('toast').textContent, /suppression a échoué/);
 });

@@ -83,14 +83,7 @@ function renderStatus() {
   let cls = 'pill';
   let text = t('status.connecting');
   let tip = '';
-  if (S.mode === 'db' && S.canWrite) {
-    cls += ' ok';
-    text = t('status.db');
-    tip = t('status.dbTip');
-  } else if (S.mode === 'db') {
-    text = t('status.readonly');
-    tip = t('status.readonlyTip');
-  } else if (S.mode === 'file') {
+  if (S.mode === 'file') {
     cls += ' ok';
     text = t('status.file');
     tip = t('status.fileTip');

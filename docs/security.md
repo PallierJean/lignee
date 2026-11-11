@@ -55,8 +55,7 @@ Envoyée par `server.js` dans un en-tête, et ajoutée dans la page du site GitH
 | `frame-ancestors 'none'` | Aucun site ne peut afficher Lignée dans un cadre (serveur local seulement) |
 
 Une balise `<meta>` ne peut pas porter `frame-ancestors` : sur GitHub Pages, `js/main.js` refuse
-donc de démarrer dans le cadre d'un autre site et propose de l'ouvrir dans un onglet (claude.ai,
-qui fournit `window.claude`, est la seule exception). Le serveur envoie aussi
+donc de démarrer dans le cadre d'un autre site et propose de l'ouvrir dans un onglet. Le serveur envoie aussi
 `Referrer-Policy: no-referrer`.
 
 ## Textes saisis et fichiers importés

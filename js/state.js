@@ -5,17 +5,13 @@
 import { ZOOMS, THEMES, TEXT_SIZES, TREE_FILTERS, PREF_KEY, DEFAULT_TREE } from './config.js';
 
 export const S = {
-  mode: 'loading',       // 'loading' | 'db' (online database) | 'file' (data/arbres/) | 'local' (browser)
+  mode: 'loading',       // 'loading' | 'file' (data/arbres/) | 'local' (browser)
   tree: DEFAULT_TREE,    // id of the open tree
   trees: new Map(),      // id -> { name, count, createdAt }: every tree in the collection
-  loadedT: false,        // tree list received from the database
   treeEdit: null,        // "My trees" dialog: { id, kind: 'rename' | 'delete' } or null
   people: new Map(),     // id -> person
   unions: new Map(),     // id -> union { a, b, date, place }
   sources: new Map(),    // id -> source document, cited by people (model/sources.js)
-  loadedP: false,        // people received from the database
-  loadedU: false,        // unions received from the database
-  loadedS: false,        // sources received from the database
 
   focus: null,           // id of the person at the centre of the tree
   foci: {},              // tree id -> focus person, restored when coming back to the tree
@@ -53,7 +49,6 @@ export const S = {
   query: '',             // register search
 
   canWrite: true,        // the user can edit the tree
-  writeKnown: false,     // write permission confirmed by the platform
   busy: false,           // save in progress
   pending: null,         // import read, waiting for confirmation
 
@@ -71,13 +66,7 @@ export const idx = {
 /** DOM elements of the tree cards, reused from one render to the next. */
 export const cardEls = new Map();
 
-/** Services provided by claude.ai when the application is published there (otherwise null). */
-export const services = {
-  db: null,
-  downloads: null,
-};
-
-export const isLoading = () => S.mode === 'loading' || (S.mode === 'db' && (!S.loadedP || !S.loadedT));
+export const isLoading = () => S.mode === 'loading';
 
 /** Name of the open tree. */
 export const treeName = () => (S.trees.get(S.tree) || {}).name || '';

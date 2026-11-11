@@ -71,7 +71,6 @@ L'enveloppe d'une sauvegarde `.json` et d'un fichier de `data/arbres/`.
 | `createdAt` | `number` | | Création de la fiche, en millisecondes depuis 1970 | |
 | `updatedAt` | `number` | | Dernière modification, en millisecondes depuis 1970 | |
 | `example` | `boolean` | | Fiche de la famille d'exemple (retirée par « Retirer les exemples ») | |
-| `tree` | `Id` | | Base en ligne seulement : arbre de la fiche | |
 
 ```json
 {
@@ -264,8 +263,7 @@ La galerie n'est pas exportée en GEDCOM ; la sauvegarde `.json` la conserve.
 
 Une image est l'un ou l'autre :
 
-- une **data URL** intégrée : `data:image/jpeg;base64,…` (sauvegarde `.json`, mode navigateur,
-  base en ligne) ;
+- une **data URL** intégrée : `data:image/jpeg;base64,…` (sauvegarde `.json`, mode navigateur) ;
 - une **référence** `photos/<fichier>` (`.jpg`, `.png`, `.webp` ou `.gif`), avec le serveur local :
   le fichier est dans `data/arbres/<id de l'arbre>/photos/` (voir
   [Stockage](storage.md#où-sont-les-données)).
