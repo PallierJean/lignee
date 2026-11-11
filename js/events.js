@@ -15,7 +15,8 @@ import {
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
-  openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, deleteMedia } from './ui/media.js';
+  openMedia, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag } from './ui/media.js';
+import { closeCropFree, resetCropFree, cropFreeDrag, cropFreeOpen } from './ui/crop-free.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
 import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
@@ -247,6 +248,12 @@ const CLICK_ACTIONS = {
   'src-add': () => A.addDraftSource(),
   'med-tag': (el) => openDraftMedia(+el.dataset.i),
   'media-delete': () => askMediaDelete(true),
+  'tag-pick': once((el) => addTag(el.dataset.id)),
+  'media-crop': once(() => cropMedia()),
+  'med-crop': (el) => A.cropDraftMedia(+el.dataset.i),
+  'freecrop-ok': () => closeCropFree(true),
+  'freecrop-cancel': () => closeCropFree(false),
+  'freecrop-reset': () => resetCropFree(),
   'media-delete-no': () => askMediaDelete(false),
   'media-delete-yes': once(() => deleteMedia()),
   'med-remove': (el) => A.removeDraftMedia(+el.dataset.i),
@@ -328,6 +335,7 @@ function appearanceMenu() {
 const DIALOGS = () => [
   { id: 'leaveDlg', close: () => A.leaveEdit(false) },
   { id: 'cropDlg', close: () => closeCrop(false), isOpen: cropOpen },
+  { id: 'freeCropDlg', close: () => closeCropFree(false), isOpen: cropFreeOpen },
   appearanceMenu(),
   { id: 'photoZoom', close: closePhotoZoom },
   { id: 'mediaDlg', close: closeMedia, backdrop: true },
@@ -363,6 +371,7 @@ export function bindEvents() {
   // Photo crop: drag, wheel, zoom slider
   document.addEventListener('wheel', cropWheel, { passive: false });
   for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, cropDrag);
+  for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, cropFreeDrag);
   // Tree: pinch with two fingers to zoom
   for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) document.addEventListener(type, pinch);
   // Phone: the Back button closes the side panel opened over the tree
@@ -429,10 +438,13 @@ export function bindEvents() {
     if (el.id === 'f-photo' && el.files[0]) A.setDraftPhoto(el.files[0]);
     if (el.matches('[data-src-photo]') && el.files[0]) A.setDraftSourcePhoto(+el.dataset.srcPhoto, el.files[0]);
     if (el.matches('[data-med-back]') && el.files[0]) A.setDraftMediaBack(+el.dataset.medBack, el.files[0]);
+    if (el.matches('[data-gal-add]') && el.files.length) {
+      addGalleryPhotos(el.dataset.galAdd, el.files);
+      el.value = '';
+    }
     if (el.matches('[data-src-back]') && el.files[0]) A.setDraftSourceBack(+el.dataset.srcBack, el.files[0]);
     if (el.matches('[id^="ev-type-"]')) A.refreshDraft();
     if (el.id === 'f-media' && el.files.length) A.addDraftMedia([...el.files]);
-    if (el.id === 'tagPerson' && el.value) addTag(el.value);
     if (el.id === 'kinA' || el.id === 'kinB') A.setKin(el.id, el.value);
     // City or country changed: the department follows the city, in France only
     if (el.id && (el.id.endsWith('-city') || el.id.endsWith('-country'))) departmentFromCity(el.id.replace(/-(city|country)$/, ''));
@@ -447,6 +459,7 @@ export function bindEvents() {
       if (label) label.textContent = departmentHint(ev.target.id.slice(0, -'-dept'.length));
     }
     if (ev.target.id === 'lib-q') setLibraryFilter(undefined, ev.target.value);
+    if (ev.target.id === 'tagFind') onTagFind(ev.target.value);
     if (ev.target.id === 'q') {
       S.query = ev.target.value;
       renderRegister();
@@ -471,6 +484,12 @@ export function bindEvents() {
   document.addEventListener('keydown', (ev) => {
     if (ev.target.id === 'find') {
       if (onFindKey(ev, (id) => A.setFocus(id, true))) ev.preventDefault();
+      return;
+    }
+    // Whom to identify on a photo: Enter takes the first result
+    if (ev.target.id === 'tagFind' && ev.key === 'Enter') {
+      ev.preventDefault();
+      pickFirstTag();
       return;
     }
     if (ev.target.id === 'f-spouse') {

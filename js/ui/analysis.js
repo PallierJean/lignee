@@ -17,7 +17,7 @@ import {
   loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText, loadCommuneChanges, communeChangesLoaded, currentCommune,
   officialCommune, cityDepartments,
 } from '../model/communes.js';
-import { mediaGrid } from './record.js';
+import { mediaGrid, addMediaTile } from './record.js';
 import { toast } from './toast.js';
 import { downloadBlob, fileBase } from './transfer.js';
 import { buildActsCsv } from '../services/csv.js';
@@ -709,7 +709,10 @@ function libraryList(all) {
 
 function galleryView() {
   const items = allMedia();
-  return items.length ? mediaGrid(items, 'all') : `<p class="nofocus">${t('med.empty')}</p>`;
+  // First cell: add photos to the gallery of the person at the centre of the tree
+  const lead = addMediaTile(S.focus);
+  if (!items.length) return `${lead ? mediaGrid([], 'all', lead) : ''}<p class="nofocus">${t('med.empty')}</p>`;
+  return mediaGrid(items, 'all', lead);
 }
 
 /* ---------- Rendering ---------- */

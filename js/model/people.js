@@ -201,6 +201,15 @@ const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'obj
 export { sourcesOf } from './sources.js';
 export const mediaList = (p) => listOf(p && p.media);
 
+// File names a camera, a phone or a scanner gives: they say nothing of the image
+const DEVICE_NAME = /^(img|image|photo|pic|picture|dsc|dscn|dcim|pxl|mvimg|scan|scanned|numérisation|capture|screenshot|whatsapp image|signal|wp|p)?[\s_\-.]*[\d\s_\-.:()]*$/i;
+
+/** Title from a file's name, when it means something ("mariage.jpg"); '' for "IMG_1234.jpg" or "photo.jpg". */
+export function fileTitle(name) {
+  const base = String(name || '').replace(/\.[^.]+$/, '').trim();
+  return !base || DEVICE_NAME.test(base) || /^whatsapp image /i.test(base) ? '' : base;
+}
+
 /**
  * Name of a gallery image: its title, or else the people identified on it (three at most) and its
  * date, or else '' (the caller shows "Untitled image").

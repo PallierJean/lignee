@@ -98,3 +98,12 @@
   le formulaire, un document partagé l'indique : le modifier le modifie pour toutes ces fiches.
   Deux filtres : la nature du document, et une recherche dans le titre, le lieu, la cote, la note et
   les noms des personnes qui le citent.
+- **Galerie** : toutes les images de l'arbre. La première case ajoute des photos à la galerie de la
+  personne centrale (la fiche a la même case pour sa propre galerie). Une seule image s'ouvre d'abord
+  dans le recadrage libre (`ui/crop-free.js` : un cadre à poignées, déplaçable et redimensionnable,
+  sans format imposé) ; ensuite, la visionneuse l'affiche pour identifier les personnes. Dans la
+  visionneuse, « Recadrer » et « Supprimer l'image » (après confirmation, annulable) ; recadrer
+  garde les personnes identifiées à leur place, et retire celles qui sortent du cadre. Pour choisir
+  la personne d'un visage, un champ de recherche (nom, lieu, année) remplace la liste de tout l'arbre ;
+  Entrée prend le premier résultat. Sans intitulé, une image est nommée par les personnes identifiées
+  et sa date.

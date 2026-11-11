@@ -2,6 +2,8 @@
 import { S, savePrefs } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { rid } from '../utils/helpers.js';
+import { fileTitle } from '../model/people.js';
+import { cropFree, cropTags } from '../ui/crop-free.js';
 import { P, photoOf, photoSrc, partnersOf, childrenOf, unionDeathEnd, currentSituation, reindex, birthSurname, eventsOf, sourcesOf, mediaList, unionType } from '../model/people.js';
 import { opUpdate, opDelete, inBatch, beginAction, commitAction } from '../services/storage.js';
 import { savePerson } from '../services/person-save.js';
@@ -164,22 +166,24 @@ export function removeDraftUnion(i) {
 }
 
 /** Images chosen in the form: added to the draft's gallery. */
-// File names a camera, a phone or a scanner gives: they say nothing of the image
-const DEVICE_NAME = /^(img|image|photo|pic|picture|dsc|dscn|dcim|pxl|mvimg|scan|scanned|numérisation|capture|screenshot|whatsapp image|signal|wp|p)?[\s_\-.]*[\d\s_\-.:()]*$/i;
-
-/** Title from a file's name, when it means something ("mariage.jpg"); '' for "IMG_1234.jpg" or "photo.jpg". */
-export function fileTitle(name) {
-  const base = String(name || '').replace(/\.[^.]+$/, '').trim();
-  return !base || DEVICE_NAME.test(base) || /^whatsapp image /i.test(base) ? '' : base;
-}
+export { fileTitle } from '../model/people.js';
 
 export async function addDraftMedia(files) {
   if (!S.edit) return;
   const token = S.edit.token;
   const added = [];
-  for (const file of files) {
+  const list = [...files];
+  for (const file of list) {
     try {
-      added.push({ id: rid('m'), photo: await photoFromFile(file, DOCUMENT_SIDE), back: '', title: fileTitle(file.name), date: '', note: '', tags: [], removed: false });
+      let photo = await photoFromFile(file, DOCUMENT_SIDE);
+      if (!S.edit || S.edit.token !== token) return; // the form was closed or reopened meanwhile
+      // A single image: cropped right away, as the record photo is
+      if (list.length === 1) {
+        const res = await cropFree(photo);
+        if (!res) return; // cancelled: nothing added
+        photo = res.photo;
+      }
+      added.push({ id: rid('m'), photo, back: '', title: fileTitle(file.name), date: '', note: '', tags: [], removed: false });
     } catch (err) {
       toast(err.message, true);
     }
@@ -187,6 +191,25 @@ export async function addDraftMedia(files) {
   if (!S.edit || S.edit.token !== token) return;
   captureDraft();
   S.edit.media.push(...added);
+  renderSide(true);
+}
+
+/** Crops gallery image `i` of the form (free frame); the people identified keep their place on it. */
+export async function cropDraftMedia(i) {
+  if (!S.edit || !S.edit.media[i]) return;
+  const token = S.edit.token;
+  captureDraft();
+  let res;
+  try {
+    res = await cropFree(photoSrc(S.edit.media[i].photo));
+  } catch (err) {
+    toast(err.message, true);
+    return;
+  }
+  if (!res || !S.edit || S.edit.token !== token || !S.edit.media[i]) return;
+  const m = S.edit.media[i];
+  m.photo = res.photo;
+  m.tags = cropTags(m.tags, res.rect);
   renderSide(true);
 }
 

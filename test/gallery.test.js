@@ -57,3 +57,18 @@ describe('supprimer une image depuis la visionneuse', () => {
     media.closeMedia();
   });
 });
+
+describe('ajouter des photos depuis la galerie', () => {
+  test('première case : ajouter à la galerie de la personne centrale ; seulement en écriture', async () => {
+    const { S } = await import('../js/state.js');
+    const { addMediaTile, mediaGrid } = await import('../js/ui/record.js');
+    const { resetApp } = await import('./helpers.js');
+    resetApp();
+    loadTree([person('a', { given: 'Anne', surname: 'Roux', media: [{ id: 'm1', photo: 'data:image/png;base64,A' }] })]);
+    const grid = mediaGrid(allMedia(), 'all', addMediaTile('a'));
+    assert.match(grid, /^<div class="meds"><label class="med med-add" title="Ajouter des photos à la galerie de Anne ROUX"><input type="file" accept="image\/\*" multiple/);
+    S.canWrite = false;
+    assert.equal(addMediaTile('a'), '', 'lecture seule : pas d’ajout');
+    S.canWrite = true;
+  });
+});
