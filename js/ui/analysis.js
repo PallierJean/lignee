@@ -701,7 +701,11 @@ function libraryList(all) {
           const part = [factLabel(c.id, c.fact), c.role ? t('role.' + c.role) : ''].filter(Boolean).join(', ');
           return personLink(c.id) + (part ? ` <small>(${esc(part)})</small>` : '');
         }).join(', ');
-        return `<li class="lib-item">${pic ? `<img class="lib-pic" src="${esc(pic)}" alt="" loading="lazy">` : '<span class="lib-pic none" aria-hidden="true"></span>'}`
+        // The document, and its back if it has one: a click shows it full size, as on the record
+        const back = pic && photoSrc(src.back);
+        const name = esc(String(src.title || t('src.' + kind)));
+        const zoom = (url, label) => `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom">`;
+        return `<li class="lib-item">${pic ? zoom(pic, name) + (back ? zoom(back, `${name} (${t('med.back')})`) : '') : '<span class="lib-pic none" aria-hidden="true"></span>'}`
           + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p></div></li>`;
       }).join('') + '</ul></section>';
   }).join('');
