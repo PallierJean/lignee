@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.6.0](https://github.com/PallierJean/lignee/compare/v3.5.0...v3.6.0) (2026-11-11)
+
+### Features
+
+* Show the whole gallery in place of the tree from the toolbar ([4e6a26d](https://github.com/PallierJean/lignee/commit/4e6a26dfeebbae64fe3cff6c418eb6f2e21a4fc2))
+
+### Bug Fixes
+
+* No default title for an added image ([7158790](https://github.com/PallierJean/lignee/commit/7158790226ef2540edb9e7eaccfb608435080ba5))
+
+---
+
+### Nouveautés
+
+* Un bouton « Galerie » dans la barre de l'arbre affiche toutes les images à la place de l'arbre. Le bouton, « Revenir à l'arbre » ou Échap ramènent l'arbre, là où il était. ([4e6a26d](https://github.com/PallierJean/lignee/commit/4e6a26dfeebbae64fe3cff6c418eb6f2e21a4fc2))
+
+### Corrections
+
+* Une photo ajoutée n'a plus de titre par défaut : elle porte le nom des personnes identifiées, sinon « Image sans titre ». Les titres hérités d'un nom de fichier (« PART_1474012919711_DSC_0936 ») sont ignorés. ([7158790](https://github.com/PallierJean/lignee/commit/7158790226ef2540edb9e7eaccfb608435080ba5))
+
 ## [3.5.0](https://github.com/PallierJean/lignee/compare/v3.4.0...v3.5.0) (2026-11-11)
 
 ### Features
