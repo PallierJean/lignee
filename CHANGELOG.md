@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.0.0](https://github.com/PallierJean/lignee/compare/v2.3.1...v3.0.0) (2026-11-11)
+
+### ⚠ BREAKING CHANGES
+
+* Format 1 backups (Lignée before 2.0) are no longer read. Open them with Lignée 2.3 first to convert them. ([af3916b](https://github.com/PallierJean/lignee/commit/af3916b4872e9affd0947a1ae326e046adb15d0d))
+
+### Features
+
+* Read and write format 2 only ([af3916b](https://github.com/PallierJean/lignee/commit/af3916b4872e9affd0947a1ae326e046adb15d0d))
+
+---
+
+### ⚠ Changements incompatibles
+
+* Les sauvegardes au format 1 (Lignée avant 2.0) ne sont plus lues. Ouvrez-les d'abord avec Lignée 2.3 pour les convertir. ([af3916b](https://github.com/PallierJean/lignee/commit/af3916b4872e9affd0947a1ae326e046adb15d0d))
+
+### Nouveautés
+
+* Lignée ne lit plus que le format 2 : le code de conversion de l'ancien format est retiré. Un fichier d'avant la 2.0 est refusé avec un message clair. ([af3916b](https://github.com/PallierJean/lignee/commit/af3916b4872e9affd0947a1ae326e046adb15d0d))
+
 ## [2.3.1](https://github.com/PallierJean/lignee/compare/v2.3.0...v2.3.1) (2026-11-11)
 
 ### Bug Fixes
