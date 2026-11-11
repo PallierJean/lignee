@@ -619,3 +619,20 @@ describe('bibliothèque de sources : filtres', () => {
     setLibraryFilter('', '');
   });
 });
+
+describe('bibliothèque de sources : ordre', () => {
+  beforeEach(openExample);
+
+  test('par nature, puis par personne citée (nom puis prénom), puis par numéro', async () => {
+    const { sourceLibrary } = await import('../js/ui/analysis.js');
+    loadTree([
+      person('g', { given: 'Georges', surname: 'BOURREL', citations: [{ id: 'c1', source: 'D10', fact: 'death' }] }),
+      person('o', { given: 'Olivier', surname: 'BOURREL', citations: [{ id: 'c2', source: 'D1094', fact: 'death' }] }),
+      person('a', { given: 'Alice', surname: 'BOURREL', citations: [{ id: 'c3', source: 'D14', fact: 'death' }, { id: 'c4', source: 'D3', fact: 'death' }] }),
+      person('m', { given: 'Monique', surname: 'LAMBORRE', citations: [{ id: 'c5', source: 'B2', fact: 'birth' }] }),
+    ]);
+    S.sources = new Map([['D10', { kind: 'death', title: 'Acte n°10' }], ['D1094', { kind: 'death', title: 'Acte n°1094' }],
+      ['D14', { kind: 'death', title: 'Acte n°14' }], ['D3', { kind: 'death', title: 'Acte n°3' }], ['B2', { kind: 'birth', title: 'Acte n°2' }]]);
+    assert.deepEqual(sourceLibrary().map((x) => x.src.title), ['Acte n°2', 'Acte n°3', 'Acte n°14', 'Acte n°10', 'Acte n°1094']);
+  });
+});

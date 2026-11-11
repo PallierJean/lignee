@@ -2,7 +2,7 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
-import { P, fullName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS } from '../model/people.js';
+import { P, fullName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS, cmpName } from '../model/people.js';
 import { relationship } from '../model/kinship.js';
 import { currentIssues } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
@@ -655,8 +655,13 @@ export function sourceLibrary() {
     }
   }
   const order = (k) => (SOURCE_KINDS.includes(k) ? SOURCE_KINDS.indexOf(k) : SOURCE_KINDS.length);
-  return [...byKey.values()].sort((a, b) => order(a.src.kind) - order(b.src.kind)
-    || String(a.src.title || '').localeCompare(String(b.src.title || ''), t('locale')));
+  // Within a kind, by the person cited (surname, then given name); then by title, numbers in order
+  const byName = (a, b) => cmpName(P(a.id), P(b.id));
+  const list = [...byKey.values()];
+  for (const x of list) x.cites.sort(byName);
+  return list.sort((a, b) => order(a.src.kind) - order(b.src.kind)
+    || byName(a.cites[0], b.cites[0])
+    || String(a.src.title || '').localeCompare(String(b.src.title || ''), t('locale'), { numeric: true }));
 }
 
 // Filters of the Sources view: kind ('' = all) and text (title, place, number, who cites it)
