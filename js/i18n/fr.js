@@ -200,6 +200,7 @@ export const FR = {
   'repo.autoFailed': 'La modification n’a pas pu partir sur GitHub : elle reste dans cet arbre. Voir le bandeau.',
   'repo.undoCommit': 'annulation',
   'repo.redoCommit': 'rétablissement',
+  'repo.retry': 'Réessayer l’envoi',
   'repo.forget': 'Déconnecter le dépôt',
   'tr.repoErr.old': 'Ce dépôt contient une sauvegarde au format d’avant Lignée 2.0. Convertissez-la d’abord avec Lignée 2.3.',
   'tr.repoErr.newer': 'Ce dépôt contient une sauvegarde d’une version plus récente de Lignée. Mettez Lignée à jour pour l’ouvrir ou y sauvegarder.',

@@ -195,6 +195,7 @@ export const EN = {
   'repo.autoFailed': 'The change couldn’t be sent to GitHub: it stays in this tree. See the banner.',
   'repo.undoCommit': 'undo',
   'repo.redoCommit': 'redo',
+  'repo.retry': 'Try sending again',
   'repo.forget': 'Disconnect repository',
   'tr.repoErr.old': 'This repository holds a backup in the format from before Lignée 2.0. Convert it with Lignée 2.3 first.',
   'tr.repoErr.newer': 'This repository holds a backup from a newer version of Lignée. Update Lignée to open it or save to it.',

@@ -18,8 +18,9 @@ remplacera qu'après confirmation. Le bandeau
 « ATTENTION : LECTURE ET ÉCRITURE » apparaît. Chaque action terminée (événement `changed` de `notify.js` :
 fiche enregistrée, suppression, fusion, import, annuler, rétablir) programme un envoi 1,5 s plus tard
 (`scheduleRepoSave` dans `ui/repo-link.js`) : les changements rapprochés font un seul commit, dont le message
-nomme l'action ; un contenu inchangé n'en fait aucun. Les envois, automatiques ou par le bouton
-« Sauvegarder sur GitHub », passent un par un. Rien ne part seul avant la première sauvegarde confirmée
+nomme l'action ; un contenu inchangé n'en fait aucun. Le bouton « Sauvegarder sur GitHub » n'apparaît
+que pour la première sauvegarde d'un dépôt écrit ailleurs, et « Réessayer l'envoi » après un échec ;
+les envois, automatiques ou par ces boutons, passent un par un. Rien ne part seul avant la première sauvegarde confirmée
 d'une sauvegarde écrite ailleurs, ni tant qu'un choix de conflit attend. Le `.json` et les photos
 partent en un seul commit sur la branche par défaut, et une photo retirée de l'arbre quitte le dépôt (elle reste
 dans son historique). Une photo déjà dans le dépôt n'est pas renvoyée : elle est reconnue à son contenu.
