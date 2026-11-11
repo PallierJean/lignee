@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.0.0](https://github.com/PallierJean/lignee/compare/v1.31.0...v2.0.0) (2026-11-11)
+
+### ⚠ BREAKING CHANGES
+
+* Backups are written in format 2. Lignée older than 1.31 would read them without their sources; 1.31 and later refuse them. Use "Backup for a Lignée version older than 2.0" in Export to write format 1. ([08206fd](https://github.com/PallierJean/lignee/commit/08206fd4fc0deb09f2540b60aa129af42b463ad5))
+
+### Features
+
+* Share sources between records (backup format 2) ([08206fd](https://github.com/PallierJean/lignee/commit/08206fd4fc0deb09f2540b60aa129af42b463ad5))
+
+---
+
+### ⚠ Changements incompatibles
+
+* Backups are written in format 2. Lignée older than 1.31 would read them without their sources; 1.31 and later refuse them. Use "Backup for a Lignée version older than 2.0" in Export to write format 1. ([08206fd](https://github.com/PallierJean/lignee/commit/08206fd4fc0deb09f2540b60aa129af42b463ad5))
+
+### Nouveautés
+
+* Les sources sont maintenant partagées : un acte cité par plusieurs ([08206fd](https://github.com/PallierJean/lignee/commit/08206fd4fc0deb09f2540b60aa129af42b463ad5))
+
 ## [1.31.0](https://github.com/PallierJean/lignee/compare/v1.30.0...v1.31.0) (2026-11-11)
 
 ### Features
