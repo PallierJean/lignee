@@ -4,8 +4,10 @@
  */
 
 // Tree dimensions, in pixels (CARD_W, CARD_H and PHOTO_D must match .card in tree.css)
-export const CARD_W = 176;  // card width
-export const CARD_H = 88;   // card height
+export const CARD_W = 152;  // card width: portrait card, photo above the name
+export const CARD_H = 128;  // card height
+export const PRINT_W = 176; // printed card: name and dates side by side, no photo
+export const PRINT_H = 88;
 export const PHOTO_D = 84;  // diameter of a card in photo mode (photo only, name on hover)
 // Size of the cards being laid out: CARD_W × CARD_H, or PHOTO_D × PHOTO_D in photo mode
 export let CW = CARD_W;
@@ -17,10 +19,11 @@ export function setCardSize(photos) {
   CH = photos ? PHOTO_D : CARD_H;
 }
 
-/** Runs `fn` with full cards, whatever the screen shows (printing), then puts the size back. */
-export function withFullCards(fn) {
+/** Runs `fn` with printed cards, whatever the screen shows, then puts the size back. */
+export function withPrintCards(fn) {
   const [w, h] = [CW, CH];
-  setCardSize(false);
+  CW = PRINT_W;
+  CH = PRINT_H;
   try {
     return fn();
   } finally {

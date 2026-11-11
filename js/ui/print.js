@@ -6,8 +6,8 @@
  * scaled to the page, then printed by the browser. "Save as PDF"
  * in the print dialog gives a PDF of the right size, thanks to the @page rule.
  */
-// Printed cards are always full cards, even when the screen shows photos only
-import { CARD_W as CW, CARD_H as CH, RINGS_PATH, pageRule, withFullCards } from '../config.js';
+// Printed cards have their own size, whatever the screen shows (portrait cards or photos)
+import { PRINT_W as CW, PRINT_H as CH, RINGS_PATH, pageRule, withPrintCards } from '../config.js';
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { longDate } from '../utils/dates.js';
@@ -170,7 +170,7 @@ const isBook = (content) => content === 'book' || content === 'fullbook';
 /** Whole tree, in the chosen layout: redone only when it changes. */
 function treeLayout() {
   const compact = $('#prLayout').value === 'compact';
-  if (!layout || layout.compact !== compact) layout = { ...withFullCards(() => buildFullLayout({ compact })), compact };
+  if (!layout || layout.compact !== compact) layout = { ...withPrintCards(() => buildFullLayout({ compact })), compact };
   return layout;
 }
 

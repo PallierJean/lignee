@@ -7,6 +7,7 @@ import { buildGedcom, parseGedcom } from '../js/services/gedcom.js';
 import { findIssues } from '../js/model/checks.js';
 import { buildLayout } from '../js/tree/layout.js';
 import { loadTree, person } from './helpers.js';
+import { CW } from '../js/config.js';
 
 describe('parcours d’unions', () => {
   /* Anne : veuve de Paul, remariée à Marc (divorce), concubinage avec Luc (2 enfants), puis avec Yves */
@@ -95,8 +96,8 @@ describe('parcours d’unions', () => {
     const ids = nodes.map((n) => n.id);
     for (const id of ['p', 'm', 'l', 'y', 'k1', 'k2', 'k3']) assert.ok(ids.includes(id), id);
     const row = nodes.filter((n) => n.y === nodes.find((x) => x.id === 'a').y).sort((a, b) => a.x - b.x);
-    for (let i = 1; i < row.length; i++) assert.ok(row[i].x - row[i - 1].x >= 176);
+    for (let i = 1; i < row.length; i++) assert.ok(row[i].x - row[i - 1].x >= CW);
     const kids = nodes.filter((n) => n.id[0] === 'k').sort((a, b) => a.x - b.x);
-    for (let i = 1; i < kids.length; i++) assert.ok(kids[i].x - kids[i - 1].x >= 176);
+    for (let i = 1; i < kids.length; i++) assert.ok(kids[i].x - kids[i - 1].x >= CW);
   });
 });

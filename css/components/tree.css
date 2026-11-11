@@ -228,17 +228,17 @@
   font-weight: 500;
 }
 
-/* A person's card in the tree */
+/* A person's card in the tree: portrait, the photo above the name */
 .card {
   position: absolute;
-  width: 176px;   /* = CW in js/config.js */
-  height: 88px;   /* = CH in js/config.js */
-  padding: 9px 11px 8px;
+  width: 152px;   /* = CARD_W in js/config.js */
+  height: 128px;  /* = CARD_H in js/config.js */
+  padding: 8px 9px 7px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 1px;
-  text-align: left;
+  gap: 0;
+  text-align: center;
   font: inherit;
   font-size: 15px; /* fixed-size card: the interface text size doesn't apply to it */
   color: var(--ink);
@@ -252,7 +252,13 @@
     border-color .15s;
 }
 
-/* Outline by sex: blue for a man, pale pink for a woman */
+/* Outline by sex: blue for a man, pale pink for a woman, thick enough to show under the halo */
+.card.is-M,
+.card.is-F {
+  border-width: 2px;
+  padding: 7px 8px 6px;
+}
+
 .card.is-M {
   border-color: var(--male);
 }
@@ -267,19 +273,44 @@
 
 .card.is-focus {
   border: 2px solid var(--accent);
-  padding: 8px 10px 7px;
+  padding: 7px 8px 6px;
   background: var(--accent-soft);
 }
 
-.card .tp {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
+/* Round photo, or the avatar */
+.card .pic {
+  flex: none;
+  align-self: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 5px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.card .pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Sex mark and Sosa number, in the top corners */
+.card > .sx {
+  position: absolute;
+  top: 8px;
+  left: 9px;
+}
+
+.card > .sosa {
+  position: absolute;
+  top: 6px;
+  right: 6px;
 }
 
 .card .g {
-  flex: 1;
   min-width: 0;
   font-weight: 700;
   font-size: 14px;
@@ -337,7 +368,7 @@
   border: 1.5px dashed var(--edge);
   background: var(--paper);
   color: var(--muted);
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
