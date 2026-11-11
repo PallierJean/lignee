@@ -75,19 +75,30 @@ function fillCard(el, n, purpleSword) {
   const spokenDates = (wed ? ', ' + situationLabel('married', p.sex).toLowerCase() : '') + (dates ? ', ' + dates.replace(/°/g, t('card.born')).replace(/†/g, t('card.died')) : '');
   const partnerOf = n.partnerOf ? ', ' + t('card.partnerOf', p.sex === 'F', fullName(P(n.partnerOf))) : '';
   el.setAttribute('aria-label', longName(p) + spokenDates + (n.sosa ? ', Sosa ' + n.sosa : '') + partnerOf);
+  const src = photoOf(p) || avatarOf(p.sex);
+  const img = `<img class="ph-img" src="${esc(src)}" alt="" draggable="false" decoding="async">`;
+  let html;
   if (S.photos) {
     // Photo only; the name and dates show on hover or keyboard focus, in place of the tooltip
     el.removeAttribute('title');
-    el.innerHTML = `<img class="ph-img" src="${esc(photoOf(p) || avatarOf(p.sex))}" alt="" draggable="false">`
-      + `<span class="tip" aria-hidden="true"><b>${esc(fullName(p))}</b>${dates ? `<span>${esc(dates)}</span>` : ''}</span>`;
-    return;
+    html = img + `<span class="tip" aria-hidden="true"><b>${esc(fullName(p))}</b>${dates ? `<span>${esc(dates)}</span>` : ''}</span>`;
+  } else {
+    // Portrait card: photo, given name, surname, dates; sex mark and Sosa number in the corners
+    el.title = longName(p);
+    html = `<i class="sx ${esc(p.sex || 'U')}"></i>`
+      + (n.sosa ? `<span class="sosa" title="${t('sosaTitle')}">${n.sosa}</span>` : '')
+      + `<span class="pic">${img}</span>`
+      + `<span class="g">${esc(given(p) || '—')}</span>`
+      + `<span class="s">${esc(names.name || t('card.noSurname'))}</span>`
+      + (names.maiden ? `<span class="s m">${esc(names.maiden)}</span>` : '')
+      + `<span class="d">${wed ? MARRIED_SVG : ''}${esc(dates || t('card.noDates'))}</span>`;
   }
-  el.title = longName(p);
-  el.innerHTML = `<span class="tp"><i class="sx ${esc(p.sex || 'U')}"></i><span class="g">${esc(given(p) || '—')}</span>`
-    + `${n.sosa ? `<span class="sosa" title="${t('sosaTitle')}">${n.sosa}</span>` : ''}</span>`
-    + `<span class="s">${esc(names.name || t('card.noSurname'))}</span>`
-    + (names.maiden ? `<span class="s m">${esc(names.maiden)}</span>` : '')
-    + `<span class="d">${wed ? MARRIED_SVG : ''}${esc(dates || t('card.noDates'))}</span>`;
+  // Rewritten only when it changes: the photos aren't decoded again on every render
+  const sig = html.length + ':' + html.slice(-400) + src.slice(-64);
+  if (el.dataset.sig !== sig || !el.innerHTML) {
+    el.innerHTML = html;
+    el.dataset.sig = sig;
+  }
 }
 
 function fillPlaceholder(el, n) {
@@ -98,6 +109,7 @@ function fillPlaceholder(el, n) {
   delete el.dataset.id;
   delete el.dataset.saber;
   delete el.dataset.hilt;
+  delete el.dataset.sig;
   const of = P(n.of);
   const label = t(n.rel === 'spouse'
     ? (of.sex === 'M' ? 'addSpouseF' : of.sex === 'F' ? 'addSpouseM' : 'addSpouse')

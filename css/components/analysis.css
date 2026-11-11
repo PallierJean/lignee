@@ -902,10 +902,9 @@
   opacity: .8;
 }
 
-/* Direct line of the focus person */
+/* Direct line of the focus person: a ring around the card, which keeps its outline by sex */
 .card.is-line {
-  border-color: var(--halo);
-  box-shadow: 0 0 0 2px var(--halo), 0 0 14px 4px color-mix(in srgb, var(--halo) 45%, transparent);
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4.5px var(--halo), 0 0 16px 5px color-mix(in srgb, var(--halo) 40%, transparent);
 }
 
 .edges path.line {

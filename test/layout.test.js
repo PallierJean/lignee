@@ -1,7 +1,7 @@
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { S } from '../js/state.js';
-import { CW, CH, CARD_W, PHOTO_D, setCardSize, withFullCards } from '../js/config.js';
+import { CW, CH, CARD_W, PHOTO_D, setCardSize, withPrintCards, PRINT_W } from '../js/config.js';
 import { buildLayout } from '../js/tree/layout.js';
 import { buildFullLayout } from '../js/tree/full-layout.js';
 import { example, loadTree, person } from './helpers.js';
@@ -255,13 +255,15 @@ describe('mode photos', () => {
       const photos = buildFullLayout();
       assert.ok(photos.W < full.W, 'arbre plus étroit');
       assert.ok(gap(photos) >= PHOTO_D, 'pas de chevauchement');
-      const printed = withFullCards(() => buildFullLayout());
-      assert.equal(printed.W, full.W, 'mise en page de l’impression inchangée');
+      const printed = withPrintCards(() => buildFullLayout());
+      assert.ok(printed.nodes.every((n, i, all) => !i || n.y !== all[i - 1].y || n.x - all[i - 1].x >= PRINT_W || n.x < all[i - 1].x), 'cartes imprimées à leur taille');
+      assert.notEqual(printed.W, photos.W);
       assert.equal(CW, PHOTO_D, 'taille remise après l’impression');
       assert.ok(gap(buildLayout()) >= PHOTO_D);
     } finally {
       setCardSize(false);
     }
     assert.equal(CW, CARD_W);
+    assert.ok(full.W > 0);
   });
 });

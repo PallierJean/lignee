@@ -205,7 +205,7 @@ describe('navigation et affichage', () => {
     assert.equal(JSON.parse(localStorage.getItem(PREF_KEY)).photos, true);
     A.togglePhotos();
     assert.equal(CW, CARD_W);
-    assert.ok(!henri.innerHTML.includes('ph-img'));
+    assert.ok(henri.innerHTML.includes('class="pic"'), 'fiche portrait : la photo au-dessus du nom');
   });
 
   test('filtres de l’arbre : vivants ou numéro d’acte, les autres cartes estompées', () => {

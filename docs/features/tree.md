@@ -25,15 +25,20 @@
   arbres. Chaque conjoint se place du côté de ses parents, et un couple issu de deux familles se
   pose entre elles. Le calcul est gardé tant que les données ne changent pas : zoomer ou cliquer ne
   le refait pas.
-- « Lignée directe » entoure d'un halo vert les ancêtres directs de la personne centrale (ceux
-  qui ont un numéro Sosa) et colore les traits qui remontent jusqu'à eux. À l'impression, seul le
+- Les fiches sont en portrait (`CARD_W` × `CARD_H`) : la photo ronde, ou l'avatar, au-dessus du
+  prénom, du nom et des dates ; le symbole du sexe et le numéro Sosa dans les coins du haut. Le
+  contour est bleu pour un homme et rose pour une femme. L'impression garde des fiches en largeur,
+  sans photo (`PRINT_W` × `PRINT_H`). Une fiche n'est réécrite que si son contenu change, pour ne
+  pas décoder à nouveau les photos à chaque affichage.
+- « Lignée directe » entoure d'un halo vert, en anneau autour du contour, qui garde ainsi sa
+  couleur, les ancêtres directs de la personne centrale (ceux qui ont un numéro Sosa) et colore les traits qui remontent jusqu'à eux. À l'impression, seul le
   contour des fiches est vert.
 - « Photos » montre chaque fiche en photo ronde (l'avatar quand il n'y en a pas), sans texte : le
   nom et les dates apparaissent au survol ou au clavier, et les lecteurs d'écran lisent toujours
   la fiche entière. Les cartes passent de `CARD_W` × `CARD_H` à `PHOTO_D` (`config.js`) :
   `setCardSize()` change la taille avant chaque mise en page, et l'arbre tient plus de monde à
   l'écran. Le choix est gardé avec les préférences d'affichage (`photos`). L'impression garde
-  les fiches complètes (`withFullCards()`).
+  ses propres fiches (`withPrintCards()`).
 - « Vivants » et « N° d'acte » sont des filtres : les fiches qui n'y répondent pas sont estompées
   (`passesFilter` dans `model/people.js`), les autres restent nettes. « Vivants » garde les personnes
   qui ne sont pas décédées ; « N° d'acte » garde celles dont une source du décès porte un numéro
