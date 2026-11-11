@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.3.1](https://github.com/PallierJean/lignee/compare/v3.3.0...v3.3.1) (2026-11-11)
+
+### Bug Fixes
+
+* Fit the free crop frame to the image, whatever its shape ([def1e3a](https://github.com/PallierJean/lignee/commit/def1e3abd4ad930f33f57793df9ee29d4182f06e))
+
+---
+
+### Corrections
+
+* Le cadre de recadrage colle maintenant à l'image, même quand elle est en hauteur. ([def1e3a](https://github.com/PallierJean/lignee/commit/def1e3abd4ad930f33f57793df9ee29d4182f06e))
+
 ## [3.3.0](https://github.com/PallierJean/lignee/compare/v3.2.0...v3.3.0) (2026-11-11)
 
 ### Features
