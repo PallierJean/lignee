@@ -99,3 +99,43 @@ describe('roue d’ascendance : survol et recentrage', () => {
     assert.equal(nav.hidden, true);
   });
 });
+
+describe('éventail : filtres et mode photos', () => {
+  const family = () => loadTree([
+    person('c', { given: 'Centre', fatherId: 'f', motherId: 'm' }),
+    person('f', { given: 'Père', sex: 'M', deceased: true, deathDate: '1990' }),
+    person('m', { given: 'Mère', sex: 'F', photo: 'data:image/png;base64,AAAA' }),
+  ]);
+  const group = (svg, id) => svg.match(new RegExp(`<g class="([^"]*)"[^>]*data-id="${id}"`))[1];
+
+  test('les filtres estompent les secteurs écartés, pas l’impression', () => {
+    family();
+    S.focus = 'c';
+    S.filter = 'living';
+    try {
+      const svg = fanSVG();
+      assert.equal(group(svg, 'f'), 'fan-s is-faded');
+      assert.equal(group(svg, 'm'), 'fan-s');
+      assert.ok(!fanSVG({ text: '#000', muted: '#000', empty: '#fff', line: '#000', M: '#fff', F: '#fff', U: '#fff', stroke: {} }).includes('is-faded'));
+    } finally {
+      S.filter = '';
+    }
+  });
+
+  test('mode photos : une photo ronde par secteur, le nom au survol, le texte à l’impression', () => {
+    family();
+    S.focus = 'c';
+    S.photos = true;
+    try {
+      const svg = fanSVG();
+      assert.ok(svg.includes('<image href="data:image/png;base64,AAAA"'), 'photo de la mère');
+      assert.ok(svg.includes('href="images/avatar_homme.jpeg"'), 'avatar du père');
+      assert.ok(svg.includes('<title>Père'));
+      assert.ok(!svg.includes('<tspan'), 'pas de texte dans les secteurs');
+      const printed = fanSVG({ text: '#000', muted: '#000', empty: '#fff', line: '#000', M: '#fff', F: '#fff', U: '#fff', stroke: {} });
+      assert.ok(!printed.includes('<image') && printed.includes('<tspan'));
+    } finally {
+      S.photos = false;
+    }
+  });
+});

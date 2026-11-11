@@ -38,13 +38,14 @@
   la fiche entière. Les cartes passent de `CARD_W` × `CARD_H` à `PHOTO_D` (`config.js`) :
   `setCardSize()` change la taille avant chaque mise en page, et l'arbre tient plus de monde à
   l'écran. Le choix est gardé avec les préférences d'affichage (`photos`). L'impression garde
-  ses propres fiches (`withPrintCards()`).
+  ses propres fiches (`withPrintCards()`). En éventail, chaque secteur montre une photo ronde, le nom en
+  infobulle. « Lignée directe » y est grisé : tout l'éventail est la lignée directe.
 - « Vivants » et « N° d'acte » sont des filtres : les fiches qui n'y répondent pas sont estompées
   (`passesFilter` dans `model/people.js`), les autres restent nettes. « Vivants » garde les personnes
   qui ne sont pas décédées ; « N° d'acte » garde celles dont une source du décès porte un numéro
   d'acte, dans sa cote ou dans son titre (« Acte n°412 », comme l'ajoute la vérification INSEE :
   `hasDeathNumber`). Un seul filtre à la fois ; un second clic l'enlève. Le choix est gardé avec
-  les préférences d'affichage (`filter`) ; l'impression et l'éventail l'ignorent.
+  les préférences d'affichage (`filter`) ; l'éventail estompe aussi ses secteurs, l'impression l'ignore.
 - Quand la barre manque de place, « Lignée directe », « Photos », les filtres et « Éventail » passent en
   icônes (le nom reste en infobulle et pour les lecteurs d'écran), comme Imprimer ou Recentrer.
 - « Éventail » (`tree/fan.js`) remplace l'arbre par la roue d'ascendance de la personne
