@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.1.0](https://github.com/PallierJean/lignee/compare/v2.0.0...v2.1.0) (2026-11-11)
+
+### Features
+
+* Show what a GitHub save would change before replacing a backup ([23d2517](https://github.com/PallierJean/lignee/commit/23d25176c735aa9037a439896ea7466fe73614bc))
+
+### Bug Fixes
+
+* Don't send every photo again when linking the open tree to a repository ([1f2176f](https://github.com/PallierJean/lignee/commit/1f2176f4fe3b21d75e623f5630de566043af79f7))
+* Keep the whole French text in the release notes ([dc4b3dc](https://github.com/PallierJean/lignee/commit/dc4b3dc5d7c83bb1928d257ce9196fda1978cc59))
+
+---
+
+### Nouveautés
+
+* Avant de remplacer une sauvegarde sur GitHub, une fenêtre liste ce qui changerait dans le dépôt : fiches ajoutées, retirées ou modifiées, sources et photos. Vous pouvez fusionner au lieu de remplacer. ([23d2517](https://github.com/PallierJean/lignee/commit/23d25176c735aa9037a439896ea7466fe73614bc))
+
+### Corrections
+
+* Relier l'arbre ouvert à un dépôt ne renvoie plus toutes les photos. La sauvegarde suivante retire aussi du dépôt les copies inutiles laissées par ce bogue ; elles restent dans son historique. ([1f2176f](https://github.com/PallierJean/lignee/commit/1f2176f4fe3b21d75e623f5630de566043af79f7))
+* Les notes de version en français ne sont plus coupées après la première ligne. ([dc4b3dc](https://github.com/PallierJean/lignee/commit/dc4b3dc5d7c83bb1928d257ce9196fda1978cc59))
+
 ## [2.0.0](https://github.com/PallierJean/lignee/compare/v1.31.0...v2.0.0) (2026-11-11)
 
 ### ⚠ BREAKING CHANGES
