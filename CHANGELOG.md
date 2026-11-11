@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.31.0](https://github.com/PallierJean/lignee/compare/v1.30.0...v1.31.0) (2026-11-11)
+
+### Features
+
+* Refuse backups from a newer format version ([ab6f2e8](https://github.com/PallierJean/lignee/commit/ab6f2e814339e25e7f073b9f363155ba04c57e7e))
+
+---
+
+### Nouveautés
+
+* Lignée refuse maintenant les arbres enregistrés par une version ([ab6f2e8](https://github.com/PallierJean/lignee/commit/ab6f2e814339e25e7f073b9f363155ba04c57e7e))
+
 ## [1.30.0](https://github.com/PallierJean/lignee/compare/v1.29.0...v1.30.0) (2026-11-11)
 
 ### Features
