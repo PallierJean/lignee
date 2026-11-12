@@ -8,6 +8,12 @@ réalise.
 - **Ajouter une personne**, seule ou avec son lien : « ajoute Anne Lacoste, née le 3 mai 1872 à
   Hautefort, fille de Marguerite Maury », « Pierre Lacoste est le père de Jean Lacoste »,
   « ajoute le père de Jean Lacoste : Pierre Lacoste », « Odette a eu une fille, Anne, en 1960 ».
+- **Relier deux personnes déjà dans l'arbre** : « Marguerite Maury est la mère de Jean Lacoste »,
+  « Jean Lacoste a une sœur, Marie », « le père de Jean Lacoste est Pierre Lacoste ». Si le nom
+  complet dit (nom de naissance compris) est celui d'une fiche, Lignée ouvre le formulaire de la
+  fiche qui porte le lien, au lieu d'en créer une nouvelle ; « Non, c'est une autre personne » crée
+  la nouvelle fiche. Un frère ou une sœur se relie par les parents : si ni l'un ni l'autre n'a de
+  parent connu, la bulle demande d'en choisir un.
 - **Modifier une personne** : « Génie Desgorces est morte vers 1890 à la Borie », « Jean Maury
   était cultivateur ».
 

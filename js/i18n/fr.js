@@ -613,6 +613,13 @@ export const FR = {
   'voice.added': (n, f) => `Nouvelle personne : <b>${n}</b>${f ? ' — ' + f : ''}.`,
   // "fille de Odette" → "fille d’Odette"
   'voice.addedRel': (n, rel, of, f) => `Nouvelle personne : <b>${n}</b>, ${/ de$/.test(rel) && /^[aeiouyàâéèêîïôû]/i.test(of) ? rel.slice(0, -2) + 'd’' : rel + ' '}${of}${f ? ' — ' + f : ''}.`,
+  'voice.linked': (n, rel, of) => `<b>${n}</b>, déjà dans l’arbre, devient ${/ de$/.test(rel) && /^[aeiouyàâéèêîïôû]/i.test(of) ? rel.slice(0, -2) + 'd’' : rel + ' '}${of}.`,
+  'voice.already': (n, rel, of) => `<b>${n}</b> est déjà ${/ de$/.test(rel) && /^[aeiouyàâéèêîïôû]/i.test(of) ? rel.slice(0, -2) + 'd’' : rel + ' '}${of}.`,
+  'voice.whichRelative': (w) => `Plusieurs personnes de l’arbre s’appellent « ${w} ». Laquelle, ou une nouvelle personne ?`,
+  'voice.newOne': 'Une nouvelle personne',
+  'voice.other': 'Non, c’est une autre personne',
+  'voice.noParents': (of) => `Aucun parent ${/^[aeiouyàâéèêîïôû]/i.test(of) ? 'd’' : 'de '}${of} n’est connu : un frère ou une sœur se relie par un parent commun. Choisis-en un dans le formulaire, ou ajoute d’abord un parent.`,
+  'voice.factsLeft': (n) => `Le reste de ce que tu as dit sur ${n} est à saisir sur sa fiche.`,
   'voice.edited': (n, f) => `Modification de <b>${n}</b>${f ? ' : ' + f : ''}.`,
   'voice.check': 'Le formulaire est rempli avec ce que tu as dit : vérifie-le, puis Enregistrer.',
   'voice.born': (sex, s) => `${sex === 'F' ? 'née' : 'né'} ${s}`,

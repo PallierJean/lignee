@@ -77,6 +77,18 @@ describe('voix : phrases connues', () => {
     assert.equal(parseCommand('Jean Maury était cultivateur à Hautefort').action, 'unknown');
   });
 
+  test('frère, sœur, père, mère : « est », « comme », « a pour », « a un frère »', () => {
+    const rel = (x) => { const c = parseCommand(x); return [c.who, c.relation, c.person.given, c.person.surname, c.person.sex].join('|'); };
+    assert.equal(rel('Le père de Jean Lacoste est Pierre Lacoste.'), 'Jean Lacoste|father|Pierre|Lacoste|M');
+    assert.equal(rel('La sœur de Jean Lacoste s’appelle Marie.'), 'Jean Lacoste|sibling|Marie||F');
+    assert.equal(rel('Ajoute Pierre Lacoste comme père de Jean Lacoste'), 'Jean Lacoste|father|Pierre|Lacoste|M');
+    assert.equal(rel('Jean Lacoste a pour mère Marguerite Maury'), 'Jean Lacoste|mother|Marguerite|Maury|F');
+    assert.equal(rel('Jean Lacoste a un frère, Paul.'), 'Jean Lacoste|sibling|Paul||M');
+    assert.equal(rel('Jean Lacoste a une soeur qui s’appelle Marie'), 'Jean Lacoste|sibling|Marie||F');
+    assert.equal(parseCommand('La mère de Jean est cultivatrice').action, 'unknown', 'pas un nom');
+    assert.equal(parseCommand('Le père de Jean Lacoste est mort en 1900').action, 'unknown');
+  });
+
   test('lieux : petits mots en minuscules', () => {
     assert.equal(parseCommand('Ajoute Anne Lacoste, née en 1872 à Hautefort en Dordogne').person.birthPlace, 'Hautefort en Dordogne');
     assert.equal(parseCommand('Ajoute Anne Lacoste, née en 1872 à saint-pierre-de-chignac').person.birthPlace, 'Saint-Pierre-de-Chignac');
@@ -238,5 +250,71 @@ describe('voix : dans la page', () => {
     voice.closeVoice();
     assert.equal(document.getElementById('voiceBubble').hidden, true);
     assert.equal(voice.voiceOpen(), false);
+  });
+  test('un parent, un frère, un conjoint déjà dans l’arbre : la fiche est reliée, pas recréée', async () => {
+    const { S } = await import('../js/state.js');
+    const voice = await import('../js/ui/voice.js');
+    const { resetVoiceEngines } = await import('../js/services/voice.js');
+    const A = await import('../js/actions.js');
+    resetApp();
+    resetVoiceEngines();
+    globalThis.fetch = async (u) => (String(u) === 'api/voice'
+      ? new Response('{"listen":true,"understand":false}', { headers: { 'Content-Type': 'application/json' } }) : new Response('{}'));
+    loadTree([
+      person('j', { given: 'Jean', surname: 'Lacoste', sex: 'M', fatherId: 'p' }),
+      person('p', { given: 'Pierre', surname: 'Lacoste', sex: 'M' }),
+      person('m', { given: 'Marguerite', surname: 'Lacoste', maidenName: 'Maury', sex: 'F' }),
+      person('s', { given: 'Marie', surname: 'Lacoste', sex: 'F' }),
+      person('o', { given: 'Odette', surname: 'Morel', sex: 'F' }),
+      person('a1', { given: 'Anne', surname: 'Morel', sex: 'F', birthDate: '1920' }),
+      person('a2', { given: 'Anne', surname: 'Morel', sex: 'F', birthDate: '1960' }),
+      person('n', { given: 'Noëlle', surname: 'Roux', sex: 'F' }),
+    ]);
+    await voice.initVoice(A);
+    const bubble = () => document.getElementById('voiceBubble').innerHTML;
+    const people = S.people.size;
+
+    await voice.understand('La mère de Jean Lacoste est Marguerite Maury');
+    assert.equal(S.edit.id, 'j', 'la fiche de Jean, qui porte le lien');
+    assert.equal(S.edit.draft.motherId, 'm', 'retrouvée par son nom de naissance');
+    assert.match(bubble(), /déjà dans l’arbre, devient mère de Jean/);
+    assert.match(bubble(), /data-act="voice-new"/);
+    voice.newVoice();
+    assert.equal(S.edit.id, null, 'une autre personne : une nouvelle fiche');
+    assert.equal(S.edit.rel, 'mother');
+    A.cancelEdit();
+
+    await voice.understand('Pierre Lacoste est le père de Jean Lacoste');
+    assert.equal(S.edit, null);
+    assert.match(bubble(), /est déjà père de Jean/);
+
+    await voice.understand('Marie Lacoste, née en 1872, est la sœur de Jean Lacoste');
+    assert.equal(S.edit.id, 's', 'la sœur reçoit les parents de Jean');
+    assert.equal(S.edit.draft.fatherId, 'p');
+    assert.equal(S.edit.draft.birthDate, '1872', 'ce qui est dit d’elle va sur sa fiche');
+    A.cancelEdit();
+
+    await voice.understand('Odette Morel a une sœur, Noëlle Roux');
+    assert.match(bubble(), /Aucun parent d’Odette MOREL n’est connu/, 'ni l’un ni l’autre n’a de parent');
+
+    assert.equal(S.edit, null);
+
+    await voice.understand('Ajoute la femme de Jean Lacoste : Noëlle Roux');
+    assert.equal(S.edit.id, 'j');
+    assert.equal(S.edit.unions.at(-1).other, 'n', 'l’union est proposée');
+    A.cancelEdit();
+
+    await voice.understand('Odette Morel a une fille, Anne Morel');
+    assert.match(bubble(), /Plusieurs personnes de l’arbre s’appellent « Anne Morel »/);
+    assert.match(bubble(), /data-act="voice-pick" data-id="a2"/);
+    voice.pickVoice('a2');
+    assert.equal(S.edit.id, 'a2');
+    assert.equal(S.edit.draft.motherId, 'o');
+    A.cancelEdit();
+    await voice.understand('Odette Morel a une fille, Anne Morel');
+    voice.newVoice();
+    assert.equal(S.edit.rel, 'child', 'une nouvelle personne');
+    assert.equal(S.people.size, people, 'rien n’est enregistré avant Enregistrer');
+    A.cancelEdit();
   });
 });

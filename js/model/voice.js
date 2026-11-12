@@ -168,8 +168,9 @@ const MASCULINE = new RegExp(String.raw`^(?:n[ée]|mort|d[ée]c[ée]d[ée])${R}`
 const JOB = new RegExp(String.raw`(?:${L}(?:il|elle|he|she)\s+)?${L}(?:[ée]tait|est|was)\s+(?!n[ée]e?${R}|mort|d[ée]c[ée]d)([\p{L}-]+(?: [\p{L}-]+)?)\s*$`, 'iu');
 // Words that can't be part of a name: the sentence says more than a name
 const NOT_NAME = new RegExp(String.raw`${L}(?:et|and|qui|who|est|était|is|was|a|eu|has|had|s['’]appel\p{L}*|appel[ée]e?|named|called|n[ée]e?|mort|morte)${R}|\d`, 'iu');
-/** Could `s` be the name of a person? One to five words, nothing else. */
-const isName = (s) => { const n = str(s).split(' ').filter(Boolean).length; return n >= 1 && n <= 5 && !NOT_NAME.test(s); };
+const ARTICLE = /^(?:le|la|les|l['’]|un|une|the|a|an)(?:\s|$)/i;
+/** Could `s` be the name of a person? One to five words, not starting with an article, nothing else. */
+const isName = (s) => { const n = str(s).split(' ').filter(Boolean).length; return n >= 1 && n <= 5 && !NOT_NAME.test(s) && !ARTICLE.test(str(s)); };
 
 /** Birth and death said in `text`: fields of a person, and `text` without them (`raw`: commas kept). */
 function facts(text) {
@@ -210,11 +211,14 @@ export function parseCommand(sentence) {
   // ("ajoute à …": Whisper sometimes hears a stray "à")
   const add = /^(?:ajoute|ajouter|add)\s+(?:une personne|quelqu['’]un|a person|someone)?\s*:?\s*(?:(?:à|a)\s+)?(.+)$/i.exec(s);
   const body = add ? add[1] : s;
-  // "le père de Jean Lacoste s'appelle Pierre Lacoste"
-  m = new RegExp(String.raw`^(?:le |la |l['’]|the )?(${KIN_RE})\s+(?:de |d['’]|of )(.+?)\s+(?:s['’]appel\p{L}*|is called|was called|is named|was named)\s+(.+)$`, 'iu').exec(body);
-  if (m) return relative(m[3], kinOf(m[1]), m[2]);
+  // "le père de Jean Lacoste s'appelle Pierre Lacoste", "… est Pierre Lacoste" (a name: a capital, as Whisper writes it)
+  m = new RegExp(String.raw`^(?:le |la |l['’]|the )?(${KIN_RE})\s+(?:de |d['’]|of )(.+?)\s+(?:(?:s['’]appel\p{L}*|is called|was called|is named|was named)\s+(.+)|(?:est|était|is|was)\s+(.+))$`, 'iu').exec(body);
+  if (m && (m[3] || /^\p{Lu}/u.test(m[4]))) return relative(m[3] || m[4], kinOf(m[1]), m[2]);
+  // "Jean Lacoste a pour père Pierre Lacoste", "Jean Lacoste a un frère, Paul", "… a une sœur qui s'appelle Marie"
+  m = new RegExp(String.raw`^(.+?)\s+(?:a|avait|has|had)\s+(?:pour |comme |un |une |a |an )(${KIN_RE})\s*[,:]?\s+(?:(?:qui\s+)?s['’]appel\p{L}*\s+|named |called )?(.+)$`, 'iu').exec(body);
+  if (m) return relative(m[3], kinOf(m[2]), m[1]);
   // "Anne Lacoste, fille de Marguerite Maury", "Pierre Lacoste est le père de Jean Lacoste"
-  m = new RegExp(String.raw`^(.+?)\s*,?\s+(?:(?:est|était|is|was)\s+)?(?:le |la |un |une |l['’]|the |a )?(${KIN_RE})\s+(?:de |d['’]|of )(.+)$`, 'iu').exec(body);
+  m = new RegExp(String.raw`^(.+?)\s*,?\s+(?:(?:est|était|is|was)\s+)?(?:(?:comme|as)\s+)?(?:le |la |un |une |l['’]|the |a )?(${KIN_RE})\s+(?:de |d['’]|of )(.+)$`, 'iu').exec(body);
   if (m) {
     // The relative's name ends where the facts about the new person start
     const tail = facts(m[3]);
