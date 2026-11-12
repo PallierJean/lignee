@@ -14,6 +14,11 @@ réalise.
   fiche qui porte le lien, au lieu d'en créer une nouvelle ; « Non, c'est une autre personne » crée
   la nouvelle fiche. Un frère ou une sœur se relie par les parents : si ni l'un ni l'autre n'a de
   parent connu, la bulle demande d'en choisir un.
+- **Ajouter une union** : « Jean Tellier a épousé Marie Dupont le 3 juin 1990 à Confolens », « Jean et
+  Marie se sont mariés en 1990 », « Jean est pacsé avec Paul Martin », « Jean vit en concubinage avec
+  Sophie Martin », « Sophie Martin est la concubine (la compagne) de Jean Tellier ». Le type d'union
+  (mariage, pacs, concubinage), sa date et son lieu remplissent l'union du formulaire ; une union
+  déjà connue est complétée.
 - **Modifier une personne** : « Génie Desgorces est morte vers 1890 à la Borie », « Jean Maury
   était cultivateur ».
 

@@ -184,6 +184,7 @@ export async function understand(text, { model = !refused, spoken = false } = {}
   }
   if (st.phase !== 'thinking' || st.text !== text) return;
   const command = { ...res.command, person: await placesHeard(res.command.person) };
+  if (command.union && command.union.place) command.union = { ...command.union, place: await placeHeard(command.union.place) };
   if (st.phase !== 'thinking' || st.text !== text) return;
   carryOut(command, text);
   replies = 0;
@@ -258,7 +259,9 @@ function recap() {
     [t('voice.r.name'), [d.given, d.surname].filter(Boolean).join(' ')],
     [t('voice.r.father'), name(d.fatherId)],
     [t('voice.r.mother'), name(d.motherId)],
-    [t('voice.r.spouse'), e.unions.filter((u) => !u.uid && !u.removed).map((u) => name(u.other)).filter(Boolean).join(', ')],
+    // The unions added, or completed by what was said
+    [t('voice.r.spouse'), e.unions.filter((u) => !u.removed && (!u.uid || u.type || u.date || u.place) && name(u.other))
+      .map((u) => [name(u.other), u.type ? t('ut.' + u.type).toLowerCase() : '', place(u.date, u.place)].filter(Boolean).join(', ')).join(' ; ')],
     [t('voice.r.born', d.sex), place(d.birthDate, d.birthPlace)],
     [t('voice.r.died', d.sex), place(d.deathDate, d.deathPlace)],
     [t('voice.r.occupation'), d.occupation],
@@ -379,6 +382,15 @@ async function placesHeard(person) {
   const out = { ...person };
   for (const f of ['birthPlace', 'deathPlace']) if (out[f]) out[f] = await placeHeard(out[f]);
   return out;
+}
+
+/** Something was said of the union: its kind, date or place. */
+const hasUnion = (c) => !!(c.union && (c.union.type || c.union.date || c.union.place));
+
+/** A union of the form (draftUnion), with what was said of it. */
+function fillUnion(u, said) {
+  if (!u || !said) return;
+  for (const f of ['type', 'date', 'place']) if (said[f]) u[f] = said[f];
 }
 
 /** The tree's surnames (birth names included), the most frequent first: how the names heard are written. */
@@ -567,11 +579,20 @@ function link(c, of, rid, text) {
       for (const f of ['fatherId', 'motherId']) if (from[f] && !d[f]) d[f] = from[f];
     };
   } else if (c.relation === 'spouse') {
-    if (unionBetween(of, rid)) return already();
+    const told = hasUnion(c);
+    // Already united: what is said of the union (married in 1990…) completes it; nothing new, said so
+    if (unionBetween(of, rid) && !told) return already();
     act.editPerson(of);
     if (!S.edit) return done(t('voice.failed', ''));
-    act.addDraftUnion(rid);
-    return done(t('voice.linked', ...label(r, r.sex)) + (said ? ' ' + t('voice.factsLeft', esc(longName(r))) : ''), { check: true, linked: true });
+    let u = S.edit.unions.find((x) => x.other === rid && !x.removed);
+    if (!u) {
+      act.addDraftUnion(rid);
+      u = S.edit.unions.at(-1);
+    }
+    fillUnion(u, c.union);
+    renderSide(true);
+    const note = unionBetween(of, rid) ? t('voice.unionCompleted', esc(longName(r)), esc(longName(o))) : t('voice.linked', ...label(r, r.sex));
+    return done(note + (said ? ' ' + t('voice.factsLeft', esc(longName(r))) : ''), { check: true, linked: true });
   } else {
     return done(t('voice.failed', ''));
   }
@@ -608,6 +629,8 @@ function apply(c, id, text, fresh = false) {
   else if (id) act.startAdd(c.relation, id);
   else act.startNew();
   if (!S.edit) return set({ phase: 'done', text, note: t('voice.failed', '') });
+  // A new spouse: the union said (married in 1990 at…), on the union the form opens with
+  if (c.relation === 'spouse' && S.edit.unions[0]) fillUnion(S.edit.unions[0], c.union);
   // The form, filled in with what was said
   for (const f of FIELDS) {
     if (c.person[f] && (f !== 'sex' || c.action === 'add')) S.edit.draft[f] = c.person[f];
