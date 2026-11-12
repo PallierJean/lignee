@@ -27,7 +27,7 @@ import { closeCrop, cropZoomInput, cropWheel, cropDrag, cropOpen } from './ui/cr
 import { pinch } from './ui/pinch.js';
 import { defineDialogs, dialogOpen, closeTopDialog, closeOnBackdrop } from './ui/dialogs.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
-import { toggleVoice, startVoice, closeVoice, pickVoice, answerConsent, understand, voiceOpen } from './ui/voice.js';
+import { toggleVoice, startVoice, closeVoice, pickVoice, newVoice, answerConsent, understand, voiceOpen } from './ui/voice.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo, chooseRepoSave, closeRepoDiff } from './ui/repo-link.js';
 import { openPrint, closePrint, updatePrintInfo, printTree, printFamilyBook } from './ui/print.js';
@@ -281,6 +281,7 @@ const CLICK_ACTIONS = {
     startVoice();
   },
   'voice-pick': (el) => pickVoice(el.dataset.id),
+  'voice-new': () => newVoice(),
   'voice-consent': (el) => answerConsent(el.dataset.what, el.dataset.yes === '1'),
   'voice-understand': () => understand($('#voiceText').value),
   'spouse-pick': (el) => A.addDraftUnion(el.dataset.id),
