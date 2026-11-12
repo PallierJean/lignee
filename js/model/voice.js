@@ -170,7 +170,8 @@ const KIN = [
   ['fr[eè]re|brother', 'sibling', 'M'], ['s(?:œ|oe)ur|sister', 'sibling', 'F'],
 ];
 const KIN_RE = KIN.map(([w]) => w).join('|');
-const ADD = String.raw`(?:ajoute|ajouter|rajoute|rajouter|cr[ée]e|cr[ée]er|add|create)`;
+// "Ajoute" as Whisper may hear it: "Ajout", "Ajoutez", "A joute", "Azout"
+const ADD = String.raw`(?:r?ajout(?:e|er|ez|es)?|a joute|azoute?|cr[ée]e|cr[ée]er|add|create)`;
 const kinOf = (word) => {
   const k = KIN.find(([w]) => new RegExp(`^(?:${w})$`, 'i').test(word));
   return k ? { relation: k[1], sex: k[2], union: k[3] || '' } : null;

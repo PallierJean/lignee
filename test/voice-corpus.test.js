@@ -21,6 +21,10 @@ const CORPUS = [
   ['Ajoute, Marie Dupont, née le 12 mars 1920.', { action: 'add', person: { given: 'Marie', surname: 'Dupont', sex: 'F', birthDate: '12 mars 1920' } }],
   ['Cherche, Tellier.', { action: 'search', who: 'Tellier' }],
   ['Ouvre, la fiche de Marc Tellier.', { action: 'open', who: 'Marc Tellier' }],
+  ['Azout, Marie Dupont, née en 1920.', { action: 'add', person: { given: 'Marie', surname: 'Dupont', birthDate: '1920' } }],
+  ['Ajoutez Marie Dupont.', { action: 'add', person: { given: 'Marie', surname: 'Dupont' } }],
+  ['Ajout Marie Dupont née en 1920.', { action: 'add', person: { given: 'Marie', surname: 'Dupont', birthDate: '1920' } }],
+  ['A joute un fils à Marc Tellier : Jean.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Jean' } }],
   ['Ajoute Marie de la Borie.', { action: 'add', person: { given: 'Marie', surname: 'De la Borie' } }],
 
   // Parents and children
