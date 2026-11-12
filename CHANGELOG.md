@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.14](https://github.com/PallierJean/lignee/compare/v4.1.13...v4.1.14) (2026-11-12)
+
+### Bug Fixes
+
+* Understand a birth or death place said without a date, or before it ([6039a6c](https://github.com/PallierJean/lignee/commit/6039a6ca6c1d4aa83395d6a9bbba929cd05a9838))
+
+---
+
+### Corrections
+
+* « né à Confolens » sans date, ou « mort à Limoges en 2020 », sont compris ([6039a6c](https://github.com/PallierJean/lignee/commit/6039a6ca6c1d4aa83395d6a9bbba929cd05a9838))
+
 ## [4.1.13](https://github.com/PallierJean/lignee/compare/v4.1.12...v4.1.13) (2026-11-12)
 
 ### Bug Fixes
