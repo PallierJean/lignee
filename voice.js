@@ -12,7 +12,9 @@
  * - LIGNEE_WHISPER: Python of faster-whisper's environment (default ~/lignee-voice/bin/python);
  * - LIGNEE_WHISPER_MODEL: Whisper model (default: small);
  * - LIGNEE_OLLAMA: Ollama's address (default http://127.0.0.1:11434);
- * - LIGNEE_LLM_MODEL: Ollama model (default: qwen2.5:7b).
+ * - LIGNEE_LLM_MODEL: Ollama model (default: qwen2.5:7b);
+ * - LIGNEE_LLM_KEEP: how long Ollama keeps the model loaded after the last sentence (default 4h):
+ *   loading it again takes about a minute on a processor, and it only takes ~5 GB of memory.
  */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
@@ -26,6 +28,7 @@ const PYTHON = process.env.LIGNEE_WHISPER || path.join(HOME, 'lignee-voice', 'bi
 const WHISPER_MODEL = process.env.LIGNEE_WHISPER_MODEL || 'small';
 const OLLAMA = (process.env.LIGNEE_OLLAMA || 'http://127.0.0.1:11434').replace(/\/$/, '');
 const LLM_MODEL = process.env.LIGNEE_LLM_MODEL || 'qwen2.5:7b';
+const LLM_KEEP = process.env.LIGNEE_LLM_KEEP || '4h';
 const WORKER = path.join(path.dirname(fileURLToPath(import.meta.url)), 'scripts', 'whisper-worker.py');
 const IDLE = 15 * 60 * 1000;     // the model leaves memory after a quarter of an hour without use
 const LOADING = 5 * 60 * 1000;   // first use: the model may be downloaded (~500 MB)
@@ -150,7 +153,7 @@ export async function understand(text) {
       model: LLM_MODEL,
       stream: false,
       format: SCHEMA,
-      keep_alive: '30m',
+      keep_alive: LLM_KEEP,
       options: { temperature: 0 },
       messages: [{ role: 'system', content: PROMPT }, { role: 'user', content: String(text).slice(0, 1000) }],
     }),
@@ -169,7 +172,7 @@ export async function warmUp() {
       method: 'POST',
       signal: AbortSignal.timeout(LOADING),
       body: JSON.stringify({
-        model: LLM_MODEL, stream: false, keep_alive: '30m', options: { temperature: 0, num_predict: 1 },
+        model: LLM_MODEL, stream: false, keep_alive: LLM_KEEP, options: { temperature: 0, num_predict: 1 },
         messages: [{ role: 'system', content: PROMPT }, { role: 'user', content: '.' }],
       }),
     });
