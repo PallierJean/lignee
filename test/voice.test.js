@@ -208,6 +208,36 @@ describe('voix : la voix de Lignée', () => {
   });
 });
 
+describe('voix : modèles chargés d’avance', () => {
+  const nativeFetch = globalThis.fetch;
+  after(() => { globalThis.fetch = nativeFetch; });
+
+  test('au chargement de la page, si le micro a servi ces sept derniers jours ; sinon à la première phrase', async () => {
+    const voice = await import('../js/ui/voice.js');
+    const { resetVoiceEngines } = await import('../js/services/voice.js');
+    const A = await import('../js/actions.js');
+    const warmed = [];
+    globalThis.fetch = async (u) => {
+      if (String(u) === 'api/voice/warm') warmed.push(1);
+      return String(u) === 'api/voice' ? new Response('{"listen":true,"understand":true}', { headers: { 'Content-Type': 'application/json' } }) : new Response('{}');
+    };
+    const start = async (used) => {
+      resetApp();
+      resetVoiceEngines();
+      localStorage.setItem('lignee.voice', JSON.stringify(used ? { used } : {}));
+      await voice.initVoice(A);
+      await new Promise((r) => setTimeout(r, 0));
+    };
+    await start(0);
+    assert.equal(warmed.length, 0, 'jamais servi');
+    await start(Date.now() - 8 * 24 * 3600 * 1000);
+    assert.equal(warmed.length, 0, 'il y a plus d’une semaine');
+    await start(Date.now() - 3600 * 1000);
+    assert.equal(warmed.length, 1, 'servi il y a une heure');
+    localStorage.removeItem('lignee.voice');
+  });
+});
+
 describe('voix : entendre quelqu’un parler', () => {
   test('un « oui » faible dans une pièce calme ; un clic n’est pas une voix ; une pièce bruyante comme avant', async () => {
     const { voiceGate } = await import('../js/services/voice.js');
