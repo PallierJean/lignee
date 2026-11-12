@@ -51,9 +51,35 @@ export const voiceOpen = () => st.phase !== 'idle';
 function set(next) {
   // A form filled in by the voice: remembered, for the answer and the buttons of the bubble
   if (next.check && S.edit && !next.token) next.token = S.edit.token;
+  if (next.phase === 'thinking' && !next.since) next.since = Date.now();
   st = next;
   renderVoice();
+  tick();
 }
+
+let ticker = null;
+
+/** While the language model thinks: the seconds counted in the bubble, so that a long wait isn't taken for a failure. */
+function tick() {
+  if (st.phase !== 'thinking') {
+    clearInterval(ticker);
+    ticker = null;
+    return;
+  }
+  if (ticker) return;
+  ticker = setInterval(() => {
+    if (st.phase !== 'thinking') return tick();
+    const el = document.getElementById('voiceElapsed');
+    if (el) el.textContent = elapsed();
+  }, 1000);
+  if (ticker && ticker.unref) ticker.unref(); // in the tests (Node), the counter mustn't keep them running
+}
+
+/** "12 s", and past 25 s, why it takes so long. */
+const elapsed = () => {
+  const n = Math.round((Date.now() - (st.since || Date.now())) / 1000);
+  return n < 1 ? '' : t('voice.elapsed', n) + (n > 25 ? ' ' + t('voice.firstSlow') : '');
+};
 
 /** The form that the voice filled in is still the one open. */
 const formOpen = () => !!(st.check && S.edit && S.edit.token === st.token);
@@ -728,7 +754,8 @@ export function renderVoice() {
   } else if (st.phase === 'hearing') {
     body = `<div class="vb-row"><b>${t('voice.hearing')}</b>${close}</div>${dl}`;
   } else if (st.phase === 'thinking') {
-    body = `${heard}<div class="vb-row"><b>${t('voice.thinking')}</b>${close}</div>${st.slow ? `<p class="hint">${t('voice.slow')}</p>` : ''}${dl}`;
+    body = `${heard}<div class="vb-row"><b>${t('voice.thinking')}</b>${close}</div><p class="hint" id="voiceElapsed" aria-live="off">${elapsed()}</p>`
+      + `${st.slow ? `<p class="hint">${t('voice.slow')}</p>` : ''}${dl}`;
   } else if (st.phase === 'consent') {
     const yes = st.what === 'asr' ? t('voice.consentAsrYes') : t('voice.consentLlmYes');
     const no = st.what === 'asr' ? t('cancel') : t('voice.consentLlmNo');
