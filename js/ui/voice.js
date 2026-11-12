@@ -312,6 +312,9 @@ export async function reply(text, keep = { ...st, phase: 'done' }, spoken = fals
   if (r.reply === 'no') return cancelVoice(text, spoken);
   const said = await placesHeard(parseDetails(r.rest, { surname: S.edit.draft.surname }));
   if (!formOpen()) return;
+  // "Oui" and words that aren't a detail ("Oui, à l'île"): Whisper heard a noise after the "oui".
+  // A "non" followed by such words is asked again: closing the form would lose what was said
+  if (!Object.keys(said).length && r.lead === 'yes') return saveVoice(text, spoken);
   if (!Object.keys(said).length) {
     set({ ...keep, answer: text, extra: t('voice.replyUnknown') });
     return spoken ? askSave() : undefined;
