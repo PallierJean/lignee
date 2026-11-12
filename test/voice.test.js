@@ -49,7 +49,7 @@ describe('voix : phrases connues', () => {
       action: 'edit', who: 'Génie Desgorces', relation: '', person: { deathDate: 'vers 1890', deathPlace: 'La Borie' },
     });
     assert.deepEqual(said(parseCommand('Jean Maury était cultivateur')).person, { occupation: 'cultivateur' });
-    assert.equal(parseCommand('Marguerite a eu un fils, Pierre, en 1875').action, 'unknown');
+    assert.equal(parseCommand('Marguerite a eu un fils, Pierre, en 1875').person.birthDate, '1875', 'l’année : la naissance');
     assert.equal(parseCommand('ajoute Paul Bertrand qui est parti vivre à Paris en 1990').action, 'unknown', 'plus qu’un nom');
     assert.equal(parseCommand('quelle heure est-il').action, 'unknown');
   });
@@ -329,8 +329,8 @@ describe('voix : dans la page', () => {
     assert.match(bubble(), /Termine d’abord la fiche en cours/, 'un ajout ouvert');
     A.cancelEdit();
 
-    await voice.understand('Odette a eu une fille, Anne Morel, en 1960');
-    assert.deepEqual(asked, ['Odette a eu une fille, Anne Morel, en 1960'], 'phrase libre : le modèle du serveur');
+    await voice.understand('Odette a donné naissance à Anne Morel en 1960');
+    assert.deepEqual(asked, ['Odette a donné naissance à Anne Morel en 1960'], 'phrase libre : le modèle du serveur');
     assert.equal(S.edit.draft.motherId, 'o');
     assert.match(bubble(), /fille d’Odette/);
     A.cancelEdit();

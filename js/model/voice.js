@@ -294,8 +294,14 @@ export function parseCommand(sentence) {
   m = new RegExp(String.raw`^(?:le |la |l['’]|the )?(${KIN_RE})\s+(?:de |d['’]|of )(.+?)\s+(?:(?:s['’]appel\p{L}*|is called|was called|is named|was named)\s+(.+)|(?:est|était|is|was)\s+(.+))$`, 'iu').exec(body);
   if (m && (m[3] || /^\p{Lu}/u.test(m[4]))) return relative(m[3] || m[4], kinOf(m[1]), m[2]);
   // "Jean Lacoste a pour père Pierre Lacoste", "Jean Lacoste a un frère, Paul", "… a une sœur qui s'appelle Marie"
-  m = new RegExp(String.raw`^(.+?)\s+(?:a|avait|has|had)\s+(?:pour |comme |un |une |a |an )(${KIN_RE})\s*[,:]?\s+(?:(?:qui\s+)?s['’]appel\p{L}*\s+|named |called )?(.+)$`, 'iu').exec(body);
-  if (m) return relative(m[3], kinOf(m[2]), m[1]);
+  m = new RegExp(String.raw`^(.+?)\s+(?:a|avait|has|had)\s+(eu\s+|had\s+)?(?:pour |comme |un |une |a |an )(${KIN_RE})\s*[,:]?\s+(?:(?:qui\s+)?s['’]appel\p{L}*\s+|named |called )?(.+)$`, 'iu').exec(body);
+  if (m) {
+    // "a eu un fils, Jean, en 1995": the year of the child's birth
+    let name = m[4];
+    const year = m[2] && kinOf(m[3]).relation === 'child' && new RegExp(String.raw`[\s,]+${DATE}\s*[.,]?$`, 'iu').exec(name);
+    if (year && !facts(name).person.birthDate) name = name.slice(0, year.index) + ', né ' + year[0].trim().replace(/^,\s*/, '');
+    return relative(name, kinOf(m[3]), m[1]);
+  }
   // "Anne Lacoste, fille de Marguerite Maury", "Pierre Lacoste est le père de Jean Lacoste" ("et": "est" misheard)
   m = new RegExp(String.raw`^(.+?)\s*,?\s+(?:(?:est|et|était|is|was)\s+)?(?:(?:comme|as)\s+)?(?:le |la |un |une |l['’]|the |a )?(${KIN_RE})\s+(?:de |d['’]|of )(.+)$`, 'iu').exec(body);
   if (m) {
