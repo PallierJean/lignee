@@ -132,6 +132,9 @@ Relancer ensuite `npm start` : le micro apparaît. Réglages :
 - `LIGNEE_LLM_MODEL` : modèle d'Ollama (par défaut `qwen2.5:7b`). Des essais sur un portable sans
   carte graphique : Qwen2.5 7B comprend juste en 10 à 20 secondes ; Qwen2.5 3B répond en 6 à 10
   secondes mais confond les liens de parenté.
+- `LIGNEE_LLM_KEEP` : durée pendant laquelle Ollama garde le modèle en mémoire après la dernière
+  phrase (par défaut `4h`). Le recharger prend environ une minute sans carte graphique ; il occupe
+  environ 5 Go de mémoire vive.
 
 Sans Whisper, le serveur ne propose pas le micro. Sans Ollama, seules les phrases connues sont
 comprises.
