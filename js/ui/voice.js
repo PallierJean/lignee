@@ -14,7 +14,7 @@ import { S, savePrefs } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { norm } from '../utils/helpers.js';
 import { t } from '../i18n.js';
-import { P, longName, lifeYears, given, surname, maiden, unionBetween } from '../model/people.js';
+import { P, longName, lifeYears, given, surname, maiden, unionBetween, partnersOf } from '../model/people.js';
 import { FIELDS, parseCommand, parseReply, parseDetails, parseChoice, isGoodbye, isNoise, fixName, soundKey } from '../model/voice.js';
 import { voiceEngines, warmVoice, record, listen, understandText, needsDownload, speak, hush, loadVoices, chime } from '../services/voice.js';
 import { parseSpokenPlace, formatPlace } from '../model/places.js';
@@ -527,14 +527,25 @@ export function answerChoice(text, keep = { ...st }, force = false) {
 /** People of the tree whose full name is the one said for the new relative of `of` (birth name included). */
 function relativesNamed(c, of) {
   const o = P(of);
-  // "ajoute un fils à Jean Lacoste : Paul": the family name goes without saying
-  const last = c.person.surname || (['child', 'sibling', 'father'].includes(c.relation) ? surname(o) : '');
-  const said = words(c.person.given + ' ' + last).join(' ');
-  if (!c.person.given || !last) return [];
+  if (!c.person.given) return [];
+  // The family names the relative may have: the one said; else ("ajoute une fille à Véronique : Sophie")
+  // those of the family, the person's and their spouses' (a child often has the father's)
+  const family = [o.surname, o.maidenName, ...partnersOf(of).map((x) => P(x.id) && P(x.id).surname)];
+  const lasts = (c.person.surname ? [c.person.surname] : c.relation === 'mother' || c.relation === 'spouse' ? [] : family)
+    .map(soundKey).filter(Boolean);
+  if (!lasts.length) return [];
+  const firsts = words(c.person.given).map(soundKey);
   const sex = c.relation === 'father' ? 'M' : c.relation === 'mother' ? 'F' : c.person.sex;
   const other = { M: 'F', F: 'M' }[sex];
-  return [...S.people].filter(([id, p]) => id !== of && (!other || p.sex !== other)
-    && [surname(p), maiden(p)].some((n) => n && words(given(p) + ' ' + n).join(' ') === said)).map(([id]) => id);
+  return [...S.people].filter(([id, p]) => {
+    if (id === of || (other && p.sex === other)) return false;
+    const names = words(p.given).map(soundKey);
+    // A record whose surname was glued to the first names ("Marc-Anatole-Octave-Tellier"): its last part
+    const theirs = [p.surname, p.maidenName].map(soundKey).filter(Boolean);
+    if (!theirs.length && names.length > 1) theirs.push(names.pop());
+    // The first names said, the first one first ("Marc" for "Marc-François"), and a family name in common
+    return firsts.length && names[0] === firsts[0] && firsts.every((f) => names.includes(f)) && theirs.some((n) => lasts.includes(n));
+  }).map(([id]) => id);
 }
 
 const relText = (relation, sex) => t('voice.rel.' + relation, sex);

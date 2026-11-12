@@ -462,6 +462,40 @@ describe('voix : dans la page', () => {
     A.cancelEdit();
   });
 
+  test('une fiche déjà là, retrouvée même sans le nom dit, ou abîmée : reliée, pas recréée', async () => {
+    const { S } = await import('../js/state.js');
+    const voice = await import('../js/ui/voice.js');
+    const { resetVoiceEngines } = await import('../js/services/voice.js');
+    const A = await import('../js/actions.js');
+    resetApp();
+    resetVoiceEngines();
+    globalThis.fetch = async (u) => (String(u) === 'api/voice'
+      ? new Response('{"listen":true,"understand":false}', { headers: { 'Content-Type': 'application/json' } }) : new Response('{}'));
+    loadTree([
+      person('v', { given: 'Véronique', surname: 'Dorvigné', sex: 'F' }),
+      person('m', { given: 'Marc', surname: 'Tellier', sex: 'M' }),
+      person('s', { given: 'Sophie', surname: 'Tellier', sex: 'F' }),
+      person('x', { given: 'Marc-Anatole-Octave-Tellier', surname: '', sex: 'M' }),
+      person('k', { given: 'Paul', surname: 'Tellier', sex: 'M' }),
+    ], [{ a: 'v', b: 'm' }]);
+    await voice.initVoice(A);
+    S.voiceReply = false;
+
+    await voice.understand('Ajoute une fille à Véronique Dorvigné : Sophie');
+    assert.equal(S.edit && S.edit.id, 's', 'la fille porte le nom de son père, conjoint de Véronique');
+    assert.equal(S.edit.draft.motherId, 'v');
+    A.cancelEdit();
+    await voice.understand('Sophie et la fille de Véronique Dorvigné');
+    assert.equal(S.edit && S.edit.id, 's', '« et » entendu pour « est »');
+    A.cancelEdit();
+    await voice.understand('Marc Anatole Octave Tellier est le père de Paul Tellier');
+    assert.equal(S.edit && S.edit.id, 'k', 'la fiche de Paul, qui porte le lien');
+    assert.equal(S.edit.draft.fatherId, 'x', 'la fiche au nom collé aux prénoms, retrouvée');
+    A.cancelEdit();
+    S.voiceReply = true;
+    voice.closeVoice();
+  });
+
   test('la conversation : récapitulatif lu, « oui » enregistre, « non » ferme, une précision complète, puis la commande suivante ; boutons ; réglable', async () => {
     const { S } = await import('../js/state.js');
     const voice = await import('../js/ui/voice.js');

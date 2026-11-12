@@ -283,8 +283,8 @@ export function parseCommand(sentence) {
   // "Jean Lacoste a pour père Pierre Lacoste", "Jean Lacoste a un frère, Paul", "… a une sœur qui s'appelle Marie"
   m = new RegExp(String.raw`^(.+?)\s+(?:a|avait|has|had)\s+(?:pour |comme |un |une |a |an )(${KIN_RE})\s*[,:]?\s+(?:(?:qui\s+)?s['’]appel\p{L}*\s+|named |called )?(.+)$`, 'iu').exec(body);
   if (m) return relative(m[3], kinOf(m[2]), m[1]);
-  // "Anne Lacoste, fille de Marguerite Maury", "Pierre Lacoste est le père de Jean Lacoste"
-  m = new RegExp(String.raw`^(.+?)\s*,?\s+(?:(?:est|était|is|was)\s+)?(?:(?:comme|as)\s+)?(?:le |la |un |une |l['’]|the |a )?(${KIN_RE})\s+(?:de |d['’]|of )(.+)$`, 'iu').exec(body);
+  // "Anne Lacoste, fille de Marguerite Maury", "Pierre Lacoste est le père de Jean Lacoste" ("et": "est" misheard)
+  m = new RegExp(String.raw`^(.+?)\s*,?\s+(?:(?:est|et|était|is|was)\s+)?(?:(?:comme|as)\s+)?(?:le |la |un |une |l['’]|the |a )?(${KIN_RE})\s+(?:de |d['’]|of )(.+)$`, 'iu').exec(body);
   if (m) {
     // The relative's name ends where the facts about the new person start
     const tail = facts(m[3]);
