@@ -2,7 +2,7 @@
 import { S } from '../state.js';
 import { yearOf, longDate } from '../utils/dates.js';
 import { t, getLang } from '../i18n.js';
-import { P, fullName, partnersOf, childrenOf, eventsOf, eventLabel, isDead, unionTypeLabel, UNION_ENDS } from './people.js';
+import { P, fullName, birthFullName, partnersOf, childrenOf, eventsOf, eventLabel, isDead, unionTypeLabel, UNION_ENDS } from './people.js';
 import { HISTORY } from './history-data.js';
 
 /** People on the timeline: the person alone, or with parents, spouses and children. */
@@ -24,7 +24,8 @@ export function timelineOf(id, family, now = new Date()) {
   for (const x of ids) {
     const p = P(x);
     const named = (label) => (family ? `${label} · ${fullName(p)}` : label);
-    add('birth', p.birthDate, named(t('birth')), x);
+    // At birth, a woman bears her maiden name, not her married one
+    add('birth', p.birthDate, family ? `${t('birth')} · ${birthFullName(p)}` : t('birth'), x);
     for (const e of eventsOf(p)) add('event', e.date, named([eventLabel(e), e.note].filter(Boolean).join(' : ')), x);
     add('death', p.deathDate, named(t('death')), x);
     for (const { id: other, uid } of partnersOf(x)) {
