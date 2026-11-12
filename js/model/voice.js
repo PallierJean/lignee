@@ -375,3 +375,51 @@ export function parseChoice(text) {
   const said = s.split(' ').filter((w) => !/^(?:le|la|les|l'|celui|celle|qui|est|né|née|de|du|d'|en|the|one|who|is|was|born|in|c'est)$/.test(w));
   return said.length ? { words: said.join(' ') } : null;
 }
+
+/* ---------- Names heard: as written in the tree ---------- */
+
+/**
+ * What a French name sounds like, to find it however Whisper spelled it: "Tellier", "Telier" and
+ * "Telié" give the same key; '' for a word too short to compare.
+ */
+export function soundKey(word) {
+  let w = String(word || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/[^a-z]/g, '');
+  w = w.replace(/ph/g, 'f').replace(/qu/g, 'k').replace(/c(?=[eiy])/g, 's').replace(/ck|c/g, 'k')
+    .replace(/gu(?=[eiy])/g, 'g').replace(/g(?=[eiy])/g, 'j').replace(/h/g, '').replace(/y/g, 'i')
+    .replace(/eau|au/g, 'o').replace(/[ae]i(?![aeiou])/g, 'e').replace(/(.)\1+/g, '$1').replace(/(?:er|ez|et|ai)$/, 'e').replace(/e$/, '').replace(/[sxtdz]$/, '');
+  return w.length >= 3 ? w : '';
+}
+
+/**
+ * The name heard, made right with the tree's surnames (`known`: their spellings, most frequent first):
+ * - a surname glued to the first names by Whisper ("Marc-Anatole-Octave-Tellier", "Jean Tellier" said
+ *   with no surname) is put back in its place;
+ * - a surname also repeated at the end of the first names ("Jean-Tellier" "Tellier") is said once;
+ * - a surname that sounds like one of the tree is written like it ("Telié" → "Tellier").
+ */
+export function fixName({ given = '', surname = '' }, known = []) {
+  const byKey = new Map();
+  for (const name of known) {
+    const k = soundKey(name);
+    if (k && !byKey.has(k)) byKey.set(k, name);
+  }
+  const spelled = (name) => (known.some((n) => n.toLowerCase() === name.toLowerCase()) ? name : byKey.get(soundKey(name)) || name);
+  let g = str(given);
+  let s = str(surname);
+  const parts = g.split(/[\s-]+/).filter(Boolean);
+  if (!s && parts.length > 1) {
+    // From the end: the first part that is a surname of the tree, and what follows it
+    for (let i = parts.length - 1; i > 0; i--) {
+      if (byKey.has(soundKey(parts[i]))) {
+        const at = g.search(new RegExp(`[\\s-]${parts[i]}(?:[\\s-]|$)`));
+        s = spelled(g.slice(at + 1).replace(/-/g, ' '));
+        g = g.slice(0, at);
+        break;
+      }
+    }
+  } else if (s && parts.length > 1 && soundKey(parts.at(-1)) && soundKey(parts.at(-1)) === soundKey(s)) {
+    g = g.slice(0, g.length - parts.at(-1).length).replace(/[\s-]+$/, '');
+  }
+  if (s && !s.includes(' ')) s = spelled(s);
+  return { given: g, surname: s };
+}

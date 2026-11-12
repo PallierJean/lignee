@@ -3,7 +3,7 @@ import { test, describe, before, after } from 'node:test';
 import { mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { parseCommand, cleanCommand, cleanDate, commandFromText, splitName, parseReply, parseDetails, parseChoice, isGoodbye, isNoise, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
+import { parseCommand, cleanCommand, cleanDate, commandFromText, splitName, parseReply, parseDetails, parseChoice, isGoodbye, isNoise, soundKey, fixName, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
 import { createServer } from '../server.js';
 import { loadTree, person, resetApp } from './helpers.js';
 
@@ -92,6 +92,19 @@ describe('voix : phrases connues', () => {
   test('lieux : petits mots en minuscules', () => {
     assert.equal(parseCommand('Ajoute Anne Lacoste, née en 1872 à Hautefort en Dordogne').person.birthPlace, 'Hautefort en Dordogne');
     assert.equal(parseCommand('Ajoute Anne Lacoste, née en 1872 à saint-pierre-de-chignac').person.birthPlace, 'Saint-Pierre-de-Chignac');
+  });
+
+  test('noms entendus : le nom de famille à sa place, écrit comme dans l’arbre', () => {
+    assert.equal(soundKey('Tellier'), soundKey('Telié'));
+    assert.equal(soundKey('Tellier'), soundKey('Telier'));
+    assert.notEqual(soundKey('Tellier'), soundKey('Pelletier'));
+    const known = ['Tellier', 'Lamborre', 'Freyssinet'];
+    assert.deepEqual(fixName({ given: 'Marc-Anatole-Octave-Tellier', surname: '' }, known), { given: 'Marc-Anatole-Octave', surname: 'Tellier' });
+    assert.deepEqual(fixName({ given: 'Jean-Tellier', surname: 'Tellier' }, known), { given: 'Jean', surname: 'Tellier' });
+    assert.deepEqual(fixName({ given: 'Sophie', surname: 'Telié' }, known), { given: 'Sophie', surname: 'Tellier' });
+    assert.deepEqual(fixName({ given: 'Marie', surname: 'Lambore' }, known), { given: 'Marie', surname: 'Lamborre' });
+    assert.deepEqual(fixName({ given: 'Jean-Pierre', surname: '' }, known), { given: 'Jean-Pierre', surname: '' }, 'un prénom composé reste');
+    assert.deepEqual(fixName({ given: 'Paul', surname: 'Martin' }, known), { given: 'Paul', surname: 'Martin' }, 'un nom nouveau reste');
   });
 
   test('noms : prénoms puis nom, particules avec le nom', () => {
@@ -326,6 +339,15 @@ describe('voix : dans la page', () => {
     S.voiceReply = false; // the links only: no conversation here (see the next test)
     const bubble = () => document.getElementById('voiceBubble').innerHTML;
     const people = S.people.size;
+
+    await voice.understand('Ajoute Marie Lacost, sœur de Jean Lacauste');
+    assert.equal(S.edit.id, 's', 'les noms entendus de travers : Marie Lacoste, sœur de Jean Lacoste');
+    A.cancelEdit();
+    await voice.understand('Ajoute Paul-Lacoste, né en 1880');
+    assert.deepEqual([S.edit.draft.given, S.edit.draft.surname], ['Paul', 'Lacoste'], 'le nom collé au prénom');
+    A.cancelEdit();
+    await voice.understand('cherche les Lacost');
+    assert.equal(document.getElementById('find').value, 'les Lacoste');
 
     await voice.understand('La mère de Jean Lacoste est Marguerite Maury');
     assert.equal(S.edit.id, 'j', 'la fiche de Jean, qui porte le lien');
