@@ -222,7 +222,12 @@ function apply(c, id, text) {
     return set({ phase: 'done', text, note: t('voice.opened', esc(longName(P(id)))) });
   }
   if (!S.canWrite) return set({ phase: 'done', text, note: t('voice.readOnly') });
-  if (S.edit) return set({ phase: 'done', text, note: t('voice.finishFirst') });
+  if (S.edit) {
+    // The record being edited: shown, to finish it
+    act.revealPanel();
+    act.setTab('record');
+    return set({ phase: 'done', text, note: t('voice.finishFirst') });
+  }
   if (c.action === 'edit') act.editPerson(id);
   else if (id) act.startAdd(c.relation, id);
   else act.startNew();

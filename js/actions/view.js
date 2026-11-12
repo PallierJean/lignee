@@ -21,6 +21,17 @@ export function showSide() {
   renderControls();
 }
 
+/** Makes the side panel visible: unfolded on a computer, opened over the tree on a phone. */
+export function revealPanel() {
+  if (narrow()) return showSide();
+  if (S.panel) return;
+  S.panel = true;
+  savePrefs();
+  renderControls();
+  renderTree();
+  requestAnimationFrame(recenter);
+}
+
 /** Closes the side panel opened over the tree on a phone. `fromHistory`: the Back button already went back. */
 export function closeSheet(fromHistory) {
   if (!S.sheet) return;

@@ -13,6 +13,18 @@ import { parseCommand, commandFromText, PROMPT, SCHEMA } from '../model/voice.js
 
 /* ---------- What runs where ---------- */
 
+let adapter = null; // Promise of the graphics card (WebGPU), or null
+
+/** The graphics card the browser can compute with, or null (WebGPU announced is not enough). */
+function gpu() {
+  if (!adapter) {
+    adapter = typeof navigator !== 'undefined' && navigator.gpu
+      ? navigator.gpu.requestAdapter().catch(() => null)
+      : Promise.resolve(null);
+  }
+  return adapter;
+}
+
 let engines = null; // Promise<{ listen: 'server'|'browser'|'', understand: 'server'|'browser'|'' , server }>
 
 /** Asks once: { listen, understand } ('' when there is none: only fixed sentences). */
@@ -20,11 +32,10 @@ export function voiceEngines() {
   engines = engines || fetch('api/voice', { cache: 'no-store' })
     .then((r) => (r.ok && /json/.test(r.headers.get('content-type') || '') ? r.json() : null))
     .catch(() => null)
-    .then((o) => {
+    .then(async (o) => {
       if (o) return { server: true, listen: o.listen ? 'server' : '', understand: o.understand ? 'server' : '' };
       const media = typeof navigator !== 'undefined' && navigator.mediaDevices && typeof MediaRecorder !== 'undefined';
-      const gpu = typeof navigator !== 'undefined' && !!navigator.gpu;
-      return { server: false, listen: media ? 'browser' : '', understand: gpu ? 'browser' : '' };
+      return { server: false, listen: media ? 'browser' : '', understand: (await gpu()) ? 'browser' : '' };
     });
   return engines;
 }
@@ -32,6 +43,7 @@ export function voiceEngines() {
 /** For the tests. */
 export function resetVoiceEngines() {
   engines = null;
+  adapter = null;
   asr = null;
   llm = null;
 }
@@ -144,13 +156,14 @@ async function browserAsr(onProgress) {
   if (!asr) {
     asr = (async () => {
       const { pipeline } = await import(TRANSFORMERS);
-      const gpu = !!navigator.gpu;
+      const progress_callback = (p) => { if (p.status === 'progress' && p.total) onProgress(p.loaded / p.total); };
       // Small model on the graphics card; on the processor, a lighter one
-      return pipeline('automatic-speech-recognition', gpu ? 'onnx-community/whisper-small' : 'onnx-community/whisper-base', {
-        device: gpu ? 'webgpu' : 'wasm',
-        dtype: gpu ? { encoder_model: 'fp32', decoder_model_merged: 'q4' } : 'q8',
-        progress_callback: (p) => { if (p.status === 'progress' && p.total) onProgress(p.loaded / p.total); },
-      });
+      if (await gpu()) {
+        return pipeline('automatic-speech-recognition', 'onnx-community/whisper-small', {
+          device: 'webgpu', dtype: { encoder_model: 'fp32', decoder_model_merged: 'q4' }, progress_callback,
+        });
+      }
+      return pipeline('automatic-speech-recognition', 'onnx-community/whisper-base', { device: 'wasm', dtype: 'q8', progress_callback });
     })();
     asr.catch(() => { asr = null; });
   }
@@ -183,8 +196,8 @@ async function browserLlm(onProgress) {
   if (!llm) {
     llm = (async () => {
       const webllm = await import(WEBLLM);
-      const adapter = await navigator.gpu.requestAdapter();
-      const f16 = adapter && adapter.features.has('shader-f16');
+      const card = await gpu();
+      const f16 = card && card.features.has('shader-f16');
       return webllm.CreateMLCEngine(`${BROWSER_LLM}-${f16 ? 'q4f16_1' : 'q4f32_1'}-MLC`, {
         initProgressCallback: (p) => onProgress(p.progress || 0),
       });

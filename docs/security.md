@@ -62,6 +62,20 @@ Envoyée par `server.js` dans un en-tête, et ajoutée dans la page du site GitH
 | `object-src 'none'`, `base-uri 'none'`, `form-action 'none'` | Ni plugin, ni changement de l'adresse de base, ni envoi de formulaire |
 | `frame-ancestors 'none'` | Aucun site ne peut afficher Lignée dans un cadre (serveur local seulement) |
 
+**Site GitHub Pages seulement**, pour les [commandes à la voix](features/voice.md) dans le
+navigateur (sans serveur, Whisper et Qwen tournent dans la page) :
+
+| Ajout | Pour |
+| --- | --- |
+| `script-src https://cdn.jsdelivr.net blob: 'wasm-unsafe-eval'` | Les bibliothèques Transformers.js et WebLLM, à versions figées, et le WebAssembly qui fait tourner les modèles |
+| `worker-src 'self' blob:` | Les calculs des modèles hors de la page |
+| `connect-src https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co` | Le téléchargement des modèles (une fois, après accord ; ensuite gardés par le navigateur) |
+
+Ces scripts viennent d'un autre site : une bibliothèque compromise sur jsDelivr pourrait agir dans
+la page. Les versions sont figées (`@4.3.2`, `@0.2.86`) et ne sont chargées qu'au premier usage du
+micro. Le serveur local garde la politique stricte : la voix y passe par Whisper et Ollama sur
+l'ordinateur.
+
 Une balise `<meta>` ne peut pas porter `frame-ancestors` : sur GitHub Pages, `js/main.js` refuse
 donc de démarrer dans le cadre d'un autre site et propose de l'ouvrir dans un onglet. Le serveur envoie aussi
 `Referrer-Policy: no-referrer`.
