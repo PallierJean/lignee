@@ -35,8 +35,11 @@ import {
 } from '../services/insee.js';
 import { sourcesOfPerson } from '../model/sources.js';
 
-const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['insee', 'an.insee'], ['acts', 'an.acts'], ['stats', 'an.stats'],
-  ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery'], ['sources', 'an.sources'], ['archives', 'an.archives']];
+// Four per row: checking the tree, then the documents, then time and places, then the images
+const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['stats', 'an.stats'],
+  ['insee', 'an.insee'], ['acts', 'an.acts'], ['sources', 'an.sources'], ['archives', 'an.archives'],
+  ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'],
+  ['gallery', 'an.gallery']];
 
 const name = (id) => esc(fullName(P(id)));
 const decimal = (x) => t('decimal', x.toFixed(1));
