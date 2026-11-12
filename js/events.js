@@ -27,6 +27,7 @@ import { closeCrop, cropZoomInput, cropWheel, cropDrag, cropOpen } from './ui/cr
 import { pinch } from './ui/pinch.js';
 import { defineDialogs, dialogOpen, closeTopDialog, closeOnBackdrop } from './ui/dialogs.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
+import { toggleVoice, startVoice, closeVoice, pickVoice, answerConsent, understand, voiceOpen } from './ui/voice.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo, chooseRepoSave, closeRepoDiff } from './ui/repo-link.js';
 import { openPrint, closePrint, updatePrintInfo, printTree, printFamilyBook } from './ui/print.js';
@@ -271,6 +272,17 @@ const CLICK_ACTIONS = {
   // Quick search
   'find-pick': (el) => pickFind(el.dataset.id, (id) => A.setFocus(id, true)),
   'find-all': () => showAllFind(() => A.setTab('register')),
+
+  // Voice commands
+  voice: () => toggleVoice(),
+  'voice-close': () => closeVoice(),
+  'voice-retry': () => {
+    closeVoice();
+    startVoice();
+  },
+  'voice-pick': (el) => pickVoice(el.dataset.id),
+  'voice-consent': (el) => answerConsent(el.dataset.what, el.dataset.yes === '1'),
+  'voice-understand': () => understand($('#voiceText').value),
   'spouse-pick': (el) => A.addDraftUnion(el.dataset.id),
 
   // Adding and editing
@@ -556,6 +568,12 @@ export function bindEvents() {
       if (onFindKey(ev, (id) => A.setFocus(id, true))) ev.preventDefault();
       return;
     }
+    // Voice: the sentence heard, corrected by hand, then Enter
+    if (ev.target.id === 'voiceText' && ev.key === 'Enter') {
+      ev.preventDefault();
+      understand(ev.target.value);
+      return;
+    }
     // Whom to identify on a photo: Enter takes the first result
     if (ev.target.id === 'tagFind' && ev.key === 'Enter') {
       ev.preventDefault();
@@ -599,6 +617,12 @@ export function bindEvents() {
       find.select();
       return;
     }
+    // M: speak a command (when this device can listen)
+    if (key === 'm' && !typing(ev.target) && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !blocked) {
+      ev.preventDefault();
+      toggleVoice();
+      return;
+    }
     // Gallery viewer: the arrow keys go from one image to the next
     if ((ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') && !typing(ev.target)
       && !document.getElementById('mediaDlg').hidden && stepMedia(ev.key === 'ArrowLeft' ? -1 : 1)) {
@@ -606,6 +630,10 @@ export function bindEvents() {
       return;
     }
     if (ev.key !== 'Escape') return;
+    if (voiceOpen()) {
+      closeVoice();
+      return;
+    }
     if (closeTopDialog()) return;
     if (S.edit && !S.busy) A.cancelEdit();
     else if (S.gallery) A.toggleStageGallery();

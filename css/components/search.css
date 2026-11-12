@@ -102,6 +102,133 @@
   color: var(--accent);
 }
 
+/* Voice commands: the microphone at the end of the field, the bubble under it (ui/voice.js) */
+.find.has-mic #find {
+  padding-right: 40px;
+}
+
+.find-mic {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.find-mic svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.find-mic:hover,
+.find-mic:focus-visible {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.find-mic[aria-pressed="true"] {
+  color: var(--surface);
+  background: var(--danger);
+}
+
+.voice-bubble {
+  position: absolute;
+  z-index: 31;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  min-width: min(360px, calc(100vw - 32px));
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / .14);
+  font-size: .875rem;
+}
+
+.voice-bubble p {
+  margin: 6px 0;
+}
+
+.vb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vb-row.end {
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.vb-row b {
+  flex: 1;
+}
+
+.vb-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: vb-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes vb-pulse {
+  50% { opacity: .35; }
+}
+
+/* Loudness of the voice, while listening */
+.vb-level {
+  --level: 0;
+  width: 60px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent) calc(var(--level) * 100%), var(--line) 0);
+}
+
+.vb-heard {
+  display: flex;
+  gap: 6px;
+}
+
+.vb-heard input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: .875rem;
+  font-style: italic;
+}
+
+.vb-choices {
+  margin: 4px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vb-choices li + li {
+  margin-top: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vb-dot {
+    animation: none;
+  }
+}
+
 /* Person search in the form (adding a union) */
 .pick {
   position: relative;

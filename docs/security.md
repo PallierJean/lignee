@@ -40,6 +40,10 @@ local ou au navigateur accède aux arbres. Ne l'exposez pas sur un réseau.
   l'ordinateur, sans passer par un shell, sur une photo de l'arbre désignée par son nom vérifié
   (`photos/<fichier>`) ; une lecture à la fois, arrêtée au bout de dix minutes. Rien ne sort sur
   Internet.
+- **Commandes à la voix** (`voice.js`) : l'enregistrement (un WAV vérifié, 20 Mo au plus) est
+  écrit dans un dossier temporaire supprimé aussitôt et passé au programme Whisper de l'ordinateur,
+  lancé sans shell ; la phrase va à Ollama, sur l'ordinateur (`127.0.0.1`). Rien ne sort sur
+  Internet. Le micro n'est ouvert que pendant l'écoute, après un clic ou la touche M.
 - **Pas d'écrasement silencieux** : chaque arbre a une version (empreinte SHA-256, en-tête
   `ETag`). Un enregistrement envoie la version reçue au chargement (`If-Match`) ; si l'arbre a
   changé entre-temps (autre onglet, fichier modifié à la main), il est refusé (409) et un message
