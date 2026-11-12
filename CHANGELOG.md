@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.12](https://github.com/PallierJean/lignee/compare/v4.1.11...v4.1.12) (2026-11-12)
+
+### Bug Fixes
+
+* Understand more ways to ask for a new record or to open one ([534f51d](https://github.com/PallierJean/lignee/commit/534f51d73e888fddd2268fd1b044f758c661cb33))
+
+---
+
+### Corrections
+
+* « Rajoute », « Crée la fiche de », « Nouvelle personne » et « Montre-moi la fiche de » sont compris tout de suite ([534f51d](https://github.com/PallierJean/lignee/commit/534f51d73e888fddd2268fd1b044f758c661cb33))
+
 ## [4.1.11](https://github.com/PallierJean/lignee/compare/v4.1.10...v4.1.11) (2026-11-12)
 
 ### Bug Fixes
