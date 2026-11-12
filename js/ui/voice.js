@@ -6,13 +6,15 @@
  * form, filled in with what was said: nothing is saved until the user clicks Save (and Ctrl+Z
  * undoes it as any change). Several people with the name said: the bubble asks which one.
  * A relative said who is already in the tree is linked to the record, instead of a new record.
+ * Once the form is filled in from the microphone, the answer is listened to at once: "oui" saves,
+ * "non" cancels, a detail ("née en 1873") completes the form; silence leaves it open.
  */
-import { S } from '../state.js';
+import { S, savePrefs } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { norm } from '../utils/helpers.js';
 import { t } from '../i18n.js';
 import { P, longName, lifeYears, given, surname, maiden, unionBetween } from '../model/people.js';
-import { FIELDS, parseCommand } from '../model/voice.js';
+import { FIELDS, parseCommand, parseReply, parseDetails } from '../model/voice.js';
 import { voiceEngines, warmVoice, record, listen, understandText, needsDownload } from '../services/voice.js';
 import { searchPeople, onFindInput } from './search.js';
 import { renderSide } from './render.js';
@@ -25,6 +27,10 @@ let rec = null;     // recording in progress: { stop, done }
 let st = { phase: 'idle' };
 let level = 0;
 let refused = false; // browser language model declined, this time
+let replies = 0;     // answers listened to for the open form (a few, then the user clicks)
+
+const REPLY_WAIT = 8000; // the answer: nobody speaks for this long, the listening ends
+const MAX_REPLIES = 3;
 
 /** Shows the microphone if this device can listen. `actions`: setFocus, startNew, startAdd, editPerson. */
 export function initVoice(actions) {
@@ -38,9 +44,14 @@ export function initVoice(actions) {
 export const voiceOpen = () => st.phase !== 'idle';
 
 function set(next) {
+  // A form filled in by the voice: remembered, for the answer and the buttons of the bubble
+  if (next.check && S.edit && !next.token) next.token = S.edit.token;
   st = next;
   renderVoice();
 }
+
+/** The form that the voice filled in is still the one open. */
+const formOpen = () => !!(st.check && S.edit && S.edit.token === st.token);
 
 /* ---------- Consent to downloads (in the browser only) ---------- */
 
@@ -70,7 +81,7 @@ export function answerConsent(what, yes) {
   }
   if (yes) giveConsent('llm');
   else refused = true;
-  return understand(st.text, yes);
+  return understand(st.text, { model: yes, spoken: st.spoken });
 }
 
 /* ---------- Listening ---------- */
@@ -124,7 +135,7 @@ export async function startVoice(agreed = false) {
   }
   if (st.phase !== 'hearing') return;
   if (!text) return set({ phase: 'done', note: t('voice.nothing') });
-  understand(text);
+  understand(text, { spoken: true });
 }
 
 function showLevel(v) {
@@ -139,12 +150,15 @@ function progress(p) {
   if (el) el.textContent = t('voice.download', Math.round(p * 100));
 }
 
-/** The sentence heard (or corrected by hand): understood, then carried out. */
-export async function understand(text, model = !refused) {
+/**
+ * The sentence heard (or corrected by hand): understood, then carried out. `spoken`: it came from the
+ * microphone, so the answer is listened to once the form is filled in (typed: the user is at the keyboard).
+ */
+export async function understand(text, { model = !refused, spoken = false } = {}) {
   text = String(text || '').trim();
   if (!text) return;
   if (model && parseCommand(text).action === 'unknown' && !consent('llm') && (await needsDownload())) {
-    return set({ phase: 'consent', what: 'llm', text });
+    return set({ phase: 'consent', what: 'llm', text, spoken });
   }
   set({ phase: 'thinking', text, slow: engines && engines.understand === 'server' && parseCommand(text).action === 'unknown' });
   let res;
@@ -155,6 +169,101 @@ export async function understand(text, model = !refused) {
   }
   if (st.phase !== 'thinking' || st.text !== text) return;
   carryOut(res.command, text);
+  replies = 0;
+  if (spoken && formOpen()) listenReply();
+}
+
+/* ---------- The answer: save, cancel, or more ---------- */
+
+/** Listens for the answer to the form filled in (unless switched off): one short listening. */
+async function listenReply() {
+  if (!S.voiceReply || rec || !engines || !engines.listen || !formOpen() || replies >= MAX_REPLIES) return;
+  replies++;
+  const keep = { ...st, phase: 'done' };
+  set({ ...keep, phase: 'reply' });
+  let r;
+  try {
+    r = await record({ onLevel: showLevel, wait: REPLY_WAIT, silence: 1000, max: 15000 });
+    rec = r;
+  } catch (e) {
+    rec = null;
+    return set(keep);
+  }
+  renderVoice();
+  let samples;
+  try {
+    samples = await r.done;
+  } catch (e) {
+    samples = new Float32Array(0);
+  } finally {
+    rec = null;
+  }
+  if (st.phase !== 'reply') return; // saved, cancelled or closed meanwhile
+  // Nothing said: the form stays open, as without the answer
+  if (!r.spoke() || samples.length < 16000 * 0.3) return set(keep);
+  set({ ...keep, phase: 'hearing' });
+  let text;
+  try {
+    text = await listen(samples, { lang: S.lang === 'en' ? 'en' : 'fr', hint: hint(), onProgress: progress });
+  } catch (e) {
+    return set({ ...keep, extra: t('voice.failed', esc(e.message)) });
+  }
+  if (st.phase !== 'hearing') return;
+  await reply(text || '', keep);
+}
+
+/** The answer heard (or given in a test): "oui" saves, "non" cancels, a detail completes the form. */
+export async function reply(text, keep = { ...st, phase: 'done' }) {
+  if (!formOpen()) return set({ ...keep, check: false });
+  const r = parseReply(text);
+  if (r.reply === 'yes') return saveVoice(text);
+  if (r.reply === 'no') return cancelVoice(text);
+  const said = parseDetails(r.rest, { surname: S.edit.draft.surname });
+  if (!Object.keys(said).length) {
+    set({ ...keep, answer: text, extra: t('voice.replyUnknown') });
+    return listenReply();
+  }
+  const sex = S.edit.draft.sex;
+  act.refreshDraft(); // what was typed in the form meanwhile is kept
+  Object.assign(S.edit.draft, said);
+  renderSide(true);
+  const list = [
+    said.given || said.surname ? [said.given, said.surname].filter(Boolean).join(' ') : '',
+    said.birthDate || said.birthPlace ? t('voice.born', sex, [said.birthDate, said.birthPlace].filter(Boolean).join(', ')) : '',
+    said.deathDate || said.deathPlace ? t('voice.died', sex, [said.deathDate, said.deathPlace].filter(Boolean).join(', ')) : '',
+    said.occupation,
+  ].filter(Boolean).join(' · ');
+  set({ ...keep, answer: text, extra: t('voice.completed', esc(list)) });
+  return listenReply();
+}
+
+/** Saves the form filled in by the voice (the answer "oui", or the bubble's button). */
+export async function saveVoice(answer = '') {
+  if (!formOpen()) return;
+  if (rec) rec.stop();
+  const keep = { ...st, phase: 'done' };
+  set({ ...keep, phase: 'saving' });
+  await act.submitEdit();
+  // Refused (a name missing…): the form says why, and stays open
+  if (S.edit) return set({ ...keep, answer, extra: t('voice.saveFailed') });
+  set({ phase: 'done', text: keep.text, answer, note: t('voice.saved') });
+}
+
+/** Closes the form filled in by the voice, without saving. */
+export function cancelVoice(answer = '') {
+  if (!formOpen()) return;
+  if (rec) rec.stop();
+  const text = st.text;
+  act.cancelEdit();
+  set({ phase: 'done', text, answer, note: t('voice.cancelled') });
+}
+
+/** The bubble's tick box: listen for the answer, or not. */
+export function toggleVoiceReply(on) {
+  S.voiceReply = !!on;
+  savePrefs();
+  if (!S.voiceReply && st.phase === 'reply' && rec) rec.stop();
+  renderVoice();
 }
 
 /* ---------- Carrying out the command ---------- */
@@ -357,8 +466,9 @@ export function renderVoice() {
   btn.hidden = !can;
   const field = btn.closest('.find');
   if (field) field.classList.toggle('has-mic', can);
-  btn.setAttribute('aria-pressed', String(st.phase === 'listening'));
-  btn.title = t(st.phase === 'listening' ? 'voice.stop' : 'voice.start');
+  const hearing = st.phase === 'listening' || st.phase === 'reply';
+  btn.setAttribute('aria-pressed', String(hearing));
+  btn.title = t(hearing ? 'voice.stop' : 'voice.start');
   btn.setAttribute('aria-label', btn.title);
   box.hidden = st.phase === 'idle';
   if (box.hidden) return setHTML(box, '');
@@ -368,8 +478,21 @@ export function renderVoice() {
       + `<button class="btn small" type="button" data-act="voice-understand">${t('voice.understand')}</button></div>`
     : '';
   const dl = `<p class="hint" id="voiceProgress">${st.progress != null ? t('voice.download', Math.round(st.progress * 100)) : ''}</p>`;
+  // The form filled in: what was understood, the answer heard, and Save / Cancel at hand
+  const form = formOpen();
+  const answer = st.answer ? `<p class="hint">« ${esc(st.answer)} »</p>` : '';
+  const result = `<p class="vb-note">${st.note || ''}</p>${answer}${st.extra ? `<p class="vb-note">${st.extra}</p>` : ''}`;
+  const formButtons = form ? `<button class="btn small" type="button" data-act="voice-cancel">${t('cancel')}</button>`
+    + `<button class="btn small primary" type="button" id="voiceSave" data-act="voice-save">${t('save')}</button>` : '';
+  const pref = form && engines && engines.listen ? `<label class="vb-pref hint"><input type="checkbox" data-act="voice-reply-pref"${S.voiceReply ? ' checked' : ''}> ${t('voice.replyPref')}</label>` : '';
   let body = '';
-  if (st.phase === 'listening') {
+  if (st.phase === 'reply') {
+    body = `${heard}${result}<div class="vb-row"><span class="vb-dot" aria-hidden="true"></span><b>${t('voice.replyListening')}</b>`
+      + `<span class="vb-level" id="voiceLevel" data-style="--level:${level}" aria-hidden="true"></span>${close}</div>`
+      + `<p class="hint">${t('voice.replyHint')}</p><div class="vb-row end">${formButtons}</div>${pref}`;
+  } else if (st.phase === 'saving') {
+    body = `${heard}<div class="vb-row"><b>${t('f.saving')}</b>${close}</div>`;
+  } else if (st.phase === 'listening') {
     body = `<div class="vb-row"><span class="vb-dot" aria-hidden="true"></span><b>${t('voice.listening')}</b>`
       + `<span class="vb-level" id="voiceLevel" data-style="--level:${level}" aria-hidden="true"></span>`
       + `<button class="btn small" type="button" data-act="voice">${t('voice.end')}</button>${close}</div><p class="hint">${t('voice.listenHint')}</p>`;
@@ -388,11 +511,16 @@ export function renderVoice() {
     body = `${heard}<p>${t(st.linkTo ? 'voice.whichRelative' : 'voice.which', esc(name))}</p><ul class="vb-choices">${st.ids.map((id) => `<li><button class="link" type="button" data-act="voice-pick" data-id="${esc(id)}">${esc(longName(P(id)))} <span class="hint">${esc(lifeYears(P(id)))}</span></button></li>`).join('')}</ul>`
       + `<div class="vb-row end">${st.linkTo ? `<button class="btn small" type="button" data-act="voice-new">${t('voice.newOne')}</button>` : ''}${close}</div>`;
   } else {
-    body = `${heard}<p class="vb-note">${st.note || ''}</p>`
-      + (st.check ? `<p class="hint">${t('voice.check')}</p>` : '')
+    body = `${heard}${result}`
+      + (form ? `<p class="hint">${t('voice.check')}</p>` : '')
       + (st.examples ? `<p class="hint">${t('voice.examples')}</p>` : '')
       + `<div class="vb-row end">${st.linked ? `<button class="btn small" type="button" data-act="voice-new">${t('voice.other')}</button>` : ''}`
-      + `<button class="btn small" type="button" data-act="voice-retry">${t('voice.again')}</button>${close}</div>`;
+      + `<button class="btn small" type="button" data-act="voice-retry">${t('voice.again')}</button>${formButtons}${close}</div>${pref}`;
   }
   setHTML(box, body);
+  // Enter saves: the button has the focus, unless the user is typing somewhere
+  const save = document.getElementById('voiceSave');
+  const el = document.activeElement;
+  const typing = el && (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || (el.tagName === 'INPUT' && el.type !== 'checkbox'));
+  if (save && !typing) save.focus();
 }

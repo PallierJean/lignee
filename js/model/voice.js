@@ -260,3 +260,80 @@ function relative(name, kin, who, known = null, cleanName = null) {
   const sex = person.sex || kin.sex;
   return cleanCommand({ action: 'add', who: of, relation: kin.relation, person: { ...splitName(rest), ...person, sex } });
 }
+
+/* ---------- The answer once the form is filled in ---------- */
+
+const plain = (s) => str(s).toLowerCase().replace(/’/g, "'").replace(/[.,;:!?«»"]+/g, ' ').replace(/\s+/g, ' ').trim();
+// Longest first: "c'est bon" before "c'est"
+const phrases = (list) => list.sort((a, b) => b.length - a.length).map((w) => w.replace(/[-\s]/g, '[-\\s]'));
+const YES = phrases(['oui', 'ouais', 'ok', 'okay', "d'accord", "c'est bon", "c'est ça", "c'est parfait", 'parfait', 'exact', 'exactement',
+  'valide', 'valider', 'validé', 'validée', 'enregistre', 'enregistrer', 'enregistré', 'sauvegarde', 'sauvegarder', 'confirme', 'confirmer',
+  'vas-y', 'yes', 'yeah', 'save', 'confirm', 'correct', "that's right", 'go ahead', 'right']);
+const NO = phrases(['non', 'nan', 'annule', 'annuler', 'annulé', 'laisse tomber', 'oublie', 'arrête', 'ferme', 'pas du tout',
+  'no', 'nope', 'cancel', 'never mind', 'stop']);
+const FILLER = phrases(['merci', 'tu peux', 'la fiche', 'le formulaire', "s'il te plaît", "s'il vous plaît", 'please', 'thanks', 'thank you', 'it', 'et', 'and', 'mais', 'but']);
+const START = (list) => new RegExp(`^(?:${list.join('|')})(?=\\s|$)\\s*`, 'iu');
+const YES_START = START(YES);
+const NO_START = START(NO);
+const FILLER_START = START(FILLER);
+const LEAD = new RegExp(`^[\\s,.;:!?«»"]*(?:${[...YES, ...NO, ...FILLER].join('|')})(?=[\\s,.;:!?]|$)[\\s,.;:!?]*`, 'iu');
+
+/** Words said only made of `start` phrases (and polite words): true; anything else: false. */
+function only(s, start) {
+  let rest = s;
+  let seen = false;
+  for (let i = 0; i < 12 && rest; i++) {
+    const m = start.exec(rest) || FILLER_START.exec(rest);
+    if (!m) return false;
+    if (start.test(rest)) seen = true;
+    rest = rest.slice(m[0].length);
+  }
+  return seen && !rest;
+}
+
+/**
+ * The answer to "Save?": { reply: 'yes' } (save), { reply: 'no' } (cancel), or { reply: 'more', rest }:
+ * something to add to the form ("non, née en 1873", "oui et elle était couturière", "née en 1873").
+ */
+export function parseReply(text) {
+  const s = plain(text);
+  if (only(s, YES_START)) return { reply: 'yes', rest: '' };
+  if (only(s, NO_START)) return { reply: 'no', rest: '' };
+  // A yes or a no followed by more: the more, to add
+  let rest = str(text).replace(/’/g, "'");
+  for (let i = 0; i < 6; i++) {
+    const m = LEAD.exec(rest);
+    if (!m || !m[0]) break;
+    rest = rest.slice(m[0].length);
+  }
+  return { reply: 'more', rest: str(rest) };
+}
+
+/**
+ * Facts said about the person whose form is open: "née le 3 mai 1873 à Hautefort", "elle était couturière",
+ * "il est mort en 1950", "elle s'appelle Anne Marie". Only the fields said; {} if none.
+ * `surname`: the one in the form: "elle s'appelle Anne Marie Lacoste" ends with it, the rest are first names.
+ */
+export function parseDetails(text, { surname = '' } = {}) {
+  let s = str(text).replace(/[.!?]+$/, '');
+  const person = {};
+  const named = new RegExp(String.raw`(?:^|\s)(?:(?:il|elle|he|she)\s+)?(?:s['’]appel\p{L}*|is called|is named)\s+(\p{L}[\p{L}' -]*?)(?=[,;]|$)`, 'iu').exec(s);
+  if (named) {
+    const name = cap(str(named[1]));
+    const last = surname && new RegExp(`\\s+${surname.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'iu').exec(name);
+    if (last) Object.assign(person, { given: name.slice(0, last.index), surname: name.slice(last.index).trim() });
+    else person.given = name;
+    s = s.replace(named[0], ' ');
+  }
+  const first = /(?:son |her |his )(prénom|nom|first name|surname|last name)\s+(?:est|is|c['’]est)\s+([\p{L}' -]+?)(?=[,;]|$)/iu.exec(s);
+  if (first) {
+    person[/pr[ée]nom|first/i.test(first[1]) ? 'given' : 'surname'] = cap(str(first[2]));
+    s = s.replace(first[0], ' ');
+  }
+  // "elle est née …": "est" is only the tense
+  const found = facts(s.replace(new RegExp(String.raw`${L}(?:est|était|is|was)\s+(?=n[ée]e?${R}|mort|d[ée]c[ée]d|born|died)`, 'giu'), ''));
+  Object.assign(person, found.person);
+  delete person.sex;
+  for (const f of ['birthDate', 'deathDate']) if (person[f]) person[f] = cleanDate(person[f]);
+  return Object.fromEntries(Object.entries(person).filter(([f, v]) => FIELDS.includes(f) && v));
+}

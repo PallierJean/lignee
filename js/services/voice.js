@@ -59,11 +59,12 @@ export async function warmVoice() {
 const RATE = 16000; // what Whisper hears
 
 /**
- * Starts recording the microphone. Returns { stop(), done }: `done` resolves to the samples
+ * Starts recording the microphone. Returns { stop(), done, spoke() }: `done` resolves to the samples
  * (Float32Array, mono, 16 kHz) when `stop()` is called, after `silence` ms of silence once
- * the user has spoken, or after `max` ms. `onLevel(0..1)` follows the voice's loudness.
+ * the user has spoken, after `max` ms, or after `wait` ms if nobody spoke (`spoke()` then false).
+ * `onLevel(0..1)` follows the voice's loudness.
  */
-export async function record({ onLevel = () => {}, silence = 1500, max = 30000 } = {}) {
+export async function record({ onLevel = () => {}, silence = 1500, max = 30000, wait = 0 } = {}) {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
   const ctx = new AudioContext();
   // Started after awaiting the microphone: the browser may hold it paused
@@ -95,6 +96,8 @@ export async function record({ onLevel = () => {}, silence = 1500, max = 30000 }
       if (now - quietSince > silence) stop();
     }
     if (now - start > max) stop();
+    // Nobody speaks (an answer waited for): over, without sending silence to Whisper
+    if (wait && !spoke && now - start > wait) stop();
   }, 100);
 
   let stopped = false;
@@ -112,7 +115,7 @@ export async function record({ onLevel = () => {}, silence = 1500, max = 30000 }
     ctx.close();
     return resample(decoded);
   });
-  return { stop, done };
+  return { stop, done, spoke: () => spoke };
 }
 
 /** The recording, mono, at 16 kHz. */

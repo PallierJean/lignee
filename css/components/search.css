@@ -171,8 +171,18 @@
 }
 
 .vb-row.end {
+  flex-wrap: wrap;
   justify-content: flex-end;
   margin-top: 8px;
+}
+
+/* Listening for the answer once the form is filled in: on or off */
+.vb-pref {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  cursor: pointer;
 }
 
 .vb-row b {

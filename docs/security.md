@@ -43,7 +43,10 @@ local ou au navigateur accède aux arbres. Ne l'exposez pas sur un réseau.
 - **Commandes à la voix** (`voice.js`) : l'enregistrement (un WAV vérifié, 20 Mo au plus) est
   écrit dans un dossier temporaire supprimé aussitôt et passé au programme Whisper de l'ordinateur,
   lancé sans shell ; la phrase va à Ollama, sur l'ordinateur (`127.0.0.1`). Rien ne sort sur
-  Internet. Le micro n'est ouvert que pendant l'écoute, après un clic ou la touche M.
+  Internet. Le micro n'est ouvert que pendant l'écoute, après un clic ou la touche M ; seule
+  exception, la réponse à une commande dite qui a rempli le formulaire (« oui », « non », une précision) :
+  une écoute courte, montrée dans la bulle, qui s'arrête au bout de 8 secondes sans parole et se
+  désactive par une case de la bulle.
 - **Pas d'écrasement silencieux** : chaque arbre a une version (empreinte SHA-256, en-tête
   `ETag`). Un enregistrement envoie la version reçue au chargement (`If-Match`) ; si l'arbre a
   changé entre-temps (autre onglet, fichier modifié à la main), il est refusé (409) et un message
