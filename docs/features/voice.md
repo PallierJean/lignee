@@ -22,18 +22,28 @@ habituel, rempli avec ce qui a été dit** : rien n'est enregistré avant le cli
 Ctrl+Z annule comme pour toute modification. Si plusieurs personnes portent le nom dit, la bulle
 demande laquelle ; un nom entendu un peu de travers (« Margerite Mauri ») est retrouvé quand même.
 
-**Valider sans relancer le micro.** Quand une phrase dite a rempli le formulaire, Lignée écoute
-aussitôt la réponse, une seule fois (le point rouge et « J'écoute ta réponse… » le montrent) :
+**Une conversation, sans relancer le micro.** Après une phrase dite au micro, Lignée enchaîne :
 
-- « oui », « valide », « enregistre », « c'est bon » : la fiche est enregistrée (Ctrl+Z annule) ;
-- « non », « annule », « laisse tomber » : le formulaire se ferme sans rien enregistrer ;
-- une précision (« non, elle est née en 1873 », « il était maçon », « elle s'appelle Anne Marie ») :
-  le formulaire est complété, puis Lignée réécoute (trois réponses au plus) ;
-- rien pendant 8 secondes : l'écoute s'arrête, le formulaire reste ouvert.
+1. Si le formulaire est rempli, la bulle **récapitule ce qui sera enregistré** (nom, père, mère,
+   conjoint, naissance, décès, métier), Lignée le lit à voix haute et demande « Je l'enregistre ? ».
+   Puis elle écoute la réponse :
+   - « oui », « valide », « enregistre », « c'est bon » : la fiche est enregistrée (Ctrl+Z annule) ;
+   - « non », « annule », « laisse tomber » : le formulaire se ferme sans rien enregistrer ;
+   - une précision (« non, elle est née en 1873 », « il était maçon », « elle s'appelle Anne
+     Marie ») : le formulaire est complété, relu, et Lignée réécoute (trois réponses au plus).
+2. Ensuite, et après une recherche, une fiche ouverte ou une phrase non comprise, Lignée demande
+   « Autre chose ? » et écoute la commande suivante.
 
-La bulle a aussi ses boutons **Enregistrer** (Entrée) et **Annuler**. La case « Écouter ma réponse
-quand le formulaire est rempli à la voix » coupe cette écoute (réglage retenu). Une phrase tapée
-dans la bulle n'est pas suivie d'une écoute : on est alors au clavier.
+« C'est tout », « merci », « non », ou 8 secondes sans parole terminent la conversation ; le
+formulaire reste alors ouvert. Le silence n'est jamais envoyé à Whisper.
+
+La lecture à voix haute n'utilise que les voix installées sur l'appareil : jamais une voix en ligne
+(les voix « Google » de Chrome envoient le texte à Google). Sans voix installée, Lignée ne parle pas
+et la bulle montre tout. Lignée n'écoute qu'une fois sa phrase finie, pour ne pas s'entendre.
+
+La bulle a aussi ses boutons **Enregistrer** (Entrée) et **Annuler**, qui terminent la conversation.
+La case « Conversation à la voix » la coupe (réglage retenu). Une phrase tapée dans la bulle n'est
+pas suivie d'une écoute : on est alors au clavier.
 
 ## Utilisation
 

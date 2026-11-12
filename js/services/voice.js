@@ -237,3 +237,41 @@ export async function understandText(text, { model = true, onProgress = () => {}
   });
   return { command: commandFromText(res.choices[0].message.content) || parseCommand(''), by: 'browser' };
 }
+
+/**
+ * Says `text` aloud with a voice installed on this device: never an online voice (Chrome's
+ * "Google" voices send the text to Google), so names and dates stay here. No such voice: silent,
+ * the bubble shows it all. Resolves once said, at once without a voice, and after 15 s at most:
+ * the listening that follows must not hear Lignée itself.
+ */
+export function speak(text, lang = 'fr') {
+  const synth = globalThis.speechSynthesis;
+  if (!synth || typeof globalThis.SpeechSynthesisUtterance !== 'function' || !text) return Promise.resolve();
+  // The voices not known yet (loaded late by some browsers, see loadVoices): silent rather than a default voice, maybe online
+  const voice = synth.getVoices().find((v) => v.localService && v.lang && v.lang.toLowerCase().startsWith(lang));
+  if (!voice) return Promise.resolve();
+  return new Promise((resolve) => {
+    const u = new globalThis.SpeechSynthesisUtterance(text);
+    u.lang = lang === 'en' ? 'en-GB' : 'fr-FR';
+    u.voice = voice;
+    const timer = setTimeout(done, 15000);
+    function done() {
+      clearTimeout(timer);
+      resolve();
+    }
+    u.onend = done;
+    u.onerror = done;
+    synth.cancel();
+    synth.speak(u);
+  });
+}
+
+/** Asks the browser for its voices early: Chrome lists them only after a first call. */
+export function loadVoices() {
+  if (globalThis.speechSynthesis) globalThis.speechSynthesis.getVoices();
+}
+
+/** Stops what is being said. */
+export function hush() {
+  if (globalThis.speechSynthesis) globalThis.speechSynthesis.cancel();
+}

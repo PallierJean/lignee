@@ -337,3 +337,9 @@ export function parseDetails(text, { surname = '' } = {}) {
   for (const f of ['birthDate', 'deathDate']) if (person[f]) person[f] = cleanDate(person[f]);
   return Object.fromEntries(Object.entries(person).filter(([f, v]) => FIELDS.includes(f) && v));
 }
+
+const BYE = START(phrases(["c'est tout", "ce sera tout", "ça ira", 'merci', 'fini', 'terminé', 'rien', 'au revoir', 'à plus', 'non merci',
+  "that's all", 'nothing', 'thanks', 'thank you', 'bye', 'goodbye', 'done']));
+
+/** The end of the conversation: "c'est tout", "merci", "non"… */
+export const isGoodbye = (text) => only(plain(text), BYE) || parseReply(text).reply === 'no';
