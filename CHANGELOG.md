@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.17](https://github.com/PallierJean/lignee/compare/v4.1.16...v4.1.17) (2026-11-12)
+
+### Bug Fixes
+
+* Take "depuis 1985" said after a spouse as the date of the union ([d6a3431](https://github.com/PallierJean/lignee/commit/d6a3431099fd0ea25415f5a774f620d8575532c2))
+
+---
+
+### Corrections
+
+* « concubin de Véronique depuis 1985 » donne la date de l'union ([d6a3431](https://github.com/PallierJean/lignee/commit/d6a3431099fd0ea25415f5a774f620d8575532c2))
+
 ## [4.1.16](https://github.com/PallierJean/lignee/compare/v4.1.15...v4.1.16) (2026-11-12)
 
 ### Bug Fixes
