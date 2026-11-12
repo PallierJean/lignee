@@ -303,7 +303,8 @@ export function parseCommand(sentence) {
   if (m) return relative(m[3], kinOf(m[1]), m[2]);
 
   // ("ajoute à …": Whisper sometimes hears a stray "à")
-  const add = new RegExp(String.raw`^(?:${ADD}\s+(?:la fiche (?:de |d['’])|une fiche pour |une personne|quelqu['’]un|a person|someone)?|(?:une )?nouvelle (?:personne|fiche)|new person)\s*[:,]?\s*(?:(?:à|a)\s+)?(.+)$`, 'iu').exec(s);
+  // After the verb, the record itself, maybe misheard: "Ajoute la fiche, …", "Ajoute la carte, la fiche, …"
+  const add = new RegExp(String.raw`^(?:${ADD}(?:[\s:,]+(?:la |une |une nouvelle )?(?:fiche|carte|personne)(?:\s+(?:de|d['’]|pour)(?=\s|$))?)*[\s:,]+(?:quelqu['’]un|a person|someone)?|(?:une )?nouvelle (?:personne|fiche)|new person)\s*[:,]?\s*(?:(?:à|a)\s+)?(.+)$`, 'iu').exec(s);
   const body = add ? add[1] : s;
   // "Jean a épousé Marie Dupont le 3 juin 1890 à Hautefort", "Jean vit en concubinage avec Marie"
   const wed = unionSaid(body);

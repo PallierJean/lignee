@@ -28,6 +28,9 @@ const CORPUS = [
   ['Azout, Marc-Octave-Anatole-Tellier, né le 7 juin 1961 à Confolens.', { action: 'add', person: { given: 'Marc-Octave-Anatole', surname: 'Tellier', sex: 'M', birthDate: '7 juin 1961', birthPlace: 'Confolens' } }],
   ['Ajoute Jean-Pierre.', { action: 'add', person: { given: 'Jean-Pierre', surname: '' } }],
   ['Ajoute Jean Tellier, né le 10-12-95 à Bordeaux.', { action: 'add', person: { given: 'Jean', surname: 'Tellier', birthDate: '10/12/1995', birthPlace: 'Bordeaux' } }],
+  ['Ajoute la fiche, Jean Tellier, né le 10-12-95 à Bordeaux.', { action: 'add', person: { given: 'Jean', surname: 'Tellier', birthDate: '10/12/1995', birthPlace: 'Bordeaux' } }],
+  ['Ajoute la carte, la fiche, Jean Telier, né en 1995.', { action: 'add', person: { given: 'Jean', surname: 'Telier', birthDate: '1995' } }],
+  ['Ajoute une fiche pour Anne Tellier.', { action: 'add', person: { given: 'Anne', surname: 'Tellier' } }],
   ['Ajoute Marie de la Borie.', { action: 'add', person: { given: 'Marie', surname: 'De la Borie' } }],
 
   // Parents and children
