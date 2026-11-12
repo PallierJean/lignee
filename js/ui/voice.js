@@ -43,6 +43,8 @@ export function initVoice(actions) {
   return voiceEngines().then((e) => {
     engines = e;
     renderVoice();
+    // Used lately: the models load now, not at the first sentence (a minute or two for the language model)
+    if (e.server && e.listen && usedLately()) warmVoice();
   });
 }
 
@@ -103,6 +105,26 @@ function giveConsent(what) {
   }
 }
 
+const WEEK = 7 * 24 * 3600 * 1000;
+
+/** The microphone was used in the last seven days (on this browser). */
+function usedLately() {
+  try {
+    return Date.now() - (JSON.parse(localStorage.getItem(CONSENT_KEY) || '{}').used || 0) < WEEK;
+  } catch (e) {
+    return false;
+  }
+}
+
+function markUsed() {
+  try {
+    const all = JSON.parse(localStorage.getItem(CONSENT_KEY) || '{}');
+    localStorage.setItem(CONSENT_KEY, JSON.stringify({ ...all, used: Date.now() }));
+  } catch (e) {
+    // Private browsing: the models load at the first sentence
+  }
+}
+
 /** Answer to a download question: `what` = 'asr' (listening) or 'llm' (understanding). */
 export function answerConsent(what, yes) {
   if (what === 'asr') {
@@ -153,6 +175,7 @@ export async function startVoice(agreed = false) {
   if (engines.listen === 'browser' && !agreed && !consent('asr')) return set({ phase: 'consent', what: 'asr' });
   set({ phase: 'listening' });
   warmVoice();
+  markUsed();
   try {
     rec = await record({ onLevel: showLevel });
   } catch (e) {

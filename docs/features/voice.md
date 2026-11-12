@@ -93,7 +93,8 @@ Rien n'est envoyé à un service en ligne : la voix et les phrases restent sur l
 Les phrases connues (celles de la liste ci-dessus et leurs variantes) sont comprises sans modèle de
 langage, instantanément. Les autres passent par Qwen : comptez 10 à 20 secondes sur un ordinateur
 sans carte graphique, et un peu plus pour la première phrase, le temps de charger le modèle (Lignée
-le charge dès qu'on appuie sur le micro).
+le charge dès qu'on appuie sur le micro, et dès l'ouverture de la page si le micro a servi ces
+sept derniers jours ; la bulle compte les secondes pendant qu'il réfléchit).
 
 Dans le navigateur, les modèles sont téléchargés la première fois, après accord (Whisper : quelques
 centaines de Mo ; Qwen : environ 2 Go, seulement s'il faut comprendre une phrase libre), puis
