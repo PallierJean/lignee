@@ -59,6 +59,12 @@
         <input id="find" type="search" placeholder="Rechercher une personne…  ( / )" data-i18n-attr="placeholder:find.placeholder" autocomplete="off" spellcheck="false"
           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="findList">
         <ul class="find-list" id="findList" role="listbox" aria-label="Personnes trouvées" data-i18n-attr="aria-label:find.list" hidden></ul>
+        <!-- Voice commands (ui/voice.js): shown when this device can listen -->
+        <button class="find-mic" type="button" id="voiceBtn" data-act="voice" aria-pressed="false" hidden
+          title="Parler" aria-label="Parler">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>
+        </button>
+        <div class="voice-bubble" id="voiceBubble" role="status" aria-live="polite" hidden></div>
       </div>
       <div class="top-actions">
         <span class="pill" id="status"><i></i><span>Connexion…</span></span>

@@ -28,6 +28,11 @@
  * POST   /api/insee/register        : { email } — matchID sends a code to this address
  * POST   /api/insee/auth            : { email, code } — keeps the token in data/matchid.json
  *
+ * GET    /api/voice                 : voice commands on this computer (voice.js): { listen, understand, … }
+ * POST   /api/voice/warm            : loads Whisper and the language model while the user speaks
+ * POST   /api/voice/listen?lang=&hint= : a WAV recording → { text } (Whisper)
+ * POST   /api/voice/understand      : { text } → { command } (Ollama, see js/model/voice.js)
+ *
  * No dependencies. The server only listens on this computer (127.0.0.1) and refuses
  * requests coming from another site (Host and Origin headers).
  * Imported as a module, it provides createServer() (used by the tests).
@@ -38,6 +43,7 @@ import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { htrStatus, readImage } from './htr.js';
+import { voiceStatus, transcribe, understand, warmUp } from './voice.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -98,6 +104,10 @@ function allowed(req) {
 const versionOf = (text) => '"' + createHash('sha256').update(text).digest('hex').slice(0, 32) + '"';
 
 async function readBody(req) {
+  return (await readBytes(req)).toString('utf8');
+}
+
+async function readBytes(req) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
@@ -105,7 +115,7 @@ async function readBody(req) {
     if (size > MAX_BODY) throw Object.assign(new Error('Fichier trop volumineux'), { status: 413 });
     chunks.push(chunk);
   }
-  return Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks);
 }
 
 /* ---------- Photos ---------- */
@@ -286,6 +296,7 @@ export function createServer({
   root = ROOT, dataDir = path.join(root, 'data', 'arbres'), tokenFile = path.join(root, 'data', 'matchid.json'),
   deaths = matchidClient(tokenFile),
   htr = { status: htrStatus, read: readImage },
+  voice = { status: voiceStatus, listen: transcribe, understand, warm: warmUp },
 } = {}) {
   const { treeFile, photoDir, readTree, treeIds } = paths(dataDir);
 
@@ -427,6 +438,43 @@ export function createServer({
     send(res, 200, JSON.stringify(await htr.read(full)), TYPES['.json']);
   }
 
+  /**
+   * Voice commands, on this computer (voice.js): GET /api/voice → what it can do;
+   * POST /api/voice/warm → loads the models while the user speaks;
+   * POST /api/voice/listen?lang=&hint= (a WAV recording) → { text };
+   * POST /api/voice/understand { text } → { command }.
+   */
+  async function voiceApi(req, res, pathname, query) {
+    const json = (o) => send(res, 200, JSON.stringify(o), TYPES['.json']);
+    if (pathname === '/api/voice') {
+      if (req.method !== 'GET') return send(res, 405, 'Méthode non autorisée');
+      return json(await voice.status());
+    }
+    if (req.method !== 'POST') return send(res, 405, 'Méthode non autorisée');
+    if (pathname === '/api/voice/warm') {
+      voice.warm().catch(() => {});
+      return json({ ok: true });
+    }
+    if (pathname === '/api/voice/listen') {
+      const wav = await readBytes(req);
+      if (wav.length < 44 || wav.toString('latin1', 0, 4) !== 'RIFF' || wav.toString('latin1', 8, 12) !== 'WAVE') return send(res, 400, 'Enregistrement WAV attendu');
+      const q = new URLSearchParams(query);
+      const lang = /^[a-z]{2}$/.test(q.get('lang') || '') ? q.get('lang') : 'fr';
+      return json(await voice.listen(wav, { lang, hint: q.get('hint') || '' }));
+    }
+    if (pathname === '/api/voice/understand') {
+      let o;
+      try {
+        o = JSON.parse(await readBody(req));
+      } catch (e) {
+        return send(res, 400, 'JSON invalide');
+      }
+      if (!o || typeof o.text !== 'string' || !o.text.trim()) return send(res, 400, 'Phrase attendue');
+      return json(await voice.understand(o.text));
+    }
+    send(res, 404, 'Introuvable');
+  }
+
   async function api(req, res, rel, query) {
     if (rel === '') {
       if (req.method === 'GET') return listTrees(res);
@@ -524,6 +572,8 @@ export function createServer({
       } else if (pathname === '/api/htr') {
         if (req.method === 'GET') send(res, 200, JSON.stringify(await htr.status()), TYPES['.json']);
         else send(res, 405, 'Méthode non autorisée');
+      } else if (pathname.startsWith('/api/voice')) {
+        await voiceApi(req, res, pathname, query);
       } else if (pathname === '/api/insee') {
         if (req.method === 'GET') await insee(res, query);
         else send(res, 405, 'Méthode non autorisée');

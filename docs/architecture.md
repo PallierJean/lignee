@@ -20,6 +20,8 @@ lignee/
 ├── docs/                       Documentation technique (sommaire : DEVELOPMENT.md)
 ├── server.js                   Serveur local : sert l'application, écrit data/arbres/
 ├── htr.js                      Lecture des écritures anciennes sur cet ordinateur (Kraken), pour server.js
+├── voice.js                    Commandes à la voix sur cet ordinateur (Whisper, Ollama), pour server.js
+├── scripts/whisper-worker.py   Programme Whisper lancé par voice.js, gardé en mémoire
 ├── assets/
 │   └── favicon.svg             Icône de l'onglet
 ├── images/
@@ -67,6 +69,7 @@ lignee/
 │   ├── model/
 │   │   ├── people.js           Noms, âges, parents, conjoints, enfants, événements, sources, galerie
 │   │   ├── sources.js          Sources partagées : citations, documents de l'import GEDCOM
+│   │   ├── voice.js            Commandes à la voix : la commande, la consigne du modèle, les phrases connues
 │   │   ├── kinship.js          Lien de parenté entre deux personnes
 │   │   ├── occupations.js      Traduction des professions à l'affichage
 │   │   ├── book-branches.js    Livre de famille complet : chapitres par branche
@@ -90,6 +93,7 @@ lignee/
 │   │   │   ├── file.js         Mode fichier (server.js), photos en fichiers
 │   │   │   └── local.js        Mode navigateur (localStorage)
 │   │   ├── htr.js              Lecture d'une photo par le serveur local (Kraken)
+│   │   ├── voice.js            Voix : micro, Whisper et Qwen du serveur ou du navigateur
 │   │   ├── gedcom.js           Export et import GEDCOM 5.5.1
 │   │   ├── github.js           Lecture d'une sauvegarde et de ses photos dans un dépôt GitHub, envoi
 │   │   ├── merge.js            Fusion à trois voies des fiches (sauvegarde GitHub)
@@ -124,6 +128,7 @@ lignee/
 │       ├── places.js           Carte des lieux en SVG
 │       ├── media.js            Visionneuse de la galerie, identification sur les photos
 │       ├── reading.js          Lecture d'un document : image, texte lu, corrections
+│       ├── voice.js            Le micro et la bulle des commandes à la voix
 │       ├── trees.js            Fenêtre Mes arbres : ouvrir, créer, renommer, supprimer
 │       ├── spouse-pick.js      Choix d'un conjoint existant
 │       ├── theme.js            Thème choisi, couleurs, calque animé

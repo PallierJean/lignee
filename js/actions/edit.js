@@ -17,7 +17,7 @@ import { renderPersonDlg } from '../ui/person-dlg.js';
 import { photoFromFile, DOCUMENT_SIDE } from '../utils/image.js';
 import { cropPhoto } from '../ui/crop.js';
 import { askLeave, closeLeave } from '../ui/leave-dlg.js';
-import { showSide, setFocus, setTab } from './view.js';
+import { setFocus, setTab, revealPanel } from './view.js';
 import { openMedia } from '../ui/media.js';
 import { mediaGroups } from '../ui/record.js';
 import { sourcesOfPerson } from '../model/sources.js';
@@ -44,7 +44,8 @@ function openEdit(edit) {
   S.tab = 'record';
   S.confirmDel = false;
   renderSide(true);
-  showSide();
+  // A folded panel would hide the form
+  revealPanel();
   focusFirstField();
 }
 

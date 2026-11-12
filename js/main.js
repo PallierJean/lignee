@@ -14,6 +14,8 @@ import { loadLocal, seedExample, loadFile } from './services/storage.js';
 import { applyTheme } from './ui/theme.js';
 import { connectServices } from './ui/connect.js';
 import { checkHtr } from './services/htr.js';
+import { initVoice } from './ui/voice.js';
+import * as A from './actions.js';
 
 /** Shows the version number, taken from package.json. Without it, nothing is shown. */
 async function showVersion() {
@@ -44,6 +46,9 @@ async function init() {
 
   // 2. Reading handwriting on this computer (local server with Kraken): the buttons appear once known
   checkHtr().then(({ ready }) => ready && renderAll()).catch(() => {});
+
+  // 2b. Voice commands: the microphone appears if this device can listen (ui/voice.js)
+  initVoice(A).catch(() => {});
 
   // 3. French communes, loaded after opening: the consistency check then verifies places' departments
   loadCommunes().then(() => renderAll()).catch(() => {});

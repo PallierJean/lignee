@@ -24,6 +24,7 @@ dépendance, aucune étape de compilation : Node.js 26 suffit pour la lancer et 
 - [Impression](features/print.md) : PDF vectoriel, découpage en feuilles, livrets.
 - [Onglet Analyse](features/analysis.md) : parenté, cohérence, doublons, INSEE, lieux, carte.
 - [Lecture des écritures anciennes](features/htr.md) : Kraken sur l'ordinateur, texte lu et corrigé.
+- [Commandes à la voix](features/voice.md) : chercher, ouvrir, ajouter, modifier en parlant ; Whisper et Qwen sur l'appareil.
 - [Thèmes](features/themes.md) : clair et sombre, fêtes et saisons, univers, accessibilité.
 - [GitHub](features/github.md) : ouvrir et sauvegarder un arbre dans un dépôt ; pas à pas pour les utilisateurs : [Garder son arbre sur GitHub](guide-github.md).
 

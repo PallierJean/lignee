@@ -40,6 +40,10 @@ local ou au navigateur accède aux arbres. Ne l'exposez pas sur un réseau.
   l'ordinateur, sans passer par un shell, sur une photo de l'arbre désignée par son nom vérifié
   (`photos/<fichier>`) ; une lecture à la fois, arrêtée au bout de dix minutes. Rien ne sort sur
   Internet.
+- **Commandes à la voix** (`voice.js`) : l'enregistrement (un WAV vérifié, 20 Mo au plus) est
+  écrit dans un dossier temporaire supprimé aussitôt et passé au programme Whisper de l'ordinateur,
+  lancé sans shell ; la phrase va à Ollama, sur l'ordinateur (`127.0.0.1`). Rien ne sort sur
+  Internet. Le micro n'est ouvert que pendant l'écoute, après un clic ou la touche M.
 - **Pas d'écrasement silencieux** : chaque arbre a une version (empreinte SHA-256, en-tête
   `ETag`). Un enregistrement envoie la version reçue au chargement (`If-Match`) ; si l'arbre a
   changé entre-temps (autre onglet, fichier modifié à la main), il est refusé (409) et un message
@@ -57,6 +61,20 @@ Envoyée par `server.js` dans un en-tête, et ajoutée dans la page du site GitH
 | `connect-src` | Seulement l'application, OpenStreetMap (Nominatim), l'annuaire de service-public.fr et GitHub (`api.github.com`, `raw.githubusercontent.com`) |
 | `object-src 'none'`, `base-uri 'none'`, `form-action 'none'` | Ni plugin, ni changement de l'adresse de base, ni envoi de formulaire |
 | `frame-ancestors 'none'` | Aucun site ne peut afficher Lignée dans un cadre (serveur local seulement) |
+
+**Site GitHub Pages seulement**, pour les [commandes à la voix](features/voice.md) dans le
+navigateur (sans serveur, Whisper et Qwen tournent dans la page) :
+
+| Ajout | Pour |
+| --- | --- |
+| `script-src https://cdn.jsdelivr.net blob: 'wasm-unsafe-eval'` | Les bibliothèques Transformers.js et WebLLM, à versions figées, et le WebAssembly qui fait tourner les modèles |
+| `worker-src 'self' blob:` | Les calculs des modèles hors de la page |
+| `connect-src https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co` | Le téléchargement des modèles (une fois, après accord ; ensuite gardés par le navigateur) |
+
+Ces scripts viennent d'un autre site : une bibliothèque compromise sur jsDelivr pourrait agir dans
+la page. Les versions sont figées (`@4.3.2`, `@0.2.86`) et ne sont chargées qu'au premier usage du
+micro. Le serveur local garde la politique stricte : la voix y passe par Whisper et Ollama sur
+l'ordinateur.
 
 Une balise `<meta>` ne peut pas porter `frame-ancestors` : sur GitHub Pages, `js/main.js` refuse
 donc de démarrer dans le cadre d'un autre site et propose de l'ouvrir dans un onglet. Le serveur envoie aussi
