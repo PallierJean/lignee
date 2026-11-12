@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.26](https://github.com/PallierJean/lignee/compare/v4.1.25...v4.1.26) (2026-11-12)
+
+### Bug Fixes
+
+* Read a date said in figures, "né le 10-12-95" ([f4f888d](https://github.com/PallierJean/lignee/commit/f4f888da3d72ff603106e71b8a61ef3b7e4bc13b))
+
+---
+
+### Corrections
+
+* Une date dite en chiffres (« 10-12-95 ») devient « 10/12/1995 », que le formulaire sait lire ([f4f888d](https://github.com/PallierJean/lignee/commit/f4f888da3d72ff603106e71b8a61ef3b7e4bc13b))
+
 ## [4.1.25](https://github.com/PallierJean/lignee/compare/v4.1.24...v4.1.25) (2026-11-12)
 
 ### Bug Fixes
