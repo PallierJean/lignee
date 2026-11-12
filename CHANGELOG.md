@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.20](https://github.com/PallierJean/lignee/compare/v4.1.19...v4.1.20) (2026-11-12)
+
+### Bug Fixes
+
+* Understand a command word followed by a comma, "Ajoute, Marie Dupont" ([2e6efcd](https://github.com/PallierJean/lignee/commit/2e6efcd8479e49170e813a284ffcefc0ba23209f))
+
+---
+
+### Corrections
+
+* « Ajoute, Marie Dupont », avec la virgule que met Whisper après le verbe, est compris tout de suite ([2e6efcd](https://github.com/PallierJean/lignee/commit/2e6efcd8479e49170e813a284ffcefc0ba23209f))
+
 ## [4.1.19](https://github.com/PallierJean/lignee/compare/v4.1.18...v4.1.19) (2026-11-12)
 
 ### Bug Fixes
