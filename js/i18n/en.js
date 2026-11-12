@@ -187,6 +187,7 @@ export const EN = {
   'repo.confirmFirst': 'First save: click “Save to GitHub” to check the changes; after that, each change is sent by itself.',
   'repo.autoFailed': 'The change couldn’t be sent to GitHub: it stays in this tree. See the banner.',
   'repo.undoCommit': 'undo',
+  'repo.formatCommit': 'move to the Lignée 4 format',
   'repo.redoCommit': 'redo',
   'repo.retry': 'Try sending again',
   'repo.forget': 'Disconnect repository',

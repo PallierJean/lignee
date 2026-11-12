@@ -7,6 +7,7 @@ import { S, treeName } from '../../state.js';
 import { buildBackup, parseBackup, FORMAT_VERSION } from '../backup.js';
 import { isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
 import { pool } from '../../utils/helpers.js';
+import { GALLERY_FILE } from '../../model/media.js';
 import { say, failure } from '../notify.js';
 import { ensureTree, sortTrees } from './trees.js';
 import { readLocalTrees, readLocalData } from './local.js';
@@ -183,8 +184,7 @@ export async function storePhotos() {
   return n;
 }
 
-/** File name of a gallery image: "photos/galerie-…". */
-export const GALLERY_FILE = /^photos\/galerie-/;
+export { GALLERY_FILE };
 
 /**
  * Gallery images whose files are still named after a person (saved before Lignée 4.0, when each

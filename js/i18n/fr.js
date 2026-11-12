@@ -192,6 +192,7 @@ export const FR = {
   'repo.confirmFirst': 'Première sauvegarde : cliquez sur « Sauvegarder sur GitHub » pour vérifier les changements ; ensuite, chaque modification partira toute seule.',
   'repo.autoFailed': 'La modification n’a pas pu partir sur GitHub : elle reste dans cet arbre. Voir le bandeau.',
   'repo.undoCommit': 'annulation',
+  'repo.formatCommit': 'passage au format de Lignée 4',
   'repo.redoCommit': 'rétablissement',
   'repo.retry': 'Réessayer l’envoi',
   'repo.forget': 'Déconnecter le dépôt',

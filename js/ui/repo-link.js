@@ -54,6 +54,7 @@ function setLink(repo, path, photos, mustConfirm, base) {
 export function linkRepo(repo, backup, photos, base) {
   if (repo.write) {
     setLink(repo, backup.path, photos, false, base);
+    if (backup.outdated) scheduleRepoSave('repo.formatCommit');
     return;
   }
   S.repoLink = { tree: S.tree, name: repo.name, path: backup.path };
@@ -82,6 +83,8 @@ export async function connectTree(repo) {
   const path = backup ? backup.path : paths[0] || paths[1];
   const { photos, base } = backup ? await attachPhotos(repo, backup) : { photos: new Map() };
   setLink(repo, path, photos, !!backup && !(known && known.head === repo.head), base);
+  // The repository's backup in an older format: rewritten at once, not at the next change
+  if (backup && backup.outdated) scheduleRepoSave('repo.formatCommit');
   renderRepoBanner();
 }
 

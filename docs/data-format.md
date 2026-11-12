@@ -24,7 +24,7 @@ L'enveloppe d'une sauvegarde `.json` et d'un fichier de `data/arbres/`.
 | Champ | Type | Requis | Description |
 | --- | --- | --- | --- |
 | `format` | `"lignee"` | ✅ | Reconnaît une sauvegarde Lignée ; sinon le fichier est refusé |
-| `version` | `number` | ✅ | Version du format, actuellement `3`. Le format `2` (Lignée 2.0 à 3.x, images dans les fiches) est lu et converti : les images passent dans la galerie (voir [Galerie](#galerie-media)), et l'arbre est réécrit au format 3 en mode fichier. Une autre version est refusée (import, dépôt GitHub, mode fichier) : un fichier d'avant Lignée 2.0 se convertit en l'ouvrant avec Lignée 2.3 ; en mode fichier, un arbre d'une version plus récente s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
+| `version` | `number` | ✅ | Version du format, actuellement `3`. Le format `2` (Lignée 2.0 à 3.x, images dans les fiches) est lu et converti : les images passent dans la galerie (voir [Galerie](#galerie-media)), et l'arbre est réécrit au format 3 : en mode fichier à son ouverture, dans un dépôt GitHub dès la connexion avec un jeton d'écriture (sans attendre une modification). Une autre version est refusée (import, dépôt GitHub, mode fichier) : un fichier d'avant Lignée 2.0 se convertit en l'ouvrant avec Lignée 2.3 ; en mode fichier, un arbre d'une version plus récente s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
 | `name` | `string` | | Nom de l'arbre |
 | `createdAt` | `number` | | Création de l'arbre, en millisecondes depuis 1970 |
 | `exportedAt` | `string` | | Date de l'export, ISO 8601 |
@@ -284,7 +284,7 @@ l'arbre, personne. Retirée du formulaire d'une fiche, elle ne montre plus la pe
 dans la galerie ; supprimer une personne la retire des images, qui restent. Les fichiers des
 images de la galerie s'appellent `galerie-<uuid>`. Ceux d'avant Lignée 4.0, nommés d'après une
 personne, sont repris sous ce nom : en mode fichier à l'ouverture de l'arbre (copie, puis l'ancien
-fichier part, sauf s'il sert aussi de portrait), dans un dépôt GitHub au prochain envoi (même
+fichier part, sauf s'il sert aussi de portrait), dans un dépôt GitHub dès la connexion (même
 contenu, rien n'est renvoyé).
 
 Conversion du format 2 : chaque image d'une fiche (`media` de la personne) passe dans la
