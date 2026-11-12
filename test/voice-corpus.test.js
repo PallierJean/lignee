@@ -56,7 +56,9 @@ const CORPUS = [
   // Facts about someone already in the tree
   ['Marc Tellier est né le 7 juin 1961 à Confolens.', { action: 'edit', who: 'Marc Tellier', person: { birthDate: '7 juin 1961', birthPlace: 'Confolens' } }],
   ['Marc Tellier est né en 1961.', { action: 'edit', who: 'Marc Tellier', person: { birthDate: '1961' } }],
+  ['Marc Tellier est né à Confolens.', { action: 'edit', who: 'Marc Tellier', person: { birthPlace: 'Confolens' } }],
   ['Marc Tellier est mort le 3 mars 2020 à Limoges.', { action: 'edit', who: 'Marc Tellier', person: { deathDate: '3 mars 2020', deathPlace: 'Limoges' } }],
+  ['Marc Tellier est mort à Limoges en 2020.', { action: 'edit', who: 'Marc Tellier', person: { deathDate: '2020', deathPlace: 'Limoges' } }],
   ['Marc Tellier est décédé en 2020.', { action: 'edit', who: 'Marc Tellier', person: { deathDate: '2020' } }],
   ['Marc Tellier était menuisier.', { action: 'edit', who: 'Marc Tellier', person: { occupation: 'menuisier' } }],
 
