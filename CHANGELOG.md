@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.30](https://github.com/PallierJean/lignee/compare/v4.1.29...v4.1.30) (2026-11-12)
+
+### Performance Improvements
+
+* Have the language model write only the fields said ([eda9097](https://github.com/PallierJean/lignee/commit/eda909712e0039dfac6fa48ef7f6bfec069566df))
+
+---
+
+### Performances
+
+* Le modèle de langage n'écrit plus que les champs dits : la première phrase passe de 109 s à 62 s, les suivantes de 13–20 s à 5–16 s ([eda9097](https://github.com/PallierJean/lignee/commit/eda909712e0039dfac6fa48ef7f6bfec069566df))
+
 ## [4.1.29](https://github.com/PallierJean/lignee/compare/v4.1.28...v4.1.29) (2026-11-12)
 
 ### Performance Improvements
