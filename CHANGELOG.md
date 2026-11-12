@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.31](https://github.com/PallierJean/lignee/compare/v4.1.30...v4.1.31) (2026-11-12)
+
+### Performance Improvements
+
+* Keep the language model loaded for 4 hours instead of 30 minutes ([1ac04b9](https://github.com/PallierJean/lignee/commit/1ac04b96197fb365d5a7b0076aa280d8d6004714))
+
+---
+
+### Performances
+
+* Le modèle de langue reste chargé 4 heures au lieu de 30 minutes, pour éviter la minute d'attente au retour ([1ac04b9](https://github.com/PallierJean/lignee/commit/1ac04b96197fb365d5a7b0076aa280d8d6004714))
+
 ## [4.1.30](https://github.com/PallierJean/lignee/compare/v4.1.29...v4.1.30) (2026-11-12)
 
 ### Performance Improvements
