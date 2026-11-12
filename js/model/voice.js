@@ -57,7 +57,15 @@ export function cleanDate(s) {
     });
 }
 
-/** JSON schema of a command, for the language model's constrained output. */
+/** A command as JSON with only what was said: the examples given to the model, which it copies. */
+function compact(command) {
+  return JSON.stringify(command, (k, v) => (v === '' || (v && typeof v === 'object' && Object.values(v).every((x) => x === '')) ? undefined : v));
+}
+
+/**
+ * JSON schema of a command, for the language model's constrained output. Only the action is required:
+ * the fields not said are left out (cleanCommand fills them in), a shorter answer, written sooner.
+ */
 export const SCHEMA = {
   type: 'object',
   properties: {
@@ -67,17 +75,15 @@ export const SCHEMA = {
     person: {
       type: 'object',
       properties: Object.fromEntries(FIELDS.map((f) => [f, f === 'sex' ? { type: 'string', enum: ['', 'M', 'F'] } : { type: 'string' }])),
-      required: FIELDS,
       additionalProperties: false,
     },
     union: {
       type: 'object',
       properties: { type: { type: 'string', enum: ['', ...UNION_KINDS] }, date: { type: 'string' }, place: { type: 'string' } },
-      required: ['type', 'date', 'place'],
       additionalProperties: false,
     },
   },
-  required: ['action', 'who', 'relation', 'person', 'union'],
+  required: ['action'],
   additionalProperties: false,
 };
 
@@ -116,10 +122,10 @@ action:
 person: given (first names), surname, sex ("M" or "F", from the words used, e.g. "née", "fille", "il"),
 birthDate, birthPlace, deathDate, deathPlace, occupation. Dates without "le" or "en": "12 mars 1820", "1 mai 1880"
 (not "1er"), "vers 1850", "1901". A place is only the town ("à Hautefort" → "Hautefort").
-Leave unsaid fields empty (""). Never invent anything.
+Leave out the fields not said. Never invent anything.
 
 Examples:
-${EXAMPLES.map(([s, c]) => `"${s}" → ${JSON.stringify(cleanCommand(c))}`).join('\n')}`;
+${EXAMPLES.map(([s, c]) => `"${s}" → ${compact(cleanCommand(c))}`).join('\n')}`;
 
 /** A command, with only known values (from a language model, which may stray). */
 export function cleanCommand(c) {
