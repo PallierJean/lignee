@@ -78,7 +78,7 @@ describe('voix : phrases connues', () => {
     assert.equal(c.who, 'Pierre Maury', 'le premier parent ; le formulaire propose son conjoint');
     assert.equal(c.relation, 'child');
     assert.equal(parseCommand('Anne est la fille de Jean qui est parti vivre à Paris').action, 'unknown');
-    assert.equal(parseCommand('Jean Maury était cultivateur à Hautefort').action, 'unknown');
+    assert.equal(parseCommand('Jean Maury était cultivateur à Hautefort').person.occupation, 'cultivateur');
   });
 
   test('frère, sœur, père, mère : « est », « comme », « a pour », « a un frère »', () => {
