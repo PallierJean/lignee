@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.2](https://github.com/PallierJean/lignee/compare/v4.1.1...v4.1.2) (2026-11-12)
+
+### Bug Fixes
+
+* Understand spoken sentences better and fill the form right ([5ae6074](https://github.com/PallierJean/lignee/commit/5ae607442e7b3fd41be08495abbe232a08e462a5))
+
+---
+
+### Corrections
+
+* Les phrases dites sont mieux comprises et remplissent correctement le formulaire ([5ae6074](https://github.com/PallierJean/lignee/commit/5ae607442e7b3fd41be08495abbe232a08e462a5))
+
 ## [4.1.1](https://github.com/PallierJean/lignee/compare/v4.1.0...v4.1.1) (2026-11-12)
 
 ### Bug Fixes
