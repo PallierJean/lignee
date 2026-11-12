@@ -261,8 +261,9 @@ describe('pluie du thème Matrix', () => {
       assert.equal(box.children[0].className, 'rain');
       const canvas = box.children[0].firstChild;
       assert.deepEqual([canvas.width, canvas.height], [159, 319], 'à la taille de la zone visible, un pixel de moins (jamais d’ascenseur)');
-      // Quelques images : les colonnes avancent et dessinent des signes retournés (miroir)
-      await new Promise((r) => setTimeout(r, 400));
+      // Quelques images : les colonnes avancent et dessinent des signes retournés (miroir). Elles partent
+      // d'une hauteur tirée au hasard au-dessus de la zone : on attend les premiers signes (3 s au plus)
+      for (let i = 0; i < 60 && !drawn.some((x) => x[0] === 'text'); i++) await new Promise((r) => setTimeout(r, 50));
       const texts = drawn.filter((x) => x[0] === 'text');
       assert.ok(texts.length > 0, 'des signes tombent');
       assert.ok(texts.every(([, t]) => t.length === 1));
@@ -270,6 +271,7 @@ describe('pluie du thème Matrix', () => {
       setRain(false);
       assert.equal(box.children.length, 0);
     } finally {
+      setRain(false); // even after a failed check: a rain left running keeps the tests from ending
       Object.assign(document, { createElement: saved.create, getElementById: saved.byId });
     }
   });
