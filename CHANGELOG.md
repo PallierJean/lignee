@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.13](https://github.com/PallierJean/lignee/compare/v4.1.12...v4.1.13) (2026-11-12)
+
+### Bug Fixes
+
+* Keep the name said when "et" or "il est" is left after the facts ([8edcf9a](https://github.com/PallierJean/lignee/commit/8edcf9a4b3df9c4ca30dc838dfc5d01b71ed36c2))
+
+---
+
+### Corrections
+
+* Une phrase avec « et mort en… » ou « il est né en… » garde le nom dit au lieu d'attendre le modèle de langage ([8edcf9a](https://github.com/PallierJean/lignee/commit/8edcf9a4b3df9c4ca30dc838dfc5d01b71ed36c2))
+
 ## [4.1.12](https://github.com/PallierJean/lignee/compare/v4.1.11...v4.1.12) (2026-11-12)
 
 ### Bug Fixes
