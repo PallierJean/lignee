@@ -196,6 +196,9 @@ export const EVENT_TYPES = ['baptism', 'burial', 'cremation', 'census', 'residen
 export const SOURCE_KINDS = ['birth', 'baptism', 'marriage', 'death', 'burial', 'census', 'military', 'notary',
   'family', 'book', 'web', 'other'];
 
+/** Kind of the archives (family papers, images moved from the gallery): shown apart from the other sources. */
+export const ARCHIVE_KIND = 'family';
+
 const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') : []);
 
 export { sourcesOf } from './sources.js';
