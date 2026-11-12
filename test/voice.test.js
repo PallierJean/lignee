@@ -124,7 +124,6 @@ describe('voix : phrases connues', () => {
     assert.equal(said(parseCommand('Ajoute la femme de Jean Tellier : Marie Dupont')).union, undefined, '« femme » : sans type');
     assert.equal(parseCommand('Jean Tellier vit à Paris').action, 'unknown');
     assert.equal(cleanCommand({ action: 'add', who: 'Jean', relation: 'child', person: { given: 'Anne' }, union: { type: 'married' } }).union.type, '', 'une union pour un conjoint seulement');
-    assert.deepEqual(SCHEMA.required, ['action', 'who', 'relation', 'person', 'union']);
   });
 
   test('lieux : petits mots en minuscules', () => {
@@ -278,9 +277,11 @@ describe('voix : réponse du modèle de langage', () => {
   });
 
   test('le schéma demande tous les champs ; la consigne montre des exemples valides', () => {
-    assert.deepEqual(SCHEMA.required, ['action', 'who', 'relation', 'person', 'union']);
-    assert.deepEqual(SCHEMA.properties.person.required, FIELDS);
+    assert.deepEqual(SCHEMA.required, ['action'], 'seule l’action : une réponse courte');
+    assert.deepEqual(Object.keys(SCHEMA.properties.person.properties), FIELDS);
     assert.match(PROMPT, /"relation":"child"/);
+    assert.doesNotMatch(PROMPT, /"birthPlace":""/, 'des exemples compacts : le modèle les recopie');
+    assert.equal(commandFromText('{"action":"open","who":"Jean"}').person.given, '', 'les champs absents, remplis');
   });
 });
 
