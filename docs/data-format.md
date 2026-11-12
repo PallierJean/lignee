@@ -206,7 +206,10 @@ Dans le formulaire, « Ou citer un document déjà dans l'arbre » ajoute une ci
 
 `Reading` (texte lu par [la lecture des écritures anciennes](features/htr.md)) :
 `{ of, model, date, lines: [{ box: [x, y, w, h], text, conf, ok? }] }`. `of` est l'image lue : si
-l'image a changé depuis, le texte ne compte plus. `box` est le cadre de la ligne en fractions de
+l'image a été remplacée depuis, le texte ne compte plus (et n'est pas envoyé au dépôt GitHub). Quand
+le fichier de l'image change de nom ou de forme (envoi au dépôt, ouverture depuis le dépôt, sauvegarde
+portable), `of` le suit ; une sauvegarde d'avant Lignée 4.0 où ce n'était pas le cas est réécrite à
+la connexion du dépôt. `box` est le cadre de la ligne en fractions de
 l'image (0 à 1), `conf` la confiance la plus basse du modèle sur la ligne (0 à 1), `ok` une ligne
 corrigée à la main.
 

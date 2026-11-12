@@ -67,7 +67,12 @@ export function parseBackup(text) {
   const people = convert(o.people);
   // Format 2: the images kept in the records (and any left there by hand) go to the gallery
   const media = galleryFromPeople(people, convert(o.media));
-  // Written in an older format, or gallery files still named after a person: worth writing again
-  const outdated = Number(o.version) < FORMAT_VERSION || media.some((x) => namedAfterPerson(x.data));
-  return { name, people, unions: convert(o.unions), sources: convert(o.sources), media, outdated };
+  // Written in an older format, gallery files still named after a person, or a document's reading
+  // naming another file than its image (sent by Lignée before 4.0): worth writing again
+  const sources = convert(o.sources);
+  const misnamed = (s) => [['photo', 'text'], ['back', 'backText']]
+    .some(([key, text]) => s[key] && s[text] && typeof s[text] === 'object' && s[text].of !== s[key]);
+  const outdated = Number(o.version) < FORMAT_VERSION || media.some((x) => namedAfterPerson(x.data))
+    || sources.some((x) => misnamed(x.data));
+  return { name, people, unions: convert(o.unions), sources, media, outdated };
 }

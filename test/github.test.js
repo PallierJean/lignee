@@ -454,6 +454,19 @@ describe('envoi vers le dépôt', () => {
     assert.ok(!treeEntries().tree.some((x) => x.sha === null && x.path.endsWith('Ané.jpg')));
   });
 
+  test('lecture d’un document : elle suit le nom de l’image dans le dépôt ; celle d’une image remplacée part', async () => {
+    const { repo, target } = await opened();
+    const body = JSON.parse(send([{ id: 'a' }], [
+      { id: 'S', kind: 'birth', photo: data, text: { of: data, lines: [{ text: 'Né le' }] } },
+      { id: 'T', kind: 'birth', photo: other, text: { of: 'photos/ancienne.jpg', lines: [] } },
+    ]));
+    await pushBackup(repo, target, JSON.stringify(body), 'msg');
+    const [s, t2] = json().sources;
+    assert.equal(s.text.of, s.photo);
+    assert.equal(s.photo, 'photos/Ané.jpg');
+    assert.equal(t2.text, undefined);
+  });
+
   test('second envoi : la photo ajoutée n’est pas retransférée', async () => {
     const { repo, target } = await opened();
     await pushBackup(repo, target, send([{ id: 'a', photo: other }]), 'msg');

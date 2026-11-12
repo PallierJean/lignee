@@ -59,3 +59,13 @@ test('format 1 (avant Lignée 2.0) : refusé clairement, jamais lu à moitié', 
   assert.throws(() => parseBackup(v1), { code: 'old', message: /avant Lignée 2\.0/ });
   assert.throws(() => parseBackup(JSON.stringify({ format: 'lignee', people: [], unions: [] })), { code: 'old' }, 'sans version : format 1');
 });
+
+test('outdated: an older format, gallery files named after a person, a reading naming another file', () => {
+  const v3 = (extra = {}) => JSON.stringify({ format: 'lignee', version: 3, people: [{ id: 'a' }], unions: [], ...extra });
+  assert.equal(parseBackup(v3()).outdated, false);
+  assert.equal(parseBackup(JSON.stringify({ format: 'lignee', version: 2, people: [{ id: 'a' }], unions: [] })).outdated, true);
+  assert.equal(parseBackup(v3({ media: [{ id: 'm', photo: 'photos/galerie-1.jpg', tags: [] }] })).outdated, false);
+  assert.equal(parseBackup(v3({ media: [{ id: 'm', photo: 'photos/ANA-1.jpg', tags: [] }] })).outdated, true);
+  assert.equal(parseBackup(v3({ sources: [{ id: 's', photo: 'photos/a.jpg', text: { of: 'photos/a.jpg', lines: [] } }] })).outdated, false);
+  assert.equal(parseBackup(v3({ sources: [{ id: 's', photo: 'photos/a.jpg', text: { of: 'photos/b.jpg', lines: [] } }] })).outdated, true);
+});
