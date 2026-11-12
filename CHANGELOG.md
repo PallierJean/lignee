@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.8](https://github.com/PallierJean/lignee/compare/v4.1.7...v4.1.8) (2026-11-12)
+
+### Bug Fixes
+
+* Split and spell the names heard as the tree writes them ([793e952](https://github.com/PallierJean/lignee/commit/793e952944a53e509d2cc61033ea3aeb25d85997))
+
+---
+
+### Corrections
+
+* Les prénoms et noms entendus sont séparés et écrits comme dans l'arbre (« Telié » devient « Tellier ») ([793e952](https://github.com/PallierJean/lignee/commit/793e952944a53e509d2cc61033ea3aeb25d85997))
+
 ## [4.1.7](https://github.com/PallierJean/lignee/compare/v4.1.6...v4.1.7) (2026-11-12)
 
 ### Bug Fixes
