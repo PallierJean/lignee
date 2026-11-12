@@ -15,7 +15,7 @@ import { $, esc, setHTML } from '../utils/dom.js';
 import { norm } from '../utils/helpers.js';
 import { t } from '../i18n.js';
 import { P, longName, lifeYears, given, surname, maiden, unionBetween } from '../model/people.js';
-import { FIELDS, parseCommand, parseReply, parseDetails, parseChoice, isGoodbye, isNoise } from '../model/voice.js';
+import { FIELDS, parseCommand, parseReply, parseDetails, parseChoice, isGoodbye, isNoise, fixName, soundKey } from '../model/voice.js';
 import { voiceEngines, warmVoice, record, listen, understandText, needsDownload, speak, hush, loadVoices, chime } from '../services/voice.js';
 import { searchPeople, onFindInput } from './search.js';
 import { renderSide } from './render.js';
@@ -354,6 +354,23 @@ export function toggleVoiceReply(on) {
 
 const words = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean);
 
+/** The tree's surnames (birth names included), the most frequent first: how the names heard are written. */
+function knownSurnames() {
+  const count = new Map();
+  for (const p of S.people.values()) {
+    // As written (surname() is in capitals, for display)
+    for (const n of new Set([p.surname, p.maidenName].map((x) => String(x || '').trim()).filter(Boolean))) count.set(n, (count.get(n) || 0) + 1);
+  }
+  return [...count].sort((a, b) => b[1] - a[1]).map(([n]) => n);
+}
+
+/** Words said, each surname that sounds like one of the tree written like it ("cherche les Telié" → "Tellier"). */
+function spellSurnames(text, known) {
+  const byKey = new Map();
+  for (const n of known) if (soundKey(n) && !byKey.has(soundKey(n))) byKey.set(soundKey(n), n);
+  return text.split(' ').map((w) => byKey.get(soundKey(w)) || w).join(' ');
+}
+
 /** Edits between two words (Levenshtein), to forgive a name heard a little wrong. */
 function distance(a, b) {
   let prev = Array.from({ length: b.length + 1 }, (x, j) => j);
@@ -379,7 +396,8 @@ export function peopleNamed(who) {
     const name = words([given(p), surname(p), p.maidenName].join(' '));
     let total = 0;
     const ok = said.every((w) => {
-      const d = Math.min(...name.map((n) => distance(w, n)));
+      // Sounding the same ("telie" for "tellier") counts as written the same
+      const d = Math.min(...name.map((n) => (soundKey(n) && soundKey(n) === soundKey(w) ? 0 : distance(w, n))));
       total += d;
       return d <= Math.max(1, Math.floor(w.length / 4));
     });
@@ -389,6 +407,10 @@ export function peopleNamed(who) {
 }
 
 function carryOut(c, text) {
+  // The names heard, written as in the tree: surname in its place, its spelling
+  const known = knownSurnames();
+  c = { ...c, person: { ...c.person, ...fixName(c.person, known) } };
+  if (c.action === 'search') c = { ...c, who: spellSurnames(c.who, known) };
   if (c.action === 'unknown') return set({ phase: 'done', text, note: t('voice.unknown'), examples: true });
   if (c.action === 'search') {
     const input = $('#find');
