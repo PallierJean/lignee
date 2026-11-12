@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.24](https://github.com/PallierJean/lignee/compare/v4.1.23...v4.1.24) (2026-11-12)
+
+### Bug Fixes
+
+* Save on a "oui" Whisper wrote with a noise after it ([bf46dc5](https://github.com/PallierJean/lignee/commit/bf46dc547e3bf46d8c7da9e3ef7b535ad8d72ae0))
+
+---
+
+### Corrections
+
+* Un « oui » suivi d'un bruit (« Oui, à l'île ») enregistre au lieu de redemander ([bf46dc5](https://github.com/PallierJean/lignee/commit/bf46dc547e3bf46d8c7da9e3ef7b535ad8d72ae0))
+
 ## [4.1.23](https://github.com/PallierJean/lignee/compare/v4.1.22...v4.1.23) (2026-11-12)
 
 ### Bug Fixes
