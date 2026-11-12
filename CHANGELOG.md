@@ -1,5 +1,41 @@
 # Changelog
 
+## [4.0.0](https://github.com/PallierJean/lignee/compare/v3.7.0...v4.0.0) (2026-11-12)
+
+### ⚠ BREAKING CHANGES
+
+* Backup format 3. Trees, backups and repositories written by this version can't be opened by Lignée 3.x; the local server must be restarted, as an older one only shows the tree read-only. ([b062850](https://github.com/PallierJean/lignee/commit/b062850924b1917bef592a48ea3d4629e5de24ff))
+
+### Features
+
+* Keep the gallery apart from the records ([b062850](https://github.com/PallierJean/lignee/commit/b062850924b1917bef592a48ea3d4629e5de24ff))
+* Voice commands to search, open, add and edit people ([09e384b](https://github.com/PallierJean/lignee/commit/09e384b0d59e42b838063eacafb60ab0a6a9f099))
+
+### Bug Fixes
+
+* Keep a document's reading tied to its image when the file changes ([c13502b](https://github.com/PallierJean/lignee/commit/c13502bb31edb9888efb5707ec72e79ac7507da2))
+* Rewrite an outdated repository backup as soon as it is linked ([33a4c64](https://github.com/PallierJean/lignee/commit/33a4c64d30360dfec03c495eaa7d0745e69a4383))
+* Rename gallery files still named after a person ([9a21d4b](https://github.com/PallierJean/lignee/commit/9a21d4bb44b14df4e9d6b1605dee7878fcd21b80))
+* Show the form when the side panel is folded, run voice in the online site ([29011ab](https://github.com/PallierJean/lignee/commit/29011ab3614db81b260dd2da9f154d1e26fd2043))
+
+---
+
+### ⚠ Changements incompatibles
+
+* Backup format 3. Trees, backups and repositories written by this version can't be opened by Lignée 3.x; the local server must be restarted, as an older one only shows the tree read-only. ([b062850](https://github.com/PallierJean/lignee/commit/b062850924b1917bef592a48ea3d4629e5de24ff))
+
+### Nouveautés
+
+* La galerie est rangée à part des fiches. Les images forment leur propre collection dans l'arbre, comme les unions : une fiche ne garde que son portrait, et une image n'est liée à une personne que par son identification dessus. Ajoutées depuis la galerie de l'arbre, les photos n'identifient personne ; depuis une fiche, sa personne. Leurs fichiers s'appellent « galerie-… » au lieu du nom de la personne au centre de l'arbre. Les arbres au format 2 sont convertis automatiquement, sans perte. Changement majeur : format de sauvegarde 3, que Lignée 3.x ne sait pas ouvrir. ([b062850](https://github.com/PallierJean/lignee/commit/b062850924b1917bef592a48ea3d4629e5de24ff))
+* Commandes à la voix pour chercher, ouvrir, ajouter et modifier des personnes. Un micro au bout du champ de recherche (ou la touche M) : Whisper écrit la phrase, puis Lignée la comprend, tout de suite pour les phrases connues, avec un modèle de langage (Qwen) pour les phrases libres. Chercher et ouvrir une fiche se font aussitôt ; un ajout ou une modification ouvre le formulaire habituel rempli avec ce qui a été dit, enregistré seulement au clic sur Enregistrer. Tout tourne sur l'ordinateur avec le serveur local (Whisper et Ollama) : rien n'est envoyé sur Internet. ([09e384b](https://github.com/PallierJean/lignee/commit/09e384b0d59e42b838063eacafb60ab0a6a9f099))
+
+### Corrections
+
+* La transcription d'un document reste affichée après un envoi ou une ouverture depuis GitHub ([c13502b](https://github.com/PallierJean/lignee/commit/c13502bb31edb9888efb5707ec72e79ac7507da2))
+* Un dépôt GitHub à l'ancien format est réécrit dès la connexion, sans attendre une modification ([33a4c64](https://github.com/PallierJean/lignee/commit/33a4c64d30360dfec03c495eaa7d0745e69a4383))
+* Les photos de la galerie encore nommées d'après une personne prennent le nom « galerie-… » ([9a21d4b](https://github.com/PallierJean/lignee/commit/9a21d4bb44b14df4e9d6b1605dee7878fcd21b80))
+* Le formulaire s'affiche quand le panneau latéral est replié, et la voix marche sur le site en ligne. Un formulaire ouvert avec le panneau replié restait caché : le panneau se déplie. Sur le site GitHub Pages, Whisper et Qwen tournent dans le navigateur ; Whisper n'utilise la carte graphique que si elle répond vraiment. ([29011ab](https://github.com/PallierJean/lignee/commit/29011ab3614db81b260dd2da9f154d1e26fd2043))
+
 ## [3.7.0](https://github.com/PallierJean/lignee/compare/v3.6.0...v3.7.0) (2026-11-11)
 
 ### Features
