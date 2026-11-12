@@ -25,6 +25,8 @@ const CORPUS = [
   ['Ajoutez Marie Dupont.', { action: 'add', person: { given: 'Marie', surname: 'Dupont' } }],
   ['Ajout Marie Dupont née en 1920.', { action: 'add', person: { given: 'Marie', surname: 'Dupont', birthDate: '1920' } }],
   ['A joute un fils à Marc Tellier : Jean.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Jean' } }],
+  ['Azout, Marc-Octave-Anatole-Tellier, né le 7 juin 1961 à Confolens.', { action: 'add', person: { given: 'Marc-Octave-Anatole', surname: 'Tellier', sex: 'M', birthDate: '7 juin 1961', birthPlace: 'Confolens' } }],
+  ['Ajoute Jean-Pierre.', { action: 'add', person: { given: 'Jean-Pierre', surname: '' } }],
   ['Ajoute Marie de la Borie.', { action: 'add', person: { given: 'Marie', surname: 'De la Borie' } }],
 
   // Parents and children

@@ -151,10 +151,19 @@ export function commandFromText(text) {
 
 /* ---------- Fixed sentences, without a language model ---------- */
 
+/**
+ * A whole name Whisper wrote with hyphens ("Marc-Octave-Anatole-Tellier"): from three parts on, the last
+ * is the surname (two parts are a compound first name: "Jean-Pierre").
+ */
+function unchain(given) {
+  const parts = given.split('-');
+  return parts.length >= 3 ? { given: parts.slice(0, -1).join('-'), surname: parts.at(-1) } : { given, surname: '' };
+}
+
 /** "anne marie lacoste" → { given: 'Anne Marie', surname: 'Lacoste' }; "de la borie": particles go with the surname. */
 export function splitName(name) {
   const words = str(name).replace(/[.,;:!?]+$/, '').split(' ').filter(Boolean);
-  if (words.length < 2) return { given: cap(words[0] || ''), surname: '' };
+  if (words.length < 2) return unchain(cap(words[0] || ''));
   let i = words.length - 1;
   while (i > 1 && PARTICLES.has(words[i - 1].toLowerCase())) i--;
   return { given: cap(words.slice(0, i).join(' ')), surname: cap(words.slice(i).join(' ')) };
@@ -517,6 +526,7 @@ export function fixName({ given = '', surname = '' }, known = []) {
   } else if (s && parts.length > 1 && soundKey(parts.at(-1)) && soundKey(parts.at(-1)) === soundKey(s)) {
     g = g.slice(0, g.length - parts.at(-1).length).replace(/[\s-]+$/, '');
   }
+  if (!s && !g.includes(' ')) ({ given: g, surname: s } = unchain(g));
   if (s && !s.includes(' ')) s = spelled(s);
   return { given: g, surname: s };
 }

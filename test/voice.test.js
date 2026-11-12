@@ -143,6 +143,7 @@ describe('voix : phrases connues', () => {
     assert.deepEqual(fixName({ given: 'Marie', surname: 'Lambore' }, known), { given: 'Marie', surname: 'Lamborre' });
     assert.deepEqual(fixName({ given: 'Jean-Pierre', surname: '' }, known), { given: 'Jean-Pierre', surname: '' }, 'un prénom composé reste');
     assert.deepEqual(fixName({ given: 'Paul', surname: 'Martin' }, known), { given: 'Paul', surname: 'Martin' }, 'un nom nouveau reste');
+    assert.deepEqual(fixName({ given: 'Marc-Otave-Anatole-Telier', surname: '' }, []), { given: 'Marc-Otave-Anatole', surname: 'Telier' }, 'arbre vide : la chaîne de tirets');
   });
 
   test('noms : prénoms puis nom, particules avec le nom', () => {
