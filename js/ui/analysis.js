@@ -2,7 +2,7 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
-import { P, fullName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS, surname, maiden, given } from '../model/people.js';
+import { P, fullName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS, ARCHIVE_KIND, surname, maiden, given } from '../model/people.js';
 import { relationship } from '../model/kinship.js';
 import { currentIssues } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
@@ -36,7 +36,7 @@ import {
 import { sourcesOfPerson } from '../model/sources.js';
 
 const VIEWS = [['kin', 'an.kin'], ['checks', 'an.checks'], ['dups', 'an.dups'], ['insee', 'an.insee'], ['acts', 'an.acts'], ['stats', 'an.stats'],
-  ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery'], ['sources', 'an.sources']];
+  ['cal', 'an.cal'], ['time', 'an.time'], ['places', 'an.places'], ['map', 'an.map'], ['gallery', 'an.gallery'], ['sources', 'an.sources'], ['archives', 'an.archives']];
 
 const name = (id) => esc(fullName(P(id)));
 const decimal = (x) => t('decimal', x.toFixed(1));
@@ -646,7 +646,7 @@ function timeView() {
  * Every document of the tree, once, with who cites it: [{ src, cites: [{ id, fact }] }], by kind
  * then title. A shared source is one entry; a record from before shared sources keeps its own.
  */
-export function sourceLibrary() {
+export function sourceLibrary(archives = false) {
   const byKey = new Map();
   for (const [id, p] of S.people) {
     for (const x of sourcesOfPerson(id)) {
@@ -664,7 +664,8 @@ export function sourceLibrary() {
     if (!na !== !nb) return na ? -1 : 1;
     return na.localeCompare(nb, t('locale')) || given(P(a.id)).localeCompare(given(P(b.id)), t('locale'));
   };
-  const list = [...byKey.values()];
+  // The archives (family papers) apart from the other sources: each in its own view
+  const list = [...byKey.values()].filter((x) => (x.src.kind === ARCHIVE_KIND) === archives);
   for (const x of list) x.cites.sort(byName);
   return list.sort((a, b) => order(a.src.kind) - order(b.src.kind)
     || byName(a.cites[0], b.cites[0])
@@ -677,9 +678,10 @@ let libQuery = '';
 
 const kindOf = (src) => (SOURCE_KINDS.includes(src.kind) ? src.kind : 'other');
 
-function sourcesView() {
-  const list = sourceLibrary();
-  if (!list.length) return `<p class="nofocus">${t('lib.none')}</p>`;
+/** The Sources view, or with `archives` the Archives view (family papers, images archived from the gallery). */
+function sourcesView(archives = false) {
+  const list = sourceLibrary(archives);
+  if (!list.length) return `<p class="nofocus">${t(archives ? 'lib.noArchive' : 'lib.none')}</p>`;
   const shared = list.filter((x) => new Set(x.cites.map((c) => c.id)).size > 1).length;
   const kinds = SOURCE_KINDS.filter((k) => list.some((x) => kindOf(x.src) === k));
   // Reading on this computer every document not read yet, one after the other
@@ -688,11 +690,13 @@ function sourcesView() {
   const reading = batch
     ? `<p class="rd-batch" role="status">${t('htr.batch', batch.done, batch.total)} <button class="link" type="button" data-act="read-stop">${t('htr.stop')}</button></p>`
     : todo ? `<p class="rd-batch"><button class="btn small" type="button" data-act="read-all">${t('htr.readAll', todo)}</button> <span class="hint">${t('htr.allHint')}</span></p>` : '';
-  return `<p class="hint an-hint">${t('lib.hint', list.length, shared)}</p>${reading}`
-    + `<div class="row2 lib-filters"><label class="fld"><span>${t('lib.kind')}</span><select id="lib-kind"><option value="">${t('lib.allKinds')}</option>`
-    + kinds.map((k) => `<option value="${k}"${k === libKind ? ' selected' : ''}>${esc(t('src.' + k))}</option>`).join('') + '</select></label>'
+  // One kind in the archives: no choice of kind
+  const kind = archives ? '' : `<label class="fld"><span>${t('lib.kind')}</span><select id="lib-kind"><option value="">${t('lib.allKinds')}</option>`
+    + kinds.map((k) => `<option value="${k}"${k === libKind ? ' selected' : ''}>${esc(t('src.' + k))}</option>`).join('') + '</select></label>';
+  return `<p class="hint an-hint">${t(archives ? 'lib.archiveHint' : 'lib.hint', list.length, shared)}</p>${reading}`
+    + `<div class="${archives ? '' : 'row2 '}lib-filters">${kind}`
     + `<label class="fld"><span>${t('lib.search')}</span><input id="lib-q" type="search" value="${esc(libQuery)}" placeholder="${t('lib.searchPlaceholder')}" autocomplete="off"></label></div>`
-    + `<div id="libList">${libraryList(list)}</div>`;
+    + `<div id="libList">${libraryList(list, archives)}</div>`;
 }
 
 /** Sets the Sources view's filters; the list alone is redrawn, the search field keeps the cursor. */
@@ -700,7 +704,8 @@ export function setLibraryFilter(kind, query) {
   if (kind !== undefined) libKind = kind;
   if (query !== undefined) libQuery = query;
   const el = document.getElementById('libList');
-  if (el) el.innerHTML = libraryList(sourceLibrary());
+  const archives = S.analysis === 'archives';
+  if (el) el.innerHTML = libraryList(sourceLibrary(archives), archives);
 }
 
 /** One document of the Sources view: its thumbnail(s), what it is, and who cites it. */
@@ -724,10 +729,10 @@ function libraryItem({ src, cites }, kind) {
 /** Family a document is filed under: the name shown of the first person citing it, or '' (no name). */
 const familyOf = ({ cites }) => (cites[0] ? surname(P(cites[0].id)) || maiden(P(cites[0].id)) : '');
 
-function libraryList(all) {
+function libraryList(all, archives = false) {
   const q = norm(libQuery).trim();
   const text = ({ src, cites }) => norm([src.title, src.place, src.ref, src.note, readText(src), ...cites.map((c) => fullName(P(c.id)))].filter(Boolean).join(' '));
-  const list = all.filter((x) => (!libKind || kindOf(x.src) === libKind) && (!q || text(x).includes(q)));
+  const list = all.filter((x) => (archives || !libKind || kindOf(x.src) === libKind) && (!q || text(x).includes(q)));
   if (!list.length) return `<p class="nofocus">${t('lib.noMatch')}</p>`;
   const kinds = [...new Set(list.map((x) => kindOf(x.src)))];
   return kinds.map((kind) => {
@@ -736,7 +741,7 @@ function libraryList(all) {
     const families = [...new Set(items.map(familyOf))];
     const groups = families.map((family) => {
       const members = items.filter((x) => familyOf(x) === family);
-      return `<li class="lib-family"><h4>${esc(family || t('lib.noName'))} - ${t('lib.count', members.length)}</h4>`
+      return `<li class="lib-family"><h4>${esc(family || t('lib.noName'))} - ${t(archives ? 'lib.docCount' : 'lib.count', members.length)}</h4>`
         + `<ul class="lib-list">${members.map((x) => libraryItem(x, kind)).join('')}</ul></li>`;
     }).join('');
     return `<section class="rel lib-kind"><h3>${esc(t('src.' + kind))} <span class="n">${items.length}</span></h3><ul class="lib-families">${groups}</ul></section>`;
@@ -769,7 +774,7 @@ export function renderAnalysis() {
   if (!S.kinA && P(S.focus)) S.kinA = S.focus;
   const seg = VIEWS.map(([view, label]) => `<button type="button" data-act="analysis-view" data-view="${view}" aria-pressed="${S.analysis === view}">${t(label)}</button>`).join('');
   const body = {
-    kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, acts: actsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView, sources: sourcesView,
+    kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, acts: actsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView, sources: () => sourcesView(), archives: () => sourcesView(true),
   }[S.analysis]();
   setHTML($('#paneAnalysis'), `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`);
 }

@@ -7,7 +7,7 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, given, surname, maiden, fullName, lifeYears, mediaLabel, photoSrc, peopleNamedIn, fileTitle, SOURCE_KINDS } from '../model/people.js';
+import { P, given, surname, maiden, fullName, lifeYears, mediaLabel, photoSrc, peopleNamedIn, fileTitle, ARCHIVE_KIND } from '../model/people.js';
 import { sourcesOf } from '../model/sources.js';
 import { tagsOf, hasPlace } from '../model/media.js';
 import { opSet, opUpdate, opDelete, inBatch, beginAction, commitAction, storePhoto, GALLERY_LABEL } from '../services/storage.js';
@@ -29,7 +29,7 @@ let editing = false; // caption being edited
 let sequence = [];    // [id]: the images of the grid it was opened from, in order
 let back = false;     // the back of the image is shown (contract, annotated photo)
 let askDelete = false; // the deletion of the image waits for its confirmation
-let askArchive = false; // moving the image to the archives waits for its kind
+let askArchive = false; // moving the image to the archives waits for a confirmation
 
 const isDraft = () => !!current && current.draft !== undefined;
 const item = () => {
@@ -145,9 +145,7 @@ function deleteBlock() {
       + `<button class="link" type="button" data-act="media-back-remove">${t('med.backRemove')}</button> · `
     : `<label class="link"><input type="file" accept="image/*" class="sr" data-media-back="1">${t('med.backAdd')}</label> · `;
   if (askArchive) {
-    const kinds = SOURCE_KINDS.map((k) => `<option value="${k}"${k === 'family' ? ' selected' : ''}>${esc(t('src.' + k))}</option>`).join('');
     return `<div class="confirm media-delete"><p>${t('med.archiveAsk')}</p>`
-      + `<label class="fld"><span>${t('f.srcKind')}</span><select id="archiveKind">${kinds}</select></label>`
       + `<button class="btn small primary" type="button" data-act="media-archive-yes">${t('med.archiveYes')}</button>`
       + `<button class="btn small" type="button" data-act="media-archive-no">${t('cancel')}</button></div>`;
   }
@@ -310,11 +308,12 @@ function leaveCurrent(id) {
 }
 
 /**
- * Moves the image shown to the archives: it leaves the gallery and becomes a source of `kind`
- * (front, back, title, date and note kept), cited by the people identified on it, for their whole
- * record. One undoable action. An image identifying no one stays: no record would keep the source.
+ * Moves the image shown to the archives: it leaves the gallery and becomes a source of the archives'
+ * kind (front, back, title, date and note kept), shown in the Archives view and not among the other
+ * sources, cited by the people identified on it, for their whole record. One undoable action. An
+ * image identifying no one stays: no record would keep the source.
  */
-export async function archiveMedia(kind) {
+export async function archiveMedia() {
   const m = item();
   if (!m || isDraft() || !S.canWrite) return;
   const { id } = current;
@@ -326,7 +325,7 @@ export async function archiveMedia(kind) {
   askArchive = false;
   const source = rid('S');
   const doc = {
-    source, fact: '', kind: SOURCE_KINDS.includes(kind) ? kind : 'other', title: m.title || '',
+    source, fact: '', kind: ARCHIVE_KIND, title: m.title || '',
     note: [m.date, m.note].filter(Boolean).join(' — '), photo: m.photo, ...(photoSrc(m.back) ? { back: m.back } : {}),
   };
   beginAction('hist.mediaArchive');

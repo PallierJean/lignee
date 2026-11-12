@@ -626,6 +626,36 @@ describe('bibliothèque de sources : filtres', () => {
   });
 });
 
+describe('archives : une vue à part des sources', () => {
+  beforeEach(openExample);
+
+  test('les papiers de famille dans Archives, plus parmi les actes', async () => {
+    const { setLibraryFilter } = await import('../js/ui/analysis.js');
+    loadTree([
+      person('a', { given: 'Jean', surname: 'Roux', citations: [{ id: 'c1', source: 'S1', fact: '' }, { id: 'c2', source: 'F1', fact: '' }] }),
+      person('b', { given: 'Marie', surname: 'Durand', citations: [{ id: 'c3', source: 'F2', fact: '' }] }),
+    ]);
+    S.sources = new Map([['S1', { kind: 'marriage', title: 'Mariage' }], ['F1', { kind: 'family', title: 'Lettre de 1915' }], ['F2', { kind: 'family', title: 'Carte postale' }]]);
+    S.focus = 'a';
+    const sources = view('sources');
+    assert.ok(sources.includes('Mariage') && !sources.includes('Lettre de 1915'), 'pas parmi les actes');
+    assert.ok(sources.includes('1 document.'));
+    assert.ok(!sources.includes('<option value="family"'));
+    const archives = view('archives');
+    assert.ok(archives.includes('data-view="archives" aria-pressed="true">Archives'));
+    assert.ok(archives.includes('Lettre de 1915') && archives.includes('Carte postale') && !archives.includes('Mariage'));
+    assert.ok(archives.includes('2 documents : les papiers de famille'));
+    assert.ok(!archives.includes('id="lib-kind"') && archives.includes('id="lib-q"'), 'une seule nature : pas de choix');
+    assert.ok(archives.includes('ROUX - 1 document'));
+    setLibraryFilter(undefined, 'durand');
+    const list = document.getElementById('libList').innerHTML;
+    assert.ok(list.includes('Carte postale') && !list.includes('Lettre'));
+    setLibraryFilter('', '');
+    S.sources = new Map([['S1', { kind: 'marriage', title: 'Mariage' }]]);
+    assert.ok(view('archives').includes('Aucune archive dans cet arbre'));
+  });
+});
+
 describe('bibliothèque de sources : ordre', () => {
   beforeEach(openExample);
 

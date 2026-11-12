@@ -150,11 +150,11 @@ describe('classer une image aux archives', () => {
     const card = () => document.getElementById('mediaCard').innerHTML;
     assert.match(card(), /data-act="media-archive">Classer aux archives/);
     media.askMediaArchive(true);
-    assert.match(card(), /<select id="archiveKind">/);
-    await media.archiveMedia('notary');
+    assert.doesNotMatch(card(), /<select/, 'pas de type à choisir');
+    await media.archiveMedia();
     assert.deepEqual([...S.media.keys()], ['m2'], 'plus dans la galerie');
     const [doc] = sourcesOf(S.people.get('a'));
-    assert.equal(doc.kind, 'notary');
+    assert.equal(doc.kind, 'family', 'une archive : « Archives familiales »');
     assert.equal(doc.title, 'Contrat');
     assert.equal(doc.note, '1912 — chez le notaire');
     assert.equal(doc.photo, 'data:image/png;base64,A');
@@ -171,7 +171,7 @@ describe('classer une image aux archives', () => {
     // An image identifying no one: no record would cite the source
     S.media.set('m3', { photo: 'data:image/png;base64,C', tags: [] });
     media.openMedia('m3');
-    await media.archiveMedia('family');
+    await media.archiveMedia();
     assert.ok(S.media.has('m3'), 'elle reste');
     assert.equal(S.sources.size, 0);
     media.closeMedia();
