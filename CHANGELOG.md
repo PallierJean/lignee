@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.6](https://github.com/PallierJean/lignee/compare/v4.1.5...v4.1.6) (2026-11-12)
+
+### Bug Fixes
+
+* Make the voice conversation take over again when no answer is heard ([465dd1e](https://github.com/PallierJean/lignee/commit/465dd1e4616c4fcec0d9d3ab276d1892f417f489))
+
+---
+
+### Corrections
+
+* La conversation à la voix reprend la main quand aucune réponse n'est entendue : signal sonore, message, et le micro répond au formulaire ([465dd1e](https://github.com/PallierJean/lignee/commit/465dd1e4616c4fcec0d9d3ab276d1892f417f489))
+
 ## [4.1.5](https://github.com/PallierJean/lignee/compare/v4.1.4...v4.1.5) (2026-11-12)
 
 ### Bug Fixes
