@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.21](https://github.com/PallierJean/lignee/compare/v4.1.20...v4.1.21) (2026-11-12)
+
+### Bug Fixes
+
+* Understand "Ajoute" as Whisper mishears it: "Azout", "Ajout", "A joute" ([86a486a](https://github.com/PallierJean/lignee/commit/86a486a28552122182900e0651b79ae9cd86c673))
+
+---
+
+### Corrections
+
+* « Ajoute » mal entendu par Whisper (« Azout », « Ajout », « A joute ») est compris ([86a486a](https://github.com/PallierJean/lignee/commit/86a486a28552122182900e0651b79ae9cd86c673))
+
 ## [4.1.20](https://github.com/PallierJean/lignee/compare/v4.1.19...v4.1.20) (2026-11-12)
 
 ### Bug Fixes
