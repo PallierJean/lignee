@@ -282,7 +282,10 @@ Une image apparaît dans la galerie de l'arbre, et sur la fiche de chaque person
 Ajoutée depuis une fiche, elle identifie la personne (sans repère) ; ajoutée depuis la galerie de
 l'arbre, personne. Retirée du formulaire d'une fiche, elle ne montre plus la personne mais reste
 dans la galerie ; supprimer une personne la retire des images, qui restent. Les fichiers des
-images de la galerie s'appellent `galerie-<uuid>` (ceux d'avant gardent leur nom).
+images de la galerie s'appellent `galerie-<uuid>`. Ceux d'avant Lignée 4.0, nommés d'après une
+personne, sont repris sous ce nom : en mode fichier à l'ouverture de l'arbre (copie, puis l'ancien
+fichier part, sauf s'il sert aussi de portrait), dans un dépôt GitHub au prochain envoi (même
+contenu, rien n'est renvoyé).
 
 Conversion du format 2 : chaque image d'une fiche (`media` de la personne) passe dans la
 galerie ; la personne de la fiche y est identifiée sans repère si elle ne l'était pas déjà. Les
