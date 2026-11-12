@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.9](https://github.com/PallierJean/lignee/compare/v4.1.8...v4.1.9) (2026-11-12)
+
+### Bug Fixes
+
+* Fill in the department of the places said, and find the commune heard ([087c5de](https://github.com/PallierJean/lignee/commit/087c5dedbd7afbdd346509c80b2f4e4372e258dc))
+
+---
+
+### Corrections
+
+* Les lieux dits à la voix ont leur département, et la commune mal entendue est retrouvée (« Confoland » → Confolens (16)) ([087c5de](https://github.com/PallierJean/lignee/commit/087c5dedbd7afbdd346509c80b2f4e4372e258dc))
+
 ## [4.1.8](https://github.com/PallierJean/lignee/compare/v4.1.7...v4.1.8) (2026-11-12)
 
 ### Bug Fixes
