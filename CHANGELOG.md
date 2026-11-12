@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.22](https://github.com/PallierJean/lignee/compare/v4.1.21...v4.1.22) (2026-11-12)
+
+### Bug Fixes
+
+* Split a whole name Whisper glued with hyphens, "Marc-Octave-Anatole-Tellier" ([c12d6b3](https://github.com/PallierJean/lignee/commit/c12d6b3d38e8ffd0155fe695474c067c63af1fb7))
+
+---
+
+### Corrections
+
+* Un nom entier collé par des tirets (« Marc-Octave-Anatole-Tellier ») est séparé en prénoms et nom, même dans un arbre vide ([c12d6b3](https://github.com/PallierJean/lignee/commit/c12d6b3d38e8ffd0155fe695474c067c63af1fb7))
+
 ## [4.1.21](https://github.com/PallierJean/lignee/compare/v4.1.20...v4.1.21) (2026-11-12)
 
 ### Bug Fixes
