@@ -14,7 +14,7 @@ const { LIGNEE_TEST_REPO: REPO, LIGNEE_TEST_READ_TOKEN: READ, LIGNEE_TEST_WRITE_
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 const PNG2 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 const path = `e2e-${Date.now()}.json`;
-const backup = (people) => JSON.stringify({ format: 'lignee', version: 2, name: 'Essai é', people, unions: [], sources: [] });
+const backup = (people) => JSON.stringify({ format: 'lignee', version: 3, name: 'Essai é', people, unions: [], sources: [] });
 const people = (photo) => [{ id: 'a', given: 'Zoé', notes: 'accents éàü — “ok” 👍', ...(photo ? { photo } : {}) }];
 const paths = (repo) => [...repo.files.keys()];
 

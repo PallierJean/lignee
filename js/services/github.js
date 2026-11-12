@@ -5,7 +5,7 @@
  * With an authorised token, the tree and its photos go back to the repository in a single commit.
  * The token is never stored; it is only sent to api.github.com.
  */
-import { convertPhotos, GALLERY_LABEL, GALLERY_FILE } from './storage.js';
+import { convertPhotos, GALLERY_LABEL } from './storage.js';
 import { parseBackup } from './backup.js';
 import { isPhotoFile, isPhotoData, photoLabel } from '../model/people.js';
 import { pool, sleep } from '../utils/helpers.js';
@@ -240,14 +240,6 @@ export async function pushBackup(repo, target, text, message) {
     if (!isPhotoData(photo)) return photo;
     if (!photos.has(photo)) {
       let known = target.photos.get(photo);
-      const file = known && repo.files.get(known.path.normalize('NFC'));
-      // A gallery image whose file is still named after a person (Lignée before 4.0): the same
-      // content under the gallery's name, nothing sent again; the old file goes, unless a record cites it
-      if (known && p === GALLERY_LABEL && !GALLERY_FILE.test(known.ref) && file && file.sha) {
-        const ref = `photos/galerie-${crypto.randomUUID()}.${known.ref.split('.').pop()}`;
-        known = { ref, path: folder + ref };
-        entries.push({ path: known.path, mode: '100644', type: 'blob', sha: file.sha });
-      }
       if (!known) {
         const [, type, content] = photo.match(/^data:(image\/\w+);base64,(.*)$/s);
         const ref = `photos/${photoLabel(p)}-${crypto.randomUUID()}.${EXT[type]}`;
@@ -265,12 +257,7 @@ export async function pushBackup(repo, target, text, message) {
   backup.people = people;
   // A shared source's document: its file is named after its title or its kind
   const sources = [];
-  for (const s of backup.sources || []) {
-    const sent = await convertPhotos(s, (photo) => store(photo, { given: s.title || s.kind || 'source' }));
-    // A reading of a document replaced since: never shown, it would leave the backup looking outdated
-    for (const [key, text] of [['photo', 'text'], ['back', 'backText']]) if (sent[text] && sent[text].of !== sent[key]) delete sent[text];
-    sources.push(sent);
-  }
+  for (const s of backup.sources || []) sources.push(await convertPhotos(s, (photo) => store(photo, { given: s.title || s.kind || 'source' })));
   if (backup.sources) backup.sources = sources;
   // A gallery image: the same name for all ("galerie-…"), not that of a person
   const media = [];

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
 import { parseRepo, openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
-import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner, chooseRepoSave, flushRepoSave, scheduleRepoSave, AUTOSAVE_DELAY } from '../js/ui/repo-link.js';
+import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner, chooseRepoSave, flushRepoSave, scheduleRepoSave } from '../js/ui/repo-link.js';
 import { beginAction, commitAction, opUpdate } from '../js/services/storage.js';
 import { readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo, openTransfer, closeTransfer } from '../js/ui/transfer.js';
 import { photoOf } from '../js/model/people.js';
@@ -11,7 +11,7 @@ import { resetApp, html } from './helpers.js';
 
 const el = (id) => document.getElementById(id);
 const nativeFetch = globalThis.fetch;
-const backup = (extra = {}) => JSON.stringify({ format: 'lignee', version: 2, name: 'Famille', people: [{ id: 'a', given: 'Ana', photo: 'photos/Ané.jpg', ...extra }], unions: [] });
+const backup = (extra = {}) => JSON.stringify({ format: 'lignee', version: 3, name: 'Famille', people: [{ id: 'a', given: 'Ana', photo: 'photos/Ané.jpg', ...extra }], unions: [] });
 let calls;
 let head;
 
@@ -111,9 +111,10 @@ describe('lecture du dépôt', () => {
   });
 
   test('photo à côté du fichier ; sources et médias convertis ; absente : retirée', async () => {
-    const fields = { citations: [{ id: 'c', source: 'S1', fact: '' }], media: [{ photo: 'photos/manque.gif' }] };
+    const fields = { citations: [{ id: 'c', source: 'S1', fact: '' }] };
     const file = JSON.parse(backup(fields));
     file.sources = [{ id: 'S1', title: 'Acte', photo: 'photos/acte.png' }];
+    file.media = [{ id: 'm', photo: 'photos/manque.gif', tags: [{ id: 'a' }] }];
     serve({ 'data/arbre.json': JSON.stringify(file), 'data/photos/Ané.jpg': 'img', 'data/photos/acte.png': 'doc' });
     const repo = await openRepo('compte/depot', '');
     const count = await attachPhotos(repo, repo.backups[0]);
@@ -124,7 +125,6 @@ describe('lecture du dépôt', () => {
     const src = repo.backups[0].sources.find((x) => x.id === p.citations[0].source).data;
     assert.match(src.photo, /^data:image\/png;base64,/);
     assert.equal(count.base.sources.get(p.citations[0].source).photo, 'photos/acte.png', 'base : chemins du dépôt');
-    assert.equal(p.media, undefined, 'les images ne sont plus dans les fiches');
     assert.deepEqual(repo.backups[0].media, [], 'absente du dépôt : l’image est retirée de la galerie');
   });
 
@@ -286,7 +286,7 @@ describe('bandeaux', () => {
     const [id] = S.people.keys();
     S.people.set(id, { ...S.people.get(id), birthPlace: 'Lyon' });
     files['principal.json'] = JSON.stringify({
-      format: 'lignee', version: 2, name: 'Famille',
+      format: 'lignee', version: 3, name: 'Famille',
       people: [{ id, given: 'Ana', surname: 'Durand', photo: 'photos/Ané.jpg' }, { id: 'b', given: 'Bruno' }],
       unions: [],
     });
@@ -344,7 +344,7 @@ describe('bandeaux', () => {
     await importGo(true);
     const [id] = S.people.keys();
     S.people.set(id, { ...S.people.get(id), given: 'Anne' });
-    files['principal.json'] = JSON.stringify({ format: 'lignee', version: 2, people: [{ id, given: 'Anna', photo: 'photos/Ané.jpg' }], unions: [] });
+    files['principal.json'] = JSON.stringify({ format: 'lignee', version: 3, people: [{ id, given: 'Anna', photo: 'photos/Ané.jpg' }], unions: [] });
     head = 'c1';
     calls.length = 0;
     await saveRepo();
@@ -389,7 +389,7 @@ describe('bandeaux', () => {
 describe('envoi vers le dépôt', () => {
   const data = 'data:image/jpeg;base64,' + btoa('img');
   const other = 'data:image/png;base64,' + btoa('neuf');
-  const send = (people, sources = []) => JSON.stringify({ format: 'lignee', version: 2, name: 'F', people, unions: [], sources });
+  const send = (people, sources = []) => JSON.stringify({ format: 'lignee', version: 3, name: 'F', people, unions: [], sources });
 
   async function opened() {
     serve({ 'principal.json': backup(), 'principal/photos/Ané.jpg': 'img', 'principal/photos/vieille.jpg': 'x' }, 0, true);
@@ -426,45 +426,13 @@ describe('envoi vers le dépôt', () => {
     assert.ok(!entries.some((x) => x.path.endsWith('vieille.jpg')), 'fichier jamais chargé : conservé');
   });
 
-  test('image de la galerie au nom d’une personne : reprise sous « galerie-… », sans renvoi', async () => {
+  test('lecture d’un document : elle suit le nom de l’image dans le dépôt', async () => {
     const { repo, target } = await opened();
-    const known = repo.files.get('principal/photos/Ané.jpg').sha;
-    calls.length = 0;
-    const body = JSON.parse(send([{ id: 'a' }]));
-    body.version = 3;
-    body.media = [{ id: 'm', photo: data, tags: [{ id: 'a' }] }];
+    const body = JSON.parse(send([{ id: 'a' }], [{ id: 'S', kind: 'birth', photo: data, text: { of: data, lines: [{ text: 'Né le' }] } }]));
     await pushBackup(repo, target, JSON.stringify(body), 'msg');
-    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')), 'contenu déjà dans le dépôt');
-    const ref = json().media[0].photo;
-    assert.match(ref, /^photos\/galerie-[0-9a-f-]{36}\.jpg$/);
-    const entries = treeEntries().tree;
-    assert.ok(entries.some((x) => x.path === 'principal/' + ref && x.sha === known));
-    assert.ok(entries.some((x) => x.path === 'principal/photos/Ané.jpg' && x.sha === null), 'l’ancien nom part');
-  });
-
-  test('fichier aussi portrait d’une fiche : le portrait garde son nom', async () => {
-    const { repo, target } = await opened();
-    calls.length = 0;
-    const body = JSON.parse(send([{ id: 'a', photo: data }]));
-    body.version = 3;
-    body.media = [{ id: 'm', photo: data, tags: [] }];
-    await pushBackup(repo, target, JSON.stringify(body), 'msg');
-    assert.equal(json().people[0].photo, 'photos/Ané.jpg');
-    assert.equal(json().media[0].photo, 'photos/Ané.jpg');
-    assert.ok(!treeEntries().tree.some((x) => x.sha === null && x.path.endsWith('Ané.jpg')));
-  });
-
-  test('lecture d’un document : elle suit le nom de l’image dans le dépôt ; celle d’une image remplacée part', async () => {
-    const { repo, target } = await opened();
-    const body = JSON.parse(send([{ id: 'a' }], [
-      { id: 'S', kind: 'birth', photo: data, text: { of: data, lines: [{ text: 'Né le' }] } },
-      { id: 'T', kind: 'birth', photo: other, text: { of: 'photos/ancienne.jpg', lines: [] } },
-    ]));
-    await pushBackup(repo, target, JSON.stringify(body), 'msg');
-    const [s, t2] = json().sources;
-    assert.equal(s.text.of, s.photo);
+    const [s] = json().sources;
     assert.equal(s.photo, 'photos/Ané.jpg');
-    assert.equal(t2.text, undefined);
+    assert.equal(s.text.of, s.photo);
   });
 
   test('second envoi : la photo ajoutée n’est pas retransférée', async () => {
@@ -478,7 +446,7 @@ describe('envoi vers le dépôt', () => {
 });
 
 describe('lecture juste après un envoi', () => {
-  const send = (given) => JSON.stringify({ format: 'lignee', version: 2, name: 'F', people: [{ id: 'a', given }], unions: [] });
+  const send = (given) => JSON.stringify({ format: 'lignee', version: 3, name: 'F', people: [{ id: 'a', given }], unions: [] });
 
   test('GitHub relit encore l’ancien commit : pas de faux conflit', async () => {
     serve({ 'principal.json': backup({ photo: '' }) }, 0, true);
@@ -616,7 +584,7 @@ describe('connecter l’arbre ouvert', () => {
   });
 
   const sent = () => JSON.parse(calls.findLast((c) => c.url.endsWith('/git/trees')).body.tree.find((x) => x.path === 'agathe.json').content);
-  const twoPeople = () => JSON.stringify({ format: 'lignee', version: 2, name: 'F', people: [{ id: 'a', given: 'Ana' }, { id: 'r', given: 'Rémi' }], unions: [] });
+  const twoPeople = () => JSON.stringify({ format: 'lignee', version: 3, name: 'F', people: [{ id: 'a', given: 'Ana' }, { id: 'r', given: 'Rémi' }], unions: [] });
 
   test('bouton seulement si besoin : première sauvegarde à vérifier, ou envoi qui a échoué', async () => {
     await connect({ 'agathe.json': backup({ photo: '' }) });
@@ -647,7 +615,7 @@ describe('connecter l’arbre ouvert', () => {
   test('connecté après l’aperçu d’import : les photos du dépôt sont reconnues, pas renvoyées ; les doublons partent', async () => {
     // Même photo que celle de l'arbre ouvert (beforeEach), plus un doublon laissé par une ancienne version
     await connect({
-      'agathe.json': JSON.stringify({ format: 'lignee', version: 2, name: 'F', people: [{ id: 'a', given: 'Agathe', photo: 'photos/Agathe-1.jpg' }], unions: [] }),
+      'agathe.json': JSON.stringify({ format: 'lignee', version: 3, name: 'F', people: [{ id: 'a', given: 'Agathe', photo: 'photos/Agathe-1.jpg' }], unions: [] }),
       'agathe/photos/Agathe-1.jpg': 'img', 'agathe/photos/Agathe-0db90881-c80d-4a4f-a99a-632f168b33cd.jpg': 'img',
       'agathe/photos/posée-à-la-main.jpg': 'img', 'autre/photos/x-0db90881-c80d-4a4f-a99a-632f168b33cd.jpg': 'img',
     });
@@ -699,12 +667,6 @@ describe('connecter l’arbre ouvert', () => {
     assert.equal(S.repoLink.mustConfirm, false);
   });
 
-  // The automatic send, scheduled by itself, then done
-  const waitAutoSave = async () => {
-    await new Promise((r) => setTimeout(r, AUTOSAVE_DELAY + 100));
-    for (let i = 0; i < 20 && !calls.some((c) => c.method === 'PATCH'); i++) await new Promise((r) => setTimeout(r, 25));
-  };
-
   test('rechargement : dépôt retenu sans le jeton, reconnexion sans confirmation', async () => {
     head = '';
     await connect({});
@@ -719,41 +681,6 @@ describe('connecter l’arbre ouvert', () => {
     assert.equal(el('repoUrl').value, 'compte/depot');
     await connect({ 'agathe-famille.json': backup({ photo: '' }) });
     assert.equal(S.repoLink.mustConfirm, false);
-  });
-
-  test('reconnexion à un dépôt d’un format plus ancien : réécrit tout de suite, sans attendre une modification', async () => {
-    head = '';
-    await connect({});
-    await saveRepo();
-    head = S.repoLink.repo.head;
-    S.repoLink = null;
-    // L'arbre ouvert, déjà converti sur l'ordinateur ; le dépôt, encore au format 2
-    S.people = new Map([['a', { given: 'Ana' }]]);
-    S.media = new Map([['m', { photo: 'data:image/jpeg;base64,' + btoa('img'), tags: [{ id: 'a' }] }]]);
-    const old = { format: 'lignee', version: 2, name: 'F', people: [{ id: 'a', given: 'Ana', media: [{ id: 'm', photo: 'photos/ANA-1.jpg' }] }], unions: [] };
-    await connect({ 'agathe-famille.json': JSON.stringify(old), 'agathe-famille/photos/ANA-1.jpg': 'img' });
-    calls.length = 0;
-    await waitAutoSave();
-    const commit = calls.find((c) => c.url.endsWith('/git/commits'));
-    assert.ok(commit, 'envoyé');
-    assert.match(commit.body.message, /format de Lignée 4/);
-    const json = JSON.parse(calls.find((c) => c.url.endsWith('/git/trees')).body.tree.find((x) => x.path === 'agathe-famille.json').content);
-    assert.equal(json.version, 3);
-    assert.match(json.media[0].photo, /^photos\/galerie-/);
-    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')), 'photo déjà dans le dépôt : pas renvoyée');
-  });
-
-  test('reconnexion à un dépôt à jour : rien n’est envoyé', async () => {
-    head = '';
-    await connect({});
-    await saveRepo();
-    head = S.repoLink.repo.head;
-    S.repoLink = null;
-    const now = { format: 'lignee', version: 3, name: 'F', people: [{ id: 'a', given: 'Ana' }], unions: [], media: [{ id: 'm', photo: 'photos/galerie-1.jpg', tags: [{ id: 'a' }] }] };
-    await connect({ 'agathe-famille.json': JSON.stringify(now), 'agathe-famille/photos/galerie-1.jpg': 'img' });
-    calls.length = 0;
-    await waitAutoSave();
-    assert.deepEqual(calls.filter((c) => c.method !== 'GET').map((c) => c.method + ' ' + c.url), []);
   });
 
   test('dépôt modifié ailleurs depuis la dernière sauvegarde : confirmation demandée', async () => {

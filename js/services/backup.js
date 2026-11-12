@@ -7,11 +7,10 @@
  */
 import { S, treeName } from '../state.js';
 import { t } from '../i18n.js';
-import { galleryFromPeople, namedAfterPerson } from '../model/media.js';
 
 // Version of the backup format this Lignée writes; it also reads OLDEST_READ and later
 export const FORMAT_VERSION = 3;
-const OLDEST_READ = 2;
+const OLDEST_READ = 3;
 
 const SAFE_ID = /^[A-Za-z0-9_\-.~:@+]{1,200}$/;
 const isSafeId = (s) => typeof s === 'string' && SAFE_ID.test(s) && s !== '.' && s !== '..';
@@ -43,7 +42,7 @@ export function buildBackup(src) {
 /** True if `o` (a parsed backup) was written by a newer Lignée, in a format this one doesn't know. */
 export const isNewerFormat = (o) => !!o && o.format === 'lignee' && Number(o.version) > FORMAT_VERSION;
 
-/** True if `o` was written by a Lignée older than 2.0 (format 1), which this one no longer reads. */
+/** True if `o` was written by a Lignée older than 4.0 (formats 1 and 2), which this one no longer reads. */
 export const isOlderFormat = (o) => !!o && o.format === 'lignee' && !(Number(o.version) >= OLDEST_READ);
 
 /**
@@ -64,15 +63,5 @@ export function parseBackup(text) {
       return { id: x.id, data };
     });
   const name = typeof o.name === 'string' ? o.name.trim().slice(0, 80) : '';
-  const people = convert(o.people);
-  // Format 2: the images kept in the records (and any left there by hand) go to the gallery
-  const media = galleryFromPeople(people, convert(o.media));
-  // Written in an older format, gallery files still named after a person, or a document's reading
-  // naming another file than its image (sent by Lignée before 4.0): worth writing again
-  const sources = convert(o.sources);
-  const misnamed = (s) => [['photo', 'text'], ['back', 'backText']]
-    .some(([key, text]) => s[key] && s[text] && typeof s[text] === 'object' && s[text].of !== s[key]);
-  const outdated = Number(o.version) < FORMAT_VERSION || media.some((x) => namedAfterPerson(x.data))
-    || sources.some((x) => misnamed(x.data));
-  return { name, people, unions: convert(o.unions), sources, media, outdated };
+  return { name, people: convert(o.people), unions: convert(o.unions), sources: convert(o.sources), media: convert(o.media) };
 }

@@ -192,7 +192,6 @@ export const FR = {
   'repo.confirmFirst': 'Première sauvegarde : cliquez sur « Sauvegarder sur GitHub » pour vérifier les changements ; ensuite, chaque modification partira toute seule.',
   'repo.autoFailed': 'La modification n’a pas pu partir sur GitHub : elle reste dans cet arbre. Voir le bandeau.',
   'repo.undoCommit': 'annulation',
-  'repo.formatCommit': 'passage au format de Lignée 4',
   'repo.redoCommit': 'rétablissement',
   'repo.retry': 'Réessayer l’envoi',
   'repo.forget': 'Déconnecter le dépôt',
@@ -200,7 +199,7 @@ export const FR = {
   'tr.repoErr.newer': 'Ce dépôt contient une sauvegarde d’une version plus récente de Lignée. Mettez Lignée à jour pour l’ouvrir ou y sauvegarder.',
   'tr.repoErr.noBackup': 'Aucune sauvegarde Lignée (.json) trouvée dans ce dépôt.',
   'tr.repoErr.failed': 'Le dépôt n’a pas pu être lu. Vérifiez votre connexion et réessayez.',
-  'backup.old': 'Ce fichier est au format d’avant Lignée 2.0, que cette version ne lit plus. Ouvrez-le d’abord avec Lignée 2.3 pour le convertir.',
+  'backup.old': 'Ce fichier est dans un format d’avant Lignée 4.0, que cette version ne lit plus. Ouvrez-le d’abord avec Lignée 4.1 pour le convertir.',
   'backup.newer': 'Cet arbre a été enregistré par une version plus récente de Lignée. Mettez Lignée à jour pour l’ouvrir : cette version risquerait d’en perdre une partie.',
   'backup.invalid': 'Ce fichier n’est pas une sauvegarde Lignée.',
 

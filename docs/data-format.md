@@ -24,7 +24,7 @@ L'enveloppe d'une sauvegarde `.json` et d'un fichier de `data/arbres/`.
 | Champ | Type | Requis | Description |
 | --- | --- | --- | --- |
 | `format` | `"lignee"` | ✅ | Reconnaît une sauvegarde Lignée ; sinon le fichier est refusé |
-| `version` | `number` | ✅ | Version du format, actuellement `3`. Le format `2` (Lignée 2.0 à 3.x, images dans les fiches) est lu et converti : les images passent dans la galerie (voir [Galerie](#galerie-media)), et l'arbre est réécrit au format 3 : en mode fichier à son ouverture, dans un dépôt GitHub dès la connexion avec un jeton d'écriture (sans attendre une modification). Une autre version est refusée (import, dépôt GitHub, mode fichier) : un fichier d'avant Lignée 2.0 se convertit en l'ouvrant avec Lignée 2.3 ; en mode fichier, un arbre d'une version plus récente s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
+| `version` | `number` | ✅ | Version du format, actuellement `3`. Une autre version est refusée (import, dépôt GitHub, mode fichier) : un fichier au format 1 ou 2 (d'avant Lignée 4.0, images dans les fiches) se convertit en l'ouvrant avec Lignée 4.1 ; en mode fichier, un arbre d'une version plus récente s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
 | `name` | `string` | | Nom de l'arbre |
 | `createdAt` | `number` | | Création de l'arbre, en millisecondes depuis 1970 |
 | `exportedAt` | `string` | | Date de l'export, ISO 8601 |
@@ -206,10 +206,8 @@ Dans le formulaire, « Ou citer un document déjà dans l'arbre » ajoute une ci
 
 `Reading` (texte lu par [la lecture des écritures anciennes](features/htr.md)) :
 `{ of, model, date, lines: [{ box: [x, y, w, h], text, conf, ok? }] }`. `of` est l'image lue : si
-l'image a été remplacée depuis, le texte ne compte plus (et n'est pas envoyé au dépôt GitHub). Quand
-le fichier de l'image change de nom ou de forme (envoi au dépôt, ouverture depuis le dépôt, sauvegarde
-portable), `of` le suit ; une sauvegarde d'avant Lignée 4.0 où ce n'était pas le cas est réécrite à
-la connexion du dépôt. `box` est le cadre de la ligne en fractions de
+l'image a été remplacée depuis, le texte ne compte plus. Quand le fichier de l'image change de nom ou
+de forme (envoi au dépôt, ouverture depuis le dépôt, sauvegarde portable), `of` le suit. `box` est le cadre de la ligne en fractions de
 l'image (0 à 1), `conf` la confiance la plus basse du modèle sur la ligne (0 à 1), `ok` une ligne
 corrigée à la main.
 
@@ -285,15 +283,9 @@ Une image apparaît dans la galerie de l'arbre, et sur la fiche de chaque person
 Ajoutée depuis une fiche, elle identifie la personne (sans repère) ; ajoutée depuis la galerie de
 l'arbre, personne. Retirée du formulaire d'une fiche, elle ne montre plus la personne mais reste
 dans la galerie ; supprimer une personne la retire des images, qui restent. Les fichiers des
-images de la galerie s'appellent `galerie-<uuid>`. Ceux d'avant Lignée 4.0, nommés d'après une
-personne, sont repris sous ce nom : en mode fichier à l'ouverture de l'arbre (copie, puis l'ancien
-fichier part, sauf s'il sert aussi de portrait), dans un dépôt GitHub dès la connexion (même
-contenu, rien n'est renvoyé).
+images de la galerie s'appellent `galerie-<uuid>`.
 
-Conversion du format 2 : chaque image d'une fiche (`media` de la personne) passe dans la
-galerie ; la personne de la fiche y est identifiée sans repère si elle ne l'était pas déjà. Les
-repères existants sont gardés tels quels. On
-identifie quelqu'un en ouvrant la photo, en cliquant sur son visage puis en choisissant la
+On identifie quelqu'un en ouvrant la photo, en cliquant sur son visage puis en choisissant la
 personne ; les personnes nommées dans la légende (titre et note : prénom et nom proches,
 `peopleNamedIn`) sont proposées en premier, et chaque vignette porte le nombre de personnes
 identifiées.

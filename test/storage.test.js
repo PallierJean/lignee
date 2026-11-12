@@ -6,7 +6,7 @@ import path from 'node:path';
 import { S, loadPrefs, savePrefs, treeName } from '../js/state.js';
 import { createServer } from '../server.js';
 import {
-  loadFile, loadLocal, seedExample, saveLocal, inBatch, opSet, opUpdate, opDelete, openTree, createTree, renameTree, deleteTree, storePhoto, storePhotos, renameGalleryFiles,
+  loadFile, loadLocal, seedExample, saveLocal, inBatch, opSet, opUpdate, opDelete, openTree, createTree, renameTree, deleteTree, storePhoto, storePhotos,
   buildPortableBackup, beginAction, commitAction, undoAction,
 } from '../js/services/storage.js';
 import { PREF_KEY, TREES_KEY, TREE_KEY } from '../js/config.js';
@@ -77,25 +77,6 @@ describe('mode fichier, sur le vrai serveur', () => {
     const saved = JSON.parse(await readFile(path.join(dataDir, 'principal.json'), 'utf8'));
     assert.ok(saved.sources.some((x) => x.photo && x.photo.startsWith('photos/')), 'fichier : la source garde son chemin');
     assert.equal(await storePhoto('photos/a.jpg', p), 'photos/a.jpg');
-  });
-
-  test('image de la galerie au nom d’une personne : son fichier prend le nom de la galerie', async () => {
-    const portrait = S.people.get('b').photo;
-    await opSet('media', 'n', { photo: portrait, tags: [{ id: 'b' }] });
-    await opSet('media', 'o', { photo: portrait, back: 'photos/absente.jpg', tags: [] });
-    await opSet('media', 'q', { photo: 'photos/absente.jpg', tags: [] });
-    assert.equal(await renameGalleryFiles(), 1, 'un fichier introuvable : l’image garde son nom');
-    const renamed = S.media.get('n').photo;
-    assert.match(renamed, /^photos\/galerie-/);
-    assert.equal(S.media.get('o').photo, portrait, 'pas à moitié reprise');
-    assert.equal(S.media.get('q').photo, 'photos/absente.jpg');
-    assert.equal(S.people.get('b').photo, portrait, 'le portrait garde son nom');
-    const dir = path.join(dataDir, 'principal', 'photos');
-    assert.deepEqual(await readFile(path.join(dir, renamed.slice(7))), await readFile(path.join(dir, portrait.slice(7))), 'même contenu');
-    assert.equal(await renameGalleryFiles(), 0, 'déjà fait');
-    await opDelete('media', 'n');
-    await opDelete('media', 'o');
-    await opDelete('media', 'q');
   });
 
   test('photo introuvable : la sauvegarde part sans elle', async () => {
@@ -334,7 +315,7 @@ describe('mode navigateur', () => {
 
 describe('famille d’exemple à la première visite', () => {
   const nativeFetch = globalThis.fetch;
-  const family = JSON.stringify({ format: 'lignee', version: 2, name: 'Famille Bertrand (exemple)', people: [{ id: 'e1', given: 'Louis', example: true }], unions: [{ id: 'u1', a: 'e1' }] });
+  const family = JSON.stringify({ format: 'lignee', version: 3, name: 'Famille Bertrand (exemple)', people: [{ id: 'e1', given: 'Louis', example: true }], unions: [{ id: 'u1', a: 'e1' }] });
 
   beforeEach(() => {
     resetApp();
