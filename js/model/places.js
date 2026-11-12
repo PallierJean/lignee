@@ -31,6 +31,32 @@ export function parsePlace(s) {
   return { hamlet: parts.slice(0, -1).join(', '), city: parts.at(-1) || '', dept, country };
 }
 
+/**
+ * A place as said aloud, in its parts: "Confolens, 16", "Confolens (Charente)", "Confolens en Charente",
+ * "Confolens dans la Haute-Vienne", "la Borie, Hautefort", "Bruxelles en Belgique". `dept` is the
+ * department's number when one was said ('' otherwise).
+ */
+export function parseSpokenPlace(s) {
+  let rest = clean(s).replace(/\s+/g, ' ').replace(/[.;]+$/, '');
+  let dept = '';
+  let country = '';
+  // From the end, what isn't the city: a department, or a country
+  for (let i = 0; i < 2; i++) {
+    const m = /^(.+?)\s*(?:,\s*|\s+(?:en|dans(?: la| le| les| l['’])?|in)\s+|\s*\(\s*|\s+(?=\d{1,3}\)?$|2[AB]\)?$))\s*(?:la |le |les |l['’])?([^,()]+?)\s*\)?$/i.exec(rest);
+    if (!m) break;
+    const code = !dept && departmentCode(m[2]);
+    if (code) {
+      dept = code;
+      rest = m[1];
+    } else if (!country && countryName(m[2])) {
+      country = isFrance(m[2]) ? '' : countryName(m[2]);
+      rest = m[1];
+    } else break;
+  }
+  const parts = rest.split(',').map((x) => x.trim()).filter(Boolean);
+  return { hamlet: parts.slice(0, -1).join(', '), city: parts.at(-1) || '', dept, country };
+}
+
 /** A place's text from its parts; an empty part is omitted, and so is France. */
 export function formatPlace({ hamlet = '', city = '', dept = '', country = '' }) {
   const head = [clean(hamlet), clean(city)].filter(Boolean).join(', ');

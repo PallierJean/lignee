@@ -92,3 +92,55 @@ export function placeDepartmentIssue(place) {
   if (!expected.length || !code || expected.includes(code)) return null;
   return { expected, fixed: expected.length === 1 ? formatPlace({ ...pl, dept: expected[0] }) : '' };
 }
+
+/** Edits between two texts (Levenshtein), stopping beyond `max`. */
+function distance(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (x, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let low = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      low = Math.min(low, cur[j]);
+    }
+    if (low > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/**
+ * The commune meant by a name heard, maybe misspelled ("Confoland" for Confolens), with its department:
+ * { city, dept } as INSEE writes it, or null if none is close enough or the list isn't loaded.
+ * In the department said first (`dept`); a name found in one department only gives that department.
+ */
+export function findCommune(city, dept = '') {
+  if (!index || !String(city || '').trim()) return null;
+  const k = key(city);
+  let depts = index.get(k);
+  let found = k;
+  if (!depts) {
+    // The closest name, in the department said if there is one there, else anywhere
+    const max = Math.max(1, Math.floor(k.length / 4));
+    let best = [];
+    let bestD = max + 1;
+    let bestIn = false;
+    for (const [name, ds] of index) {
+      const d = distance(k, name, max);
+      if (d > max) continue;
+      const inDept = !!dept && ds.includes(dept);
+      if ((inDept && !bestIn) || (inDept === bestIn && d < bestD)) {
+        best = [name];
+        bestD = d;
+        bestIn = inDept;
+      } else if (inDept === bestIn && d === bestD) best.push(name);
+    }
+    if (best.length !== 1) return null;
+    found = best[0];
+    depts = index.get(found);
+  }
+  const d = dept && depts.includes(dept) ? dept : depts.length === 1 ? depts[0] : '';
+  const name = d ? official.get(d + '|' + found) : null;
+  return { city: name || (found === k ? String(city).trim() : official.get(depts[0] + '|' + found)), dept: d };
+}
