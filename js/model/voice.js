@@ -334,8 +334,8 @@ export function parseCommand(sentence) {
     const field = /^(?:date)$/i.test(m[1]) ? (death ? 'deathDate' : 'birthDate') : /^lieu$/i.test(m[1]) ? (death ? 'deathPlace' : 'birthPlace') : 'occupation';
     if (m[2] || field === 'occupation') return cleanCommand({ action: 'edit', who: m[3], person: { [field]: field.endsWith('Place') ? cap(m[4]) : m[4] } });
   }
-  // "Jean Maury était cultivateur"
-  m = /^(.+?)\s+(?:était|est|was|is)\s+(?:un |une |a |an )?([\p{L}-]+(?: [\p{L}-]+)?)$/iu.exec(s);
+  // "Jean Maury était cultivateur", "… est cultivateur à Confolens" (where they lived isn't kept)
+  m = /^(.+?)\s+(?:était|est|was|is)\s+(?:un |une |a |an )?(?!parti|partie|all[ée]e?|venue?|rest[ée]e?|mari[ée]e?|pacs[ée]e?|en couple|veu(?:f|ve)|là|ici)([\p{L}-]+(?: [\p{L}-]+)?)(?:\s+(?:à|a|au|en|at|in)\s+[^,;]+)?$/iu.exec(s);
   if (m && isName(m[1])) return cleanCommand({ action: 'edit', who: m[1], person: { occupation: m[2] } });
   return UNKNOWN();
 }
