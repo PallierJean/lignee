@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.5](https://github.com/PallierJean/lignee/compare/v4.1.4...v4.1.5) (2026-11-12)
+
+### Bug Fixes
+
+* Hold a voice conversation, with a recap read aloud before saving ([16c3d39](https://github.com/PallierJean/lignee/commit/16c3d39f67a894e4fbf39386516c84a3de3215d8))
+
+---
+
+### Corrections
+
+* Dialoguer à la voix : Lignée relit à voix haute ce qu'elle va enregistrer, puis écoute la commande suivante ([16c3d39](https://github.com/PallierJean/lignee/commit/16c3d39f67a894e4fbf39386516c84a3de3215d8))
+
 ## [4.1.4](https://github.com/PallierJean/lignee/compare/v4.1.3...v4.1.4) (2026-11-12)
 
 ### Bug Fixes
