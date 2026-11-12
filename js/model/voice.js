@@ -291,7 +291,7 @@ export function parseCommand(sentence) {
   const wed = unionSaid(body);
   if (wed) return wed;
   // "le père de Jean Lacoste s'appelle Pierre Lacoste", "… est Pierre Lacoste" (a name: a capital, as Whisper writes it)
-  m = new RegExp(String.raw`^(?:le |la |l['’]|the )?(${KIN_RE})\s+(?:de |d['’]|of )(.+?)\s+(?:(?:s['’]appel\p{L}*|is called|was called|is named|was named)\s+(.+)|(?:est|était|is|was)\s+(.+))$`, 'iu').exec(body);
+  m = new RegExp(String.raw`^(?:le |la |l['’]|the )?(${KIN_RE})\s+(?:de |d['’]|of )(.+?)\s*,?\s+(?:(?:s['’]appel\p{L}*|is called|was called|is named|was named)\s+(.+)|(?:est|était|c['’]est|c['’]était|is|was)\s+(.+))$`, 'iu').exec(body);
   if (m && (m[3] || /^\p{Lu}/u.test(m[4]))) return relative(m[3] || m[4], kinOf(m[1]), m[2]);
   // "Jean Lacoste a pour père Pierre Lacoste", "Jean Lacoste a un frère, Paul", "… a une sœur qui s'appelle Marie"
   m = new RegExp(String.raw`^(.+?)\s+(?:a|avait|has|had)\s+(eu\s+|had\s+)?(?:pour |comme |un |une |a |an )(${KIN_RE})\s*[,:]?\s+(?:(?:qui\s+)?s['’]appel\p{L}*\s+|named |called )?(.+)$`, 'iu').exec(body);
