@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.3](https://github.com/PallierJean/lignee/compare/v4.1.2...v4.1.3) (2026-11-12)
+
+### Bug Fixes
+
+* Link spoken relatives already in the tree instead of creating them again ([6c4580a](https://github.com/PallierJean/lignee/commit/6c4580aaa1ea6d772639f04257721209a5f2c246))
+
+---
+
+### Corrections
+
+* Un parent, un frère, une sœur ou un conjoint dit à la voix et déjà dans l'arbre est relié à sa fiche au lieu d'être recréé ([6c4580a](https://github.com/PallierJean/lignee/commit/6c4580aaa1ea6d772639f04257721209a5f2c246))
+
 ## [4.1.2](https://github.com/PallierJean/lignee/compare/v4.1.1...v4.1.2) (2026-11-12)
 
 ### Bug Fixes
