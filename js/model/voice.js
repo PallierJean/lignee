@@ -179,9 +179,17 @@ const kinOf = (word) => {
 const DATE = String.raw`(?:le |en |on |in )?((?:vers |avant |après |about |before |after )?(?:\d{1,2}(?:er)? )?(?:[a-zéû]+ )?\d{4}|\d{1,2}\/\d{1,2}\/\d{4})`;
 // A place, and its department said in figures after it: "à Confolens, 16", "à Confolens (16)"
 const PLACE = String.raw`(?: (?:à|a|au|en|at|in) ([^,;.()]+?(?:\s*,\s*(?:\d{1,3}|2[AB])(?=[,;.\s]|$)|\s*\([^()]*\))?))?`;
+const BORN = String.raw`(?:n[ée]e?|born)`;
+const DIED = String.raw`(?:mort|morte|d[ée]c[ée]d[ée]e?|died)`;
+const END_BIRTH = String.raw`(?=[,;.]|\s+(?:et|and|il|elle|he|she|mort|morte|d[ée]c[ée]d[ée]e?|died|fils|fille|enfant|p[eè]re|m[eè]re|qui)${R}|$)`;
+const END_DEATH = String.raw`(?=[,;.]|\s+(?:et|and|il|elle|he|she|n[ée]e?|born|fils|fille|enfant|qui)${R}|$)`;
+// The place first, the date maybe after: "né à Confolens", "mort à Limoges en 2020" (a place doesn't start with a figure)
+const PLACE_FIRST = String.raw` (?:à|a|au|at|in) (?!\d)([^,;.()]+?(?:\s*,\s*(?:\d{1,3}|2[AB])(?=[,;.\s]|$)|\s*\([^()]*\))?)(?:\s+${DATE})?`;
 const FACTS = [
-  ['birth', new RegExp(String.raw`${L}(?:n[ée]e?|born)\s+${DATE}${PLACE}(?=[,;.]|\s+(?:et|and|il|elle|he|she|mort|morte|d[ée]c[ée]d[ée]e?|died|fils|fille|enfant|p[eè]re|m[eè]re|qui)${R}|$)`, 'iu')],
-  ['death', new RegExp(String.raw`${L}(?:mort|morte|d[ée]c[ée]d[ée]e?|died)\s+${DATE}${PLACE}(?=[,;.]|\s+(?:et|and|il|elle|he|she|n[ée]e?|born|fils|fille|enfant|qui)${R}|$)`, 'iu')],
+  ['birth', new RegExp(String.raw`${L}${BORN}\s+${DATE}${PLACE}${END_BIRTH}`, 'iu'), 'date'],
+  ['birth', new RegExp(String.raw`${L}${BORN}${PLACE_FIRST}${END_BIRTH}`, 'iu'), 'place'],
+  ['death', new RegExp(String.raw`${L}${DIED}\s+${DATE}${PLACE}${END_DEATH}`, 'iu'), 'date'],
+  ['death', new RegExp(String.raw`${L}${DIED}${PLACE_FIRST}${END_DEATH}`, 'iu'), 'place'],
 ];
 const FEMININE = new RegExp(String.raw`^(?:n[ée]e|morte|d[ée]c[ée]d[ée]e)${R}`, 'iu');
 const MASCULINE = new RegExp(String.raw`^(?:n[ée]|mort|d[ée]c[ée]d[ée])${R}`, 'iu');
@@ -240,11 +248,13 @@ function spouse(who, said, type) {
 function facts(text) {
   const person = {};
   let rest = text;
-  for (const [kind, re] of FACTS) {
+  for (const [kind, re, first] of FACTS) {
+    if (person[kind + 'Date'] || person[kind + 'Place']) continue;
     const m = re.exec(rest);
     if (!m) continue;
-    person[kind + 'Date'] = m[1].replace(/^(le|en|on|in) /i, '');
-    if (m[2]) person[kind + 'Place'] = cap(m[2].trim());
+    const [date, place] = first === 'date' ? [m[1], m[2]] : [m[2], m[1]];
+    if (date) person[kind + 'Date'] = date.replace(/^(le|en|on|in) /i, '');
+    if (place) person[kind + 'Place'] = cap(place.trim());
     if (FEMININE.test(m[0])) person.sex = 'F';
     else if (!person.sex && MASCULINE.test(m[0])) person.sex = 'M';
     rest = rest.replace(m[0], ' ');
