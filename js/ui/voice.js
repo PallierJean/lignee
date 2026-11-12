@@ -100,13 +100,19 @@ export function toggleVoice() {
   startVoice();
 }
 
-/** Names and places of the tree, most frequent first, to help Whisper write them right (the server's Whisper only). */
-function hint() {
+/**
+ * What Whisper may expect to hear (the server's Whisper only): the words of the moment (`kind`: 'command',
+ * 'reply' to the form, 'pick' among people), then the tree's names and places, most frequent first.
+ * A short answer is written right this way ("Non." rather than "Lô").
+ */
+function hint(kind = 'command') {
   const count = new Map();
   for (const p of S.people.values()) {
-    for (const w of [surname(p), ...given(p).split(' '), p.birthPlace].filter(Boolean)) count.set(w, (count.get(w) || 0) + 1);
+    // As written: surname() is in capitals, for display
+    for (const w of [p.surname, ...given(p).split(' '), p.birthPlace].map((x) => String(x || '').trim()).filter(Boolean)) count.set(w, (count.get(w) || 0) + 1);
   }
-  return [...count].sort((a, b) => b[1] - a[1]).map(([w]) => w).join(', ').slice(0, 600);
+  const names = [...count].sort((a, b) => b[1] - a[1]).map(([w]) => w).join(', ');
+  return (t('voice.hint.' + kind) + ' ' + names).slice(0, 600);
 }
 
 export async function startVoice(agreed = false) {
@@ -141,7 +147,7 @@ export async function startVoice(agreed = false) {
   set({ phase: 'hearing' });
   let text;
   try {
-    text = await listen(samples, { lang: S.lang === 'en' ? 'en' : 'fr', hint: hint(), onProgress: progress });
+    text = await listen(samples, { lang: S.lang === 'en' ? 'en' : 'fr', hint: hint('command'), onProgress: progress });
   } catch (e) {
     return set({ phase: 'done', note: t('voice.failed', esc(e.message)) });
   }
@@ -239,7 +245,8 @@ async function hearOnce(keep, phase) {
   if (!r.spoke() || samples.length < 16000 * 0.3) return '';
   set({ ...keep, phase: 'hearing' });
   try {
-    const text = await listen(samples, { lang: S.lang === 'en' ? 'en' : 'fr', hint: hint(), onProgress: progress });
+    const kind = { reply: 'reply', pick: 'pick' }[phase] || 'command';
+    const text = await listen(samples, { lang: S.lang === 'en' ? 'en' : 'fr', hint: hint(kind), onProgress: progress });
     if (st.phase !== 'hearing') return null;
     return text && !isNoise(text) ? text : '';
   } catch (e) {
