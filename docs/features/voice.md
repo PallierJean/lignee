@@ -58,6 +58,20 @@ La bulle a aussi ses boutons **Enregistrer** (Entrée) et **Annuler**, qui termi
 La case « Conversation à la voix » la coupe (réglage retenu). Une phrase tapée dans la bulle n'est
 pas suivie d'une écoute : on est alors au clavier.
 
+**Noms et lieux, comme l'arbre les écrit.** Whisper écrit ce qu'il entend : « Telié », « Jean-Tellier »,
+« Confoland ». Avant de remplir le formulaire, Lignée :
+
+- remet à sa place un nom de famille de l'arbre collé aux prénoms (« Marc-Anatole-Octave-Tellier » →
+  Marc-Anatole-Octave TELLIER) ;
+- écrit un nom de famille qui se prononce comme un nom de l'arbre de la même façon (« Telié »,
+  « Telier » → Tellier), et retrouve la personne dite (« ouvre la fiche de Jean Telié ») ;
+- retrouve la commune dite dans la liste officielle, même mal entendue (« Confoland » → Confolens), et
+  remplit son département ; un département dit (« Confolens, 16 », « en Charente », « dans la
+  Haute-Vienne ») est repris.
+
+**Plusieurs personnes du même nom.** La bulle les numérote ; on répond à la voix : « le premier »,
+« la deuxième », « le dernier », l'année (« celui de 1995 »), un prénom, ou « une nouvelle personne ».
+
 ## Utilisation
 
 - Cliquer sur le micro, ou appuyer sur **M** (hors d'un champ de saisie).
