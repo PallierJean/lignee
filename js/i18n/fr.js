@@ -632,6 +632,8 @@ export const FR = {
   'voice.cancelledNext': 'D’accord, rien n’est enregistré. Autre chose ?',
   'voice.nextListening': 'Autre chose ?',
   'voice.nextHint': 'Une autre commande, ou « c’est tout » pour finir.',
+  'voice.noAnswer': 'Je n’ai rien entendu. Réponds avec le micro (ou M), ou clique sur Enregistrer.',
+  'voice.idle': 'Je n’entends plus rien : la conversation s’arrête. Le micro (ou M) pour reprendre.',
   'voice.bye': 'Fin de la conversation.',
   'voice.at': ' à ',
   'voice.r.name': 'Nom',
