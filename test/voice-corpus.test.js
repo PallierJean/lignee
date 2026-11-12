@@ -10,6 +10,7 @@ import { parseCommand } from '../js/model/voice.js';
 const CORPUS = [
   // Add a person
   ['Ajoute Marie Dupont, née le 12 mars 1920 à Limoges.', { action: 'add', person: { given: 'Marie', surname: 'Dupont', sex: 'F', birthDate: '12 mars 1920', birthPlace: 'Limoges' } }],
+  ['Ajoute Pierre Martin né en 1890 à Confolens et mort en 1960 à Paris.', { action: 'add', person: { given: 'Pierre', surname: 'Martin', sex: 'M', birthDate: '1890', birthPlace: 'Confolens', deathDate: '1960', deathPlace: 'Paris' } }],
   ['Ajouter Jean Tellier, né le 1er janvier 1950.', { action: 'add', person: { given: 'Jean', surname: 'Tellier', birthDate: '1 janvier 1950' } }],
   ['Ajoute une personne, Paul Durand, né vers 1850.', { action: 'add', person: { given: 'Paul', surname: 'Durand', birthDate: 'vers 1850' } }],
   ['Ajoute Anne-Marie Tellier, née en 1955, décédée en 2010.', { action: 'add', person: { given: 'Anne-Marie', surname: 'Tellier', birthDate: '1955', deathDate: '2010' } }],
@@ -29,6 +30,7 @@ const CORPUS = [
   ['Ajoute une fille à Véronique Dorvigné, Sophie.', { action: 'add', who: 'Véronique Dorvigné', relation: 'child', person: { given: 'Sophie', sex: 'F' } }],
   ['Le père de Marc Tellier s’appelle Louis Tellier.', { action: 'add', who: 'Marc Tellier', relation: 'father', person: { given: 'Louis', surname: 'Tellier', sex: 'M' } }],
   ['La mère de Marc Tellier est Jeanne Lamborre, née en 1930.', { action: 'add', who: 'Marc Tellier', relation: 'mother', person: { given: 'Jeanne', surname: 'Lamborre', sex: 'F', birthDate: '1930' } }],
+  ['Louis Tellier est le père de Marc Tellier, il est né en 1925 à Confolens.', { action: 'add', who: 'Marc Tellier', relation: 'father', person: { given: 'Louis', surname: 'Tellier', birthDate: '1925', birthPlace: 'Confolens' } }],
   ['Ajoute la mère de Marc Tellier : Jeanne Lamborre.', { action: 'add', who: 'Marc Tellier', relation: 'mother', person: { given: 'Jeanne', surname: 'Lamborre' } }],
 
   // Brothers and sisters

@@ -254,6 +254,8 @@ function facts(text) {
     person.occupation = job[1];
     rest = rest.replace(job[0], ' ');
   }
+  // What the facts leave behind: "Pierre Martin et", "Marc Tellier, il est"
+  rest = rest.replace(new RegExp(String.raw`(?:[\s,;]+(?:et|and|(?:il|elle|he|she)(?:\s+(?:est|était|is|was))?))+[\s,;.]*$`, 'iu'), '');
   return { person, raw: rest, rest: rest.replace(/\s*[,;]\s*/g, ' ').replace(/\s+/g, ' ').trim() };
 }
 
