@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.10](https://github.com/PallierJean/lignee/compare/v4.1.9...v4.1.10) (2026-11-12)
+
+### Bug Fixes
+
+* Understand unions said aloud: marriage, pacs, cohabitation ([05219c3](https://github.com/PallierJean/lignee/commit/05219c3571a77a6619acb7e304a1ab6291218aed))
+
+---
+
+### Corrections
+
+* Les unions dites à la voix sont comprises : mariage, pacs, concubinage, avec leur date et leur lieu ([05219c3](https://github.com/PallierJean/lignee/commit/05219c3571a77a6619acb7e304a1ab6291218aed))
+
 ## [4.1.9](https://github.com/PallierJean/lignee/compare/v4.1.8...v4.1.9) (2026-11-12)
 
 ### Bug Fixes
