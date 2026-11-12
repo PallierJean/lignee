@@ -157,9 +157,12 @@ describe('voix : la réponse, une fois le formulaire rempli', () => {
   test('oui, non, ou une précision', () => {
     for (const x of ['Oui.', 'oui, enregistre', 'C’est bon, merci !', 'Valide', 'ok vas-y', 'yes please']) assert.equal(parseReply(x).reply, 'yes', x);
     for (const x of ['Non.', 'annule', 'laisse tomber', 'non non', 'cancel']) assert.equal(parseReply(x).reply, 'no', x);
-    assert.deepEqual(parseReply('Non, elle est née en 1873.'), { reply: 'more', rest: 'elle est née en 1873.' });
-    assert.deepEqual(parseReply('Oui et elle était couturière'), { reply: 'more', rest: 'elle était couturière' });
+    assert.deepEqual(parseReply('Non, elle est née en 1873.'), { reply: 'more', rest: 'elle est née en 1873.', lead: 'no' });
+    assert.deepEqual(parseReply('Oui et elle était couturière'), { reply: 'more', rest: 'elle était couturière', lead: 'yes' });
     assert.equal(parseReply('Ouistreham').reply, 'more', 'un mot entier');
+    assert.equal(parseReply('Oui, à l’île.').lead, 'yes', 'un « oui » suivi d’un bruit');
+    assert.equal(parseReply('Non, euh').lead, 'no');
+    assert.equal(parseReply('née en 1873').lead, '');
   });
 
   test('ce que Whisper invente sur un bruit ne compte pas', () => {
@@ -557,6 +560,8 @@ describe('voix : dans la page', () => {
     assert.match(bubble(), /<dt>Née?<\/dt><dd>3 mai 1872<\/dd>/, "le sexe vient du formulaire (absent de la fausse page)");
     await voice.reply('euh attends');
     assert.match(bubble(), /Je n’ai pas compris la réponse/);
+    await voice.reply('Non, euh');
+    assert.ok(S.edit, '« non » suivi d’un bruit : on redemande, le formulaire reste');
 
     fill();
     const before = S.people.size;

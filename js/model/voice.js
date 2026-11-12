@@ -398,8 +398,9 @@ function only(s, start) {
 }
 
 /**
- * The answer to "Save?": { reply: 'yes' } (save), { reply: 'no' } (cancel), or { reply: 'more', rest }:
- * something to add to the form ("non, née en 1873", "oui et elle était couturière", "née en 1873").
+ * The answer to "Save?": { reply: 'yes' } (save), { reply: 'no' } (cancel), or { reply: 'more', rest, lead }:
+ * something to add to the form ("non, née en 1873", "oui et elle était couturière", "née en 1873"),
+ * `lead` being the "oui" or "non" said first ('yes', 'no' or '').
  */
 export function parseReply(text) {
   const s = plain(text);
@@ -412,7 +413,9 @@ export function parseReply(text) {
     if (!m || !m[0]) break;
     rest = rest.slice(m[0].length);
   }
-  return { reply: 'more', rest: str(rest) };
+  // Said first: "oui" ("Oui, à l'île": a short "oui" Whisper wrote with a noise after it)
+  const lead = YES_START.test(plain(text)) ? 'yes' : NO_START.test(plain(text)) ? 'no' : '';
+  return { reply: 'more', rest: str(rest), lead };
 }
 
 /**
