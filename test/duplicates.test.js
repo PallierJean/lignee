@@ -53,7 +53,7 @@ describe('doublons', () => {
     assert.equal(out.deceased, true);
     assert.deepEqual(out.events.map((e) => e.id), ['e1', 'e3']);
     assert.deepEqual(out.sources.map((s) => s.fact), ['birth', 'e1', 'union:new']);
-    assert.equal(out.media.length, 1);
+    assert.equal(out.media, undefined, 'la galerie est à part : les identifications sont déplacées par la fusion');
     assert.equal(out.createdAt, undefined);
   });
 });

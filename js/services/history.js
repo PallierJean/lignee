@@ -15,7 +15,7 @@ let done = [];     // undoable actions, the most recent at the end
 let undone = [];   // undone actions, redoable
 let current = null;
 
-export const mapOfCollection = (collection) => ({ people: S.people, unions: S.unions, sources: S.sources })[collection];
+export const mapOfCollection = (collection) => ({ people: S.people, unions: S.unions, sources: S.sources, media: S.media })[collection];
 
 /** Opens an action: the following writes belong to it until commitAction(). */
 export function beginAction(label) {

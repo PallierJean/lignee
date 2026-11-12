@@ -73,12 +73,14 @@ export function mergeRecords(base, mine, theirs, prefer = 'mine') {
   return { result, conflicts };
 }
 
-/** Records of a backup ({ people: [{id, ...}], unions, sources } as stored in the file), as Maps id -> record. */
+/** Records of a backup ({ people: [{id, ...}], unions, sources, media } as stored in the file), as Maps id -> record. */
 export function backupRecords(backup) {
   const index = (list) => new Map((Array.isArray(list) ? list : [])
     .filter((x) => x && typeof x.id === 'string')
     .map(({ id, ...data }) => [id, data]));
-  return { people: index(backup && backup.people), unions: index(backup && backup.unions), sources: index(backup && backup.sources) };
+  return {
+    people: index(backup && backup.people), unions: index(backup && backup.unions), sources: index(backup && backup.sources), media: index(backup && backup.media),
+  };
 }
 
 // Fields that change on every save without meaning anything to the reader
@@ -106,7 +108,7 @@ export function diffRecords(theirs, mine) {
 export function imagesOf(records) {
   const out = new Set();
   const add = (x) => { if (typeof x === 'string' && x) out.add(x); };
-  for (const map of [records.people, records.sources]) {
+  for (const map of [records.people, records.sources, records.media]) {
     for (const r of (map || new Map()).values()) {
       add(r.photo);
       add(r.back);

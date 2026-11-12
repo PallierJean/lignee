@@ -199,7 +199,8 @@ export const SOURCE_KINDS = ['birth', 'baptism', 'marriage', 'death', 'burial', 
 const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') : []);
 
 export { sourcesOf } from './sources.js';
-export const mediaList = (p) => listOf(p && p.media);
+// The gallery is apart from the records (model/media.js): images [{ id, m }]
+export { allMedia, mediaOf } from './media.js';
 
 // File names a camera, a phone or a scanner gives: they say nothing of the image
 const DEVICE_NAME = /^(img|image|photo|pic|picture|dsc|dscn|dcim|pxl|mvimg|scan|scanned|numérisation|capture|screenshot|whatsapp image|signal|wp|p)?[\s_\-.]*[\d\s_\-.:()]*$/i;
@@ -231,16 +232,6 @@ export function mediaLabel(m) {
   return [names, String(m.date || '').trim()].filter(Boolean).join(' · ');
 }
 
-/** A person's gallery: their images, and those where they are identified: [{ owner, m }]. */
-export function mediaOf(id) {
-  const out = mediaList(P(id)).map((m) => ({ owner: id, m }));
-  for (const [owner, p] of S.people) {
-    if (owner === id) continue;
-    for (const m of mediaList(p)) if (listOf(m.tags).some((x) => x.id === id)) out.push({ owner, m });
-  }
-  return out;
-}
-
 /**
  * People named in a text (a photo caption): first given name and surname (in use or at
  * birth) both present, ignoring accents and hyphens. In the order of the text.
@@ -269,9 +260,6 @@ export function peopleNamedIn(text) {
   }
   return found.sort((a, b) => a.pos - b.pos).map((x) => x.id);
 }
-
-/** All the images in the tree. */
-export const allMedia = () => [...S.people].flatMap(([owner, p]) => mediaList(p).map((m) => ({ owner, m })));
 
 /** A person's events, in date order (with no readable date: at the end). */
 export function eventsOf(p) {

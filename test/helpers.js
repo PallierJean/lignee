@@ -4,18 +4,25 @@ import { S } from '../js/state.js';
 import { reindex } from '../js/model/people.js';
 import { setCardSize } from '../js/config.js';
 import { fromDocuments } from '../js/model/sources.js';
+import { galleryFromPeople } from '../js/model/media.js';
 
 /** Famille d'exemple livrée avec l'application (data/arbres/exemple-famille-bertrand.json). */
 export const example = () =>
   JSON.parse(readFileSync(new URL('../data/arbres/exemple-famille-bertrand.json', import.meta.url), 'utf8'));
 
-/** Ouvre un arbre en mémoire : personnes et unions en tableaux [{ id, ... }]. */
+/**
+ * Ouvre un arbre en mémoire : personnes et unions en tableaux [{ id, ... }]. Les images données
+ * dans les fiches (`media`, comme au format 2) vont dans la galerie de l'arbre, comme à la lecture.
+ */
 export function loadTree(people, unions = []) {
   // Des fiches données avec leurs documents (`sources`) : citations et sources partagées, comme à l'import
   const tree = fromDocuments(new Map(people.map(({ id, ...p }) => [id, p])), new Map(unions.map(({ id, ...u }, i) => [id || 'u' + i, u])));
-  S.people = tree.people;
+  const entries = [...tree.people].map(([id, data]) => ({ id, data: { ...data } }));
+  const media = galleryFromPeople(entries);
+  S.people = new Map(entries.map((x) => [x.id, x.data]));
   S.unions = tree.unions;
   S.sources = tree.sources;
+  S.media = new Map(media.map((x) => [x.id, x.data]));
   reindex();
 }
 

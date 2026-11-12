@@ -106,11 +106,10 @@ export function mergedData(keep, drop, unionIds = new Map(), ids = {}) {
   // and `dropDocs`: the documents read before the unions changed
   const all = (p, docs, id) => docs || (id ? sourcesOfPerson(id) : sourcesOf(p));
   const sources = [...all(keep, ids.keepDocs, ids.keep), ...all(drop, ids.dropDocs, ids.drop).map((s) => ({ ...s, fact: fact(s.fact) }))];
-  const media = [...(keep.media || []), ...(drop.media || [])];
-  for (const [key, list] of [['events', events], ['media', media]]) {
-    if (list.length) out[key] = list;
-    else delete out[key];
-  }
+  // The gallery is apart (model/media.js): the identifications are moved by the merge itself
+  if (events.length) out.events = events;
+  else delete out.events;
+  delete out.media;
   delete out.citations;
   out.sources = sources;
   return out;

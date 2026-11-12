@@ -21,7 +21,7 @@ import { loadFileTree, saveFile, createFileTree, renameFileTree, deleteFileTree 
 import { track, resetHistory, takeUndo, takeRedo, pushDone, pushUndone } from './history.js';
 
 export { loadLocal, seedExample } from './storage/local.js';
-export { loadFile, storePhoto, storePhotos, convertPhotos, keptMedia, buildPortableBackup } from './storage/file.js';
+export { loadFile, storePhoto, storePhotos, convertPhotos, GALLERY_LABEL, buildPortableBackup } from './storage/file.js';
 export { beginAction, commitAction, track, canUndo, canRedo } from './history.js';
 
 /** Saves the tree: to the file (file mode) or the browser. */
@@ -34,7 +34,7 @@ export function saveLocal() {
 
 /* ---------- Writes (all modes) ---------- */
 
-export const mapOf = (collection) => ({ people: S.people, unions: S.unions, sources: S.sources })[collection];
+export const mapOf = (collection) => ({ people: S.people, unions: S.unions, sources: S.sources, media: S.media })[collection];
 
 // Writes grouped by inBatch(): collection/id -> { collection, id, before, after }
 let batch = null;
@@ -154,10 +154,18 @@ const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'obj
 
 /**
  * Deletes a document. The sources of a person or a union that nobody else cites go with
- * them, unless `raw` (a merge that sets every collection itself).
+ * them, and a person leaves the images they were identified on (the images stay in the
+ * gallery), unless `raw` (a merge that sets every collection itself).
  */
 export function opDelete(collection, id, { raw = false } = {}) {
   const doc = !raw && (collection === 'people' || collection === 'unions') ? mapOf(collection).get(id) : null;
+  const shownOn = doc && collection === 'people' ? [...S.media].filter(([, m]) => listOf(m.tags).some((x) => x.id === id)) : [];
+  if (shownOn.length) {
+    return inBatch(async () => {
+      for (const [mid, m] of shownOn) await writeDoc('media', mid, { ...m, tags: listOf(m.tags).filter((x) => x.id !== id) });
+      await opDelete(collection, id);
+    });
+  }
   if (doc && listOf(doc.citations).length) {
     return inBatch(async () => {
       await writeDoc(collection, id, undefined);

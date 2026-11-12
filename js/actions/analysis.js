@@ -1,6 +1,7 @@
 /** Analysis tab actions: kinship, timeline, anniversaries, duplicates, places, INSEE deaths. */
 import { S, savePrefs } from '../state.js';
-import { P, sourcesOf, mediaList, isDead } from '../model/people.js';
+import { P, sourcesOf, isDead } from '../model/people.js';
+import { tagsOf, hasPlace } from '../model/media.js';
 import { opSet, opUpdate, opDelete, inBatch, beginAction, commitAction } from '../services/storage.js';
 import { closeUnionsAtDeath } from '../services/person-save.js';
 import { relationship } from '../model/kinship.js';
@@ -123,17 +124,21 @@ export async function mergePeople(keep, drop) {
         const patch = {};
         if (p.fatherId === drop) patch.fatherId = keep;
         if (p.motherId === drop) patch.motherId = keep;
-        // Identifications on photos: they follow the person kept
-        const tagged = (m) => (Array.isArray(m.tags) ? m.tags : []);
-        if (mediaList(p).some((m) => tagged(m).some((x) => x.id === drop))) {
-          patch.media = mediaList(p).map((m) => ({ ...m, tags: tagged(m).map((x) => (x.id === drop ? { ...x, id: keep } : x)) }));
-        }
         // Marriage sources carried by a spouse: they follow the union kept
         const moved = (s) => String(s.fact || '').startsWith('union:') && unionIds.has(s.fact.slice(6));
         if (sourcesOf(p).some(moved)) {
           patch.sources = sourcesOf(p).map((s) => (moved(s) ? { ...s, fact: 'union:' + unionIds.get(s.fact.slice(6)) } : s));
         }
         if (Object.keys(patch).length) await opUpdate('people', id, patch);
+      }
+      // Identifications on images: they follow the person kept (once per image, the marker preferred)
+      for (const [mid, m] of [...S.media]) {
+        const tags = tagsOf(m);
+        if (!tags.some((x) => x.id === drop)) continue;
+        const moved = tags.map((x) => (x.id === drop ? { ...x, id: keep } : x));
+        const mine = moved.filter((x) => x.id === keep);
+        const kept = mine.find(hasPlace) || mine[0];
+        await opUpdate('media', mid, { tags: moved.filter((x) => x.id !== keep || x === kept) });
       }
       const merged = mergedData(P(keep), P(drop), unionIds, docs);
       merged.updatedAt = Date.now();

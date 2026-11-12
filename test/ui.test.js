@@ -6,7 +6,7 @@ import { renderHeader } from '../js/ui/header.js';
 import { renderAll, afterData, renderRecord } from '../js/ui/render.js';
 import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
 import {
-  openMedia, closeMedia, stepMedia, showMediaSide, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption, onTagFind } from '../js/ui/media.js';
+  openMedia, renderMedia, closeMedia, stepMedia, showMediaSide, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption, onTagFind } from '../js/ui/media.js';
 import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind } from '../js/ui/search.js';
 import { onSpouseInput, onSpouseKey, closeSpouse } from '../js/ui/spouse-pick.js';
 import { resetHistory } from '../js/services/history.js';
@@ -316,7 +316,7 @@ describe('fiche : événements, sources, galerie', () => {
     assert.ok(fiche.includes('Ajouter un enfant avec Yves BLANC') || fiche.includes('Ajouter un enfant avec Yves'));
     assert.ok(fiche.includes('class="meds"'));
     assert.match(fiche, /Ouvrez une photo pour identifier les personnes/);
-    assert.match(fiche, /<span class="med-n" title="1 personne identifiée">1<\/span>/);
+    assert.match(fiche, /<span class="med-n" title="2 personnes identifiées">2<\/span>/, 'sa fiche (sans repère) et Paul');
   });
 
   test('fiche en fenêtre : frise de vie, ouverture et fermeture', () => {
@@ -330,17 +330,19 @@ describe('fiche : événements, sources, galerie', () => {
   });
 
   test('visionneuse : repère neutralisé, identification, retrait', async () => {
-    S.people.get('a').media[0].note = 'Lyon, avec Léa et Yves';
-    openMedia('a', 'm1');
+    S.media.get('m1').note = 'Lyon, avec Léa et Yves';
+    openMedia('m1');
     assert.ok(html('mediaCard').includes('left:0%;top:20%'), 'position piégée remise à zéro');
     assert.match(html('mediaCard'), /class="hint tag-hint">Pour identifier quelqu’un, cliquez sur son visage/);
     assert.match(html('mediaCard'), /class="media-pic can-tag"/);
     // Repères invisibles, sans numéro ; le survol d'un nom éclaire son repère
-    assert.match(html('mediaCard'), /class="tag-pin" type="button" data-tag="0"[^>]*><span class="tag-name"><b>Paul <span class="sur">BLANC<\/span><\/b><\/span><\/button>/);
-    assert.match(html('mediaCard'), /<li data-tag="0"><button class="link"/);
+    assert.match(html('mediaCard'), /class="tag-pin" type="button" data-tag="1"[^>]*><span class="tag-name"><b>Paul <span class="sur">BLANC<\/span><\/b><\/span><\/button>/);
+    assert.equal((html('mediaCard').match(/class="tag-pin/g) || []).length, 1, 'Anne, sans repère : pas sur l’image');
+    assert.match(html('mediaCard'), /<li data-tag="0"><button class="link" type="button" data-act="media-person" data-id="a">/, 'mais dans la liste');
+    assert.match(html('mediaCard'), /<li data-tag="1"><button class="link"/);
     assert.doesNotMatch(html('mediaCard'), /class="tag-n"/);
-    const pinEl = document.querySelector('.tag-pin[data-tag="0"]');
-    const row = { closest: () => ({ dataset: { tag: '0' } }) };
+    const pinEl = document.querySelector('.tag-pin[data-tag="1"]');
+    const row = { closest: () => ({ dataset: { tag: '1' } }) };
     highlightTag(row, true);
     assert.ok(pinEl.classList.contains('lit'));
     highlightTag(row, false);
@@ -352,7 +354,7 @@ describe('fiche : événements, sources, galerie', () => {
     placePin(pic, { target: { closest: () => null }, clientX: 100, clientY: 50 });
     assert.ok(html('mediaCard').includes('id="tagFind"'), 'un champ de recherche, pas une liste de 200 noms');
     assert.match(html('mediaCard'), /Tapez un nom/, 'personne nommée dans la légende : rien à proposer d’office');
-    S.people.get('a').media[0].note = 'Avec Léa Blanc';
+    S.media.get('m1').note = 'Avec Léa Blanc';
     S.people.get('c').surname = 'Blanc';
     placePin(pic, { target: { closest: () => null }, clientX: 100, clientY: 50 });
     assert.match(html('mediaCard'), /data-act="tag-pick" data-id="c">Léa BLANC/, 'nommée dans la légende : proposée d’office');
@@ -366,15 +368,15 @@ describe('fiche : événements, sources, galerie', () => {
     assert.ok(!html('mediaCard').includes('id="tagFind"'));
     placePin(pic, { target: { closest: () => null }, clientX: 100, clientY: 50 });
     await addTag('c');
-    assert.equal(S.people.get('a').media[0].tags.length, 2);
+    assert.equal(S.media.get('m1').tags.length, 3);
     await removeTag(0);
-    assert.equal(S.people.get('a').media[0].tags.length, 1);
+    assert.equal(S.media.get('m1').tags.length, 2);
     closeMedia();
     assert.equal(el('mediaDlg').hidden, true);
   });
 
   test('visionneuse : modifier la légende sur place, annulable', async () => {
-    openMedia('a', 'm1');
+    openMedia('m1');
     assert.match(html('mediaCard'), /data-act="caption-edit">modifier le titre, la date, la légende</);
     assert.match(html('mediaCard'), /<h2 id="mdTitle">[^<]*<\/h2><button class="icon-btn md-pen" type="button" data-act="caption-edit"/, 'le titre se modifie depuis l’en-tête');
     editCaption(true);
@@ -383,13 +385,13 @@ describe('fiche : événements, sources, galerie', () => {
     el('mdEditDate').value = '1950';
     el('mdEditNote').value = ' Geneviève (en haut), Paul ';
     await saveCaption();
-    const m = S.people.get('a').media[0];
+    const m = S.media.get('m1');
     assert.deepEqual([m.title, m.date, m.note], ['Mariage', '1950', 'Geneviève (en haut), Paul']);
     assert.ok(m.tags.length, 'les identifications restent');
     assert.match(html('mediaCard'), /<h2 id="mdTitle">Mariage<\/h2>/);
     await A.undo();
-    assert.equal(S.people.get('a').media[0].title, 'Noce');
-    // Fiche du propriétaire en cours de saisie : son enregistrement réécrirait la galerie
+    assert.equal(S.media.get('m1').title, 'Noce');
+    // Fiche d'une personne identifiée en cours de saisie : son enregistrement réécrirait l'image
     A.startEdit('a');
     editCaption(true);
     assert.doesNotMatch(html('mediaCard'), /id="mdEditNote"/);
@@ -408,8 +410,8 @@ describe('fiche : événements, sources, galerie', () => {
     S.focus = 'a';
     S.tab = 'record';
     renderAll();
-    assert.match(html('paneRecord'), /data-act="media-open" data-owner="a" data-id="m1" data-group="person:a"/);
-    openMedia('a', 'm1', 'person:a');
+    assert.match(html('paneRecord'), /data-act="media-open" data-id="m1" data-group="person:a"/);
+    openMedia('m1', 'person:a');
     assert.match(html('mediaCard'), /<span class="n">1 \/ 3<\/span>/, 'ses images et celles où elle est identifiée');
     assert.ok(stepMedia(1));
     assert.match(html('mediaCard'), /Baptême.*2 \/ 3/s);
@@ -426,7 +428,7 @@ describe('fiche : événements, sources, galerie', () => {
     cancelPin();
     closeMedia();
     // Ouverte hors d'une galerie, ou avec une seule image : pas de navigation
-    openMedia('b', 'm3');
+    openMedia('m3');
     assert.doesNotMatch(html('mediaCard'), /media-step/);
     assert.equal(stepMedia(1), false);
     closeMedia();
@@ -443,7 +445,7 @@ describe('fiche : événements, sources, galerie', () => {
     S.tab = 'record';
     renderAll();
     assert.match(html('paneRecord'), /data-id="m1"[^>]*>.*<span class="med-rv" title="Recto et verso">R\/V<\/span>/s);
-    openMedia('a', 'm1', 'person:a');
+    openMedia('m1', 'person:a');
     let card = html('mediaCard');
     assert.match(card, /data-act="media-side" data-back="0" aria-pressed="true">Recto/);
     assert.match(card, /src="data:image\/jpeg;base64,RECTO"/);
@@ -467,8 +469,12 @@ describe('fiche : événements, sources, galerie', () => {
   });
 
   test('image supprimée : la visionneuse se ferme', () => {
-    openMedia('a', 'absente');
+    openMedia('absente');
     assert.equal(el('mediaDlg').hidden, true);
+    openMedia('m1');
+    S.media.delete('m1');
+    renderMedia();
+    assert.equal(el('mediaDlg').hidden, true, 'disparue pendant qu’elle s’affiche');
   });
 });
 

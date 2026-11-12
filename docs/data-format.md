@@ -24,23 +24,25 @@ L'enveloppe d'une sauvegarde `.json` et d'un fichier de `data/arbres/`.
 | Champ | Type | Requis | Description |
 | --- | --- | --- | --- |
 | `format` | `"lignee"` | ✅ | Reconnaît une sauvegarde Lignée ; sinon le fichier est refusé |
-| `version` | `number` | ✅ | Version du format, actuellement `2`. Une autre version est refusée (import, dépôt GitHub, mode fichier) : un fichier d'avant Lignée 2.0 se convertit en l'ouvrant avec Lignée 2.3 ; en mode fichier, un arbre d'une autre version s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
+| `version` | `number` | ✅ | Version du format, actuellement `3`. Le format `2` (Lignée 2.0 à 3.x, images dans les fiches) est lu et converti : les images passent dans la galerie (voir [Galerie](#galerie-media)), et l'arbre est réécrit au format 3 en mode fichier. Une autre version est refusée (import, dépôt GitHub, mode fichier) : un fichier d'avant Lignée 2.0 se convertit en l'ouvrant avec Lignée 2.3 ; en mode fichier, un arbre d'une version plus récente s'ouvre vide et en lecture seule, et le serveur ne l'écrase pas ni ne supprime ses photos |
 | `name` | `string` | | Nom de l'arbre |
 | `createdAt` | `number` | | Création de l'arbre, en millisecondes depuis 1970 |
 | `exportedAt` | `string` | | Date de l'export, ISO 8601 |
 | `people` | [`Person[]`](#personne-person) | ✅ | Les personnes |
 | `unions` | [`Union[]`](#union-union) | ✅ | Les unions |
 | `sources` | [`Source[]`](#source-source) | | Les documents cités, chacun une seule fois (format 2) |
+| `media` | [`Media[]`](#galerie-media) | | La galerie de l'arbre : photos, lettres, cartes (format 3) |
 
 ```json
 {
   "format": "lignee",
-  "version": 2,
+  "version": 3,
   "name": "Famille Bertrand (exemple)",
   "exportedAt": "2026-10-28T08:00:00.000Z",
   "people": [ … ],
   "unions": [ … ],
-  "sources": [ … ]
+  "sources": [ … ],
+  "media": [ … ]
 }
 ```
 
@@ -67,7 +69,6 @@ L'enveloppe d'une sauvegarde `.json` et d'un fichier de `data/arbres/`.
 | `photo` | `Image` | | Portrait, 256 × 320 pixels | non exporté |
 | `events` | [`Event[]`](#événement-event) | | Autres événements | voir Événement |
 | `citations` | [`Citation[]`](#citation-citation) | | Actes cités : renvois vers les sources partagées | `SOUR` sous chaque fait |
-| `media` | [`Media[]`](#galerie-media) | | Galerie d'images | non exporté |
 | `createdAt` | `number` | | Création de la fiche, en millisecondes depuis 1970 | |
 | `updatedAt` | `number` | | Dernière modification, en millisecondes depuis 1970 | |
 | `example` | `boolean` | | Fiche de la famille d'exemple (retirée par « Retirer les exemples ») | |
@@ -249,20 +250,43 @@ les mêmes sources.
 
 ## Galerie (`Media`)
 
+Les images de l'arbre sont rangées à part, comme les unions : une fiche ne porte aucune image de
+la galerie (seulement son portrait, `photo`). Le seul lien entre une image et une personne est
+l'identification de la personne sur l'image (`tags`).
+
 | Champ | Type | Requis | Description |
 | --- | --- | --- | --- |
-| `id` | `Id` | ✅ | Identifiant, unique sur la fiche |
+| `id` | `Id` | ✅ | Identifiant (`m_…`) |
 | `photo` | `Image` | ✅ | L'image |
 | `back` | `Image` | | Verso de l'image (second côté d'un contrat, dos d'une photo annoté) ; les personnes s'identifient sur le recto |
 | `title` | `string` | | Titre |
 | `date` | `Date` | | Date |
 | `note` | `string` | | Légende |
 | `tags` | `Tag[]` | | Personnes identifiées sur l'image |
+| `createdAt` | `number` | | Ajout de l'image, en millisecondes depuis 1970 |
 
 `Tag` : `{ "id": Id, "x": number, "y": number }`, la personne `id` repérée à `x` et `y` pour
-cent de la largeur et de la hauteur de l'image.
+cent de la largeur et de la hauteur de l'image ; sans `x` ni `y`, la personne est sur l'image
+sans repère sur son visage (encore).
 
-Une image apparaît sur la fiche de sa propriétaire et sur celles des personnes identifiées. On
+```json
+{
+  "id": "m_ex_01",
+  "photo": "photos/galerie-3f9c2a1e-….jpg",
+  "title": "Noces d'or", "date": "1981", "note": "",
+  "tags": [{ "id": "p_ex_07", "x": 42.5, "y": 30 }, { "id": "p_ex_08" }]
+}
+```
+
+Une image apparaît dans la galerie de l'arbre, et sur la fiche de chaque personne identifiée.
+Ajoutée depuis une fiche, elle identifie la personne (sans repère) ; ajoutée depuis la galerie de
+l'arbre, personne. Retirée du formulaire d'une fiche, elle ne montre plus la personne mais reste
+dans la galerie ; supprimer une personne la retire des images, qui restent. Les fichiers des
+images de la galerie s'appellent `galerie-<uuid>` (ceux d'avant gardent leur nom).
+
+Conversion du format 2 : chaque image d'une fiche (`media` de la personne) passe dans la
+galerie ; la personne de la fiche y est identifiée sans repère si elle ne l'était pas déjà. Les
+repères existants sont gardés tels quels. On
 identifie quelqu'un en ouvrant la photo, en cliquant sur son visage puis en choisissant la
 personne ; les personnes nommées dans la légende (titre et note : prénom et nom proches,
 `peopleNamedIn`) sont proposées en premier, et chaque vignette porte le nombre de personnes

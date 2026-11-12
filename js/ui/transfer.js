@@ -268,6 +268,7 @@ export async function importGo(asNew) {
     ...(result.sources || []).map((x) => ['sources', x]),
     ...result.people.map((x) => ['people', x]),
     ...result.unions.map((x) => ['unions', x]),
+    ...(result.media || []).map((x) => ['media', x]),
   ].filter(([, x]) => !x.done);
   const total = items.length;
   let done = 0;
@@ -286,6 +287,7 @@ export async function importGo(asNew) {
     await pool(items.filter(([c]) => c === 'sources'), 4, write); // before the people who cite them
     await pool(items.filter(([c]) => c === 'people'), 4, write);
     await pool(items.filter(([c]) => c === 'unions'), 4, write);
+    await pool(items.filter(([c]) => c === 'media'), 4, write);
     await storePhotos(); // file mode: imported photos become files
     await saveLocal();
     commitAction();

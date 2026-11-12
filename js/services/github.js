@@ -5,7 +5,7 @@
  * With an authorised token, the tree and its photos go back to the repository in a single commit.
  * The token is never stored; it is only sent to api.github.com.
  */
-import { convertPhotos, keptMedia } from './storage.js';
+import { convertPhotos, GALLERY_LABEL } from './storage.js';
 import { parseBackup } from './backup.js';
 import { isPhotoFile, isPhotoData, photoLabel } from '../model/people.js';
 import { pool, sleep } from '../utils/helpers.js';
@@ -21,7 +21,7 @@ const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'im
 
 // Name Lignée gives a photo it sends: <label>-<random UUID>.<extension>
 export const SENT_NAME = /-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp|gif)$/;
-const EMPTY_BACKUP = '{"format":"lignee","version":2,"people":[],"unions":[],"sources":[]}\n';
+const EMPTY_BACKUP = '{"format":"lignee","version":3,"people":[],"unions":[],"sources":[],"media":[]}\n';
 
 const fail = (code) => Object.assign(new Error(code), { code });
 
@@ -155,7 +155,7 @@ export async function readLatest(repo, target) {
     throw e.code === 'newer' || e.code === 'old' ? fail(e.code) : e;
   }
   const stored = (list) => list.map((x) => ({ ...x.data, id: x.id }));
-  const backup = { people: stored(parsed.people), unions: stored(parsed.unions), sources: stored(parsed.sources) };
+  const backup = { people: stored(parsed.people), unions: stored(parsed.unions), sources: stored(parsed.sources), media: stored(parsed.media) };
   return { backup, files, read, moveTo: () => Object.assign(repo, { head, read, files }) };
 }
 
@@ -185,6 +185,7 @@ export async function attachPhotos(repo, backup) {
     people: backup.people.map((x) => ({ ...x.data, id: x.id })),
     unions: (backup.unions || []).map((x) => ({ ...x.data, id: x.id })),
     sources: (backup.sources || []).map((x) => ({ ...x.data, id: x.id })),
+    media: (backup.media || []).map((x) => ({ ...x.data, id: x.id })),
   });
   const count = { found: 0, missing: 0, photos: new Map(), base: stored };
 
@@ -204,13 +205,14 @@ export async function attachPhotos(repo, backup) {
     }
   };
 
-  await pool([...backup.people, ...(backup.sources || [])], 4, async (x) => {
+  await pool([...backup.people, ...(backup.sources || []), ...(backup.media || [])], 4, async (x) => {
     const p = await convertPhotos(x.data, load);
     if (!p.photo) delete p.photo;
-    if (!p.photo || !p.back) delete p.back; // a shared source's back, alone, means nothing
-    if (p.media) p.media = keptMedia(p.media);
+    if (!p.photo || !p.back) delete p.back; // a back, alone, means nothing
     x.data = p;
   });
+  // A gallery image not found in the repository: it goes
+  if (backup.media) backup.media = backup.media.filter((x) => x.data.photo);
   Object.defineProperty(backup, 'attached', { value: count, configurable: true }); // not enumerable: not saved
   return count;
 }
@@ -257,6 +259,10 @@ export async function pushBackup(repo, target, text, message) {
   const sources = [];
   for (const s of backup.sources || []) sources.push(await convertPhotos(s, (photo) => store(photo, { given: s.title || s.kind || 'source' })));
   if (backup.sources) backup.sources = sources;
+  // A gallery image: the same name for all ("galerie-…"), not that of a person
+  const media = [];
+  for (const m of backup.media || []) media.push(await convertPhotos(m, (photo) => store(photo, GALLERY_LABEL)));
+  if (backup.media) backup.media = media;
 
   const kept = new Set([...photos.values()].map((x) => x.path));
   // Photos the tree no longer cites: those loaded with it, and the files Lignée itself named in its

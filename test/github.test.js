@@ -124,7 +124,8 @@ describe('lecture du dépôt', () => {
     const src = repo.backups[0].sources.find((x) => x.id === p.citations[0].source).data;
     assert.match(src.photo, /^data:image\/png;base64,/);
     assert.equal(count.base.sources.get(p.citations[0].source).photo, 'photos/acte.png', 'base : chemins du dépôt');
-    assert.deepEqual(p.media, []);
+    assert.equal(p.media, undefined, 'les images ne sont plus dans les fiches');
+    assert.deepEqual(repo.backups[0].media, [], 'absente du dépôt : l’image est retirée de la galerie');
   });
 
   test('erreurs de GitHub', async () => {

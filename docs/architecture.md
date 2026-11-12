@@ -67,7 +67,8 @@ lignee/
 │   │   ├── dates.js            Lecture et affichage des dates
 │   │   └── image.js            Réduction des photos
 │   ├── model/
-│   │   ├── people.js           Noms, âges, parents, conjoints, enfants, événements, sources, galerie
+│   │   ├── people.js           Noms, âges, parents, conjoints, enfants, événements, sources
+│   │   ├── media.js            Galerie de l'arbre, à part des fiches : images, personnes identifiées, conversion du format 2
 │   │   ├── sources.js          Sources partagées : citations, documents de l'import GEDCOM
 │   │   ├── voice.js            Commandes à la voix : la commande, la consigne du modèle, les phrases connues
 │   │   ├── kinship.js          Lien de parenté entre deux personnes

@@ -1,13 +1,16 @@
 /**
  * Gallery viewer: a photo or a document, with the people identified.
  * A click on the image places a marker, then you choose the person.
+ * The images are the tree's gallery (model/media.js), apart from the records: a person is linked
+ * to an image only by being identified on it, with a marker on their face or not yet.
  */
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t } from '../i18n.js';
-import { P, given, surname, maiden, fullName, lifeYears, mediaList, mediaLabel, photoSrc, peopleNamedIn, fileTitle, SOURCE_KINDS } from '../model/people.js';
+import { P, given, surname, maiden, fullName, lifeYears, mediaLabel, photoSrc, peopleNamedIn, fileTitle, SOURCE_KINDS } from '../model/people.js';
 import { sourcesOf } from '../model/sources.js';
-import { opUpdate, beginAction, commitAction, storePhoto } from '../services/storage.js';
+import { tagsOf, hasPlace } from '../model/media.js';
+import { opSet, opUpdate, opDelete, inBatch, beginAction, commitAction, storePhoto, GALLERY_LABEL } from '../services/storage.js';
 import { cropFree, cropTags } from './crop-free.js';
 import { photoFromFile, DOCUMENT_SIDE } from '../utils/image.js';
 import { rid } from '../utils/helpers.js';
@@ -20,10 +23,10 @@ import { mediaGroups } from './record.js';
 /** Data changed: indexes and page follow (ui/render.js afterData, see ui/connect.js). */
 const afterData = () => emit('data');
 
-let current = null;  // { owner, id }: photo shown; { draft: index }: an image of the form, not saved yet
+let current = null;  // { id }: image shown; { draft: index }: an image of the form, not saved yet
 let pin = null;      // { x, y }: marker waiting for a person
 let editing = false; // caption being edited
-let sequence = [];    // [{ owner, id }]: the images of the grid it was opened from, in order
+let sequence = [];    // [id]: the images of the grid it was opened from, in order
 let back = false;     // the back of the image is shown (contract, annotated photo)
 let askDelete = false; // the deletion of the image waits for its confirmation
 let askArchive = false; // moving the image to the archives waits for its kind
@@ -32,13 +35,11 @@ const isDraft = () => !!current && current.draft !== undefined;
 const item = () => {
   if (!current) return null;
   if (isDraft()) return (S.edit && S.edit.media[current.draft] && !S.edit.media[current.draft].removed) ? S.edit.media[current.draft] : null;
-  return mediaList(P(current.owner)).find((m) => m.id === current.id);
+  return S.media.get(current.id) || null;
 };
 
-/** Markers of an image, with numeric positions: they may come from an imported file. */
-const tagsOf = (m) => (Array.isArray(m.tags) ? m.tags : [])
-  .filter((x) => x && typeof x === 'object')
-  .map((x) => ({ ...x, x: Math.min(100, Math.max(0, +x.x || 0)), y: Math.min(100, Math.max(0, +x.y || 0)) }));
+/** True if the record being edited holds the image shown: saving it would rewrite the image. */
+const inForm = () => !!(S.edit && current && !isDraft() && S.edit.media.some((x) => x.id === current.id));
 
 /** A face's label: first name, surname and lifespan. */
 function tagLabel(p) {
@@ -61,13 +62,13 @@ export function renderMedia() {
   const tags = back ? [] : tagsOf(m); // people are identified on the front
   // Invisible markers on faces: they light up on hover, of the face or of the name in the list (highlightTag)
   const shown = tags.filter((x) => P(x.id));
-  const marks = shown.map((x) => `<button class="tag-pin${pinSide(x)}" type="button" data-tag="${tags.indexOf(x)}" data-style="left:${x.x}%;top:${x.y}%"`
+  const marks = shown.filter(hasPlace).map((x) => `<button class="tag-pin${pinSide(x)}" type="button" data-tag="${tags.indexOf(x)}" data-style="left:${x.x}%;top:${x.y}%"`
     + ` data-act="media-person" data-id="${esc(x.id)}" aria-label="${esc(fullName(P(x.id)))}">${tagLabel(P(x.id))}</button>`).join('');
   const names = shown.map((x) => `<li data-tag="${tags.indexOf(x)}">`
     + `<button class="link" type="button" data-act="media-person" data-id="${esc(x.id)}">${esc(fullName(P(x.id)))}</button>`
     + (S.canWrite ? ` <button class="link" type="button" data-act="tag-remove" data-i="${tags.indexOf(x)}">${t('med.untag')}</button>` : '') + '</li>').join('');
-  // People named in the caption, not yet identified, at the top of the list
-  const tagged = new Set(tags.map((x) => x.id));
+  // People named in the caption, without a marker yet, at the top of the list
+  const tagged = new Set(tags.filter(hasPlace).map((x) => x.id));
   const named = peopleNamedIn([m.title, m.note].join(' ')).filter((id) => !tagged.has(id));
   const picker = pin
     ? `<div class="tag-pick"><input id="tagFind" type="search" autocomplete="off" placeholder="${t('med.whoSearch')}" aria-label="${t('med.who')}">`
@@ -84,7 +85,7 @@ export function renderMedia() {
       + `<button type="button" data-act="media-side" data-back="1" aria-pressed="${back}">${t('med.back')}</button></div>`
     : '';
   // From one image to the next: buttons, and the arrow keys (ui/events.js)
-  const at = sequence.findIndex((x) => x.owner === current.owner && x.id === current.id);
+  const at = sequence.indexOf(current.id);
   const nav = sequence.length > 1 && at >= 0
     ? `<div class="media-nav"><button class="icon-btn" type="button" data-act="media-step" data-d="-1" aria-label="${t('med.prev')}" title="${t('med.prev')}">‹</button>`
       + `<span class="n">${t('med.position', at + 1, sequence.length)}</span>`
@@ -124,7 +125,7 @@ export function onTagFind(query) {
   const m = item();
   const list = document.getElementById('tagHits');
   if (!m || !list) return;
-  const tagged = new Set(tagsOf(m).map((x) => x.id));
+  const tagged = new Set(tagsOf(m).filter(hasPlace).map((x) => x.id));
   list.innerHTML = tagHits(query, [], tagged);
 }
 
@@ -152,7 +153,7 @@ function deleteBlock() {
   }
   const archive = `<button class="link" type="button" data-act="media-archive">${t('med.archive')}</button> · `;
   if (!askDelete) return `<p class="media-delete">${crop}${side}${archive}<button class="link" type="button" data-act="media-delete">${t('med.delete')}</button></p>`;
-  return `<div class="confirm media-delete"><p>${t('med.deleteAsk', esc(fullName(P(current.owner))))}</p>`
+  return `<div class="confirm media-delete"><p>${t('med.deleteAsk')}</p>`
     + `<button class="btn small danger" type="button" data-act="media-delete-yes">${t('med.deleteYes')}</button>`
     + `<button class="btn small" type="button" data-act="media-delete-no">${t('cancel')}</button></div>`;
 }
@@ -164,11 +165,11 @@ function deleteBlock() {
 export async function cropMedia() {
   const m = item();
   if (!m || isDraft() || !S.canWrite) return;
-  if (S.edit && S.edit.id === current.owner) {
+  if (inForm()) {
     toast(t('finishFirst'));
     return;
   }
-  const { owner, id } = current;
+  const { id } = current;
   let res;
   try {
     res = await cropFree(photoSrc(m.photo));
@@ -179,8 +180,8 @@ export async function cropMedia() {
   if (!res) return;
   beginAction('hist.mediaCrop');
   try {
-    const photo = await storePhoto(res.photo, P(owner));
-    await opUpdate('people', owner, { media: mediaList(P(owner)).map((x) => (x.id === id ? { ...x, photo, tags: cropTags(x.tags, res.rect) } : x)) });
+    const photo = await storePhoto(res.photo, GALLERY_LABEL);
+    await opUpdate('media', id, { photo, tags: cropTags(m.tags, res.rect) });
   } catch (e) {
     reportError(e);
   } finally {
@@ -191,14 +192,15 @@ export async function cropMedia() {
 }
 
 /**
- * Adds image files to `owner`'s gallery, as one undoable action: a single image can be cropped
- * first. The first one added opens in the viewer, to identify the people on it.
+ * Adds image files to the gallery, as one undoable action: a single image can be cropped first.
+ * From a person's record (`who`), they show that person; from the tree's gallery, no one yet.
+ * The first one added opens in the viewer, to identify the people on it.
  */
-export async function addGalleryPhotos(owner, files) {
+export async function addGalleryPhotos(who, files) {
   const list = [...(files || [])];
-  if (!S.canWrite || !P(owner) || !list.length) return;
-  if (S.edit && S.edit.id === owner) {
-    toast(t('finishFirst')); // the record form would rewrite the gallery when saving
+  if (!S.canWrite || (who && !P(who)) || !list.length) return;
+  if (who && S.edit && S.edit.id === who) {
+    toast(t('finishFirst')); // the record form would rewrite its gallery when saving
     return;
   }
   const added = [];
@@ -210,7 +212,7 @@ export async function addGalleryPhotos(owner, files) {
         if (!res) return; // cancelled: nothing added
         photo = res.photo;
       }
-      added.push({ id: rid('m'), photo: await storePhoto(photo, P(owner)), title: '', date: '', note: '', tags: [] });
+      added.push({ id: rid('m'), photo: await storePhoto(photo, GALLERY_LABEL), title: '', date: '', note: '', tags: who ? [{ id: who }] : [], createdAt: Date.now() });
     } catch (e) {
       toast(e.message, true);
     }
@@ -218,7 +220,9 @@ export async function addGalleryPhotos(owner, files) {
   if (!added.length) return;
   beginAction('hist.mediaAdd');
   try {
-    await opUpdate('people', owner, { media: [...mediaList(P(owner)), ...added] });
+    await inBatch(async () => {
+      for (const { id, ...m } of added) await opSet('media', id, m);
+    });
   } catch (e) {
     reportError(e);
     return;
@@ -227,7 +231,8 @@ export async function addGalleryPhotos(owner, files) {
     afterData();
   }
   toast(t('med.added', added.length));
-  openMedia(owner, added[0].id, 'person:' + owner);
+  mediaGroups.set('new', added.map((x) => x.id));
+  openMedia(added[0].id, 'new');
 }
 
 /**
@@ -237,15 +242,15 @@ export async function addGalleryPhotos(owner, files) {
 export async function setMediaBack(file) {
   const m = item();
   if (!m || isDraft() || !S.canWrite) return;
-  if (S.edit && S.edit.id === current.owner) {
+  if (inForm()) {
     toast(t('finishFirst'));
     return;
   }
-  const { owner, id } = current;
+  const { id } = current;
   let data = '';
   if (file) {
     try {
-      data = await storePhoto(await photoFromFile(file, DOCUMENT_SIDE), P(owner));
+      data = await storePhoto(await photoFromFile(file, DOCUMENT_SIDE), GALLERY_LABEL);
     } catch (e) {
       toast(e.message, true);
       return;
@@ -253,14 +258,11 @@ export async function setMediaBack(file) {
   }
   beginAction(file ? 'hist.mediaBack' : 'hist.mediaBackRemove');
   try {
-    await opUpdate('people', owner, {
-      media: mediaList(P(owner)).map((x) => {
-        if (x.id !== id) return x;
-        if (data) return { ...x, back: data };
-        const { back: gone, ...front } = x;
-        return front;
-      }),
-    });
+    if (data) await opUpdate('media', id, { back: data });
+    else {
+      const { back: gone, ...front } = S.media.get(id);
+      await opSet('media', id, front);
+    }
   } catch (e) {
     reportError(e);
   } finally {
@@ -273,7 +275,7 @@ export async function setMediaBack(file) {
 
 /** Asks (true) or no longer asks to confirm the deletion of the image shown. */
 export function askMediaDelete(on) {
-  if (on && S.edit && S.edit.id === current.owner) {
+  if (on && inForm()) {
     toast(t('finishFirst')); // the record form would bring the image back when saving
     return;
   }
@@ -284,7 +286,7 @@ export function askMediaDelete(on) {
 
 /** Asks (true) or no longer asks the kind of document, before moving the image to the archives. */
 export function askMediaArchive(on) {
-  const busy = on && item() && [current.owner, ...tagsOf(item()).map((x) => x.id)].some((id) => S.edit && S.edit.id === id);
+  const busy = on && item() && (inForm() || tagsOf(item()).some((x) => S.edit && S.edit.id === x.id));
   if (busy) {
     toast(t('finishFirst')); // the record form would bring the image back, or drop the source, when saving
     return;
@@ -295,12 +297,12 @@ export function askMediaArchive(on) {
 }
 
 /** After the image shown left the gallery: the viewer goes on to the next image, or closes. */
-function leaveCurrent(owner, id) {
+function leaveCurrent(id) {
   // The next image first: the page redrawn afterwards would close a viewer showing a gone image
-  const at = sequence.findIndex((x) => x.owner === owner && x.id === id);
-  sequence = sequence.filter((x) => !(x.owner === owner && x.id === id));
+  const at = sequence.indexOf(id);
+  sequence = sequence.filter((x) => x !== id);
   if (sequence.length) {
-    current = { ...sequence[Math.max(0, Math.min(at, sequence.length - 1))] };
+    current = { id: sequence[Math.max(0, Math.min(at, sequence.length - 1))] };
     back = false;
   } else closeMedia();
   afterData();
@@ -309,55 +311,58 @@ function leaveCurrent(owner, id) {
 
 /**
  * Moves the image shown to the archives: it leaves the gallery and becomes a source of `kind`
- * (front, back, title, date and note kept), cited by its owner and by the people identified on
- * it, for their whole record. One undoable action.
+ * (front, back, title, date and note kept), cited by the people identified on it, for their whole
+ * record. One undoable action. An image identifying no one stays: no record would keep the source.
  */
 export async function archiveMedia(kind) {
   const m = item();
   if (!m || isDraft() || !S.canWrite) return;
-  const { owner, id } = current;
+  const { id } = current;
+  const citers = [...new Set(tagsOf(m).map((x) => x.id))].filter((pid) => P(pid));
+  if (!citers.length) {
+    toast(t('med.archiveNobody'), true);
+    return;
+  }
   askArchive = false;
   const source = rid('S');
   const doc = {
     source, fact: '', kind: SOURCE_KINDS.includes(kind) ? kind : 'other', title: m.title || '',
     note: [m.date, m.note].filter(Boolean).join(' — '), photo: m.photo, ...(photoSrc(m.back) ? { back: m.back } : {}),
   };
-  const citers = [...new Set([owner, ...tagsOf(m).map((x) => x.id)])].filter((pid) => P(pid));
   beginAction('hist.mediaArchive');
   try {
-    for (const pid of citers) {
-      const patch = { sources: [...sourcesOf(P(pid)), { ...doc, id: rid('c') }] };
-      if (pid === owner) patch.media = mediaList(P(owner)).filter((x) => x.id !== id);
-      await opUpdate('people', pid, patch);
-    }
+    await inBatch(async () => {
+      for (const pid of citers) await opUpdate('people', pid, { sources: [...sourcesOf(P(pid)), { ...doc, id: rid('c') }] });
+      await opDelete('media', id);
+    });
   } catch (e) {
     reportError(e);
   } finally {
     commitAction();
   }
-  leaveCurrent(owner, id);
+  leaveCurrent(id);
   toast(t('med.archived'));
 }
 
 /**
- * Deletes the image shown from its owner's gallery (and so from the galleries of the people
+ * Deletes the image shown from the tree's gallery (and so from the galleries of the people
  * identified on it), as one undoable action; the viewer goes on to the next image, or closes.
  */
 export async function deleteMedia() {
   const m = item();
   if (!m || isDraft() || !S.canWrite) return;
-  const { owner, id } = current;
+  const { id } = current;
   askDelete = false;
   askArchive = false;
   beginAction('hist.mediaDelete');
   try {
-    await opUpdate('people', owner, { media: mediaList(P(owner)).filter((x) => x.id !== id) });
+    await opDelete('media', id);
   } catch (e) {
     reportError(e);
   } finally {
     commitAction();
   }
-  leaveCurrent(owner, id);
+  leaveCurrent(id);
   toast(t('med.deleted'));
 }
 
@@ -405,7 +410,7 @@ function caption(m) {
 
 /** Opens or closes caption editing. */
 export function editCaption(on) {
-  if (on && S.edit && S.edit.id === current.owner) {
+  if (on && inForm()) {
     toast(t('finishFirst')); // the record form would rewrite the gallery when saving
     return;
   }
@@ -421,10 +426,9 @@ export async function saveCaption() {
   const value = (id) => String((document.getElementById(id) || {}).value || '').trim();
   const patch = { title: value('mdEditTitle'), date: value('mdEditDate'), note: value('mdEditNote') };
   editing = false;
-  const owner = P(current.owner);
   beginAction('hist.caption');
   try {
-    await opUpdate('people', current.owner, { media: mediaList(owner).map((x) => (x.id === current.id ? { ...x, ...patch } : x)) });
+    await opUpdate('media', current.id, patch);
   } catch (e) {
     reportError(e);
   } finally {
@@ -449,9 +453,10 @@ export function openDraftMedia(i) {
   renderMedia();
 }
 
-export function openMedia(owner, id, group = '') {
-  current = { owner, id };
-  sequence = (mediaGroups.get(group) || []).filter((x) => P(x.owner));
+export function openMedia(id, group = '') {
+  if (!S.media.has(id)) return;
+  current = { id };
+  sequence = (mediaGroups.get(group) || []).filter((x) => S.media.has(x));
   back = false;
   askDelete = false;
   askArchive = false;
@@ -467,9 +472,9 @@ export function openMedia(owner, id, group = '') {
  */
 export function stepMedia(d) {
   if (!current || pin || editing || sequence.length < 2) return false;
-  const at = sequence.findIndex((x) => x.owner === current.owner && x.id === current.id);
+  const at = sequence.indexOf(current.id);
   if (at < 0) return false;
-  current = { ...sequence[(at + d + sequence.length) % sequence.length] };
+  current = { id: sequence[(at + d + sequence.length) % sequence.length] };
   back = false;
   askDelete = false;
   askArchive = false;
@@ -519,10 +524,9 @@ async function saveTags(tags) {
     emit('form');
     return;
   }
-  const owner = P(current.owner);
   beginAction('hist.tag');
   try {
-    await opUpdate('people', current.owner, { media: mediaList(owner).map((m) => (m.id === current.id ? { ...m, tags } : m)) });
+    await opUpdate('media', current.id, { tags });
   } catch (e) {
     reportError(e);
   } finally {
@@ -534,7 +538,8 @@ async function saveTags(tags) {
 export async function addTag(id) {
   const m = item();
   if (!m || !pin || !P(id)) return;
-  const tags = [...tagsOf(m), { id, x: pin.x, y: pin.y }];
+  // A person already on the image without a marker: the marker is theirs now
+  const tags = [...tagsOf(m).filter((x) => x.id !== id || hasPlace(x)), { id, x: pin.x, y: pin.y }];
   pin = null;
   await saveTags(tags);
 }

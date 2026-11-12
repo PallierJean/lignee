@@ -11,7 +11,7 @@ import { rid } from '../utils/helpers.js';
 import {
   P, partnersOf, unionBetween, unionIdBetween, unionDeathEnd, currentSituation, reindex, unionType, isDead, DATED_SITUATIONS,
 } from '../model/people.js';
-import { opSet, opUpdate, opDelete, storePhoto } from './storage.js';
+import { opSet, opUpdate, opDelete, storePhoto, GALLERY_LABEL } from './storage.js';
 
 /** Situations shared with the current spouse. */
 const COUPLE_SITUATIONS = new Set(['married', 'remarried', 'pacs', 'cohabiting']);
@@ -49,7 +49,7 @@ async function endFormerUnion(id, row) {
   if (uid && !S.unions.get(uid).end) await opUpdate('unions', uid, { end: cause === 'widowed' ? 'death' : 'divorce' });
 }
 
-/** Record to store from the form's draft: trimmed fields, events, sources and gallery. */
+/** Record to store from the form's draft: trimmed fields, events and sources (the gallery: saveGallery). */
 async function recordData(e, id, previous) {
   const d = e.draft;
   const data = {
@@ -93,16 +93,36 @@ async function recordData(e, id, previous) {
   }
   data.sources = sources; // even empty: the sources nobody cites any more are then deleted
   data.unionSources = e.unionSources || [];
-  const media = [];
-  for (const { removed, ...x } of e.media) {
-    if (removed) continue;
-    const m = { ...x, title: x.title.trim(), date: x.date.trim(), note: x.note.trim(), photo: await storePhoto(x.photo, data) };
-    if (x.back) m.back = await storePhoto(x.back, data); // back: a contract's second side, a photo's annotated back
-    else delete m.back;
-    media.push(m);
-  }
-  if (media.length) data.media = media;
   return data;
+}
+
+const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') : []);
+
+/**
+ * The form's gallery, in the tree's gallery (model/media.js): each image kept shows the person
+ * (identified on it, with a marker or not); an image removed from the form no longer shows them,
+ * but stays in the tree's gallery.
+ */
+async function saveGallery(e, id) {
+  for (const { removed, id: mid, ...x } of e.media) {
+    const before = S.media.get(mid);
+    if (removed) {
+      if (before && listOf(before.tags).some((tag) => tag.id === id)) {
+        await opUpdate('media', mid, { tags: listOf(before.tags).filter((tag) => tag.id !== id) });
+      }
+      continue;
+    }
+    const tags = listOf(x.tags);
+    if (!tags.some((tag) => tag.id === id)) tags.unshift({ id });
+    const m = {
+      ...(before || { createdAt: Date.now() }), ...x, tags,
+      title: x.title.trim(), date: x.date.trim(), note: x.note.trim(), photo: await storePhoto(x.photo, GALLERY_LABEL),
+    };
+    // Its back: a contract's second side, a photo's annotated back
+    if (x.back) m.back = await storePhoto(x.back, GALLERY_LABEL);
+    else delete m.back;
+    if (JSON.stringify(m) !== JSON.stringify(before)) await opSet('media', mid, m);
+  }
 }
 
 /** New parent: linked to the child, and the union with the other parent is created if known. */
@@ -220,6 +240,7 @@ export async function savePerson(e) {
   const previous = e.id ? P(e.id) : null;
   const data = await recordData(e, id, previous);
   await opSet('people', id, data);
+  await saveGallery(e, id);
   await linkNewParent(e, id);
   await saveUnions(e, id);
   await syncSituations(e, id, data, previous);

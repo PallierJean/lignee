@@ -746,8 +746,8 @@ function libraryList(all) {
 /** Every image of the tree, the viewer going through them in this order as `group`. */
 export function galleryHTML(group) {
   const items = allMedia();
-  // First cell: add photos to the gallery of the person at the centre of the tree
-  const lead = addMediaTile(S.focus);
+  // First cell: add photos to the tree's gallery, identifying no one yet
+  const lead = addMediaTile();
   if (!items.length) return `${lead ? mediaGrid([], group, lead) : ''}<p class="nofocus">${t('med.empty')}</p>`;
   return mediaGrid(items, group, lead);
 }

@@ -100,7 +100,10 @@ test('gallery: the back of an image is added, changed, saved and removed', async
   document.getElementById('f-given').value = 'Anne';
   document.getElementById('f-surname').value = 'Roux';
   await A.submitEdit();
-  assert.equal(S.people.get('a').media[0].back, 'data:image/jpeg;base64,IMG', 'saved with its front');
+  const [saved] = [...S.media.values()];
+  assert.equal(saved.back, 'data:image/jpeg;base64,IMG', 'saved with its front');
+  assert.deepEqual(saved.tags, [{ id: 'a' }], 'in the tree’s gallery, showing the person, without a marker');
+  assert.equal('media' in S.people.get('a'), false, 'nothing kept in the record');
   A.startEdit('a');
   assert.equal(S.edit.media[0].back, 'data:image/jpeg;base64,IMG', 'back in the form again');
   A.removeDraftMediaBack(0);
@@ -108,7 +111,7 @@ test('gallery: the back of an image is added, changed, saved and removed', async
   document.getElementById('f-given').value = 'Anne';
   document.getElementById('f-surname').value = 'Roux';
   await A.submitEdit();
-  assert.equal('back' in S.people.get('a').media[0], false, 'removed');
+  assert.equal('back' in [...S.media.values()][0], false, 'removed');
   A.removeDraftMediaBack(0); // no form: nothing
 });
 
@@ -246,12 +249,19 @@ test('identifier les personnes dès l’ajout, depuis le formulaire : enregistr�
   media.placePin(pic, { clientX: 50, clientY: 40, target: { closest: () => null } });
   await media.addTag('b');
   assert.deepEqual(S.edit.media[0].tags, [{ id: 'b', x: 25, y: 40 }]);
-  assert.ok(!S.people.get('a').media, 'rien d’enregistré avant la fiche');
+  assert.equal(S.media.size, 0, 'rien d’enregistré avant la fiche');
   media.closeMedia();
   assert.match(document.getElementById('paneRecord').innerHTML, /Paul ROUX/, 'le formulaire montre qui est identifié');
   assert.equal(mediaLabel(S.edit.media[0]), 'Paul ROUX · 1985', 'sans intitulé : les personnes et la date');
   await A.submitEdit();
-  assert.deepEqual(S.people.get('a').media[0].tags, [{ id: 'b', x: 25, y: 40 }]);
+  assert.deepEqual(S.media.get('m1').tags, [{ id: 'a' }, { id: 'b', x: 25, y: 40 }], 'la fiche et la personne identifiée');
+  // Retirée du formulaire : elle quitte la galerie de la personne, pas celle de l’arbre
+  A.startEdit('a');
+  A.removeDraftMedia(0);
+  document.getElementById('f-given').value = 'Anne';
+  document.getElementById('f-surname').value = 'Roux';
+  await A.submitEdit();
+  assert.deepEqual(S.media.get('m1').tags, [{ id: 'b', x: 25, y: 40 }]);
 });
 
 test('ancien titre qui n’est qu’un nom de fichier : ignoré à l’affichage, champ vide à la modification', async () => {

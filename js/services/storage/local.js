@@ -7,6 +7,7 @@ import { TREES_KEY, TREE_KEY, DEFAULT_TREE, EXAMPLE_FILE } from '../../config.js
 import { t } from '../../i18n.js';
 import { say, failure } from '../notify.js';
 import { parseBackup } from '../backup.js';
+import { galleryFromPeople } from '../../model/media.js';
 import { ensureTree, sortTrees } from './trees.js';
 
 function readJSON(key) {
@@ -24,11 +25,17 @@ export function readLocalTrees() {
   return Array.isArray(list) ? list.filter((t) => t && typeof t.id === 'string') : [];
 }
 
-/** Data of a browser tree, as Maps. */
+/** Data of a browser tree, as Maps; images still kept in the records (before 4.0) go to the gallery. */
 export function readLocalData(id) {
   const data = readJSON(TREE_KEY + id) || {};
   const map = (o) => new Map(Object.entries(o || {}));
-  return { people: map(data.people), unions: map(data.unions), sources: map(data.sources) };
+  const entries = (o) => Object.entries(o && typeof o === 'object' ? o : {}).map(([key, value]) => ({ id: key, data: { ...value } }));
+  const people = entries(data.people);
+  const media = galleryFromPeople(people, entries(data.media));
+  return {
+    people: new Map(people.map((x) => [x.id, x.data])), unions: map(data.unions), sources: map(data.sources),
+    media: new Map(media.map((x) => [x.id, x.data])),
+  };
 }
 
 function writeLocalTrees() {
@@ -43,9 +50,9 @@ export async function seedExample() {
   try {
     const res = await fetch(EXAMPLE_FILE, { cache: 'no-store' });
     if (!res.ok) return;
-    const { name, people, unions, sources } = parseBackup(await res.text());
+    const { name, people, unions, sources, media } = parseBackup(await res.text());
     const byId = (list) => Object.fromEntries(list.map((x) => [x.id, x.data]));
-    localStorage.setItem(TREE_KEY + DEFAULT_TREE, JSON.stringify({ people: byId(people), unions: byId(unions), sources: byId(sources) }));
+    localStorage.setItem(TREE_KEY + DEFAULT_TREE, JSON.stringify({ people: byId(people), unions: byId(unions), sources: byId(sources), media: byId(media) }));
     localStorage.setItem(TREES_KEY, JSON.stringify([{ id: DEFAULT_TREE, name, createdAt: 0 }]));
   } catch (e) {
     /* file missing or storage blocked: the application starts with an empty tree */
@@ -67,6 +74,7 @@ export function loadLocalTree() {
   S.people = data.people;
   S.unions = data.unions;
   S.sources = data.sources;
+  S.media = data.media;
 }
 
 // Browsers keep about 5 million characters per site: past this size, the user is warned once
@@ -84,6 +92,7 @@ export function saveBrowserTree() {
     people: Object.fromEntries(S.people),
     unions: Object.fromEntries(S.unions),
     sources: Object.fromEntries(S.sources),
+    media: Object.fromEntries(S.media),
   });
   try {
     localStorage.setItem(TREE_KEY + S.tree, json);
