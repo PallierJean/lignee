@@ -327,6 +327,13 @@ export function parseCommand(sentence) {
     const { person } = facts(m[2]);
     if (Object.keys(person).length) return cleanCommand({ action: 'edit', who: m[1], person: { ...person, sex: '' } });
   }
+  // "La date de naissance de Marc Tellier est le 7 juin 1961", "le lieu de décès de …", "le métier de … est menuisier"
+  m = /^(?:la |le )?(date|lieu|métier|profession|job|occupation)(?:\s+(?:de |du )?(naissance|décès|mort))?\s+(?:de |d['’])(.+?)\s*,?\s+(?:est|était|c['’]est|c['’]était)\s+(?:le |à |au |un |une )?(.+)$/iu.exec(s);
+  if (m && isName(m[3])) {
+    const death = /^(?:décès|mort)$/i.test(m[2] || '');
+    const field = /^(?:date)$/i.test(m[1]) ? (death ? 'deathDate' : 'birthDate') : /^lieu$/i.test(m[1]) ? (death ? 'deathPlace' : 'birthPlace') : 'occupation';
+    if (m[2] || field === 'occupation') return cleanCommand({ action: 'edit', who: m[3], person: { [field]: field.endsWith('Place') ? cap(m[4]) : m[4] } });
+  }
   // "Jean Maury était cultivateur"
   m = /^(.+?)\s+(?:était|est|was|is)\s+(?:un |une |a |an )?([\p{L}-]+(?: [\p{L}-]+)?)$/iu.exec(s);
   if (m && isName(m[1])) return cleanCommand({ action: 'edit', who: m[1], person: { occupation: m[2] } });
