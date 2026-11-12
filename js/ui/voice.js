@@ -17,6 +17,8 @@ import { t } from '../i18n.js';
 import { P, longName, lifeYears, given, surname, maiden, unionBetween } from '../model/people.js';
 import { FIELDS, parseCommand, parseReply, parseDetails, parseChoice, isGoodbye, isNoise, fixName, soundKey } from '../model/voice.js';
 import { voiceEngines, warmVoice, record, listen, understandText, needsDownload, speak, hush, loadVoices, chime } from '../services/voice.js';
+import { parseSpokenPlace, formatPlace } from '../model/places.js';
+import { loadCommunes, findCommune } from '../model/communes.js';
 import { searchPeople, onFindInput } from './search.js';
 import { renderSide } from './render.js';
 
@@ -181,7 +183,9 @@ export async function understand(text, { model = !refused, spoken = false } = {}
     return set({ phase: 'done', text, note: t('voice.failed', esc(e.message)) });
   }
   if (st.phase !== 'thinking' || st.text !== text) return;
-  carryOut(res.command, text);
+  const command = { ...res.command, person: await placesHeard(res.command.person) };
+  if (st.phase !== 'thinking' || st.text !== text) return;
+  carryOut(command, text);
   replies = 0;
   if (spoken) converse();
 }
@@ -296,7 +300,8 @@ export async function reply(text, keep = { ...st, phase: 'done' }, spoken = fals
   const r = parseReply(text);
   if (r.reply === 'yes') return saveVoice(text, spoken);
   if (r.reply === 'no') return cancelVoice(text, spoken);
-  const said = parseDetails(r.rest, { surname: S.edit.draft.surname });
+  const said = await placesHeard(parseDetails(r.rest, { surname: S.edit.draft.surname }));
+  if (!formOpen()) return;
   if (!Object.keys(said).length) {
     set({ ...keep, answer: text, extra: t('voice.replyUnknown') });
     return spoken ? askSave() : undefined;
@@ -353,6 +358,28 @@ export function toggleVoiceReply(on) {
 /* ---------- Carrying out the command ---------- */
 
 const words = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean);
+
+/**
+ * A place as said, as the tree writes it: "Confoland, 87" → "Confolens (16)", "Hautefort" →
+ * "Hautefort (24)": the commune's department filled in, its name as INSEE writes it.
+ */
+async function placeHeard(text) {
+  if (!text) return text;
+  const pl = parseSpokenPlace(text);
+  if (!pl.country) {
+    await loadCommunes().catch(() => {});
+    const c = findCommune(pl.city, pl.dept);
+    if (c) Object.assign(pl, { city: c.city, dept: c.dept || pl.dept });
+  }
+  return formatPlace(pl);
+}
+
+/** The places of the fields said, as the tree writes them. */
+async function placesHeard(person) {
+  const out = { ...person };
+  for (const f of ['birthPlace', 'deathPlace']) if (out[f]) out[f] = await placeHeard(out[f]);
+  return out;
+}
 
 /** The tree's surnames (birth names included), the most frequent first: how the names heard are written. */
 function knownSurnames() {

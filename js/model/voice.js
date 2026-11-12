@@ -158,7 +158,8 @@ const kinOf = (word) => {
 };
 
 const DATE = String.raw`(?:le |en |on |in )?((?:vers |avant |après |about |before |after )?(?:\d{1,2}(?:er)? )?(?:[a-zéû]+ )?\d{4}|\d{1,2}\/\d{1,2}\/\d{4})`;
-const PLACE = String.raw`(?: (?:à|a|au|en|at|in) ([^,;.]+?))?`;
+// A place, and its department said in figures after it: "à Confolens, 16", "à Confolens (16)"
+const PLACE = String.raw`(?: (?:à|a|au|en|at|in) ([^,;.()]+?(?:\s*,\s*(?:\d{1,3}|2[AB])(?=[,;.\s]|$)|\s*\([^()]*\))?))?`;
 const FACTS = [
   ['birth', new RegExp(String.raw`${L}(?:n[ée]e?|born)\s+${DATE}${PLACE}(?=[,;.]|\s+(?:et|and|il|elle|he|she|mort|morte|d[ée]c[ée]d[ée]e?|died|fils|fille|enfant|p[eè]re|m[eè]re|qui)${R}|$)`, 'iu')],
   ['death', new RegExp(String.raw`${L}(?:mort|morte|d[ée]c[ée]d[ée]e?|died)\s+${DATE}${PLACE}(?=[,;.]|\s+(?:et|and|il|elle|he|she|n[ée]e?|born|fils|fille|enfant|qui)${R}|$)`, 'iu')],

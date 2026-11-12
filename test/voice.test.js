@@ -89,6 +89,23 @@ describe('voix : phrases connues', () => {
     assert.equal(parseCommand('Le père de Jean Lacoste est mort en 1900').action, 'unknown');
   });
 
+  test('lieux dits : commune, département, pays', async () => {
+    const { parseSpokenPlace } = await import('../js/model/places.js');
+    const { loadCommunes, findCommune } = await import('../js/model/communes.js');
+    const place = (x) => { const p = parseSpokenPlace(x); return [p.hamlet, p.city, p.dept, p.country].join('|'); };
+    assert.equal(place('Confolens, 16'), '|Confolens|16|');
+    assert.equal(place('Confolens en Charente'), '|Confolens|16|');
+    assert.equal(place('Confolens dans la Haute-Vienne'), '|Confolens|87|');
+    assert.equal(place('la Borie, Hautefort (24)'), 'la Borie|Hautefort|24|');
+    assert.equal(place('Bruxelles en Belgique'), '|Bruxelles||Belgique');
+    assert.equal(place('Bourg en Bresse'), '|Bourg en Bresse||', 'pas un département');
+    await loadCommunes();
+    assert.deepEqual(findCommune('Confoland', '87'), { city: 'Confolens', dept: '16' });
+    assert.deepEqual(findCommune('perigueux'), { city: 'Périgueux', dept: '24' });
+    assert.deepEqual(findCommune('Saint-Pierre'), { city: 'Saint-Pierre', dept: '' }, 'plusieurs départements : aucun');
+    assert.equal(findCommune('Zzyzx'), null);
+  });
+
   test('lieux : petits mots en minuscules', () => {
     assert.equal(parseCommand('Ajoute Anne Lacoste, née en 1872 à Hautefort en Dordogne').person.birthPlace, 'Hautefort en Dordogne');
     assert.equal(parseCommand('Ajoute Anne Lacoste, née en 1872 à saint-pierre-de-chignac').person.birthPlace, 'Saint-Pierre-de-Chignac');
@@ -345,6 +362,10 @@ describe('voix : dans la page', () => {
     A.cancelEdit();
     await voice.understand('Ajoute Paul-Lacoste, né en 1880');
     assert.deepEqual([S.edit.draft.given, S.edit.draft.surname], ['Paul', 'Lacoste'], 'le nom collé au prénom');
+    A.cancelEdit();
+    await voice.understand('Ajoute Paul Lacoste, né en 1880 à Confoland, 87, mort en 1950 à Hautefort');
+    assert.equal(S.edit.draft.birthPlace, 'Confolens (16)', 'la commune mal entendue, et son département');
+    assert.equal(S.edit.draft.deathPlace, 'Hautefort (24)', 'le département, quand il n’est pas dit');
     A.cancelEdit();
     await voice.understand('cherche les Lacost');
     assert.equal(document.getElementById('find').value, 'les Lacoste');
