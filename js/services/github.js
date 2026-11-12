@@ -265,7 +265,12 @@ export async function pushBackup(repo, target, text, message) {
   backup.people = people;
   // A shared source's document: its file is named after its title or its kind
   const sources = [];
-  for (const s of backup.sources || []) sources.push(await convertPhotos(s, (photo) => store(photo, { given: s.title || s.kind || 'source' })));
+  for (const s of backup.sources || []) {
+    const sent = await convertPhotos(s, (photo) => store(photo, { given: s.title || s.kind || 'source' }));
+    // A reading of a document replaced since: never shown, it would leave the backup looking outdated
+    for (const [key, text] of [['photo', 'text'], ['back', 'backText']]) if (sent[text] && sent[text].of !== sent[key]) delete sent[text];
+    sources.push(sent);
+  }
   if (backup.sources) backup.sources = sources;
   // A gallery image: the same name for all ("galerie-…"), not that of a person
   const media = [];

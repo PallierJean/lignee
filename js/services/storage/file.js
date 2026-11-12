@@ -149,12 +149,17 @@ const hasPhotoData = (p) => isPhotoData(p.photo) || attached(p).some(isPhotoData
 
 /**
  * Record whose images have gone through `convert`: a person's photo, a shared source's document,
- * a gallery image; and the back of the last two.
+ * a gallery image; and the back of the last two. A document's reading names the image it was made
+ * on (`text.of`, `backText.of`): it follows its image, under its new name or as data.
  */
 export async function convertPhotos(p, convert) {
   const out = Object.assign({}, p);
-  if (p.photo) out.photo = await convert(p.photo);
-  if (p.back) out.back = await convert(p.back);
+  for (const [key, text] of [['photo', 'text'], ['back', 'backText']]) {
+    if (!p[key]) continue;
+    out[key] = await convert(p[key]);
+    const reading = p[text];
+    if (reading && typeof reading === 'object' && reading.of === p[key]) out[text] = { ...reading, of: out[key] };
+  }
   return out;
 }
 

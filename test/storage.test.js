@@ -387,3 +387,12 @@ test('a gallery image and its back are converted together; the record itself is 
   assert.deepEqual(out, { photo: 'data:front.jpg', back: 'data:back.jpg', tags: [{ id: 'a' }] });
   assert.equal(m.back, 'photos/back.jpg');
 });
+
+test('a document’s reading follows its image, renamed or turned into data', async () => {
+  const { convertPhotos } = await import('../js/services/storage.js');
+  const src = { photo: 'photos/a.jpg', back: 'photos/b.jpg', text: { of: 'photos/a.jpg', lines: [] }, backText: { of: 'photos/old.jpg', lines: [] } };
+  const out = await convertPhotos(src, async (x) => x.replace('photos/', 'photos/galerie-'));
+  assert.equal(out.text.of, 'photos/galerie-a.jpg');
+  assert.equal(out.backText.of, 'photos/old.jpg', 'a reading of another image stays as it was');
+  assert.equal(src.text.of, 'photos/a.jpg', 'the record itself is untouched');
+});
