@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.28](https://github.com/PallierJean/lignee/compare/v4.1.27...v4.1.28) (2026-11-12)
+
+### Bug Fixes
+
+* Count the seconds while the language model thinks ([0c7c1cb](https://github.com/PallierJean/lignee/commit/0c7c1cb7d2da5e4ce68cbc99a57cdb9d2e632a10))
+
+---
+
+### Corrections
+
+* Pendant que le modèle de langage réfléchit, la bulle compte les secondes et explique la lenteur de la première phrase ([0c7c1cb](https://github.com/PallierJean/lignee/commit/0c7c1cb7d2da5e4ce68cbc99a57cdb9d2e632a10))
+
 ## [4.1.27](https://github.com/PallierJean/lignee/compare/v4.1.26...v4.1.27) (2026-11-12)
 
 ### Bug Fixes
