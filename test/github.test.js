@@ -426,6 +426,34 @@ describe('envoi vers le dépôt', () => {
     assert.ok(!entries.some((x) => x.path.endsWith('vieille.jpg')), 'fichier jamais chargé : conservé');
   });
 
+  test('image de la galerie au nom d’une personne : reprise sous « galerie-… », sans renvoi', async () => {
+    const { repo, target } = await opened();
+    const known = repo.files.get('principal/photos/Ané.jpg').sha;
+    calls.length = 0;
+    const body = JSON.parse(send([{ id: 'a' }]));
+    body.version = 3;
+    body.media = [{ id: 'm', photo: data, tags: [{ id: 'a' }] }];
+    await pushBackup(repo, target, JSON.stringify(body), 'msg');
+    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')), 'contenu déjà dans le dépôt');
+    const ref = json().media[0].photo;
+    assert.match(ref, /^photos\/galerie-[0-9a-f-]{36}\.jpg$/);
+    const entries = treeEntries().tree;
+    assert.ok(entries.some((x) => x.path === 'principal/' + ref && x.sha === known));
+    assert.ok(entries.some((x) => x.path === 'principal/photos/Ané.jpg' && x.sha === null), 'l’ancien nom part');
+  });
+
+  test('fichier aussi portrait d’une fiche : le portrait garde son nom', async () => {
+    const { repo, target } = await opened();
+    calls.length = 0;
+    const body = JSON.parse(send([{ id: 'a', photo: data }]));
+    body.version = 3;
+    body.media = [{ id: 'm', photo: data, tags: [] }];
+    await pushBackup(repo, target, JSON.stringify(body), 'msg');
+    assert.equal(json().people[0].photo, 'photos/Ané.jpg');
+    assert.equal(json().media[0].photo, 'photos/Ané.jpg');
+    assert.ok(!treeEntries().tree.some((x) => x.sha === null && x.path.endsWith('Ané.jpg')));
+  });
+
   test('second envoi : la photo ajoutée n’est pas retransférée', async () => {
     const { repo, target } = await opened();
     await pushBackup(repo, target, send([{ id: 'a', photo: other }]), 'msg');
