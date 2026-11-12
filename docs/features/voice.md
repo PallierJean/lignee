@@ -34,12 +34,20 @@ demande laquelle ; un nom entendu un peu de travers (« Margerite Mauri ») est 
 2. Ensuite, et après une recherche, une fiche ouverte ou une phrase non comprise, Lignée demande
    « Autre chose ? » et écoute la commande suivante.
 
-« C'est tout », « merci », « non », ou 8 secondes sans parole terminent la conversation ; le
-formulaire reste alors ouvert. Le silence n'est jamais envoyé à Whisper.
+Chaque écoute sans clic s'annonce par un petit signal sonore (deux notes, produites sur l'appareil).
+« C'est tout », « merci » ou « non » terminent la conversation. Après 12 secondes sans parole, la
+bulle le dit et le formulaire reste ouvert : **le micro (ou M) répond alors au formulaire** (« oui »,
+« non », une précision), sans relancer une commande. Le silence n'est jamais envoyé à Whisper, et ce
+qu'il invente sur un bruit (« Sous-titres réalisés par… ») compte comme rien entendu.
 
 La lecture à voix haute n'utilise que les voix installées sur l'appareil : jamais une voix en ligne
 (les voix « Google » de Chrome envoient le texte à Google). Sans voix installée, Lignée ne parle pas
 et la bulle montre tout. Lignée n'écoute qu'une fois sa phrase finie, pour ne pas s'entendre.
+
+Sous Linux, les voix installées viennent de speech-dispatcher (espeak-ng, par exemple) : Firefox
+les utilise d'office ; Chrome seulement lancé avec l'option `--enable-speech-dispatcher` (sans elle,
+il ne propose que « Google français », en ligne, et Lignée reste muette). Lignée prend la voix de
+France (`fr-FR`), et la voix de base avant ses variantes.
 
 La bulle a aussi ses boutons **Enregistrer** (Entrée) et **Annuler**, qui terminent la conversation.
 La case « Conversation à la voix » la coupe (réglage retenu). Une phrase tapée dans la bulle n'est

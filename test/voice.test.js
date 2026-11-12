@@ -3,7 +3,7 @@ import { test, describe, before, after } from 'node:test';
 import { mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { parseCommand, cleanCommand, cleanDate, commandFromText, splitName, parseReply, parseDetails, isGoodbye, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
+import { parseCommand, cleanCommand, cleanDate, commandFromText, splitName, parseReply, parseDetails, isGoodbye, isNoise, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
 import { createServer } from '../server.js';
 import { loadTree, person, resetApp } from './helpers.js';
 
@@ -110,6 +110,11 @@ describe('voix : la réponse, une fois le formulaire rempli', () => {
     assert.equal(parseReply('Ouistreham').reply, 'more', 'un mot entier');
   });
 
+  test('ce que Whisper invente sur un bruit ne compte pas', () => {
+    for (const x of ['Sous-titres réalisés par la communauté d’Amara.org', 'Merci d’avoir regardé cette vidéo !', '...', '[Musique]', ' ']) assert.equal(isNoise(x), true, x);
+    for (const x of ['oui', 'Non, elle est née en 1873', 'Ajoute Anne Lacoste']) assert.equal(isNoise(x), false, x);
+  });
+
   test('la fin de la conversation', () => {
     for (const x of ['C’est tout, merci.', 'merci', 'Non.', 'fini', 'that’s all']) assert.equal(isGoodbye(x), true, x);
     for (const x of ['Ajoute Paul Lacoste', 'cherche Maury', 'Merciers']) assert.equal(isGoodbye(x), false, x);
@@ -122,6 +127,18 @@ describe('voix : la réponse, une fois le formulaire rempli', () => {
     assert.deepEqual(parseDetails('elle s’appelle Anne Marie', { surname: 'Lacoste' }), { given: 'Anne Marie' });
     assert.deepEqual(parseDetails('son prénom est Jeanne'), { given: 'Jeanne' });
     assert.deepEqual(parseDetails('euh je sais pas'), {});
+  });
+});
+
+describe('voix : la voix de Lignée', () => {
+  test('une voix installée, de France, la voix de base avant ses variantes ; jamais une voix en ligne', async () => {
+    const { localVoice } = await import('../js/services/voice.js');
+    const v = (name, lang, localService = true) => ({ name, lang, localService });
+    const voices = [v('Google français', 'fr-FR', false), v('French (Belgium) espeak-ng', 'fr-BE'),
+      v('French (France)+Adam espeak-ng', 'fr-FR'), v('French (France) espeak-ng', 'fr-FR'), v('English (Great Britain) espeak-ng', 'en-GB')];
+    assert.equal(localVoice(voices, 'fr').name, 'French (France) espeak-ng');
+    assert.equal(localVoice(voices, 'en').name, 'English (Great Britain) espeak-ng');
+    assert.equal(localVoice([v('Google français', 'fr-FR', false)], 'fr'), null);
   });
 });
 
@@ -432,12 +449,22 @@ describe('voix : dans la page', () => {
     assert.match(bubble(), /Le formulaire n’est pas complet/, 'refusé : le formulaire dit pourquoi');
     await voice.cancelVoice();
 
+    // The microphone, with the form filled in by the voice open: it answers the form
+    await voice.understand('ajoute Paul Lacoste, fils de Marguerite Maury');
+    const n = asked;
+    await voice.startVoice();
+    await settle();
+    assert.equal(asked, n + 1, 'le micro s’ouvre');
+    assert.equal(S.edit && S.edit.draft.given, 'Paul', 'pour répondre au formulaire, pas pour une autre commande');
+    assert.match(bubble(), /data-act="voice-save"/);
+    A.cancelEdit();
+
     voice.toggleVoiceReply(false);
     assert.equal(S.voiceReply, false);
     assert.match(localStorage.getItem('lignee.view.v1'), /"voiceReply":false/, 'retenu');
     await voice.understand('ajoute Paul Lacoste, fils de Marguerite Maury', { spoken: true });
     await settle();
-    assert.equal(asked, 4, 'conversation coupée');
+    assert.equal(asked, 5, 'conversation coupée');
     voice.toggleVoiceReply(true);
     A.cancelEdit();
     voice.closeVoice();

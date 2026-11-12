@@ -343,3 +343,9 @@ const BYE = START(phrases(["c'est tout", "ce sera tout", "ça ira", 'merci', 'fi
 
 /** The end of the conversation: "c'est tout", "merci", "non"… */
 export const isGoodbye = (text) => only(plain(text), BYE) || parseReply(text).reply === 'no';
+
+// What Whisper makes up from a noise or a breath (subtitles of the videos it learned from)
+const NOISE = /sous-titr|amara|merci d['’]avoir regard|abonnez-vous|thanks? for watching|subtitles? by|^\W*$|^\[[^\]]*\]$|^\(?musique\)?$/i;
+
+/** A text Whisper wrote from a noise, not from words: nothing was said. */
+export const isNoise = (text) => NOISE.test(str(text));

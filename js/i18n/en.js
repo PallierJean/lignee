@@ -609,6 +609,8 @@ export const EN = {
   'voice.cancelledNext': 'All right, nothing saved. Anything else?',
   'voice.nextListening': 'Anything else?',
   'voice.nextHint': 'Another command, or “that’s all” to finish.',
+  'voice.noAnswer': 'I heard nothing. Answer with the microphone (or M), or click Save.',
+  'voice.idle': 'I hear nothing more: the conversation stops. The microphone (or M) to start again.',
   'voice.bye': 'End of the conversation.',
   'voice.at': ' at ',
   'voice.r.name': 'Name',

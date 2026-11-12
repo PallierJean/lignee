@@ -15,8 +15,8 @@ import { $, esc, setHTML } from '../utils/dom.js';
 import { norm } from '../utils/helpers.js';
 import { t } from '../i18n.js';
 import { P, longName, lifeYears, given, surname, maiden, unionBetween } from '../model/people.js';
-import { FIELDS, parseCommand, parseReply, parseDetails, isGoodbye } from '../model/voice.js';
-import { voiceEngines, warmVoice, record, listen, understandText, needsDownload, speak, hush, loadVoices } from '../services/voice.js';
+import { FIELDS, parseCommand, parseReply, parseDetails, isGoodbye, isNoise } from '../model/voice.js';
+import { voiceEngines, warmVoice, record, listen, understandText, needsDownload, speak, hush, loadVoices, chime } from '../services/voice.js';
 import { searchPeople, onFindInput } from './search.js';
 import { renderSide } from './render.js';
 
@@ -30,7 +30,7 @@ let level = 0;
 let refused = false; // browser language model declined, this time
 let replies = 0;     // answers listened to for the open form (a few, then the user clicks)
 
-const REPLY_WAIT = 8000; // the answer: nobody speaks for this long, the listening ends
+const REPLY_WAIT = 12000; // the answer: nobody speaks for this long, the listening ends (and the bubble says so)
 const MAX_REPLIES = 3;
 
 /** Shows the microphone if this device can listen. `actions`: setFocus, startNew, startAdd, editPerson. */
@@ -108,6 +108,8 @@ function hint() {
 
 export async function startVoice(agreed = false) {
   if (!engines || !engines.listen || rec) return;
+  // The form filled in by the voice is open: the microphone answers it ("oui", "non", a detail)
+  if (formOpen() && st.phase === 'done') return answerNow();
   if (engines.listen === 'browser' && !agreed && !consent('asr')) return set({ phase: 'consent', what: 'asr' });
   set({ phase: 'listening' });
   warmVoice();
@@ -190,12 +192,15 @@ function converse() {
 }
 
 /**
- * One short listening (the answer, or the next command): the text said, or null when nothing
- * was said (8 s of silence), the listening failed, or the bubble moved on meanwhile.
+ * One short listening (the answer, or the next command), announced by a sound: the text said,
+ * '' when nothing was said (silence, or a noise Whisper turned into words), or null when the
+ * listening failed or the bubble moved on meanwhile.
  */
 async function hearOnce(keep, phase) {
   if (rec) return null;
   set({ ...keep, phase });
+  await chime();
+  if (st.phase !== phase) return null;
   let r;
   try {
     r = await record({ onLevel: showLevel, wait: REPLY_WAIT, silence: 1000, max: 15000 });
@@ -216,16 +221,12 @@ async function hearOnce(keep, phase) {
   }
   if (st.phase !== phase) return null; // saved, cancelled or closed meanwhile
   // Nothing said: the silence is never sent to Whisper (which makes up sentences from it)
-  if (!r.spoke() || samples.length < 16000 * 0.3) {
-    set(keep);
-    return null;
-  }
+  if (!r.spoke() || samples.length < 16000 * 0.3) return '';
   set({ ...keep, phase: 'hearing' });
   try {
     const text = await listen(samples, { lang: S.lang === 'en' ? 'en' : 'fr', hint: hint(), onProgress: progress });
     if (st.phase !== 'hearing') return null;
-    if (!text) set(keep);
-    return text || null;
+    return text && !isNoise(text) ? text : '';
   } catch (e) {
     set({ ...keep, extra: t('voice.failed', esc(e.message)) });
     return null;
@@ -258,7 +259,13 @@ async function askSave() {
   set({ ...keep, phase: 'speaking' });
   await speak(recap().map(([k, v]) => `${k} : ${v}`).join('. ') + '. ' + t('voice.askSave'), S.lang);
   if (st.phase !== 'speaking' || !formOpen()) return;
+  await answerNow(keep);
+}
+
+/** Listens for the answer to the form open; nothing heard: the bubble says how to answer. */
+async function answerNow(keep = { ...st, phase: 'done' }) {
   const text = await hearOnce(keep, 'reply');
+  if (text === '') return set({ ...keep, extra: t('voice.noAnswer') });
   if (text != null) await reply(text, keep, true);
 }
 
@@ -267,6 +274,7 @@ async function listenNext() {
   if (!talking() || rec) return;
   const keep = { ...st, phase: 'done', next: true };
   const text = await hearOnce(keep, 'next');
+  if (text === '') return set({ ...keep, extra: t('voice.idle') });
   if (text == null) return;
   if (isGoodbye(text)) return set({ phase: 'done', text: keep.text, answer: text, note: t('voice.bye') });
   understand(text, { spoken: true });

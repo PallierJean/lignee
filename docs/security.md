@@ -45,7 +45,8 @@ local ou au navigateur accède aux arbres. Ne l'exposez pas sur un réseau.
   lancé sans shell ; la phrase va à Ollama, sur l'ordinateur (`127.0.0.1`). Rien ne sort sur
   Internet. Le micro n'est ouvert que pendant l'écoute, après un clic ou la touche M ; seule
   exception, la conversation qui suit une commande dite (la réponse, puis la commande suivante) :
-  des écoutes courtes, montrées dans la bulle, qui s'arrêtent au bout de 8 secondes sans parole et
+  des écoutes courtes, annoncées par un signal sonore et montrées dans la bulle, qui s'arrêtent au
+  bout de 12 secondes sans parole et
   se désactivent par une case de la bulle. La lecture à voix haute n'utilise que les voix installées
   sur l'appareil (`localService`), jamais une voix en ligne.
 - **Pas d'écrasement silencieux** : chaque arbre a une version (empreinte SHA-256, en-tête

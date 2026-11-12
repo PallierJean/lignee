@@ -248,7 +248,7 @@ export function speak(text, lang = 'fr') {
   const synth = globalThis.speechSynthesis;
   if (!synth || typeof globalThis.SpeechSynthesisUtterance !== 'function' || !text) return Promise.resolve();
   // The voices not known yet (loaded late by some browsers, see loadVoices): silent rather than a default voice, maybe online
-  const voice = synth.getVoices().find((v) => v.localService && v.lang && v.lang.toLowerCase().startsWith(lang));
+  const voice = localVoice(synth.getVoices(), lang);
   if (!voice) return Promise.resolve();
   return new Promise((resolve) => {
     const u = new globalThis.SpeechSynthesisUtterance(text);
@@ -266,6 +266,17 @@ export function speak(text, lang = 'fr') {
   });
 }
 
+/**
+ * The voice to speak `lang` with: installed on the device only; the language's own country first
+ * (fr-FR, en-GB), and the plain voice before its variants ("French (France)+Adam espeak-ng").
+ */
+export function localVoice(voices, lang) {
+  const own = lang === 'en' ? 'en-gb' : 'fr-fr';
+  const rank = (v) => (v.lang.toLowerCase().replace('_', '-') === own ? 0 : 2) + (/\+/.test(v.name) ? 1 : 0);
+  return voices.filter((v) => v.localService && v.lang && v.lang.toLowerCase().startsWith(lang))
+    .sort((a, b) => rank(a) - rank(b))[0] || null;
+}
+
 /** Asks the browser for its voices early: Chrome lists them only after a first call. */
 export function loadVoices() {
   if (globalThis.speechSynthesis) globalThis.speechSynthesis.getVoices();
@@ -274,4 +285,35 @@ export function loadVoices() {
 /** Stops what is being said. */
 export function hush() {
   if (globalThis.speechSynthesis) globalThis.speechSynthesis.cancel();
+}
+
+let chimeCtx = null;
+
+/**
+ * A short sound, made here (nothing is downloaded): 'listen' (two rising notes) when Lignée listens
+ * without a click, so that the user knows it waits for an answer. Resolves once played.
+ */
+export function chime() {
+  const AC = globalThis.AudioContext;
+  if (!AC) return Promise.resolve();
+  try {
+    chimeCtx = chimeCtx || new AC();
+    if (chimeCtx.state === 'suspended') chimeCtx.resume().catch(() => {});
+    const now = chimeCtx.currentTime;
+    [[660, 0], [880, 0.12]].forEach(([freq, at]) => {
+      const osc = chimeCtx.createOscillator();
+      const gain = chimeCtx.createGain();
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, now + at);
+      gain.gain.exponentialRampToValueAtTime(0.15, now + at + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + at + 0.11);
+      osc.connect(gain).connect(chimeCtx.destination);
+      osc.start(now + at);
+      osc.stop(now + at + 0.12);
+    });
+  } catch (e) {
+    return Promise.resolve();
+  }
+  // The microphone opens after the sound: it must not hear it
+  return new Promise((resolve) => setTimeout(resolve, 300));
 }
