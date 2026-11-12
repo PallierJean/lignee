@@ -27,6 +27,7 @@ const CORPUS = [
   ['A joute un fils à Marc Tellier : Jean.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Jean' } }],
   ['Azout, Marc-Octave-Anatole-Tellier, né le 7 juin 1961 à Confolens.', { action: 'add', person: { given: 'Marc-Octave-Anatole', surname: 'Tellier', sex: 'M', birthDate: '7 juin 1961', birthPlace: 'Confolens' } }],
   ['Ajoute Jean-Pierre.', { action: 'add', person: { given: 'Jean-Pierre', surname: '' } }],
+  ['Ajoute Jean Tellier, né le 10-12-95 à Bordeaux.', { action: 'add', person: { given: 'Jean', surname: 'Tellier', birthDate: '10/12/1995', birthPlace: 'Bordeaux' } }],
   ['Ajoute Marie de la Borie.', { action: 'add', person: { given: 'Marie', surname: 'De la Borie' } }],
 
   // Parents and children

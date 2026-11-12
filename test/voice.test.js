@@ -239,6 +239,9 @@ describe('voix : réponse du modèle de langage', () => {
     assert.equal(cleanDate('vers le 1er mai 1850'), 'vers 1 mai 1850');
     assert.equal(cleanDate('premier janvier 1950'), '1 janvier 1950');
     assert.equal(cleanDate('on 2nd May 1890'), '2 May 1890');
+    assert.equal(cleanDate('10-12-95'), '10/12/1995', 'en chiffres, comme Whisper les écrit');
+    assert.equal(cleanDate('le 3.5.1872'), '03/05/1872');
+    assert.equal(cleanDate('1/2/05'), '01/02/2005');
     const c = cleanCommand({ action: 'add', person: { given: 'anne', surname: 'de la borie', birthDate: 'le 3 mai 1872', birthPlace: 'hautefort', deathPlace: 'La Roche-Chalais' } });
     assert.deepEqual([c.person.given, c.person.surname, c.person.birthDate, c.person.birthPlace, c.person.deathPlace],
       ['Anne', 'De la Borie', '3 mai 1872', 'Hautefort', 'La Roche-Chalais']);
