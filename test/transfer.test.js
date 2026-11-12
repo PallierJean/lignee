@@ -72,7 +72,7 @@ describe('exports', () => {
 describe('imports', () => {
   test('sauvegarde : aperçu puis ajout, annulable', async () => {
     const before = S.people.size;
-    const extra = JSON.stringify({ format: 'lignee', version: 2, name: 'Autre', people: [{ id: 'n1', given: 'Nina' }], unions: [] });
+    const extra = JSON.stringify({ format: 'lignee', version: 3, name: 'Autre', people: [{ id: 'n1', given: 'Nina' }], unions: [] });
     await readImportFile(file('autre.json', extra));
     assert.ok(html('importInfo').includes('data-act="import-go"'));
     await importGo(false);
@@ -120,7 +120,7 @@ describe('imports', () => {
     const set = localStorage.setItem;
     localStorage.setItem = () => { throw new Error('quota'); };
     try {
-      await readImportFile(file('a.json', JSON.stringify({ format: 'lignee', version: 2, people: [{ id: 'q1', given: 'Q' }], unions: [] })));
+      await readImportFile(file('a.json', JSON.stringify({ format: 'lignee', version: 3, people: [{ id: 'q1', given: 'Q' }], unions: [] })));
       await importGo(false);
     } finally {
       localStorage.setItem = set;

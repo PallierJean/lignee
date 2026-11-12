@@ -4,7 +4,7 @@ import { mediaOf, allMedia, peopleNamedIn } from '../js/model/people.js';
 import { loadTree, person } from './helpers.js';
 
 describe('galerie', () => {
-  test('une image apparaît chez ceux qui y sont identifiés ; la fiche qui la gardait (format 2) aussi, sans repère', () => {
+  test('une image apparaît chez ceux qui y sont identifiés ; la fiche où elle a été ajoutée aussi, sans repère', () => {
     const m = { id: 'm', photo: 'data:image/jpeg;base64,AAAA', tags: [{ id: 'b', x: 10, y: 20 }] };
     loadTree([person('a', { media: [m] }), person('b'), person('c')]);
     assert.deepEqual(mediaOf('b'), [{ id: 'm', m: { photo: m.photo, tags: [{ id: 'a' }, { id: 'b', x: 10, y: 20 }] } }]);
@@ -13,30 +13,18 @@ describe('galerie', () => {
     assert.equal(allMedia().length, 1);
   });
 
-  test('format 2 → 3 : les images quittent les fiches pour la galerie, sans doublon ni perte', async () => {
-    const { galleryFromPeople, tagsOf } = await import('../js/model/media.js');
-    const people = [
-      { id: 'a', data: { given: 'Anne', media: [{ id: 'm1', photo: 'photos/x.jpg', title: 'Noces', tags: [{ id: 'b', x: 5, y: 6, extra: 1 }] }, { id: 'm2', photo: 'photos/y.jpg', tags: [{ id: 'a', x: 1, y: 2 }] }] } },
-      { id: 'b', data: { given: 'Paul', media: [{ id: 'm1', photo: 'photos/x.jpg' }, { photo: 'sans id' }] } },
-      { id: 'c', data: { given: 'Rien' } },
-    ];
-    const media = galleryFromPeople(people, [{ id: 'm0', data: { photo: 'photos/z.jpg', tags: [] } }]);
-    assert.deepEqual(media.map((x) => x.id).slice(0, 3), ['m0', 'm1', 'm2']);
-    assert.equal(media.length, 4, 'une image sans identifiant en reçoit un');
-    assert.deepEqual(media[3].data, { photo: 'sans id', tags: [{ id: 'b' }] });
-    assert.deepEqual(media[1].data.tags, [{ id: 'a' }, { id: 'b', x: 5, y: 6, extra: 1 }], 'la fiche qui la gardait : identifiée sans repère ; les repères gardés tels quels');
-    assert.deepEqual(media[2].data.tags, [{ id: 'a', x: 1, y: 2 }], 'déjà identifiée : pas deux fois');
-    assert.ok(people.every((p) => !('media' in p.data)), 'les fiches ne gardent plus d’images');
+  test('repères : une position illisible devient 0, sans position pas de repère', async () => {
+    const { tagsOf } = await import('../js/model/media.js');
     assert.deepEqual(tagsOf({ tags: [{ id: 'a', x: '150', y: -3 }, { id: 'b' }, { id: 'c', x: 'bad', y: 5 }, { x: 1 }, null] }), [{ id: 'a', x: 100, y: 0 }, { id: 'b' }, { id: 'c', x: 0, y: 5 }]);
   });
 
-  test('sauvegarde au format 2 : lue et convertie ; format 1 refusé ; écrite au format 3', async () => {
+  test('format 3 : la galerie lue et écrite à part des fiches ; formats 1 et 2 refusés', async () => {
     const { parseBackup, buildBackup } = await import('../js/services/backup.js');
-    const v2 = JSON.stringify({ format: 'lignee', version: 2, people: [{ id: 'a', given: 'Anne', media: [{ id: 'm1', photo: 'photos/x.jpg' }] }], unions: [], sources: [] });
-    const read = parseBackup(v2);
+    const v3 = JSON.stringify({ format: 'lignee', version: 3, people: [{ id: 'a', given: 'Anne' }], unions: [], sources: [], media: [{ id: 'm1', photo: 'photos/galerie-x.jpg', tags: [{ id: 'a' }] }] });
+    const read = parseBackup(v3);
     assert.deepEqual(read.people, [{ id: 'a', data: { given: 'Anne' } }]);
-    assert.deepEqual(read.media, [{ id: 'm1', data: { photo: 'photos/x.jpg', tags: [{ id: 'a' }] } }]);
-    assert.throws(() => parseBackup('{"format":"lignee","version":1,"people":[]}'), (e) => e.code === 'old');
+    assert.deepEqual(read.media, [{ id: 'm1', data: { photo: 'photos/galerie-x.jpg', tags: [{ id: 'a' }] } }]);
+    for (const version of [1, 2]) assert.throws(() => parseBackup(`{"format":"lignee","version":${version},"people":[]}`), (e) => e.code === 'old');
     const out = JSON.parse(buildBackup({ name: 'x', people: new Map([['a', { given: 'Anne' }]]), unions: new Map(), sources: new Map(), media: new Map([['m1', { photo: 'p', tags: [{ id: 'a' }] }]]) }));
     assert.equal(out.version, 3);
     assert.deepEqual(out.media, [{ id: 'm1', photo: 'p', tags: [{ id: 'a' }] }]);

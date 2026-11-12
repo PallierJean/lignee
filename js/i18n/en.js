@@ -187,7 +187,6 @@ export const EN = {
   'repo.confirmFirst': 'First save: click “Save to GitHub” to check the changes; after that, each change is sent by itself.',
   'repo.autoFailed': 'The change couldn’t be sent to GitHub: it stays in this tree. See the banner.',
   'repo.undoCommit': 'undo',
-  'repo.formatCommit': 'move to the Lignée 4 format',
   'repo.redoCommit': 'redo',
   'repo.retry': 'Try sending again',
   'repo.forget': 'Disconnect repository',
@@ -195,7 +194,7 @@ export const EN = {
   'tr.repoErr.newer': 'This repository holds a backup from a newer version of Lignée. Update Lignée to open it or save to it.',
   'tr.repoErr.noBackup': 'No Lignée backup (.json) found in this repository.',
   'tr.repoErr.failed': 'The repository could not be read. Check your connection and try again.',
-  'backup.old': 'This file is in the format from before Lignée 2.0, which this version no longer reads. Open it with Lignée 2.3 first to convert it.',
+  'backup.old': 'This file is in a format from before Lignée 4.0, which this version no longer reads. Open it with Lignée 4.1 first to convert it.',
   'backup.newer': 'This tree was saved by a newer version of Lignée. Update Lignée to open it: this version could lose part of it.',
   'backup.invalid': 'This file is not a Lignée backup.',
 

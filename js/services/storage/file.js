@@ -7,7 +7,6 @@ import { S, treeName } from '../../state.js';
 import { buildBackup, parseBackup, FORMAT_VERSION } from '../backup.js';
 import { isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
 import { pool } from '../../utils/helpers.js';
-import { GALLERY_FILE } from '../../model/media.js';
 import { say, failure } from '../notify.js';
 import { ensureTree, sortTrees } from './trees.js';
 import { readLocalTrees, readLocalData } from './local.js';
@@ -110,12 +109,8 @@ export async function loadFileTree() {
   S.sources = new Map(data.sources.map((x) => [x.id, x.data]));
   S.media = new Map(data.media.map((x) => [x.id, x.data]));
   if (serverTooOld) return; // nothing written, no photo swept, until the server is restarted
-  // Photos still embedded in the record (saved before photo files existed): they are moved out.
-  // A tree in an older format is saved again in the current one (its gallery leaves the records)
-  const older = Number((JSON.parse(text) || {}).version) < FORMAT_VERSION;
-  // Gallery files still named after a person (Lignée before 4.0) take the gallery's name
-  const changed = (await storePhotos()) + (await renameGalleryFiles());
-  if (changed || older) await saveFile().catch(() => {}); // message already shown
+  // Photos still embedded in the record (an imported backup): they are moved out to files
+  if (await storePhotos()) await saveFile().catch(() => {}); // message already shown
   // Photos removed during the previous session: nothing can restore them any more
   fetch(API + encodeURIComponent(S.tree) + '/photos/sweep', { method: 'POST' }).catch(() => {});
 }
@@ -186,38 +181,6 @@ export async function storePhotos() {
       }
     });
   }
-  return n;
-}
-
-export { GALLERY_FILE };
-
-/**
- * Gallery images whose files are still named after a person (saved before Lignée 4.0, when each
- * image belonged to a record): the file is copied as "galerie-…" and the image cites the copy; the
- * old file goes with the next sweep, unless something else cites it (a record's portrait).
- * Returns the number of images changed; a file that can't be copied keeps its name.
- */
-export async function renameGalleryFiles() {
-  if (S.mode !== 'file') return 0;
-  const copies = new Map(); // old file -> Promise of the copy (a file cited twice is copied once)
-  const rename = (photo) => {
-    if (!isPhotoFile(photo) || GALLERY_FILE.test(photo)) return photo;
-    if (!copies.has(photo)) copies.set(photo, photoData(photo).then((data) => storePhoto(data, GALLERY_LABEL)));
-    return copies.get(photo);
-  };
-  const named = (x) => isPhotoFile(x) && !GALLERY_FILE.test(x);
-  let n = 0;
-  await pool([...S.media].filter(([, m]) => named(m.photo) || named(m.back)), 4, async ([id, m]) => {
-    try {
-      const renamed = await convertPhotos(m, rename);
-      if (S.media.get(id) === m) {
-        S.media.set(id, renamed);
-        n++;
-      }
-    } catch (e) {
-      /* file unreadable: the image keeps it, another try on the next load */
-    }
-  });
   return n;
 }
 

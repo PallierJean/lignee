@@ -31,7 +31,7 @@ test('refuse ce qui n’est pas une sauvegarde Lignée', () => {
 
 test('identifiants dangereux écartés, nom raccourci', () => {
   const back = parseBackup(JSON.stringify({
-    format: 'lignee', version: 2,
+    format: 'lignee', version: 3,
     name: '  ' + 'n'.repeat(100),
     people: [{ id: 'ok_1' }, { id: '..' }, { id: '__proto__/x' }, { id: 7 }, null],
     unions: 'pas une liste',
@@ -45,7 +45,6 @@ test('format plus récent : refusé clairement, sans rien lire', () => {
   const v = (version) => JSON.stringify({ format: 'lignee', version, people: [{ id: 'a', given: 'A' }], unions: [] });
   assert.throws(() => parseBackup(v(FORMAT_VERSION + 1)), { code: 'newer', message: /version plus récente/ });
   assert.equal(parseBackup(v(FORMAT_VERSION)).people.length, 1);
-  assert.equal(parseBackup(JSON.stringify({ format: 'lignee', version: 2, people: [], unions: [] })).people.length, 0, 'sans version : lu');
   assert.equal(JSON.parse(buildBackup()).version, FORMAT_VERSION);
 });
 
@@ -54,18 +53,10 @@ test('le serveur connaît la même version du format', async () => {
   assert.equal(Number(/const FORMAT_VERSION = (\d+);/.exec(src)[1]), FORMAT_VERSION);
 });
 
-test('format 1 (avant Lignée 2.0) : refusé clairement, jamais lu à moitié', () => {
+test('formats 1 et 2 (avant Lignée 4.0) : refusés clairement, jamais lus à moitié', () => {
   const v1 = JSON.stringify({ format: 'lignee', version: 1, people: [{ id: 'a', given: 'A', sources: [{ id: 's', title: 'Acte' }] }], unions: [] });
-  assert.throws(() => parseBackup(v1), { code: 'old', message: /avant Lignée 2\.0/ });
+  assert.throws(() => parseBackup(v1), { code: 'old', message: /avant Lignée 4\.0/ });
+  const v2 = JSON.stringify({ format: 'lignee', version: 2, people: [{ id: 'a', given: 'A', media: [{ id: 'm', photo: 'photos/x.jpg' }] }], unions: [] });
+  assert.throws(() => parseBackup(v2), { code: 'old', message: /Lignée 4\.1/ });
   assert.throws(() => parseBackup(JSON.stringify({ format: 'lignee', people: [], unions: [] })), { code: 'old' }, 'sans version : format 1');
-});
-
-test('outdated: an older format, gallery files named after a person, a reading naming another file', () => {
-  const v3 = (extra = {}) => JSON.stringify({ format: 'lignee', version: 3, people: [{ id: 'a' }], unions: [], ...extra });
-  assert.equal(parseBackup(v3()).outdated, false);
-  assert.equal(parseBackup(JSON.stringify({ format: 'lignee', version: 2, people: [{ id: 'a' }], unions: [] })).outdated, true);
-  assert.equal(parseBackup(v3({ media: [{ id: 'm', photo: 'photos/galerie-1.jpg', tags: [] }] })).outdated, false);
-  assert.equal(parseBackup(v3({ media: [{ id: 'm', photo: 'photos/ANA-1.jpg', tags: [] }] })).outdated, true);
-  assert.equal(parseBackup(v3({ sources: [{ id: 's', photo: 'photos/a.jpg', text: { of: 'photos/a.jpg', lines: [] } }] })).outdated, false);
-  assert.equal(parseBackup(v3({ sources: [{ id: 's', photo: 'photos/a.jpg', text: { of: 'photos/b.jpg', lines: [] } }] })).outdated, true);
 });

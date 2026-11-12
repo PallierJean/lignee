@@ -27,8 +27,7 @@ Les photos n'y sont pas intégrées : chacune est un fichier
 `data/arbres/<id de l'arbre>/photos/NOM-Prénom-<uuid>.jpg` (même identifiant que le
 fichier `<id>.json`), et la fiche garde `"photo": "photos/<fichier>"`. Les documents des
 sources et les images de la galerie suivent la même règle ; les images de la galerie, qui
-n'appartiennent à aucune fiche, s'appellent `galerie-<uuid>.jpg` (celles nommées d'après une
-personne, d'avant Lignée 4.0, sont renommées à l'ouverture de l'arbre). Renommer l'arbre
+n'appartiennent à aucune fiche, s'appellent `galerie-<uuid>.jpg`. Renommer l'arbre
 ne déplace rien. Une
 photo retirée ou remplacée, ou celle d'une personne supprimée, reste sur le disque le temps
 que l'action puisse être annulée, puis est effacée à la prochaine ouverture de l'arbre. Les photos

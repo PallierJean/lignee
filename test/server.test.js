@@ -8,7 +8,7 @@ import { createServer, safeName, matchidClient } from '../server.js';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 const exists = (f) => access(f).then(() => true, () => false);
-const backup = (name, people = []) => JSON.stringify({ format: 'lignee', version: 2, name, people, unions: [], sources: [] });
+const backup = (name, people = []) => JSON.stringify({ format: 'lignee', version: 3, name, people, unions: [], sources: [] });
 
 let dataDir;
 let server;
