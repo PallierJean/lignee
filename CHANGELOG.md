@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.11](https://github.com/PallierJean/lignee/compare/v4.1.10...v4.1.11) (2026-11-12)
+
+### Bug Fixes
+
+* Find the relative already in the tree without the family name said ([1e82480](https://github.com/PallierJean/lignee/commit/1e82480a5dda6c5df7b159bcc837d659f9d327c5))
+
+---
+
+### Corrections
+
+* Un enfant, un parent ou un conjoint déjà dans l'arbre est retrouvé même sans son nom de famille dit, au lieu d'être recréé ([1e82480](https://github.com/PallierJean/lignee/commit/1e82480a5dda6c5df7b159bcc837d659f9d327c5))
+
 ## [4.1.10](https://github.com/PallierJean/lignee/compare/v4.1.9...v4.1.10) (2026-11-12)
 
 ### Bug Fixes
