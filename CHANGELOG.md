@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.19](https://github.com/PallierJean/lignee/compare/v4.1.18...v4.1.19) (2026-11-12)
+
+### Bug Fixes
+
+* Understand an occupation said with a place, "cultivateur à Confolens" ([82a790f](https://github.com/PallierJean/lignee/commit/82a790fd96a65d7f3bbfbc362a7081f4f883af7a))
+
+---
+
+### Corrections
+
+* « est cultivateur à Confolens » remplit le métier ([82a790f](https://github.com/PallierJean/lignee/commit/82a790fd96a65d7f3bbfbc362a7081f4f883af7a))
+
 ## [4.1.18](https://github.com/PallierJean/lignee/compare/v4.1.17...v4.1.18) (2026-11-12)
 
 ### Bug Fixes
