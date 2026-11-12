@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.4](https://github.com/PallierJean/lignee/compare/v4.1.3...v4.1.4) (2026-11-12)
+
+### Bug Fixes
+
+* Answer a voice command by voice to save or cancel the form ([3d4d857](https://github.com/PallierJean/lignee/commit/3d4d857204110bf091ccd38ea2e664ce0127eb29))
+
+---
+
+### Corrections
+
+* Répondre à voix haute à une commande vocale pour enregistrer ou annuler le formulaire, sans relancer le micro ([3d4d857](https://github.com/PallierJean/lignee/commit/3d4d857204110bf091ccd38ea2e664ce0127eb29))
+
 ## [4.1.3](https://github.com/PallierJean/lignee/compare/v4.1.2...v4.1.3) (2026-11-12)
 
 ### Bug Fixes
