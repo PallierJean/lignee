@@ -275,7 +275,8 @@ function facts(text) {
  * "ajoute le père de … : …", "… est le fils de …", "… est né(e) / mort(e) …".
  */
 export function parseCommand(sentence) {
-  const s = str(sentence).replace(/[.!?]+$/, '');
+  // Whisper puts a comma after the command word: "Ajoute, Marc Tellier", "Cherche, Tellier"
+  const s = str(sentence).replace(/[.!?]+$/, '').replace(/^(\p{L}+(?:[- ]moi)?)\s*[,;:]\s*/u, '$1 ');
   let m;
   if ((m = /^(?:cherche|recherche|trouve|search(?: for)?|find)\s+(.+)$/i.exec(s))) return cleanCommand({ action: 'search', who: m[1] });
   if ((m = /^(?:(?:ouvre|affiche|montre)(?:[- ]moi)?|va (?:à|a|sur)|open|show(?: me)?)\s+(?:la fiche (?:de |d['’])|the record of )?(.+)$/i.exec(s))) return cleanCommand({ action: 'open', who: m[1] });
