@@ -349,3 +349,29 @@ const NOISE = /sous-titr|amara|merci d['’]avoir regard|abonnez-vous|thanks? fo
 
 /** A text Whisper wrote from a noise, not from words: nothing was said. */
 export const isNoise = (text) => NOISE.test(str(text));
+
+/* ---------- Which one, among people with the same name ---------- */
+
+const ORDINALS = [
+  ['premier|première|1er|1re|first', 0], ['deuxième|second|seconde|2e|second one', 1], ['troisième|3e|third', 2],
+  ['quatrième|4e|fourth', 3], ['cinquième|5e|fifth', 4], ['sixième|6e|sixth', 5], ['dernier|dernière|last', -1],
+];
+const NUMBERS = { un: 0, une: 0, one: 0, '1': 0, deux: 1, two: 1, '2': 1, trois: 2, three: 2, '3': 2, quatre: 3, four: 3, '4': 3, cinq: 4, five: 4, '5': 4, six: 5, '6': 5 };
+const FRESH = new RegExp(String.raw`${L}(?:nouvelle|nouveau|aucune?|personne d['’]autre|une autre personne|new|none|another (?:one|person))${R}`, 'iu');
+
+/**
+ * The person chosen by voice among a list: { fresh } (a new person), { index } (0 the first,
+ * -1 the last), { year } (born that year), { words } (part of the name), or null (nothing usable).
+ */
+export function parseChoice(text) {
+  const s = plain(text);
+  if (!s) return null;
+  if (FRESH.test(s)) return { fresh: true };
+  for (const [w, index] of ORDINALS) if (new RegExp(String.raw`${L}(?:${w})${R}`, 'iu').test(s)) return { index };
+  const year = /(?<!\d)(1\d{3}|20\d{2})(?!\d)/.exec(s);
+  if (year) return { year: +year[1] };
+  const n = /^(?:(?:le|la|l'|numéro|number|choix|the)\s+)*(\S+)$/.exec(s);
+  if (n && n[1] in NUMBERS) return { index: NUMBERS[n[1]] };
+  const said = s.split(' ').filter((w) => !/^(?:le|la|les|l'|celui|celle|qui|est|né|née|de|du|d'|en|the|one|who|is|was|born|in|c'est)$/.test(w));
+  return said.length ? { words: said.join(' ') } : null;
+}

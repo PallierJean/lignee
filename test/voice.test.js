@@ -3,7 +3,7 @@ import { test, describe, before, after } from 'node:test';
 import { mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { parseCommand, cleanCommand, cleanDate, commandFromText, splitName, parseReply, parseDetails, isGoodbye, isNoise, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
+import { parseCommand, cleanCommand, cleanDate, commandFromText, splitName, parseReply, parseDetails, parseChoice, isGoodbye, isNoise, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
 import { createServer } from '../server.js';
 import { loadTree, person, resetApp } from './helpers.js';
 
@@ -113,6 +113,17 @@ describe('voix : la réponse, une fois le formulaire rempli', () => {
   test('ce que Whisper invente sur un bruit ne compte pas', () => {
     for (const x of ['Sous-titres réalisés par la communauté d’Amara.org', 'Merci d’avoir regardé cette vidéo !', '...', '[Musique]', ' ']) assert.equal(isNoise(x), true, x);
     for (const x of ['oui', 'Non, elle est née en 1873', 'Ajoute Anne Lacoste']) assert.equal(isNoise(x), false, x);
+  });
+
+  test('choisir parmi des homonymes : rang, année, prénom, nouvelle personne', () => {
+    assert.deepEqual(parseChoice('Le premier.'), { index: 0 });
+    assert.deepEqual(parseChoice('la deuxième'), { index: 1 });
+    assert.deepEqual(parseChoice('deux'), { index: 1 });
+    assert.deepEqual(parseChoice('le dernier'), { index: -1 });
+    assert.deepEqual(parseChoice('celui né en 1961'), { year: 1961 });
+    assert.deepEqual(parseChoice('Marc'), { words: 'marc' });
+    assert.deepEqual(parseChoice('une nouvelle personne'), { fresh: true });
+    assert.equal(parseChoice(''), null);
   });
 
   test('la fin de la conversation', () => {
@@ -312,6 +323,7 @@ describe('voix : dans la page', () => {
       person('n', { given: 'Noëlle', surname: 'Roux', sex: 'F' }),
     ]);
     await voice.initVoice(A);
+    S.voiceReply = false; // the links only: no conversation here (see the next test)
     const bubble = () => document.getElementById('voiceBubble').innerHTML;
     const people = S.people.size;
 
@@ -353,9 +365,25 @@ describe('voix : dans la page', () => {
     assert.equal(S.edit.draft.motherId, 'o');
     A.cancelEdit();
     await voice.understand('Odette Morel a une fille, Anne Morel');
+    voice.answerChoice('celle de 1920');
+    assert.equal(S.edit.id, 'a1', 'choisie à la voix, par l’année');
+    A.cancelEdit();
+    await voice.understand('Odette Morel a une fille, Anne Morel');
+    voice.answerChoice('euh');
+    assert.match(bubble(), /Je n’ai pas su laquelle/);
+    voice.answerChoice('la deuxième');
+    assert.equal(S.edit.id, 'a2', 'par son rang');
+    A.cancelEdit();
+    await voice.understand('Odette Morel a une fille, Anne Morel');
+    voice.answerChoice('une nouvelle personne');
+    assert.equal(S.edit.id, null);
+    assert.equal(S.edit.rel, 'child');
+    A.cancelEdit();
+    await voice.understand('Odette Morel a une fille, Anne Morel');
     voice.newVoice();
     assert.equal(S.edit.rel, 'child', 'une nouvelle personne');
     assert.equal(S.people.size, people, 'rien n’est enregistré avant Enregistrer');
+    S.voiceReply = true;
     A.cancelEdit();
   });
 

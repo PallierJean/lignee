@@ -15,7 +15,7 @@ import { $, esc, setHTML } from '../utils/dom.js';
 import { norm } from '../utils/helpers.js';
 import { t } from '../i18n.js';
 import { P, longName, lifeYears, given, surname, maiden, unionBetween } from '../model/people.js';
-import { FIELDS, parseCommand, parseReply, parseDetails, isGoodbye, isNoise } from '../model/voice.js';
+import { FIELDS, parseCommand, parseReply, parseDetails, parseChoice, isGoodbye, isNoise } from '../model/voice.js';
 import { voiceEngines, warmVoice, record, listen, understandText, needsDownload, speak, hush, loadVoices, chime } from '../services/voice.js';
 import { searchPeople, onFindInput } from './search.js';
 import { renderSide } from './render.js';
@@ -29,6 +29,7 @@ let st = { phase: 'idle' };
 let level = 0;
 let refused = false; // browser language model declined, this time
 let replies = 0;     // answers listened to for the open form (a few, then the user clicks)
+let choices = 0;     // the same, to choose among people with the same name
 
 const REPLY_WAIT = 12000; // the answer: nobody speaks for this long, the listening ends (and the bubble says so)
 const MAX_REPLIES = 3;
@@ -108,6 +109,11 @@ function hint() {
 
 export async function startVoice(agreed = false) {
   if (!engines || !engines.listen || rec) return;
+  // Several people with the name said: the microphone chooses ("le premier", "celui de 1995")
+  if (st.phase === 'choose') {
+    choices = 0;
+    return listenChoice(true);
+  }
   // The form filled in by the voice is open: the microphone answers it ("oui", "non", a detail)
   if (formOpen() && st.phase === 'done') return answerNow();
   if (engines.listen === 'browser' && !agreed && !consent('asr')) return set({ phase: 'consent', what: 'asr' });
@@ -187,6 +193,10 @@ const talking = () => !!(S.voiceReply && engines && engines.listen);
 /** After a command said: the form filled in is read back and confirmed; otherwise, the next command. */
 function converse() {
   if (!talking()) return;
+  if (st.phase === 'choose') {
+    choices = 0;
+    return listenChoice();
+  }
   if (formOpen()) return askSave();
   if (st.phase === 'done') return listenNext();
 }
@@ -394,18 +404,61 @@ function carryOut(c, text) {
   apply(c, ids[0], text);
 }
 
-/** Person chosen among those with the name said (or, for a relative, among those already in the tree). */
-export function pickVoice(id) {
+/**
+ * Person chosen among those with the name said (or, for a relative, among those already in the tree).
+ * `spoken`: chosen by voice, the conversation goes on.
+ */
+export function pickVoice(id, spoken = false) {
   if (st.phase !== 'choose' || !S.people.has(id)) return;
-  if (st.linkTo) return link(st.command, st.linkTo, id, st.text);
-  apply(st.command, id, st.text);
+  if (st.linkTo) link(st.command, st.linkTo, id, st.text);
+  else apply(st.command, id, st.text);
+  if (spoken) converse();
 }
 
 /** "Another person": the relative said is a new record, not the one found in the tree. */
-export function newVoice() {
+export function newVoice(spoken = false) {
   if (!st.command || !st.linkTo || !S.people.has(st.linkTo)) return;
   if (st.linked && S.edit) act.cancelEdit();
   apply(st.command, st.linkTo, st.text, true);
+  if (spoken) converse();
+}
+
+/** The person meant by `text` among `ids` ("le deuxième", "celui de 1995", "Marc"): an id, 'fresh', or null. */
+function chosen(text, ids) {
+  const c = parseChoice(text);
+  if (!c) return null;
+  if (c.fresh) return 'fresh';
+  if ('index' in c) return ids.at(c.index) || null;
+  const found = c.year ? ids.filter((id) => lifeYears(P(id)).includes(String(c.year)))
+    : ids.filter((id) => {
+      const name = words([given(P(id)), surname(P(id)), maiden(P(id))].join(' '));
+      return words(c.words).every((w) => name.includes(w));
+    });
+  return found.length === 1 ? found[0] : null;
+}
+
+/** Listens for the choice among the people listed (`force`: the microphone was pressed, even without conversation). */
+async function listenChoice(force = false) {
+  if ((!force && !talking()) || rec || st.phase !== 'choose' || choices >= MAX_REPLIES) return;
+  choices++;
+  const keep = { ...st };
+  const text = await hearOnce(keep, 'pick');
+  if (text === '') return set({ ...keep, extra: t('voice.noChoice') });
+  if (text != null) answerChoice(text, keep, force);
+}
+
+/** The choice heard (or given in a test): the person picked, a new person, or the question again. */
+export function answerChoice(text, keep = { ...st }, force = false) {
+  if (keep.phase !== 'choose') return;
+  const id = chosen(text, keep.ids);
+  if (!id && isGoodbye(text)) return set({ phase: 'done', text: keep.text, answer: text, note: t('voice.bye') });
+  set({ ...keep, answer: text });
+  if (id === 'fresh' && keep.linkTo) return newVoice(true);
+  if (!id || id === 'fresh') {
+    set({ ...keep, answer: text, extra: t('voice.whichAgain') });
+    return listenChoice(force);
+  }
+  pickVoice(id, true);
 }
 
 /* ---------- A relative already in the tree ---------- */
@@ -541,7 +594,7 @@ export function renderVoice() {
   btn.hidden = !can;
   const field = btn.closest('.find');
   if (field) field.classList.toggle('has-mic', can);
-  const hearing = st.phase === 'listening' || st.phase === 'reply' || st.phase === 'next';
+  const hearing = ['listening', 'reply', 'next', 'pick'].includes(st.phase);
   btn.setAttribute('aria-pressed', String(hearing));
   btn.title = t(hearing ? 'voice.stop' : 'voice.start');
   btn.setAttribute('aria-label', btn.title);
@@ -589,10 +642,12 @@ export function renderVoice() {
     body = `${heard}<p>${t(st.what === 'asr' ? 'voice.consentAsr' : 'voice.consentLlm')}</p>`
       + `<div class="vb-row end"><button class="btn" type="button" data-act="voice-consent" data-what="${st.what}" data-yes="0">${no}</button>`
       + `<button class="btn primary" type="button" data-act="voice-consent" data-what="${st.what}" data-yes="1">${yes}</button></div>`;
-  } else if (st.phase === 'choose') {
+  } else if (st.phase === 'choose' || st.phase === 'pick') {
     const name = st.linkTo ? [st.command.person.given, st.command.person.surname].filter(Boolean).join(' ') : st.command.who;
-    body = `${heard}<p>${t(st.linkTo ? 'voice.whichRelative' : 'voice.which', esc(name))}</p><ul class="vb-choices">${st.ids.map((id) => `<li><button class="link" type="button" data-act="voice-pick" data-id="${esc(id)}">${esc(longName(P(id)))} <span class="hint">${esc(lifeYears(P(id)))}</span></button></li>`).join('')}</ul>`
-      + `<div class="vb-row end">${st.linkTo ? `<button class="btn small" type="button" data-act="voice-new">${t('voice.newOne')}</button>` : ''}${close}</div>`;
+    body = `${heard}<p>${t(st.linkTo ? 'voice.whichRelative' : 'voice.which', esc(name))}</p><ol class="vb-choices">${st.ids.map((id) => `<li><button class="link" type="button" data-act="voice-pick" data-id="${esc(id)}">${esc(longName(P(id)))} <span class="hint">${esc(lifeYears(P(id)))}</span></button></li>`).join('')}</ol>`
+      + `${answer}${st.extra ? `<p class="vb-note">${st.extra}</p>` : ''}`
+      + (st.phase === 'pick' ? live(t('voice.listening'), t(st.linkTo ? 'voice.pickHintNew' : 'voice.pickHint')) : '')
+      + `<div class="vb-row end">${st.linkTo ? `<button class="btn small" type="button" data-act="voice-new">${t('voice.newOne')}</button>` : ''}${st.phase === 'pick' ? '' : close}</div>`;
   } else {
     body = `${heard}${result}`
       + (form ? `<p class="hint">${t('voice.check')}</p>` : '')
