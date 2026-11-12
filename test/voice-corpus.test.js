@@ -31,6 +31,7 @@ const CORPUS = [
   ['Ajoute le fils de Marc Tellier, Jean Tellier, né en 1995.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Jean', surname: 'Tellier', birthDate: '1995' } }],
   ['Ajoute une fille à Véronique Dorvigné, Sophie.', { action: 'add', who: 'Véronique Dorvigné', relation: 'child', person: { given: 'Sophie', sex: 'F' } }],
   ['Le père de Marc Tellier s’appelle Louis Tellier.', { action: 'add', who: 'Marc Tellier', relation: 'father', person: { given: 'Louis', surname: 'Tellier', sex: 'M' } }],
+  ['Le père de Marc Tellier, c’est Louis Tellier.', { action: 'add', who: 'Marc Tellier', relation: 'father', person: { given: 'Louis', surname: 'Tellier' } }],
   ['La mère de Marc Tellier est Jeanne Lamborre, née en 1930.', { action: 'add', who: 'Marc Tellier', relation: 'mother', person: { given: 'Jeanne', surname: 'Lamborre', sex: 'F', birthDate: '1930' } }],
   ['Louis Tellier est le père de Marc Tellier, il est né en 1925 à Confolens.', { action: 'add', who: 'Marc Tellier', relation: 'father', person: { given: 'Louis', surname: 'Tellier', birthDate: '1925', birthPlace: 'Confolens' } }],
   ['Ajoute la mère de Marc Tellier : Jeanne Lamborre.', { action: 'add', who: 'Marc Tellier', relation: 'mother', person: { given: 'Jeanne', surname: 'Lamborre' } }],
