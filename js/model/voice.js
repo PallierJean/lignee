@@ -45,7 +45,7 @@ const capLower = (s) => (s && s === s.toLowerCase() ? cap(s) : s);
  */
 export function cleanDate(s) {
   return str(s).replace(/[.,;]+$/, '')
-    .replace(/^(?:(vers|avant|apr[eè]s|about|before|after)\s+)?(?:le|en|on|in|the)\s+/i, (all, q) => (q ? q + ' ' : ''))
+    .replace(/^(?:(vers|avant|apr[eè]s|about|before|after)\s+)?(?:le|en|on|in|the|depuis|since)\s+/i, (all, q) => (q ? q + ' ' : ''))
     .replace(new RegExp(String.raw`${L}premier${R}`, 'iu'), '1')
     .replace(new RegExp(String.raw`${L}(\d{1,2})(?:er|st|nd|rd|th)${R}`, 'iu'), '$1');
 }
@@ -176,7 +176,7 @@ const kinOf = (word) => {
   return k ? { relation: k[1], sex: k[2], union: k[3] || '' } : null;
 };
 
-const DATE = String.raw`(?:le |en |on |in )?((?:vers |avant |après |about |before |after )?(?:\d{1,2}(?:er)? )?(?:[a-zéû]+ )?\d{4}|\d{1,2}\/\d{1,2}\/\d{4})`;
+const DATE = String.raw`(?:le |en |on |in |depuis |since )?((?:vers |avant |après |about |before |after )?(?:\d{1,2}(?:er)? )?(?:[a-zéû]+ )?\d{4}|\d{1,2}\/\d{1,2}\/\d{4})`;
 // A place, and its department said in figures after it: "à Confolens, 16", "à Confolens (16)"
 const PLACE = String.raw`(?: (?:à|a|au|en|at|in) ([^,;.()]+?(?:\s*,\s*(?:\d{1,3}|2[AB])(?=[,;.\s]|$)|\s*\([^()]*\))?))?`;
 const BORN = String.raw`(?:n[ée]e?|born)`;
@@ -340,10 +340,13 @@ export function parseCommand(sentence) {
  */
 function relative(name, kin, who, known = null, cleanName = null) {
   const { person, rest } = known ? { person: known, rest: cleanName } : facts(name);
-  const of = facts(who).rest.split(/\s+(?:et|and)\s+(?:de\s+|d['’]\s*|of\s+)?/i)[0];
+  let of = facts(who).rest.split(/\s+(?:et|and)\s+(?:de\s+|d['’]\s*|of\s+)?/i)[0];
+  // A spouse: what follows the name is of the union ("concubin de Véronique depuis 1985")
+  let union = {};
+  if (kin.relation === 'spouse') ({ union, rest: of } = unionFacts(of));
   if (!isName(rest) || !isName(of)) return UNKNOWN();
   const sex = person.sex || kin.sex;
-  return cleanCommand({ action: 'add', who: of, relation: kin.relation, person: { ...splitName(rest), ...person, sex }, union: { type: kin.union } });
+  return cleanCommand({ action: 'add', who: of, relation: kin.relation, person: { ...splitName(rest), ...person, sex }, union: { type: kin.union, ...union } });
 }
 
 /* ---------- The answer once the form is filled in ---------- */
