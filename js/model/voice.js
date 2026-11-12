@@ -9,6 +9,7 @@
  * - relation (add): what the new person is to `who`: father, mother, child, spouse, sibling;
  * - person: the fields said (add, edit): given, surname, sex, birthDate, birthPlace, deathDate,
  *   deathPlace, occupation. Dates are kept as said ("12 mars 1820", "vers 1850"): the form reads them.
+ * - union (a spouse): { type, date, place }: type 'married', 'pacs', 'cohabiting' or ''.
  *
  * A language model understands free sentences (on this computer with Ollama, or in the browser);
  * without one, `parseCommand` recognises a few fixed sentences. Pure: used by the page and server.js.
@@ -17,10 +18,12 @@
 export const ACTIONS = ['search', 'open', 'add', 'edit', 'unknown'];
 export const RELATIONS = ['father', 'mother', 'child', 'spouse', 'sibling'];
 export const FIELDS = ['given', 'surname', 'sex', 'birthDate', 'birthPlace', 'deathDate', 'deathPlace', 'occupation'];
+export const UNION_KINDS = ['married', 'pacs', 'cohabiting']; // the union types said (codes of UNION_TYPES)
 
 const str = (v) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim() : '');
 const blank = () => Object.fromEntries(FIELDS.map((f) => [f, '']));
-const UNKNOWN = () => ({ action: 'unknown', who: '', relation: '', person: blank() });
+const noUnion = () => ({ type: '', date: '', place: '' });
+const UNKNOWN = () => ({ action: 'unknown', who: '', relation: '', person: blank(), union: noUnion() });
 
 // Word edges that know accented letters (\b doesn't: "né" never ended a word)
 const L = String.raw`(?<![\p{L}\d])`;
@@ -60,8 +63,14 @@ export const SCHEMA = {
       required: FIELDS,
       additionalProperties: false,
     },
+    union: {
+      type: 'object',
+      properties: { type: { type: 'string', enum: ['', ...UNION_KINDS] }, date: { type: 'string' }, place: { type: 'string' } },
+      required: ['type', 'date', 'place'],
+      additionalProperties: false,
+    },
   },
-  required: ['action', 'who', 'relation', 'person'],
+  required: ['action', 'who', 'relation', 'person', 'union'],
   additionalProperties: false,
 };
 
@@ -76,6 +85,8 @@ const EXAMPLES = [
   ['Génie Desgorces est morte vers 1890 à la Borie', { action: 'edit', who: 'Génie Desgorces', person: { deathDate: 'vers 1890', deathPlace: 'la Borie' } }],
   ['ajoute une personne : Louis Martin, né en 1901', { action: 'add', person: { given: 'Louis', surname: 'Martin', sex: 'M', birthDate: '1901' } }],
   ['le père de Jean Lacoste s\'appelle Pierre Lacoste', { action: 'add', who: 'Jean Lacoste', relation: 'father', person: { given: 'Pierre', surname: 'Lacoste', sex: 'M' } }],
+  ['Jean Lacoste a épousé Marie Dupont le 3 juin 1890 à Hautefort', { action: 'add', who: 'Jean Lacoste', relation: 'spouse', person: { given: 'Marie', surname: 'Dupont', sex: 'F' }, union: { type: 'married', date: '3 juin 1890', place: 'Hautefort' } }],
+  ['Paul Morel est le concubin d\'Odette', { action: 'add', who: 'Odette', relation: 'spouse', person: { given: 'Paul', surname: 'Morel', sex: 'M' }, union: { type: 'cohabiting' } }],
   ['Paul Maury, fils de Pierre Maury et de Marie Dupont, est né le 1er mai 1880', { action: 'add', who: 'Pierre Maury', relation: 'child', person: { given: 'Paul', surname: 'Maury', sex: 'M', birthDate: '1 mai 1880' } }],
 ];
 
@@ -91,6 +102,8 @@ action:
   "father", "mother", "child" (son, daughter), "spouse" (husband, wife), "sibling" (brother, sister).
   "X a eu un fils / une fille Y" means Y is the child of X: who = X, relation = "child".
   With two parents named, "who" = the first one.
+  A spouse: "union" = what is said of the union: type "married" (marié, épousé, mari, épouse), "pacs" (pacsé),
+  "cohabiting" (concubin, concubinage, compagnon, compagne, vit avec), its date and place.
 - "edit": facts about a person already in the tree; "who" = their name, "person" = only the facts said.
 - "unknown": anything else.
 person: given (first names), surname, sex ("M" or "F", from the words used, e.g. "née", "fille", "il"),
@@ -115,10 +128,13 @@ export function cleanCommand(c) {
   if (relation === 'father') person.sex = 'M';
   if (relation === 'mother') person.sex = 'F';
   const who = str(o.who);
+  const u = o.union && typeof o.union === 'object' ? o.union : {};
+  const union = relation === 'spouse'
+    ? { type: UNION_KINDS.includes(u.type) ? u.type : '', date: cleanDate(str(u.date)), place: capLower(str(u.place)) } : noUnion();
   // A command that names no one can't be carried out
   if ((action === 'search' || action === 'open' || action === 'edit') && !who) return UNKNOWN();
   if (action === 'add' && !person.given && !person.surname) return UNKNOWN();
-  return { action, who, relation, person };
+  return { action, who, relation, person, union };
 }
 
 
@@ -148,13 +164,15 @@ export function splitName(name) {
 const KIN = [
   ['p[eè]re|father', 'father', 'M'], ['m[eè]re|mother', 'mother', 'F'],
   ['fils?|son', 'child', 'M'], ['fille|daughter', 'child', 'F'], ['enfant|child', 'child', ''],
-  ['mari|[eé]poux|husband', 'spouse', 'M'], ['femme|[eé]pouse|wife', 'spouse', 'F'], ['conjoint|conjointe|spouse', 'spouse', ''],
+  ['[eé]poux|husband', 'spouse', 'M', 'married'], ['[eé]pouse|wife', 'spouse', 'F', 'married'], ['mari', 'spouse', 'M'], ['femme', 'spouse', 'F'],
+  ['concubin|compagnon', 'spouse', 'M', 'cohabiting'], ['concubine|compagne', 'spouse', 'F', 'cohabiting'],
+  ['partenaire|conjoint|conjointe|spouse|partner', 'spouse', ''],
   ['fr[eè]re|brother', 'sibling', 'M'], ['s(?:œ|oe)ur|sister', 'sibling', 'F'],
 ];
 const KIN_RE = KIN.map(([w]) => w).join('|');
 const kinOf = (word) => {
   const k = KIN.find(([w]) => new RegExp(`^(?:${w})$`, 'i').test(word));
-  return k ? { relation: k[1], sex: k[2] } : null;
+  return k ? { relation: k[1], sex: k[2], union: k[3] || '' } : null;
 };
 
 const DATE = String.raw`(?:le |en |on |in )?((?:vers |avant |après |about |before |after )?(?:\d{1,2}(?:er)? )?(?:[a-zéû]+ )?\d{4}|\d{1,2}\/\d{1,2}\/\d{4})`;
@@ -172,6 +190,50 @@ const NOT_NAME = new RegExp(String.raw`${L}(?:et|and|qui|who|est|était|is|was|a
 const ARTICLE = /^(?:le|la|les|l['’]|un|une|the|a|an)(?:\s|$)/i;
 /** Could `s` be the name of a person? One to five words, not starting with an article, nothing else. */
 const isName = (s) => { const n = str(s).split(' ').filter(Boolean).length; return n >= 1 && n <= 5 && !NOT_NAME.test(s) && !ARTICLE.test(str(s)); };
+
+/** The date and place of a union said after the spouse's name: "Marie Dupont le 3 juin 1890 à Hautefort". */
+function unionFacts(text) {
+  let rest = text;
+  const union = {};
+  const d = new RegExp(String.raw`[\s,]+${DATE}(?=[\s,;.]|$)`, 'iu').exec(rest);
+  if (d) {
+    union.date = d[1];
+    rest = rest.replace(d[0], ' ');
+  }
+  const p = new RegExp(String.raw`[\s,]+(?:à|au|at|in)\s+([^,;.()]+?(?:\s*,\s*(?:\d{1,3}|2[AB])|\s*\([^()]*\))?)\s*[,;.]?\s*$`, 'iu').exec(rest);
+  if (p) {
+    union.place = cap(p[1].trim());
+    rest = rest.replace(p[0], ' ');
+  }
+  return { union, rest: str(rest.replace(/[\s,;.]+$/, '')) };
+}
+
+// A union said with a verb: [the words, the type]
+const UNION_VERBS = [
+  [String.raw`(?:a\s+)?[ée]pous[ée]e?|married|has married`, 'married'],
+  [String.raw`(?:s['’]est|se sont|s['’][ée]tait|[ée]tait|est|sont|was|is|got|were)\s+(?:re)?mari[ée]e?s?\s+(?:avec|à|a|to|with)`, 'married'],
+  [String.raw`(?:s['’]est|se sont|[ée]tait|est|sont|was|is)\s+pacs[ée]e?s?\s+(?:avec|à|a|with)`, 'pacs'],
+  [String.raw`(?:vit|vivait|a v[ée]cu|[ée]tait|est|lives|lived|was|is)\s+(?:en concubinage|maritalement|en couple|together)?\s*(?:avec|with)`, 'cohabiting'],
+];
+
+/** "Jean a épousé Marie Dupont en 1890", "Jean et Marie se sont mariés…", "Jean vit en concubinage avec Marie": the spouse, or null. */
+function unionSaid(s) {
+  let m = new RegExp(String.raw`^(.+?)\s+(?:et|and)\s+(.+?)\s+se sont\s+(mari|pacs|unis)\p{L}*(.*)$`, 'iu').exec(s);
+  if (m) return spouse(m[1], m[2] + m[4], /^pacs/i.test(m[3]) ? 'pacs' : 'married');
+  for (const [verb, type] of UNION_VERBS) {
+    m = new RegExp(String.raw`^(.+?)\s+(?:${verb})\s+(.+)$`, 'iu').exec(s);
+    if (m) return spouse(m[1], m[2], type);
+  }
+  return null;
+}
+
+/** A spouse said with what is known of them and of the union: the command, or null if not a name. */
+function spouse(who, said, type) {
+  const head = facts(said);
+  const { union, rest } = unionFacts(head.rest);
+  if (!isName(who) || !isName(rest)) return null;
+  return cleanCommand({ action: 'add', who, relation: 'spouse', person: { ...splitName(rest), ...head.person }, union: { type, ...union } });
+}
 
 /** Birth and death said in `text`: fields of a person, and `text` without them (`raw`: commas kept). */
 function facts(text) {
@@ -212,6 +274,9 @@ export function parseCommand(sentence) {
   // ("ajoute à …": Whisper sometimes hears a stray "à")
   const add = /^(?:ajoute|ajouter|add)\s+(?:une personne|quelqu['’]un|a person|someone)?\s*:?\s*(?:(?:à|a)\s+)?(.+)$/i.exec(s);
   const body = add ? add[1] : s;
+  // "Jean a épousé Marie Dupont le 3 juin 1890 à Hautefort", "Jean vit en concubinage avec Marie"
+  const wed = unionSaid(body);
+  if (wed) return wed;
   // "le père de Jean Lacoste s'appelle Pierre Lacoste", "… est Pierre Lacoste" (a name: a capital, as Whisper writes it)
   m = new RegExp(String.raw`^(?:le |la |l['’]|the )?(${KIN_RE})\s+(?:de |d['’]|of )(.+?)\s+(?:(?:s['’]appel\p{L}*|is called|was called|is named|was named)\s+(.+)|(?:est|était|is|was)\s+(.+))$`, 'iu').exec(body);
   if (m && (m[3] || /^\p{Lu}/u.test(m[4]))) return relative(m[3] || m[4], kinOf(m[1]), m[2]);
@@ -259,7 +324,7 @@ function relative(name, kin, who, known = null, cleanName = null) {
   const of = facts(who).rest.split(/\s+(?:et|and)\s+(?:de\s+|d['’]\s*|of\s+)?/i)[0];
   if (!isName(rest) || !isName(of)) return UNKNOWN();
   const sex = person.sex || kin.sex;
-  return cleanCommand({ action: 'add', who: of, relation: kin.relation, person: { ...splitName(rest), ...person, sex } });
+  return cleanCommand({ action: 'add', who: of, relation: kin.relation, person: { ...splitName(rest), ...person, sex }, union: { type: kin.union } });
 }
 
 /* ---------- The answer once the form is filled in ---------- */

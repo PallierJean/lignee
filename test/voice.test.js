@@ -8,7 +8,11 @@ import { createServer } from '../server.js';
 import { loadTree, person, resetApp } from './helpers.js';
 
 /** Only the fields said, to compare commands simply. */
-const said = (c) => ({ ...c, person: Object.fromEntries(Object.entries(c.person).filter(([, v]) => v)) });
+const said = ({ union, ...c }) => ({
+  ...c,
+  person: Object.fromEntries(Object.entries(c.person).filter(([, v]) => v)),
+  ...(union && (union.type || union.date || union.place) ? { union: Object.fromEntries(Object.entries(union).filter(([, v]) => v)) } : {}),
+});
 
 describe('voix : phrases connues', () => {
   test('chercher, ouvrir', () => {
@@ -104,6 +108,23 @@ describe('voix : phrases connues', () => {
     assert.deepEqual(findCommune('perigueux'), { city: 'Périgueux', dept: '24' });
     assert.deepEqual(findCommune('Saint-Pierre'), { city: 'Saint-Pierre', dept: '' }, 'plusieurs départements : aucun');
     assert.equal(findCommune('Zzyzx'), null);
+  });
+
+  test('unions : mariage, pacs, concubinage ; date et lieu de l’union', () => {
+    assert.deepEqual(said(parseCommand('Jean Tellier a épousé Marie Dupont le 3 juin 1990 à Confolens')), {
+      action: 'add', who: 'Jean Tellier', relation: 'spouse', person: { given: 'Marie', surname: 'Dupont' },
+      union: { type: 'married', date: '3 juin 1990', place: 'Confolens' },
+    });
+    assert.deepEqual(said(parseCommand('Jean Tellier et Marie Dupont se sont mariés en 1990')).union, { type: 'married', date: '1990' });
+    assert.deepEqual(said(parseCommand('Jean Tellier est pacsé avec Paul Martin')).union, { type: 'pacs' });
+    assert.deepEqual(said(parseCommand('Jean Tellier vit en concubinage avec Sophie Martin')).union, { type: 'cohabiting' });
+    const c = said(parseCommand('Sophie Martin est la concubine de Jean Tellier'));
+    assert.deepEqual([c.who, c.relation, c.person.sex, c.union.type], ['Jean Tellier', 'spouse', 'F', 'cohabiting']);
+    assert.equal(said(parseCommand('Ajoute le compagnon d’Odette Morel : Paul Morel')).union.type, 'cohabiting');
+    assert.equal(said(parseCommand('Ajoute la femme de Jean Tellier : Marie Dupont')).union, undefined, '« femme » : sans type');
+    assert.equal(parseCommand('Jean Tellier vit à Paris').action, 'unknown');
+    assert.equal(cleanCommand({ action: 'add', who: 'Jean', relation: 'child', person: { given: 'Anne' }, union: { type: 'married' } }).union.type, '', 'une union pour un conjoint seulement');
+    assert.deepEqual(SCHEMA.required, ['action', 'who', 'relation', 'person', 'union']);
   });
 
   test('lieux : petits mots en minuscules', () => {
@@ -210,7 +231,7 @@ describe('voix : réponse du modèle de langage', () => {
   });
 
   test('le schéma demande tous les champs ; la consigne montre des exemples valides', () => {
-    assert.deepEqual(SCHEMA.required, ['action', 'who', 'relation', 'person']);
+    assert.deepEqual(SCHEMA.required, ['action', 'who', 'relation', 'person', 'union']);
     assert.deepEqual(SCHEMA.properties.person.required, FIELDS);
     assert.match(PROMPT, /"relation":"child"/);
   });
@@ -398,6 +419,17 @@ describe('voix : dans la page', () => {
     await voice.understand('Ajoute la femme de Jean Lacoste : Noëlle Roux');
     assert.equal(S.edit.id, 'j');
     assert.equal(S.edit.unions.at(-1).other, 'n', 'l’union est proposée');
+    A.cancelEdit();
+
+    await voice.understand('Jean Lacoste a épousé Noëlle Roux le 3 juin 1890 à Confoland');
+    assert.equal(S.edit.id, 'j');
+    assert.deepEqual([S.edit.unions.at(-1).other, S.edit.unions.at(-1).type, S.edit.unions.at(-1).date, S.edit.unions.at(-1).place],
+      ['n', 'married', '3 juin 1890', 'Confolens (16)'], 'le mariage, sa date, son lieu');
+    assert.match(bubble(), /<dt>Union<\/dt><dd>Noëlle ROUX, mariage, 3 juin 1890 à Confolens \(16\)<\/dd>/);
+    A.cancelEdit();
+    await voice.understand('Odette Morel vit en concubinage avec Paul Martin');
+    assert.equal(S.edit.rel, 'spouse', 'un nouveau conjoint');
+    assert.equal(S.edit.unions[0].type, 'cohabiting');
     A.cancelEdit();
 
     await voice.understand('Odette Morel a une fille, Anne Morel');
