@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.27](https://github.com/PallierJean/lignee/compare/v4.1.26...v4.1.27) (2026-11-12)
+
+### Bug Fixes
+
+* Understand "Ajoute la fiche, Jean Tellier", with the record named ([010f9cb](https://github.com/PallierJean/lignee/commit/010f9cbdd7649a5453d2872cc6c1da7c21c8d3f4))
+
+---
+
+### Corrections
+
+* « Ajoute la fiche, Jean Tellier » (et « la carte, la fiche » mal entendu) est compris tout de suite ([010f9cb](https://github.com/PallierJean/lignee/commit/010f9cbdd7649a5453d2872cc6c1da7c21c8d3f4))
+
 ## [4.1.26](https://github.com/PallierJean/lignee/compare/v4.1.25...v4.1.26) (2026-11-12)
 
 ### Bug Fixes
