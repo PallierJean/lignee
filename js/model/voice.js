@@ -47,7 +47,14 @@ export function cleanDate(s) {
   return str(s).replace(/[.,;]+$/, '')
     .replace(/^(?:(vers|avant|apr[eè]s|about|before|after)\s+)?(?:le|en|on|in|the|depuis|since)\s+/i, (all, q) => (q ? q + ' ' : ''))
     .replace(new RegExp(String.raw`${L}premier${R}`, 'iu'), '1')
-    .replace(new RegExp(String.raw`${L}(\d{1,2})(?:er|st|nd|rd|th)${R}`, 'iu'), '$1');
+    .replace(new RegExp(String.raw`${L}(\d{1,2})(?:er|st|nd|rd|th)${R}`, 'iu'), '$1')
+    // In figures, as Whisper writes them: "10-12-95", "10.12.1995" → "10/12/1995" (a two-figure year: the
+    // last hundred years)
+    .replace(/^(\d{1,2})[-./ ](\d{1,2})[-./ ](\d{4}|\d{2})$/, (all, d, m, y) => {
+      const now = new Date().getFullYear();
+      const year = y.length === 4 ? y : String(+y > now % 100 ? 1900 + +y : 2000 + +y);
+      return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${year}`;
+    });
 }
 
 /** JSON schema of a command, for the language model's constrained output. */
@@ -186,7 +193,7 @@ const kinOf = (word) => {
   return k ? { relation: k[1], sex: k[2], union: k[3] || '' } : null;
 };
 
-const DATE = String.raw`(?:le |en |on |in |depuis |since )?((?:vers |avant |après |about |before |after )?(?:\d{1,2}(?:er)? )?(?:[a-zéû]+ )?\d{4}|\d{1,2}\/\d{1,2}\/\d{4})`;
+const DATE = String.raw`(?:le |en |on |in |depuis |since )?((?:vers |avant |après |about |before |after )?(?:\d{1,2}(?:er)? )?(?:[a-zéû]+ )?\d{4}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{4}|\d{2}))`;
 // A place, and its department said in figures after it: "à Confolens, 16", "à Confolens (16)"
 const PLACE = String.raw`(?: (?:à|a|au|en|at|in) ([^,;.()]+?(?:\s*,\s*(?:\d{1,3}|2[AB])(?=[,;.\s]|$)|\s*\([^()]*\))?))?`;
 const BORN = String.raw`(?:n[ée]e?|born)`;
