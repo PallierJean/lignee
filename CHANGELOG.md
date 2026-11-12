@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.18](https://github.com/PallierJean/lignee/compare/v4.1.17...v4.1.18) (2026-11-12)
+
+### Bug Fixes
+
+* Understand "la date de naissance de X est…" and "le métier de X est…" ([ee88878](https://github.com/PallierJean/lignee/commit/ee888786d4532dcb835ada7f6ca510e085c58a95))
+
+---
+
+### Corrections
+
+* « la date (le lieu) de naissance de X est… » et « le métier de X est… » sont compris ([ee88878](https://github.com/PallierJean/lignee/commit/ee888786d4532dcb835ada7f6ca510e085c58a95))
+
 ## [4.1.17](https://github.com/PallierJean/lignee/compare/v4.1.16...v4.1.17) (2026-11-12)
 
 ### Bug Fixes
