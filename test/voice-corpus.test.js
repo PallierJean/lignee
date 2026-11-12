@@ -14,6 +14,9 @@ const CORPUS = [
   ['Ajoute une personne, Paul Durand, né vers 1850.', { action: 'add', person: { given: 'Paul', surname: 'Durand', birthDate: 'vers 1850' } }],
   ['Ajoute Anne-Marie Tellier, née en 1955, décédée en 2010.', { action: 'add', person: { given: 'Anne-Marie', surname: 'Tellier', birthDate: '1955', deathDate: '2010' } }],
   ['Ajoute Louis Tellier, agriculteur, né en 1920.', { action: 'add', person: { given: 'Louis', surname: 'Tellier', occupation: 'agriculteur', birthDate: '1920' } }],
+  ['Rajoute Marie Dupont née en 1920.', { action: 'add', person: { given: 'Marie', surname: 'Dupont', birthDate: '1920' } }],
+  ['Crée la fiche de Jean Martin, né en 1930.', { action: 'add', person: { given: 'Jean', surname: 'Martin', birthDate: '1930' } }],
+  ['Nouvelle personne : Jean-Pierre Tellier.', { action: 'add', person: { given: 'Jean-Pierre', surname: 'Tellier' } }],
   ['Ajoute Marie de la Borie.', { action: 'add', person: { given: 'Marie', surname: 'De la Borie' } }],
 
   // Parents and children
@@ -60,6 +63,7 @@ const CORPUS = [
   ['Recherche les Dorvigné.', { action: 'search', who: 'les Dorvigné' }],
   ['Ouvre la fiche de Marc Tellier.', { action: 'open', who: 'Marc Tellier' }],
   ['Affiche Marc Tellier.', { action: 'open', who: 'Marc Tellier' }],
+  ['Montre-moi la fiche de Marc.', { action: 'open', who: 'Marc' }],
   ['Va sur la fiche de Marc Tellier.', { action: 'open', who: 'Marc Tellier' }],
 
   // For the language model

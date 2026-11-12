@@ -170,6 +170,7 @@ const KIN = [
   ['fr[eè]re|brother', 'sibling', 'M'], ['s(?:œ|oe)ur|sister', 'sibling', 'F'],
 ];
 const KIN_RE = KIN.map(([w]) => w).join('|');
+const ADD = String.raw`(?:ajoute|ajouter|rajoute|rajouter|cr[ée]e|cr[ée]er|add|create)`;
 const kinOf = (word) => {
   const k = KIN.find(([w]) => new RegExp(`^(?:${w})$`, 'i').test(word));
   return k ? { relation: k[1], sex: k[2], union: k[3] || '' } : null;
@@ -265,14 +266,14 @@ export function parseCommand(sentence) {
   const s = str(sentence).replace(/[.!?]+$/, '');
   let m;
   if ((m = /^(?:cherche|recherche|trouve|search(?: for)?|find)\s+(.+)$/i.exec(s))) return cleanCommand({ action: 'search', who: m[1] });
-  if ((m = /^(?:ouvre|affiche|montre|va (?:à|a|sur)|open|show)\s+(?:la fiche (?:de |d['’])|the record of )?(.+)$/i.exec(s))) return cleanCommand({ action: 'open', who: m[1] });
+  if ((m = /^(?:(?:ouvre|affiche|montre)(?:[- ]moi)?|va (?:à|a|sur)|open|show(?: me)?)\s+(?:la fiche (?:de |d['’])|the record of )?(.+)$/i.exec(s))) return cleanCommand({ action: 'open', who: m[1] });
 
   // "ajoute le père de Jean Lacoste : Pierre Lacoste", "ajoute un fils à Jean Lacoste : Paul"
-  m = new RegExp(String.raw`^(?:ajoute|add)\s+(?:le |la |un |une |l['’]|the |a |an )?(${KIN_RE})\s+(?:de |d['’]|à |a |au |of |to )(.+?)\s*[:,]\s*(.+)$`, 'i').exec(s);
+  m = new RegExp(String.raw`^${ADD}\s+(?:le |la |un |une |l['’]|the |a |an )?(${KIN_RE})\s+(?:de |d['’]|à |a |au |of |to )(.+?)\s*[:,]\s*(.+)$`, 'i').exec(s);
   if (m) return relative(m[3], kinOf(m[1]), m[2]);
 
   // ("ajoute à …": Whisper sometimes hears a stray "à")
-  const add = /^(?:ajoute|ajouter|add)\s+(?:une personne|quelqu['’]un|a person|someone)?\s*:?\s*(?:(?:à|a)\s+)?(.+)$/i.exec(s);
+  const add = new RegExp(String.raw`^(?:${ADD}\s+(?:la fiche (?:de |d['’])|une fiche pour |une personne|quelqu['’]un|a person|someone)?|(?:une )?nouvelle (?:personne|fiche)|new person)\s*[:,]?\s*(?:(?:à|a)\s+)?(.+)$`, 'iu').exec(s);
   const body = add ? add[1] : s;
   // "Jean a épousé Marie Dupont le 3 juin 1890 à Hautefort", "Jean vit en concubinage avec Marie"
   const wed = unionSaid(body);
