@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.1.0](https://github.com/PallierJean/lignee/compare/v4.0.0...v4.1.0) (2026-11-12)
+
+### Features
+
+* Group the analysis views by theme ([3a0c2db](https://github.com/PallierJean/lignee/commit/3a0c2db63e6897715d6edf623be883243dbbf896))
+* An Archives view apart from the sources ([916874a](https://github.com/PallierJean/lignee/commit/916874aa2512dc5813c331d178d0583013be4724))
+
+---
+
+### Nouveautés
+
+* Les vues de l'onglet Analyse sont rangées par thème : vérifier l'arbre, les documents, le temps et les lieux, puis la galerie ([3a0c2db](https://github.com/PallierJean/lignee/commit/3a0c2db63e6897715d6edf623be883243dbbf896))
+* Une vue Archives dans l'onglet Analyse, à part des sources. Les papiers de famille et les images classées depuis la galerie n'y sont plus mêlés aux actes ; « Classer aux archives » ne demande plus de type. ([916874a](https://github.com/PallierJean/lignee/commit/916874aa2512dc5813c331d178d0583013be4724))
+
 ## [4.0.0](https://github.com/PallierJean/lignee/compare/v3.7.0...v4.0.0) (2026-11-12)
 
 ### ⚠ BREAKING CHANGES
