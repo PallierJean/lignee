@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.1.1](https://github.com/PallierJean/lignee/compare/v4.1.0...v4.1.1) (2026-11-12)
+
+### Bug Fixes
+
+* Show women under their maiden name at birth on the timeline ([d35056c](https://github.com/PallierJean/lignee/commit/d35056ca53a501f54310a2dcb88f1eb02ad89cd8))
+
+### Code Refactoring
+
+* Drop the conversion from format 2 ([cef0f4f](https://github.com/PallierJean/lignee/commit/cef0f4f2216d5a90021955a85009d9dd09c21740))
+
+---
+
+### Corrections
+
+* Dans la frise, une femme naît sous son nom de jeune fille, pas sous celui de son mari ([d35056c](https://github.com/PallierJean/lignee/commit/d35056ca53a501f54310a2dcb88f1eb02ad89cd8))
+
+### Refontes
+
+* La conversion depuis le format 2 est retirée : un fichier d'avant Lignée 4.0 est refusé, avec un message qui renvoie à Lignée 4.1 pour le convertir ([cef0f4f](https://github.com/PallierJean/lignee/commit/cef0f4f2216d5a90021955a85009d9dd09c21740))
+
 ## [4.1.0](https://github.com/PallierJean/lignee/compare/v4.0.0...v4.1.0) (2026-11-12)
 
 ### Features
