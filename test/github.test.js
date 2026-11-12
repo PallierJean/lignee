@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
 import { parseRepo, openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
-import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner, chooseRepoSave, flushRepoSave, scheduleRepoSave } from '../js/ui/repo-link.js';
+import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner, chooseRepoSave, flushRepoSave, scheduleRepoSave, AUTOSAVE_DELAY } from '../js/ui/repo-link.js';
 import { beginAction, commitAction, opUpdate } from '../js/services/storage.js';
 import { readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo, openTransfer, closeTransfer } from '../js/ui/transfer.js';
 import { photoOf } from '../js/model/people.js';
@@ -686,6 +686,12 @@ describe('connecter l’arbre ouvert', () => {
     assert.equal(S.repoLink.mustConfirm, false);
   });
 
+  // The automatic send, scheduled by itself, then done
+  const waitAutoSave = async () => {
+    await new Promise((r) => setTimeout(r, AUTOSAVE_DELAY + 100));
+    for (let i = 0; i < 20 && !calls.some((c) => c.method === 'PATCH'); i++) await new Promise((r) => setTimeout(r, 25));
+  };
+
   test('rechargement : dépôt retenu sans le jeton, reconnexion sans confirmation', async () => {
     head = '';
     await connect({});
@@ -700,6 +706,41 @@ describe('connecter l’arbre ouvert', () => {
     assert.equal(el('repoUrl').value, 'compte/depot');
     await connect({ 'agathe-famille.json': backup({ photo: '' }) });
     assert.equal(S.repoLink.mustConfirm, false);
+  });
+
+  test('reconnexion à un dépôt d’un format plus ancien : réécrit tout de suite, sans attendre une modification', async () => {
+    head = '';
+    await connect({});
+    await saveRepo();
+    head = S.repoLink.repo.head;
+    S.repoLink = null;
+    // L'arbre ouvert, déjà converti sur l'ordinateur ; le dépôt, encore au format 2
+    S.people = new Map([['a', { given: 'Ana' }]]);
+    S.media = new Map([['m', { photo: 'data:image/jpeg;base64,' + btoa('img'), tags: [{ id: 'a' }] }]]);
+    const old = { format: 'lignee', version: 2, name: 'F', people: [{ id: 'a', given: 'Ana', media: [{ id: 'm', photo: 'photos/ANA-1.jpg' }] }], unions: [] };
+    await connect({ 'agathe-famille.json': JSON.stringify(old), 'agathe-famille/photos/ANA-1.jpg': 'img' });
+    calls.length = 0;
+    await waitAutoSave();
+    const commit = calls.find((c) => c.url.endsWith('/git/commits'));
+    assert.ok(commit, 'envoyé');
+    assert.match(commit.body.message, /format de Lignée 4/);
+    const json = JSON.parse(calls.find((c) => c.url.endsWith('/git/trees')).body.tree.find((x) => x.path === 'agathe-famille.json').content);
+    assert.equal(json.version, 3);
+    assert.match(json.media[0].photo, /^photos\/galerie-/);
+    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')), 'photo déjà dans le dépôt : pas renvoyée');
+  });
+
+  test('reconnexion à un dépôt à jour : rien n’est envoyé', async () => {
+    head = '';
+    await connect({});
+    await saveRepo();
+    head = S.repoLink.repo.head;
+    S.repoLink = null;
+    const now = { format: 'lignee', version: 3, name: 'F', people: [{ id: 'a', given: 'Ana' }], unions: [], media: [{ id: 'm', photo: 'photos/galerie-1.jpg', tags: [{ id: 'a' }] }] };
+    await connect({ 'agathe-famille.json': JSON.stringify(now), 'agathe-famille/photos/galerie-1.jpg': 'img' });
+    calls.length = 0;
+    await waitAutoSave();
+    assert.deepEqual(calls.filter((c) => c.method !== 'GET').map((c) => c.method + ' ' + c.url), []);
   });
 
   test('dépôt modifié ailleurs depuis la dernière sauvegarde : confirmation demandée', async () => {

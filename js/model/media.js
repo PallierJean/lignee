@@ -33,6 +33,13 @@ export const hasPlace = (tag) => 'x' in tag && 'y' in tag;
 /** True if person `pid` is identified on image `m`. */
 export const shows = (m, pid) => tagsOf(m).some((x) => x.id === pid);
 
+/** File name of a gallery image: "photos/galerie-…" (before Lignée 4.0, named after a person). */
+export const GALLERY_FILE = /^photos\/galerie-/;
+
+/** True if gallery image `m` still cites a file named after a person. */
+export const namedAfterPerson = (m) => [m && m.photo, m && m.back]
+  .some((x) => typeof x === 'string' && /^photos\//.test(x) && !GALLERY_FILE.test(x));
+
 /** Images of the tree: [{ id, m }], in the order they were added. */
 export const allMedia = (media = S.media) => [...media].map(([id, m]) => ({ id, m }));
 

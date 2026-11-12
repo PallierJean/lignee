@@ -7,7 +7,7 @@
  */
 import { S, treeName } from '../state.js';
 import { t } from '../i18n.js';
-import { galleryFromPeople } from '../model/media.js';
+import { galleryFromPeople, namedAfterPerson } from '../model/media.js';
 
 // Version of the backup format this Lignée writes; it also reads OLDEST_READ and later
 export const FORMAT_VERSION = 3;
@@ -67,5 +67,7 @@ export function parseBackup(text) {
   const people = convert(o.people);
   // Format 2: the images kept in the records (and any left there by hand) go to the gallery
   const media = galleryFromPeople(people, convert(o.media));
-  return { name, people, unions: convert(o.unions), sources: convert(o.sources), media };
+  // Written in an older format, or gallery files still named after a person: worth writing again
+  const outdated = Number(o.version) < FORMAT_VERSION || media.some((x) => namedAfterPerson(x.data));
+  return { name, people, unions: convert(o.unions), sources: convert(o.sources), media, outdated };
 }
