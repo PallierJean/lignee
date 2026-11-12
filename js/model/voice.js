@@ -20,6 +20,32 @@ export const FIELDS = ['given', 'surname', 'sex', 'birthDate', 'birthPlace', 'de
 
 const str = (v) => (typeof v === 'string' ? v.replace(/\s+/g, ' ').trim() : '');
 const blank = () => Object.fromEntries(FIELDS.map((f) => [f, '']));
+const UNKNOWN = () => ({ action: 'unknown', who: '', relation: '', person: blank() });
+
+// Word edges that know accented letters (\b doesn't: "né" never ended a word)
+const L = String.raw`(?<![\p{L}\d])`;
+const R = String.raw`(?![\p{L}\d])`;
+
+const PARTICLES = new Set(['de', 'du', 'des', 'le', 'la', 'van', 'von', 'da', 'di', "d'", 'd’']);
+// Small words kept in lower case inside a name or a place ("Saint-Pierre-de-Chignac", "Hautefort en Dordogne")
+const LOWER = new Set([...PARTICLES, 'en', 'sur', 'sous', 'lès', 'lez', 'les', 'aux', 'au', 'et']);
+const capWord = (w) => w.split('-').map((part, j) => (j && LOWER.has(part.toLowerCase()) ? part.toLowerCase()
+  : part.replace(/^\p{L}/u, (l) => l.toUpperCase()))).join('-');
+/** Capitals at the start of each word, except small words inside a name ("Marie de la Borie"). */
+const cap = (s) => s.split(' ').map((w, i) => (i && LOWER.has(w.toLowerCase()) ? w.toLowerCase() : capWord(w))).join(' ');
+/** Only a text said all in lower case gets capitals: a casing chosen by the speaker stays. */
+const capLower = (s) => (s && s === s.toLowerCase() ? cap(s) : s);
+
+/**
+ * A date as the form reads it: "le 3 mai 1872" → "3 mai 1872", "vers le 1er mai 1850" → "vers 1 mai 1850",
+ * "en 1901" → "1901".
+ */
+export function cleanDate(s) {
+  return str(s).replace(/[.,;]+$/, '')
+    .replace(/^(?:(vers|avant|apr[eè]s|about|before|after)\s+)?(?:le|en|on|in|the)\s+/i, (all, q) => (q ? q + ' ' : ''))
+    .replace(new RegExp(String.raw`${L}premier${R}`, 'iu'), '1')
+    .replace(new RegExp(String.raw`${L}(\d{1,2})(?:er|st|nd|rd|th)${R}`, 'iu'), '$1');
+}
 
 /** JSON schema of a command, for the language model's constrained output. */
 export const SCHEMA = {
@@ -49,6 +75,8 @@ const EXAMPLES = [
   ['Odette a eu une fille, Anne Morel, en 1960', { action: 'add', who: 'Odette', relation: 'child', person: { given: 'Anne', surname: 'Morel', sex: 'F', birthDate: '1960' } }],
   ['Génie Desgorces est morte vers 1890 à la Borie', { action: 'edit', who: 'Génie Desgorces', person: { deathDate: 'vers 1890', deathPlace: 'la Borie' } }],
   ['ajoute une personne : Louis Martin, né en 1901', { action: 'add', person: { given: 'Louis', surname: 'Martin', sex: 'M', birthDate: '1901' } }],
+  ['le père de Jean Lacoste s\'appelle Pierre Lacoste', { action: 'add', who: 'Jean Lacoste', relation: 'father', person: { given: 'Pierre', surname: 'Lacoste', sex: 'M' } }],
+  ['Paul Maury, fils de Pierre Maury et de Marie Dupont, est né le 1er mai 1880', { action: 'add', who: 'Pierre Maury', relation: 'child', person: { given: 'Paul', surname: 'Maury', sex: 'M', birthDate: '1 mai 1880' } }],
 ];
 
 /** Instructions for the language model. */
@@ -62,10 +90,12 @@ action:
   "who" = that someone's name and "relation" = what the NEW person is to them:
   "father", "mother", "child" (son, daughter), "spouse" (husband, wife), "sibling" (brother, sister).
   "X a eu un fils / une fille Y" means Y is the child of X: who = X, relation = "child".
+  With two parents named, "who" = the first one.
 - "edit": facts about a person already in the tree; "who" = their name, "person" = only the facts said.
 - "unknown": anything else.
 person: given (first names), surname, sex ("M" or "F", from the words used, e.g. "née", "fille", "il"),
-birthDate, birthPlace, deathDate, deathPlace, occupation. Dates as said ("12 mars 1820", "vers 1850", "1901").
+birthDate, birthPlace, deathDate, deathPlace, occupation. Dates without "le" or "en": "12 mars 1820", "1 mai 1880"
+(not "1er"), "vers 1850", "1901". A place is only the town ("à Hautefort" → "Hautefort").
 Leave unsaid fields empty (""). Never invent anything.
 
 Examples:
@@ -78,14 +108,16 @@ export function cleanCommand(c) {
   const relation = action === 'add' && RELATIONS.includes(o.relation) ? o.relation : '';
   const p = o.person && typeof o.person === 'object' ? o.person : {};
   const person = Object.fromEntries(FIELDS.map((f) => [f, str(p[f])]));
+  for (const f of ['birthDate', 'deathDate']) person[f] = cleanDate(person[f]);
+  for (const f of ['given', 'surname', 'birthPlace', 'deathPlace']) person[f] = capLower(person[f]);
   person.sex = person.sex.toUpperCase();
   if (!['M', 'F'].includes(person.sex)) person.sex = '';
   if (relation === 'father') person.sex = 'M';
   if (relation === 'mother') person.sex = 'F';
   const who = str(o.who);
   // A command that names no one can't be carried out
-  if ((action === 'search' || action === 'open' || action === 'edit') && !who) return { action: 'unknown', who: '', relation: '', person: blank() };
-  if (action === 'add' && !person.given && !person.surname) return { action: 'unknown', who: '', relation: '', person: blank() };
+  if ((action === 'search' || action === 'open' || action === 'edit') && !who) return UNKNOWN();
+  if (action === 'add' && !person.given && !person.surname) return UNKNOWN();
   return { action, who, relation, person };
 }
 
@@ -102,11 +134,6 @@ export function commandFromText(text) {
 }
 
 /* ---------- Fixed sentences, without a language model ---------- */
-
-const PARTICLES = new Set(['de', 'du', 'des', 'le', 'la', 'van', 'von', 'da', 'di', "d'", 'd’']);
-/** Capitals at the start of each word, except particles inside a name ("Marie de la Borie"). */
-const cap = (s) => s.split(' ').map((w, i) => (i && PARTICLES.has(w.toLowerCase()) ? w.toLowerCase()
-  : w.replace(/(^|-)(\p{L})/gu, (all, sep, l) => sep + l.toUpperCase()))).join(' ');
 
 /** "anne marie lacoste" → { given: 'Anne Marie', surname: 'Lacoste' }; "de la borie": particles go with the surname. */
 export function splitName(name) {
@@ -133,11 +160,18 @@ const kinOf = (word) => {
 const DATE = String.raw`(?:le |en |on |in )?((?:vers |avant |après |about |before |after )?(?:\d{1,2}(?:er)? )?(?:[a-zéû]+ )?\d{4}|\d{1,2}\/\d{1,2}\/\d{4})`;
 const PLACE = String.raw`(?: (?:à|a|au|en|at|in) ([^,;.]+?))?`;
 const FACTS = [
-  ['birth', new RegExp(String.raw`\b(?:n[ée]e?|born)\s+${DATE}${PLACE}(?=[,;.]|\s+(?:et|and|mort|morte|d[ée]c[ée]d[ée]e?|died|fils|fille|enfant|p[eè]re|m[eè]re|qui)\b|$)`, 'i')],
-  ['death', new RegExp(String.raw`\b(?:mort|morte|d[ée]c[ée]d[ée]e?|died)\s+${DATE}${PLACE}(?=[,;.]|\s+(?:et|and|n[ée]e?|born|fils|fille|enfant|qui)\b|$)`, 'i')],
+  ['birth', new RegExp(String.raw`${L}(?:n[ée]e?|born)\s+${DATE}${PLACE}(?=[,;.]|\s+(?:et|and|il|elle|he|she|mort|morte|d[ée]c[ée]d[ée]e?|died|fils|fille|enfant|p[eè]re|m[eè]re|qui)${R}|$)`, 'iu')],
+  ['death', new RegExp(String.raw`${L}(?:mort|morte|d[ée]c[ée]d[ée]e?|died)\s+${DATE}${PLACE}(?=[,;.]|\s+(?:et|and|il|elle|he|she|n[ée]e?|born|fils|fille|enfant|qui)${R}|$)`, 'iu')],
 ];
+const FEMININE = new RegExp(String.raw`^(?:n[ée]e|morte|d[ée]c[ée]d[ée]e)${R}`, 'iu');
+const MASCULINE = new RegExp(String.raw`^(?:n[ée]|mort|d[ée]c[ée]d[ée])${R}`, 'iu');
+const JOB = new RegExp(String.raw`(?:${L}(?:il|elle|he|she)\s+)?${L}(?:[ée]tait|est|was)\s+(?!n[ée]e?${R}|mort|d[ée]c[ée]d)([\p{L}-]+(?: [\p{L}-]+)?)\s*$`, 'iu');
+// Words that can't be part of a name: the sentence says more than a name
+const NOT_NAME = new RegExp(String.raw`${L}(?:et|and|qui|who|est|était|is|was|a|eu|has|had|s['’]appel\p{L}*|appel[ée]e?|named|called|n[ée]e?|mort|morte)${R}|\d`, 'iu');
+/** Could `s` be the name of a person? One to five words, nothing else. */
+const isName = (s) => { const n = str(s).split(' ').filter(Boolean).length; return n >= 1 && n <= 5 && !NOT_NAME.test(s); };
 
-/** Birth and death said in `text`: fields of a person, and `text` without them. */
+/** Birth and death said in `text`: fields of a person, and `text` without them (`raw`: commas kept). */
 function facts(text) {
   const person = {};
   let rest = text;
@@ -146,16 +180,16 @@ function facts(text) {
     if (!m) continue;
     person[kind + 'Date'] = m[1].replace(/^(le|en|on|in) /i, '');
     if (m[2]) person[kind + 'Place'] = cap(m[2].trim());
-    if (/^(n[ée]e|morte|d[ée]c[ée]d[ée]e)\b/i.test(m[0])) person.sex = 'F';
-    else if (!person.sex && /^(n[ée]|mort|d[ée]c[ée]d[ée])\b/i.test(m[0])) person.sex = 'M';
+    if (FEMININE.test(m[0])) person.sex = 'F';
+    else if (!person.sex && MASCULINE.test(m[0])) person.sex = 'M';
     rest = rest.replace(m[0], ' ');
   }
-  const job = /\b(?:il|elle)?\s*(?:[ée]tait|est|was)\s+(?!n[ée]e?\b|mort|d[ée]c[ée]d)([a-zéèêàç-]+(?: [a-zéèêàç-]+)?)\s*$/i.exec(rest.replace(/[,;.\s]+$/, ''));
+  const job = JOB.exec(rest.replace(/[,;.\s]+$/, ''));
   if (job) {
     person.occupation = job[1];
     rest = rest.replace(job[0], ' ');
   }
-  return { person, rest: rest.replace(/\s*[,;]\s*/g, ' ').replace(/\s+/g, ' ').trim() };
+  return { person, raw: rest, rest: rest.replace(/\s*[,;]\s*/g, ' ').replace(/\s+/g, ' ').trim() };
 }
 
 /**
@@ -176,8 +210,11 @@ export function parseCommand(sentence) {
   // ("ajoute à …": Whisper sometimes hears a stray "à")
   const add = /^(?:ajoute|ajouter|add)\s+(?:une personne|quelqu['’]un|a person|someone)?\s*:?\s*(?:(?:à|a)\s+)?(.+)$/i.exec(s);
   const body = add ? add[1] : s;
+  // "le père de Jean Lacoste s'appelle Pierre Lacoste"
+  m = new RegExp(String.raw`^(?:le |la |l['’]|the )?(${KIN_RE})\s+(?:de |d['’]|of )(.+?)\s+(?:s['’]appel\p{L}*|is called|was called|is named|was named)\s+(.+)$`, 'iu').exec(body);
+  if (m) return relative(m[3], kinOf(m[1]), m[2]);
   // "Anne Lacoste, fille de Marguerite Maury", "Pierre Lacoste est le père de Jean Lacoste"
-  m = new RegExp(String.raw`^(.+?)\s*,?\s+(?:(?:est|était|is|was)\s+)?(?:le |la |un |une |l['’]|the |a )?(${KIN_RE})\s+(?:de |d['’]|of )(.+)$`, 'i').exec(body);
+  m = new RegExp(String.raw`^(.+?)\s*,?\s+(?:(?:est|était|is|was)\s+)?(?:le |la |un |une |l['’]|the |a )?(${KIN_RE})\s+(?:de |d['’]|of )(.+)$`, 'iu').exec(body);
   if (m) {
     // The relative's name ends where the facts about the new person start
     const tail = facts(m[3]);
@@ -185,26 +222,37 @@ export function parseCommand(sentence) {
     return relative(m[1], kinOf(m[2]), tail.rest, { ...head.person, ...tail.person }, head.rest);
   }
   if (add) {
-    const { person, rest } = facts(body);
+    const { person, raw } = facts(body);
+    const [name = '', ...more] = raw.split(/\s*[,;:]\s*/).map(str).filter(Boolean);
+    // "Louis Martin, cultivateur": a word or two after the name, the occupation
+    if (more.length === 1 && !person.occupation && more[0].split(' ').length <= 2 && !/^(?:à|a|au|aux|en|le|la|les|de|du|des|in|at|the)\s/i.test(more[0]) && !NOT_NAME.test(more[0])) {
+      person.occupation = more.pop();
+    }
     // More than a name: a sentence for the language model
-    if (rest.split(' ').length > 4) return cleanCommand({});
-    return cleanCommand({ action: 'add', person: { ...splitName(rest), ...person } });
+    if (more.length || !isName(name)) return UNKNOWN();
+    return cleanCommand({ action: 'add', person: { ...splitName(name), ...person } });
   }
   // "Génie Desgorces est morte vers 1890"
-  m = /^(.+?)\s+(?:est|était|is|was)\s+((?:n[ée]e?|mort|morte|d[ée]c[ée]d[ée]e?|born|died)\b.*)$/i.exec(s);
-  if (m) {
+  m = new RegExp(String.raw`^(.+?)\s+(?:est|était|is|was)\s+((?:n[ée]e?|mort|morte|d[ée]c[ée]d[ée]e?|born|died)${R}.*)$`, 'iu').exec(s);
+  if (m && isName(m[1])) {
     const { person } = facts(m[2]);
     if (Object.keys(person).length) return cleanCommand({ action: 'edit', who: m[1], person: { ...person, sex: '' } });
   }
   // "Jean Maury était cultivateur"
   m = /^(.+?)\s+(?:était|est|was|is)\s+(?:un |une |a |an )?([\p{L}-]+(?: [\p{L}-]+)?)$/iu.exec(s);
-  if (m) return cleanCommand({ action: 'edit', who: m[1], person: { occupation: m[2] } });
-  return cleanCommand({});
+  if (m && isName(m[1])) return cleanCommand({ action: 'edit', who: m[1], person: { occupation: m[2] } });
+  return UNKNOWN();
 }
 
-/** A new relative: `kin` = { relation, sex } of the new person, named `name` (with its facts). */
+/**
+ * A new relative: `kin` = { relation, sex } of the new person, named `name` (with its facts).
+ * Two parents said ("fils de Pierre Maury et de Marie Dupont"): the first one; the form proposes their spouse.
+ * Anything else than names: the language model.
+ */
 function relative(name, kin, who, known = null, cleanName = null) {
   const { person, rest } = known ? { person: known, rest: cleanName } : facts(name);
+  const of = facts(who).rest.split(/\s+(?:et|and)\s+(?:de\s+|d['’]\s*|of\s+)?/i)[0];
+  if (!isName(rest) || !isName(of)) return UNKNOWN();
   const sex = person.sex || kin.sex;
-  return cleanCommand({ action: 'add', who: facts(who).rest, relation: kin.relation, person: { ...splitName(rest), ...person, sex } });
+  return cleanCommand({ action: 'add', who: of, relation: kin.relation, person: { ...splitName(rest), ...person, sex } });
 }

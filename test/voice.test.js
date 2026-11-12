@@ -3,7 +3,7 @@ import { test, describe, before, after } from 'node:test';
 import { mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { parseCommand, cleanCommand, commandFromText, splitName, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
+import { parseCommand, cleanCommand, cleanDate, commandFromText, splitName, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
 import { createServer } from '../server.js';
 import { loadTree, person, resetApp } from './helpers.js';
 
@@ -50,6 +50,38 @@ describe('voix : phrases connues', () => {
     assert.equal(parseCommand('quelle heure est-il').action, 'unknown');
   });
 
+  test('« né » et « décédé » : le sexe et la modification (lettres accentuées en fin de mot)', () => {
+    assert.equal(parseCommand('Ajoute Louis Martin, né le 12 mars 1901 à Saint-Pierre-de-Chignac.').person.sex, 'M');
+    assert.equal(parseCommand('Ajoute Louis Martin, décédé en 1950').person.sex, 'M');
+    assert.deepEqual(said(parseCommand('Jean Maury est né le 3 mai 1872 à Hautefort.')), {
+      action: 'edit', who: 'Jean Maury', relation: '', person: { birthDate: '3 mai 1872', birthPlace: 'Hautefort' },
+    });
+    assert.deepEqual(said(parseCommand('Jean Maury est décédé le 1er janvier 1950 à Périgueux.')).person, { deathDate: '1 janvier 1950', deathPlace: 'Périgueux' });
+  });
+
+  test('métier dit après le nom ou après la naissance', () => {
+    assert.deepEqual(said(parseCommand('Ajoute Louis Martin, cultivateur, né en 1901.')).person,
+      { given: 'Louis', surname: 'Martin', sex: 'M', birthDate: '1901', occupation: 'cultivateur' });
+    assert.equal(parseCommand('Ajoute Louis Martin né en 1901 il était cultivateur').person.occupation, 'cultivateur');
+    assert.equal(parseCommand('Ajoute Louis Martin, à Paris').action, 'unknown', 'pas un métier');
+  });
+
+  test('« s’appelle », deux parents ; une phrase mal comprise va au modèle de langage', () => {
+    assert.deepEqual(said(parseCommand('Le père de Jean Lacoste s’appelle Pierre Lacoste.')), {
+      action: 'add', who: 'Jean Lacoste', relation: 'father', person: { given: 'Pierre', surname: 'Lacoste', sex: 'M' },
+    });
+    const c = parseCommand('Ajoute Jean-Baptiste Maury, fils de Pierre Maury et de Marie Dupont.');
+    assert.equal(c.who, 'Pierre Maury', 'le premier parent ; le formulaire propose son conjoint');
+    assert.equal(c.relation, 'child');
+    assert.equal(parseCommand('Anne est la fille de Jean qui est parti vivre à Paris').action, 'unknown');
+    assert.equal(parseCommand('Jean Maury était cultivateur à Hautefort').action, 'unknown');
+  });
+
+  test('lieux : petits mots en minuscules', () => {
+    assert.equal(parseCommand('Ajoute Anne Lacoste, née en 1872 à Hautefort en Dordogne').person.birthPlace, 'Hautefort en Dordogne');
+    assert.equal(parseCommand('Ajoute Anne Lacoste, née en 1872 à saint-pierre-de-chignac').person.birthPlace, 'Saint-Pierre-de-Chignac');
+  });
+
   test('noms : prénoms puis nom, particules avec le nom', () => {
     assert.deepEqual(splitName('anne marie lacoste'), { given: 'Anne Marie', surname: 'Lacoste' });
     assert.deepEqual(splitName('jean-pierre de la borie'), { given: 'Jean-Pierre', surname: 'De la Borie' });
@@ -70,6 +102,17 @@ describe('voix : réponse du modèle de langage', () => {
     assert.equal(commandFromText('voici : {"action":"open","who":"Jean"} fin').who, 'Jean');
     assert.equal(commandFromText('pas de JSON'), null);
     assert.equal(commandFromText('{cassé'), null);
+  });
+
+  test('dates et majuscules nettoyées, comme pour les phrases connues', () => {
+    assert.equal(cleanDate('le 3 mai 1872.'), '3 mai 1872');
+    assert.equal(cleanDate('en 1901'), '1901');
+    assert.equal(cleanDate('vers le 1er mai 1850'), 'vers 1 mai 1850');
+    assert.equal(cleanDate('premier janvier 1950'), '1 janvier 1950');
+    assert.equal(cleanDate('on 2nd May 1890'), '2 May 1890');
+    const c = cleanCommand({ action: 'add', person: { given: 'anne', surname: 'de la borie', birthDate: 'le 3 mai 1872', birthPlace: 'hautefort', deathPlace: 'La Roche-Chalais' } });
+    assert.deepEqual([c.person.given, c.person.surname, c.person.birthDate, c.person.birthPlace, c.person.deathPlace],
+      ['Anne', 'De la Borie', '3 mai 1872', 'Hautefort', 'La Roche-Chalais']);
   });
 
   test('le schéma demande tous les champs ; la consigne montre des exemples valides', () => {

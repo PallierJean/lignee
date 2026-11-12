@@ -52,6 +52,7 @@ describe('fullDate', () => {
 describe('dateParts et isImpossibleDate', () => {
   test('dates reconnues', () => {
     assert.deepEqual(dateParts('vers 12/03/1932'), { q: 'abt', y: 1932, m: 3, d: 12 });
+    assert.deepEqual(dateParts('1er mars 1932'), { q: '', y: 1932, m: 3, d: 1 }, '« 1er » dit ou tapé');
     assert.deepEqual(dateParts('03/1932'), { q: '', y: 1932, m: 3 });
     assert.deepEqual(dateParts('1932'), { q: '', y: 1932 });
     assert.deepEqual(dateParts('29/02/2000'), { q: '', y: 2000, m: 2, d: 29 });

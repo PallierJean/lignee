@@ -1,5 +1,5 @@
 /**
- * Freely entered dates: "12/03/1932", "03/1932", "1932", "12 mars 1932",
+ * Freely entered dates: "12/03/1932", "03/1932", "1932", "12 mars 1932", "1er mars 1932",
  * "mars 1932", "vers 1850", "avant 1901", "après 1790" (or "about", "before", "after").
  * They are shown in the interface language, in the format "04 Août 1961".
  * Remaining free text is shown as is.
@@ -47,7 +47,7 @@ export function dateParts(s) {
   if (m) return validDay(+m[1], +m[2], +m[3]) ? { q, y: +m[3], m: +m[2], d: +m[1] } : null;
   m = /^(\d{1,2})\/(\d{4})$/.exec(rest);
   if (m) return +m[1] >= 1 && +m[1] <= 12 ? { q, y: +m[2], m: +m[1] } : null;
-  m = /^(\d{1,2})\s+(\p{L}+)\s+(\d{4})$/u.exec(rest);
+  m = /^(\d{1,2})(?:er)?\s+(\p{L}+)\s+(\d{4})$/u.exec(rest);
   if (m) {
     const month = MONTH_NUMBER.get(norm(m[2]));
     return month && validDay(+m[1], month, +m[3]) ? { q, y: +m[3], m: month, d: +m[1] } : null;
