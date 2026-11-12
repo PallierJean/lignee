@@ -22,6 +22,19 @@ habituel, rempli avec ce qui a été dit** : rien n'est enregistré avant le cli
 Ctrl+Z annule comme pour toute modification. Si plusieurs personnes portent le nom dit, la bulle
 demande laquelle ; un nom entendu un peu de travers (« Margerite Mauri ») est retrouvé quand même.
 
+**Valider sans relancer le micro.** Quand une phrase dite a rempli le formulaire, Lignée écoute
+aussitôt la réponse, une seule fois (le point rouge et « J'écoute ta réponse… » le montrent) :
+
+- « oui », « valide », « enregistre », « c'est bon » : la fiche est enregistrée (Ctrl+Z annule) ;
+- « non », « annule », « laisse tomber » : le formulaire se ferme sans rien enregistrer ;
+- une précision (« non, elle est née en 1873 », « il était maçon », « elle s'appelle Anne Marie ») :
+  le formulaire est complété, puis Lignée réécoute (trois réponses au plus) ;
+- rien pendant 8 secondes : l'écoute s'arrête, le formulaire reste ouvert.
+
+La bulle a aussi ses boutons **Enregistrer** (Entrée) et **Annuler**. La case « Écouter ma réponse
+quand le formulaire est rempli à la voix » coupe cette écoute (réglage retenu). Une phrase tapée
+dans la bulle n'est pas suivie d'une écoute : on est alors au clavier.
+
 ## Utilisation
 
 - Cliquer sur le micro, ou appuyer sur **M** (hors d'un champ de saisie).

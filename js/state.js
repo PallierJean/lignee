@@ -30,6 +30,7 @@ export const S = {
   closed: {},            // closed banners: ex (example family), local (local mode)
   theme: 'auto',         // colour theme: see THEMES in config.js
   textSize: 'normal',    // interface text size: see TEXT_SIZES in config.js
+  voiceReply: true,      // after a voice command fills the form, listen for the answer (yes, no, more)
   tab: 'record',          // panel tab: 'record' | 'register' | 'analysis'
   analysis: 'kin',       // Analysis tab view: see VIEWS in ui/analysis.js
   timeFamily: false,     // timeline: the close family rather than the person alone
@@ -91,6 +92,7 @@ export function loadPrefs() {
     if (v.closed && typeof v.closed === 'object') S.closed = v.closed;
     if (THEMES.includes(v.theme)) S.theme = v.theme;
     if (TEXT_SIZES.includes(v.textSize)) S.textSize = v.textSize;
+    S.voiceReply = v.voiceReply !== false;
   } catch (e) {
     /* storage unavailable: the defaults are kept */
   }
@@ -100,7 +102,7 @@ export function savePrefs() {
   try {
     if (S.focus) S.foci[S.tree] = S.focus;
     else delete S.foci[S.tree];
-    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, photos: S.photos, filter: S.filter, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci, theme: S.theme, textSize: S.textSize }));
+    localStorage.setItem(PREF_KEY, JSON.stringify({ up: S.up, down: S.down, zoom: S.zoom, full: S.full, fan: S.fan, line: S.line, photos: S.photos, filter: S.filter, panel: S.panel, closed: S.closed, tree: S.tree, foci: S.foci, theme: S.theme, textSize: S.textSize, voiceReply: S.voiceReply }));
   } catch (e) {
     /* storage unavailable: preferences not remembered */
   }
