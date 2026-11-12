@@ -642,6 +642,8 @@ export const FR = {
   'voice.hint.command': 'Ajoute, cherche, ouvre la fiche de, fils de, fille de, né le, marié avec.',
   'voice.hint.reply': 'Oui. Non. Enregistre. Annule. C’est tout.',
   'voice.hint.pick': 'Le premier. La deuxième. Le dernier. Une nouvelle personne.',
+  'voice.elapsed': (n) => `Depuis ${n} s.`,
+  'voice.firstSlow': 'La première phrase est plus longue : le modèle se charge en mémoire (une à deux minutes), les suivantes vont plus vite.',
   'voice.bye': 'Fin de la conversation.',
   'voice.at': ' à ',
   'voice.r.name': 'Nom',

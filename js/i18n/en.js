@@ -619,6 +619,8 @@ export const EN = {
   'voice.hint.command': 'Add, search, open the record of, son of, daughter of, born on, married to.',
   'voice.hint.reply': 'Yes. No. Save. Cancel. That’s all.',
   'voice.hint.pick': 'The first. The second. The last. A new person.',
+  'voice.elapsed': (n) => `For ${n} s.`,
+  'voice.firstSlow': 'The first sentence takes longer: the model is loading into memory (one or two minutes); the next ones are quicker.',
   'voice.bye': 'End of the conversation.',
   'voice.at': ' at ',
   'voice.r.name': 'Name',
