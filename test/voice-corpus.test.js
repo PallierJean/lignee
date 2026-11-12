@@ -25,6 +25,8 @@ const CORPUS = [
   ['Sophie est la fille de Marc Tellier.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Sophie', sex: 'F' } }],
   ['Sophie et la fille de Marc Tellier.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Sophie', sex: 'F' } }],
   ['Marc Tellier a un fils qui s’appelle Jean.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Jean', sex: 'M' } }],
+  ['Marc Tellier a eu un fils, Jean, en 1995.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Jean', sex: 'M', birthDate: '1995' } }],
+  ['Véronique Dorvigné a eu une fille, Sophie Tellier, née en 1998.', { action: 'add', who: 'Véronique Dorvigné', relation: 'child', person: { given: 'Sophie', surname: 'Tellier', sex: 'F', birthDate: '1998' } }],
   ['Ajoute un fils à Marc Tellier : Jean, né en 1995.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Jean', sex: 'M', birthDate: '1995' } }],
   ['Ajoute le fils de Marc Tellier, Jean Tellier, né en 1995.', { action: 'add', who: 'Marc Tellier', relation: 'child', person: { given: 'Jean', surname: 'Tellier', birthDate: '1995' } }],
   ['Ajoute une fille à Véronique Dorvigné, Sophie.', { action: 'add', who: 'Véronique Dorvigné', relation: 'child', person: { given: 'Sophie', sex: 'F' } }],
