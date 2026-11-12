@@ -23,4 +23,20 @@ describe('frise', () => {
     assert.ok(timelineOf('a', false, new Date(2026, 0, 1)).some((r) => r.year === 2020));
     assert.deepEqual(timelineOf('b', false), []);
   });
+
+  test('à la naissance, une femme porte son nom de jeune fille', () => {
+    loadTree([
+      person('j', { given: 'Jacques', surname: 'Martin', sex: 'M', birthDate: '1930' }),
+      person('e', { given: 'Élise', surname: 'Martin', maidenName: 'Laborde', sex: 'F', birthDate: '1937' }),
+      person('p', { given: 'Pierre', surname: 'Roux', sex: 'M', birthDate: '1905' }),
+      // Sans nom de jeune fille saisi : celui de son père
+      person('m', { given: 'Marie', surname: 'Martin', sex: 'F', birthDate: '1932', fatherId: 'p' }),
+      person('c', { given: 'Véro', surname: 'Martin', sex: 'F', birthDate: '1961', fatherId: 'j', motherId: 'e' }),
+    ], [{ id: 'u', a: 'j', b: 'e', date: '1960' }]);
+    const births = timelineOf('j', true).filter((r) => r.kind === 'birth').map((r) => r.label);
+    assert.ok(births.includes('Naissance · Élise LABORDE'));
+    assert.ok(births.includes('Naissance · Véro MARTIN'));
+    assert.ok(births.includes('Naissance · Jacques MARTIN'));
+    assert.ok(timelineOf('m', true).some((r) => r.label === 'Naissance · Marie ROUX'));
+  });
 });

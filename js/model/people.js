@@ -330,6 +330,17 @@ const AVATARS = { F: 'images/avatar_femme.jpeg', M: 'images/avatar_homme.jpeg', 
 /** Default avatar by sex; neutral if the sex isn't specified. */
 export const avatarOf = (sex) => AVATARS[sex] || AVATARS.U;
 
+/**
+ * Name a person was born with: a woman's maiden name rather than her married name (failing a
+ * maiden name, the one derived from her parents); otherwise the full name.
+ */
+export function birthFullName(p) {
+  if (!p || p.sex !== 'F') return fullName(p);
+  const s = maiden(p) || (!String(p.maidenName || '').trim() && birthSurname(p.fatherId, p.motherId).toUpperCase()) || surname(p);
+  const g = given(p);
+  return g || s ? [g, s].filter(Boolean).join(' ') : t('noName');
+}
+
 export function fullName(p) {
   if (!p) return t('unknownPerson');
   const g = given(p);
