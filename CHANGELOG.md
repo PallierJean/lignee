@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.16](https://github.com/PallierJean/lignee/compare/v4.1.15...v4.1.16) (2026-11-12)
+
+### Bug Fixes
+
+* Understand "le père de Marc, c'est Louis Tellier" ([6a0385a](https://github.com/PallierJean/lignee/commit/6a0385acec0e90ee9a091c9ba3ca65ccd45d4c50))
+
+---
+
+### Corrections
+
+* « le père de Marc, c'est Louis Tellier » est compris ([6a0385a](https://github.com/PallierJean/lignee/commit/6a0385acec0e90ee9a091c9ba3ca65ccd45d4c50))
+
 ## [4.1.15](https://github.com/PallierJean/lignee/compare/v4.1.14...v4.1.15) (2026-11-12)
 
 ### Bug Fixes
