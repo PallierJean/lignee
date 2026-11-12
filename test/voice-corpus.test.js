@@ -50,6 +50,7 @@ const CORPUS = [
   ['Marc Tellier a épousé Véronique Dorvigné en 1990 à Limoges.', { action: 'add', who: 'Marc Tellier', relation: 'spouse', union: { type: 'married', date: '1990', place: 'Limoges' } }],
   ['Marc Tellier vit en concubinage avec Véronique Dorvigné.', { action: 'add', who: 'Marc Tellier', relation: 'spouse', person: { given: 'Véronique', surname: 'Dorvigné' }, union: { type: 'cohabiting' } }],
   ['Véronique Dorvigné est la concubine de Marc Tellier.', { action: 'add', who: 'Marc Tellier', relation: 'spouse', person: { given: 'Véronique', surname: 'Dorvigné', sex: 'F' }, union: { type: 'cohabiting' } }],
+  ['Marc Tellier est le concubin de Véronique Dorvigné depuis 1985.', { action: 'add', who: 'Véronique Dorvigné', relation: 'spouse', person: { given: 'Marc', surname: 'Tellier', sex: 'M' }, union: { type: 'cohabiting', date: '1985' } }],
   ['Véronique Dorvigné est la femme de Marc Tellier.', { action: 'add', who: 'Marc Tellier', relation: 'spouse', person: { given: 'Véronique', surname: 'Dorvigné', sex: 'F' } }],
   ['Marc Tellier est pacsé avec Paul Durand.', { action: 'add', who: 'Marc Tellier', relation: 'spouse', union: { type: 'pacs' } }],
   ['La femme de Marc Tellier s’appelle Véronique Dorvigné.', { action: 'add', who: 'Marc Tellier', relation: 'spouse', person: { given: 'Véronique', surname: 'Dorvigné', sex: 'F' } }],
