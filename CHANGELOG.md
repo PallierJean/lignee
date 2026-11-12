@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.23](https://github.com/PallierJean/lignee/compare/v4.1.22...v4.1.23) (2026-11-12)
+
+### Bug Fixes
+
+* Tell Whisper the words of the moment: a command, an answer, a choice ([f7655e5](https://github.com/PallierJean/lignee/commit/f7655e547e219cdd36ce57acebd60b62a551066e))
+
+---
+
+### Corrections
+
+* Whisper sait quels mots attendre selon le moment (commande, réponse, choix) : « non » n'est plus écrit « Lô » ([f7655e5](https://github.com/PallierJean/lignee/commit/f7655e547e219cdd36ce57acebd60b62a551066e))
+
 ## [4.1.22](https://github.com/PallierJean/lignee/compare/v4.1.21...v4.1.22) (2026-11-12)
 
 ### Bug Fixes
