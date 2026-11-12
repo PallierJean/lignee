@@ -208,6 +208,16 @@ describe('voix : la voix de Lignée', () => {
   });
 });
 
+describe('voix : entendre quelqu’un parler', () => {
+  test('un « oui » faible dans une pièce calme ; un clic n’est pas une voix ; une pièce bruyante comme avant', async () => {
+    const { voiceGate } = await import('../js/services/voice.js');
+    const run = (levels) => { const g = voiceGate(); return levels.map(g); };
+    assert.deepEqual(run([0.001, 0.001, 0.01, 0.012, 0.011, 0.001]), [false, false, false, true, true, false], 'pièce calme : 0,01 suffit');
+    assert.deepEqual(run([0.001, 0.001, 0.2, 0.001, 0.001]), [false, false, false, false, false], 'un clic seul');
+    assert.deepEqual(run([0.01, 0.01, 0.015, 0.015, 0.03, 0.03]), [false, false, false, false, false, true], 'pièce bruyante : au-dessus de 0,02');
+  });
+});
+
 describe('voix : réponse du modèle de langage', () => {
   test('seules les valeurs connues ; le sexe suit le lien ; une commande sans nom ne vaut rien', () => {
     const c = cleanCommand({ action: 'add', who: ' Jean ', relation: 'mother', person: { given: 'Anne', sex: 'M', extra: 'x', birthDate: 1872 } });

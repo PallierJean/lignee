@@ -59,6 +59,28 @@ export async function warmVoice() {
 const RATE = 16000; // what Whisper hears
 
 /**
+ * Is someone speaking? A gate fed with the loudness of each tenth of a second: true while a voice is
+ * heard. The threshold follows the room's background noise: a quiet "oui" in a calm room is heard
+ * (0.006), never stricter than 0.02; two loud tenths in a row, so that a click isn't a voice.
+ */
+export function voiceGate() {
+  let floor = null;
+  let loud = 0;
+  let speaking = false;
+  return (rms) => {
+    floor = floor === null ? rms : Math.min(rms, floor * 1.02 + 1e-5); // the lowest, rising slowly
+    const threshold = Math.min(0.02, Math.max(0.006, floor * 4));
+    if (rms > threshold) loud++;
+    else {
+      loud = 0;
+      speaking = false;
+    }
+    if (loud >= 2) speaking = true;
+    return speaking;
+  };
+}
+
+/**
  * Starts recording the microphone. Returns { stop(), done, spoke() }: `done` resolves to the samples
  * (Float32Array, mono, 16 kHz) when `stop()` is called, after `silence` ms of silence once
  * the user has spoken, after `max` ms, or after `wait` ms if nobody spoke (`spoke()` then false).
@@ -81,6 +103,7 @@ export async function record({ onLevel = () => {}, silence = 1500, max = 30000, 
   // Silence after speaking: the sentence is over
   const buf = new Float32Array(analyser.fftSize);
   const start = Date.now();
+  const gate = voiceGate();
   let spoke = false;
   let quietSince = 0;
   const timer = setInterval(() => {
@@ -88,7 +111,7 @@ export async function record({ onLevel = () => {}, silence = 1500, max = 30000, 
     const rms = Math.sqrt(buf.reduce((s, v) => s + v * v, 0) / buf.length);
     onLevel(Math.min(1, rms * 8));
     const now = Date.now();
-    if (rms > 0.02) {
+    if (gate(rms)) {
       spoke = true;
       quietSince = 0;
     } else if (spoke) {
