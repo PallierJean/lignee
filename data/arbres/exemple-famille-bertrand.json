@@ -1,6 +1,6 @@
 {
   "format": "lignee",
-  "version": 2,
+  "version": 3,
   "name": "Famille Bertrand (exemple)",
   "exportedAt": "2026-10-28T08:00:00.000Z",
   "people": [
@@ -354,5 +354,6 @@
       "example": true
     }
   ],
-  "sources": []
+  "sources": [],
+  "media": []
 }

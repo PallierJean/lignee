@@ -60,17 +60,19 @@ describe('mode fichier, sur le vrai serveur', () => {
     await opUpdate('people', 'b', { occupation: 'Tisserand' });
     const stored = await storePhoto(PNG, S.people.get('b'));
     assert.match(stored, /^photos\/ROUX-Bob-/);
-    await opUpdate('people', 'b', { photo: stored, sources: [{ id: 's', photo: PNG }, { id: 't' }], media: [{ id: 'm', photo: PNG }] });
-    assert.equal(await storePhotos(), 2, 'la fiche et la source partagée');
+    await opUpdate('people', 'b', { photo: stored, sources: [{ id: 's', photo: PNG }, { id: 't' }] });
+    await opSet('media', 'm', { photo: PNG, back: PNG, tags: [{ id: 'b' }] });
+    assert.equal(await storePhotos(), 2, 'la source partagée et l’image de la galerie');
     const p = S.people.get('b');
     assert.ok(sourcesOf(p)[0].photo.startsWith('photos/'));
-    assert.ok(p.media[0].photo.startsWith('photos/'));
+    assert.match(S.media.get('m').photo, /^photos\/galerie-/, 'une image de la galerie : un nom commun, pas celui d’une personne');
+    assert.match(S.media.get('m').back, /^photos\/galerie-/);
     await saveLocal();
     const backup = JSON.parse(await buildPortableBackup());
     const portable = backup.people.find((x) => x.id === 'b');
     assert.ok(portable.photo.startsWith('data:image'));
-    assert.ok(portable.media[0].photo.startsWith('data:image'));
-    assert.equal(backup.version, 2);
+    assert.ok(backup.media.find((x) => x.id === 'm').photo.startsWith('data:image'));
+    assert.equal(backup.version, 3);
     assert.ok(backup.sources.find((x) => x.id === portable.citations[0].source).photo.startsWith('data:image'), 'document de la source');
     const saved = JSON.parse(await readFile(path.join(dataDir, 'principal.json'), 'utf8'));
     assert.ok(saved.sources.some((x) => x.photo && x.photo.startsWith('photos/')), 'fichier : la source garde son chemin');
@@ -78,10 +80,11 @@ describe('mode fichier, sur le vrai serveur', () => {
   });
 
   test('photo introuvable : la sauvegarde part sans elle', async () => {
-    await opUpdate('people', 'b', { photo: 'photos/absente.jpg', media: [{ id: 'm', photo: 'photos/absente.jpg' }] });
-    const portable = JSON.parse(await buildPortableBackup()).people.find((x) => x.id === 'b');
-    assert.equal(portable.photo, undefined);
-    assert.equal(portable.media.length, 0);
+    await opUpdate('people', 'b', { photo: 'photos/absente.jpg' });
+    await opSet('media', 'm', { photo: 'photos/absente.jpg', tags: [] });
+    const backup = JSON.parse(await buildPortableBackup());
+    assert.equal(backup.people.find((x) => x.id === 'b').photo, undefined);
+    assert.equal(backup.media.find((x) => x.id === 'm'), undefined, 'image introuvable : elle part sans');
   });
 
   test('collection d’arbres', async () => {
@@ -358,12 +361,10 @@ describe('famille d’exemple à la première visite', () => {
   });
 });
 
-test('gallery backs follow their front: converted, kept, or dropped alone when not found', async () => {
-  const { convertPhotos, keptMedia } = await import('../js/services/storage.js');
-  const p = { photo: 'photos/a.jpg', media: [{ id: 'm', photo: 'photos/front.jpg', back: 'photos/back.jpg' }, { id: 'n', photo: 'photos/only.jpg' }] };
-  const out = await convertPhotos(p, async (x) => x.replace('photos/', 'data:'));
-  assert.deepEqual(out.media, [{ id: 'm', photo: 'data:front.jpg', back: 'data:back.jpg' }, { id: 'n', photo: 'data:only.jpg' }]);
-  assert.equal(p.media[0].back, 'photos/back.jpg', 'the record itself is untouched');
-  assert.deepEqual(keptMedia([{ id: 'm', photo: 'x', back: '' }, { id: 'n', photo: '', back: 'y' }, { id: 'o', photo: 'z', back: 'w' }]),
-    [{ id: 'm', photo: 'x' }, { id: 'o', photo: 'z', back: 'w' }]);
+test('a gallery image and its back are converted together; the record itself is untouched', async () => {
+  const { convertPhotos } = await import('../js/services/storage.js');
+  const m = { photo: 'photos/front.jpg', back: 'photos/back.jpg', tags: [{ id: 'a' }] };
+  const out = await convertPhotos(m, async (x) => x.replace('photos/', 'data:'));
+  assert.deepEqual(out, { photo: 'data:front.jpg', back: 'data:back.jpg', tags: [{ id: 'a' }] });
+  assert.equal(m.back, 'photos/back.jpg');
 });

@@ -12,16 +12,17 @@ import { readLink } from './reading.js';
 import { occupationLabel } from '../model/occupations.js';
 
 /** Gallery thumbnails; a click opens the viewer. */
-/** Images of each grid shown, in order: group -> [{ owner, id }] (see ui/media.js). */
+/** Images of each grid shown, in order: group -> [id] (see ui/media.js). */
 export const mediaGroups = new Map();
 
+/** Thumbnails of images [{ id, m }] (model/media.js); `lead`: a first cell (adding images). */
 export function mediaGrid(items, group = '', lead = '') {
   // On each thumbnail, the number of people identified
   const count = (m) => (Array.isArray(m.tags) ? m.tags.filter((x) => x && P(x.id)).length : 0);
   const shown = items.filter(({ m }) => photoSrc(m.photo));
   // The viewer goes from one image to the next in the order of this grid
-  if (group) mediaGroups.set(group, shown.map(({ owner, m }) => ({ owner, id: m.id })));
-  const cells = shown.map(({ owner, m }) => `<button class="med" type="button" data-act="media-open" data-owner="${esc(owner)}" data-id="${esc(m.id)}"`
+  if (group) mediaGroups.set(group, shown.map(({ id }) => id));
+  const cells = shown.map(({ id, m }) => `<button class="med" type="button" data-act="media-open" data-id="${esc(id)}"`
     + `${group ? ` data-group="${esc(group)}"` : ''} title="${esc(mediaLabel(m))}">`
     + `<img src="${esc(photoSrc(m.photo))}" alt="${esc(mediaLabel(m))}">`
     + (count(m) ? `<span class="med-n" title="${esc(t('med.taggedN', count(m)))}">${count(m)}</span>` : '')
@@ -29,10 +30,14 @@ export function mediaGrid(items, group = '', lead = '') {
   return cells.length || lead ? `<div class="meds">${lead}${cells.join('')}</div>` : '';
 }
 
-/** First cell of a gallery: adds photos to `owner`'s gallery (they open in the viewer, to identify the people). */
-export function addMediaTile(owner) {
-  if (!S.canWrite || !P(owner)) return '';
-  return `<label class="med med-add" title="${esc(t('med.addTo', fullName(P(owner))))}"><input type="file" accept="image/*" multiple class="sr" data-gal-add="${esc(owner)}">`
+/**
+ * First cell of a gallery: adds photos (they open in the viewer, to identify the people). With
+ * `who`, on a person's record: the photos show them; without, in the tree's gallery: no one yet.
+ */
+export function addMediaTile(who = '') {
+  if (!S.canWrite || (who && !P(who))) return '';
+  const title = who ? t('med.addTo', fullName(P(who))) : t('med.addTree');
+  return `<label class="med med-add" title="${esc(title)}"><input type="file" accept="image/*" multiple class="sr" data-gal-add="${esc(who)}">`
     + `<span class="plus" aria-hidden="true">+</span><small>${t('med.add')}</small></label>`;
 }
 

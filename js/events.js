@@ -230,7 +230,7 @@ const CLICK_ACTIONS = {
   'insee-confirm': (el) => A.confirmInseeOf(el.dataset.id),
 
   // Gallery
-  'media-open': (el) => openMedia(el.dataset.owner, el.dataset.id, el.dataset.group),
+  'media-open': (el) => openMedia(el.dataset.id, el.dataset.group),
   'media-step': (el) => stepMedia(Number(el.dataset.d)),
   'media-side': (el) => showMediaSide(el.dataset.back === '1'),
   'media-close': () => closeMedia(),

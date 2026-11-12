@@ -39,7 +39,7 @@ export const savedRepo = () => savedRepos()[S.tree] || null;
 const remember = (link) => writeRepos({ ...savedRepos(), [link.tree]: { name: link.name, path: link.path, head: link.repo.head } });
 
 const NO_BASE = () => ({ people: new Map(), unions: new Map(), sources: new Map() });
-const COLLECTIONS = ['people', 'unions', 'sources'];
+const COLLECTIONS = ['people', 'unions', 'sources', 'media'];
 const MERGE_TRIES = 3; // the repository may change again while we merge
 
 function setLink(repo, path, photos, mustConfirm, base) {
@@ -138,6 +138,10 @@ function conflictName(collection, id, records) {
     const s = records.sources.get(id) || {};
     return s.title || [t('src.' + (s.kind || 'other')), s.ref].filter(Boolean).join(' ');
   }
+  if (collection === 'media') {
+    const m = records.media.get(id) || {};
+    return m.title || [t('med.untitled'), m.date].filter(Boolean).join(' · ');
+  }
   const u = records.unions.get(id) || {};
   return `${fullName(records.people.get(u.a))} & ${fullName(records.people.get(u.b))}`;
 }
@@ -175,6 +179,7 @@ async function compareLatest(link) {
     people: await Promise.all(portable.people.map((p) => convertPhotos(p, toRef))),
     unions: portable.unions,
     sources: await Promise.all((portable.sources || []).map((s) => convertPhotos(s, toRef))),
+    media: await Promise.all((portable.media || []).map((m) => convertPhotos(m, toRef))),
   });
   const both = Object.fromEntries(COLLECTIONS.map((c) => [c, new Map([...theirs[c], ...mine[c]])]));
   return { latest, theirs, mine, both };
@@ -232,7 +237,7 @@ async function mergeLatest(link, prefer, base = link.base) {
 const SHOWN = 25; // names listed per section, the others counted
 
 /**
- * What saving would do to the repository: { people, unions, sources } (see diffRecords), the
+ * What saving would do to the repository: { people, unions, sources, media } (see diffRecords), the
  * photos sent and removed, and the names to show. Reads the repository's latest version.
  */
 export async function repoPreview(link = S.repoLink) {
@@ -266,7 +271,7 @@ export function repoDiffHTML(preview, path) {
   const { diff, photos, name } = preview;
   const p = diff.people;
   const changed = p.changed.map(({ id, fields }) => `${esc(name('people', id))} <small>(${esc(fields.map(fieldName).join(', '))})</small>`);
-  const others = ['unions', 'sources'].map((c) => {
+  const others = ['unions', 'sources', 'media'].map((c) => {
     const d = diff[c];
     const n = d.added.length + d.removed.length + d.changed.length;
     return n ? `<li>${t('diff.' + c, d.added.length, d.removed.length, d.changed.length)}</li>` : '';

@@ -12,6 +12,7 @@ export const S = {
   people: new Map(),     // id -> person
   unions: new Map(),     // id -> union { a, b, date, place }
   sources: new Map(),    // id -> source document, cited by people (model/sources.js)
+  media: new Map(),      // id -> gallery image, with the people identified on it (model/media.js)
 
   focus: null,           // id of the person at the centre of the tree
   foci: {},              // tree id -> focus person, restored when coming back to the tree

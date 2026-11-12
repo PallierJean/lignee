@@ -41,11 +41,11 @@ export function dragRect(from, part, dx, dy) {
  * to `rect`: moved into the new image; those left outside go.
  */
 export function cropTags(tags, rect) {
-  return (Array.isArray(tags) ? tags : []).map((tag) => ({
+  return (Array.isArray(tags) ? tags : []).filter((tag) => tag && typeof tag === 'object').map((tag) => (tag.x == null || tag.y == null ? tag : {
     ...tag,
     x: Math.round((((tag.x / 100) - rect.x) / rect.w) * 1000) / 10,
     y: Math.round((((tag.y / 100) - rect.y) / rect.h) * 1000) / 10,
-  })).filter((tag) => tag.x >= 0 && tag.x <= 100 && tag.y >= 0 && tag.y <= 100);
+  })).filter((tag) => tag.x == null || tag.y == null || (tag.x >= 0 && tag.x <= 100 && tag.y >= 0 && tag.y <= 100));
 }
 
 // Room for the image in the dialog: its width, and at most this share of the window's height

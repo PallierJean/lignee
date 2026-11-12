@@ -446,7 +446,9 @@ describe('formulaire', () => {
     assert.equal(sourcesOf(p)[0].fact, p.events[0].id);
     assert.equal(p.sources, undefined, 'format 2 : des citations sur la fiche');
     assert.equal(S.sources.get(p.citations[0].source).title, 'Acte', 'le document dans les sources partagées');
-    assert.equal(p.media[0].title, 'Noce');
+    assert.equal(S.media.get('m1').title, 'Noce', 'dans la galerie de l’arbre');
+    assert.deepEqual(S.media.get('m1').tags, [{ id: camille }], 'la personne y est identifiée');
+    assert.equal(p.media, undefined, 'rien dans la fiche');
     A.startEdit(camille);
     assert.equal(S.edit.media.length, 1);
     A.removeDraftEvent(0);
@@ -454,7 +456,7 @@ describe('formulaire', () => {
     fill({});
     await A.submitEdit();
     assert.equal(sourcesOf(S.people.get(camille))[0].fact, '', 'source gardée pour la fiche entière');
-    assert.equal(S.people.get(camille).media, undefined);
+    assert.deepEqual(S.media.get('m1').tags, [], 'retirée de sa galerie, l’image reste dans celle de l’arbre');
   });
 
   test('unions du formulaire : ajout, modification, retrait', async () => {
@@ -859,7 +861,7 @@ describe('suppression, exemples, fusion', () => {
     assert.equal(S.unions.get('u3').a, 'k');
     assert.equal(sourcesOfPerson('w')[0].fact, 'union:u1', 'l’acte suit l’union gardée');
     assert.equal(S.unions.get('u1').citations.length, 1);
-    assert.equal(S.people.get('w').media[0].tags[0].id, 'k');
+    assert.deepEqual(S.media.get('m').tags, [{ id: 'w' }, { id: 'k', x: 1, y: 1 }], 'l’identification suit la personne gardée');
     assert.ok(canUndo());
     await A.undo();
     assert.ok(S.people.has('d'));
@@ -1158,14 +1160,14 @@ describe('événements de la page', () => {
       assert.equal(S.focus, other);
       assert.equal(el('personDlg').hidden, true);
       // Gallery viewer: open, go to a person, close
-      S.people.set(camille, { ...S.people.get(camille), media: [{ id: 'm1', photo: 'data:image/jpeg;base64,AA', title: 'Photo', tags: [] }] });
-      click({ act: 'media-open', owner: camille, id: 'm1' });
+      S.media.set('m1', { photo: 'data:image/jpeg;base64,AA', title: 'Photo', tags: [{ id: camille }] });
+      click({ act: 'media-open', id: 'm1' });
       assert.equal(el('mediaDlg').hidden, false);
       click({ act: 'media-person', id: camille });
       assert.equal(el('mediaDlg').hidden, true);
       assert.equal(el('personDlg').hidden, false);
       key('Escape');
-      click({ act: 'media-open', owner: camille, id: 'm1' });
+      click({ act: 'media-open', id: 'm1' });
       click({ act: 'media-close' });
       assert.equal(el('mediaDlg').hidden, true);
       // Fan chart: back with nobody to go back to

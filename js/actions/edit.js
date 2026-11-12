@@ -3,7 +3,7 @@ import { S, savePrefs } from '../state.js';
 import { $ } from '../utils/dom.js';
 import { rid } from '../utils/helpers.js';
 import { cropFree, cropTags } from '../ui/crop-free.js';
-import { P, photoOf, photoSrc, partnersOf, childrenOf, unionDeathEnd, currentSituation, reindex, birthSurname, eventsOf, sourcesOf, mediaList, unionType } from '../model/people.js';
+import { P, photoOf, photoSrc, partnersOf, childrenOf, unionDeathEnd, currentSituation, reindex, birthSurname, eventsOf, sourcesOf, mediaOf, unionType } from '../model/people.js';
 import { opUpdate, opDelete, inBatch, beginAction, commitAction } from '../services/storage.js';
 import { savePerson } from '../services/person-save.js';
 import { draftError } from '../model/draft.js';
@@ -139,8 +139,9 @@ export function startEdit(id) {
     ...x, kind: 'other', ...texts(x, ['fact', 'role', 'title', 'place', 'ref', 'note']), ...(x.kind ? { kind: String(x.kind) } : {}),
     photo: photoSrc(x.photo) ? x.photo : '', back: photoSrc(x.photo) && photoSrc(x.back) ? x.back : '', removed: false,
   }));
-  const media = mediaList(p).filter((x) => photoSrc(x.photo))
-    .map((x) => ({ tags: [], ...x, ...texts(x, ['title', 'date', 'note']), back: photoSrc(x.back) ? x.back : '', removed: false }));
+  // Its gallery: the images it is identified on (model/media.js)
+  const media = mediaOf(id).filter(({ m }) => photoSrc(m.photo))
+    .map(({ id: mid, m }) => ({ tags: [], ...m, id: mid, ...texts(m, ['title', 'date', 'note']), back: photoSrc(m.back) ? m.back : '', removed: false }));
   // The unions whose marriage documents the form shows: saving replaces them with the form's
   const unionSources = [...S.unions].filter(([, u]) => u.a === id || u.b === id).map(([uid]) => uid);
   openEdit({ id, rel: null, of: null, draft: d, unions, events, sources, media, unionSources });
@@ -382,7 +383,7 @@ export async function submitEdit() {
   }
 
   // Images added in this form: once saved, the viewer opens on them to identify the people
-  const had = new Set(e.id ? mediaList(P(e.id)).map((m) => m.id) : []);
+  const had = new Set(e.id ? mediaOf(e.id).map((x) => x.id) : []);
   const added = e.media.filter((x) => !x.removed && !had.has(x.id)).map((x) => x.id);
 
   beginAction(e.id ? 'hist.edit' : 'hist.add');
@@ -397,9 +398,9 @@ export async function submitEdit() {
     savePrefs();
     afterData();
     toast(t(e.id ? 'f.saved' : 'f.added'));
-    if (added.length && S.canWrite && mediaList(P(id)).some((m) => m.id === added[0])) {
-      mediaGroups.set('new:' + id, added.map((m) => ({ owner: id, id: m })));
-      openMedia(id, added[0], 'new:' + id);
+    if (added.length && S.canWrite && S.media.has(added[0])) {
+      mediaGroups.set('new:' + id, added.filter((m) => S.media.has(m)));
+      openMedia(added[0], 'new:' + id);
     }
   } catch (err) {
     reportError(err);
