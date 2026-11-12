@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.25](https://github.com/PallierJean/lignee/compare/v4.1.24...v4.1.25) (2026-11-12)
+
+### Bug Fixes
+
+* Hear a quiet answer, by following the room's background noise ([69d895b](https://github.com/PallierJean/lignee/commit/69d895b56fadd2407f4a78c424185ce4fe08f299))
+
+---
+
+### Corrections
+
+* Un « oui » dit doucement est entendu : le seuil de la voix suit le bruit de fond de la pièce ([69d895b](https://github.com/PallierJean/lignee/commit/69d895b56fadd2407f4a78c424185ce4fe08f299))
+
 ## [4.1.24](https://github.com/PallierJean/lignee/compare/v4.1.23...v4.1.24) (2026-11-12)
 
 ### Bug Fixes
