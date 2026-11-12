@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.7](https://github.com/PallierJean/lignee/compare/v4.1.6...v4.1.7) (2026-11-12)
+
+### Bug Fixes
+
+* Choose by voice among people with the same name ([916e246](https://github.com/PallierJean/lignee/commit/916e2469be13fc117463df0809782bbd9f68711f))
+
+---
+
+### Corrections
+
+* Choisir à la voix parmi des personnes du même nom (« le premier », « celui de 1995 »), sans cliquer ([916e246](https://github.com/PallierJean/lignee/commit/916e2469be13fc117463df0809782bbd9f68711f))
+
 ## [4.1.6](https://github.com/PallierJean/lignee/compare/v4.1.5...v4.1.6) (2026-11-12)
 
 ### Bug Fixes
