@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.29](https://github.com/PallierJean/lignee/compare/v4.1.28...v4.1.29) (2026-11-12)
+
+### Performance Improvements
+
+* Load the voice models when the page opens, if the microphone was used lately ([d228409](https://github.com/PallierJean/lignee/commit/d2284097dcb7ecb255dabecc5f7d20c53d1ded0a))
+
+---
+
+### Performances
+
+* Les modèles de la voix se chargent dès l'ouverture de la page si le micro a servi ces sept derniers jours : la première phrase n'attend plus ([d228409](https://github.com/PallierJean/lignee/commit/d2284097dcb7ecb255dabecc5f7d20c53d1ded0a))
+
 ## [4.1.28](https://github.com/PallierJean/lignee/compare/v4.1.27...v4.1.28) (2026-11-12)
 
 ### Bug Fixes
