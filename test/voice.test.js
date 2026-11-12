@@ -3,7 +3,7 @@ import { test, describe, before, after } from 'node:test';
 import { mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { parseCommand, cleanCommand, cleanDate, commandFromText, splitName, parseReply, parseDetails, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
+import { parseCommand, cleanCommand, cleanDate, commandFromText, splitName, parseReply, parseDetails, isGoodbye, SCHEMA, PROMPT, FIELDS } from '../js/model/voice.js';
 import { createServer } from '../server.js';
 import { loadTree, person, resetApp } from './helpers.js';
 
@@ -108,6 +108,11 @@ describe('voix : la réponse, une fois le formulaire rempli', () => {
     assert.deepEqual(parseReply('Non, elle est née en 1873.'), { reply: 'more', rest: 'elle est née en 1873.' });
     assert.deepEqual(parseReply('Oui et elle était couturière'), { reply: 'more', rest: 'elle était couturière' });
     assert.equal(parseReply('Ouistreham').reply, 'more', 'un mot entier');
+  });
+
+  test('la fin de la conversation', () => {
+    for (const x of ['C’est tout, merci.', 'merci', 'Non.', 'fini', 'that’s all']) assert.equal(isGoodbye(x), true, x);
+    for (const x of ['Ajoute Paul Lacoste', 'cherche Maury', 'Merciers']) assert.equal(isGoodbye(x), false, x);
   });
 
   test('les précisions sur la fiche ouverte', () => {
@@ -337,7 +342,7 @@ describe('voix : dans la page', () => {
     A.cancelEdit();
   });
 
-  test('la réponse : « oui » enregistre, « non » ferme, une précision complète ; boutons de la bulle ; écoute réglable', async () => {
+  test('la conversation : récapitulatif lu, « oui » enregistre, « non » ferme, une précision complète, puis la commande suivante ; boutons ; réglable', async () => {
     const { S } = await import('../js/state.js');
     const voice = await import('../js/ui/voice.js');
     const { resetVoiceEngines } = await import('../js/services/voice.js');
@@ -356,39 +361,52 @@ describe('voix : dans la page', () => {
         if (el) el.value = S.edit.draft[k] || '';
       }
     };
-    // The microphone, for the answer
+    // The microphone, for the answer (refused here: the conversation stops, the form stays)
     let asked = 0;
     globalThis.navigator.mediaDevices = { getUserMedia: async () => { asked++; throw new Error('pas de micro ici'); } };
+    // The voice of Lignée: what it says
+    const said = [];
+    globalThis.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
+    let voices = [{ lang: 'fr-FR', localService: false }];
+    globalThis.speechSynthesis = { speak: (u) => { said.push(u.text); u.onend(); }, cancel: () => {}, getVoices: () => voices };
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
     await voice.understand('ajoute Anne Lacoste, fille de Marguerite Maury');
-    assert.equal(asked, 0, 'phrase tapée : pas d’écoute de la réponse');
+    await settle();
+    assert.equal(asked, 0, 'phrase tapée : pas de conversation');
+    assert.deepEqual(said, []);
     assert.match(bubble(), /data-act="voice-save"/, 'Enregistrer dans la bulle');
     assert.match(bubble(), /data-act="voice-cancel"/);
     assert.match(bubble(), /data-act="voice-reply-pref" checked/);
-
-    await voice.understand('ajoute Paul Lacoste', { spoken: true });
-    assert.match(bubble(), /Termine d’abord la fiche en cours/);
+    assert.match(bubble(), /<dt>Nom<\/dt><dd>Anne Lacoste<\/dd><dt>Mère<\/dt><dd>Marguerite MAURY<\/dd>/, 'le récapitulatif');
     A.cancelEdit();
+
     await voice.understand('ajoute Anne Lacoste, fille de Marguerite Maury', { spoken: true });
-    assert.equal(asked, 1, 'phrase dite : la réponse est écoutée');
+    await settle();
+    assert.deepEqual(said, [], 'une voix en ligne seulement : Lignée ne parle pas (le texte partirait chez Google)');
+    assert.equal(asked, 1, 'mais écoute la réponse');
+    A.cancelEdit();
+    voice.closeVoice();
+    voices = [{ lang: 'fr-FR', localService: true }];
+    await voice.understand('ajoute Anne Lacoste, fille de Marguerite Maury', { spoken: true });
+    await settle();
+    assert.equal(said.at(-1), 'Nom : Anne Lacoste. Mère : Marguerite MAURY. Je l’enregistre ?', 'lu à voix haute');
+    assert.equal(asked, 2, 'puis la réponse est écoutée');
     assert.match(bubble(), /data-act="voice-save"/, 'sans micro : le formulaire reste, avec ses boutons');
 
     fill();
     await voice.reply('Non, elle est née le 3 mai 1872. Elle était couturière');
     assert.equal(S.edit.draft.birthDate, '3 mai 1872');
     assert.equal(S.edit.draft.occupation, 'couturière');
-    assert.match(bubble(), /Ajouté au formulaire : née 3 mai 1872 · couturière/);
-    assert.equal(asked, 2, 'on réécoute après une précision');
-
+    assert.match(bubble(), /Formulaire complété/);
+    assert.match(bubble(), /<dt>Née?<\/dt><dd>3 mai 1872<\/dd>/, "le sexe vient du formulaire (absent de la fausse page)");
     await voice.reply('euh attends');
     assert.match(bubble(), /Je n’ai pas compris la réponse/);
-    assert.equal(asked, 3);
-    await voice.reply('euh attends');
-    assert.equal(asked, 3, 'trois écoutes au plus : ensuite, la souris ou le clavier');
 
     fill();
     const before = S.people.size;
-    await voice.reply('oui, enregistre');
+    await voice.reply('oui, enregistre', undefined, true);
+    await settle();
     assert.equal(S.edit, null);
     assert.equal(S.people.size, before + 1);
     const anne = [...S.people.values()].find((p) => p.given === 'Anne');
@@ -396,28 +414,35 @@ describe('voix : dans la page', () => {
     assert.equal(anne.birthDate, '3 mai 1872');
     assert.match(bubble(), /C’est enregistré/);
     assert.doesNotMatch(bubble(), /data-act="voice-save"/);
+    assert.equal(said.at(-1), 'C’est enregistré. Autre chose ?');
+    assert.equal(asked, 3, 'puis la commande suivante est écoutée');
 
     await voice.understand('ajoute Paul Lacoste, fils de Marguerite Maury');
-    await voice.reply('annule');
+    await voice.reply('annule', undefined, true);
+    await settle();
     assert.equal(S.edit, null);
     assert.equal(S.people.size, before + 1, 'rien d’enregistré');
     assert.match(bubble(), /rien n’est enregistré/);
+    assert.equal(asked, 4);
 
     await voice.understand('ajoute Paul Lacoste, fils de Marguerite Maury');
     document.getElementById('f-given').value = '';
     document.getElementById('f-surname').value = '';
     await voice.saveVoice();
     assert.match(bubble(), /Le formulaire n’est pas complet/, 'refusé : le formulaire dit pourquoi');
-    voice.cancelVoice();
+    await voice.cancelVoice();
 
     voice.toggleVoiceReply(false);
     assert.equal(S.voiceReply, false);
     assert.match(localStorage.getItem('lignee.view.v1'), /"voiceReply":false/, 'retenu');
     await voice.understand('ajoute Paul Lacoste, fils de Marguerite Maury', { spoken: true });
-    assert.equal(asked, 3, 'écoute de la réponse coupée');
+    await settle();
+    assert.equal(asked, 4, 'conversation coupée');
     voice.toggleVoiceReply(true);
     A.cancelEdit();
     voice.closeVoice();
+    delete globalThis.SpeechSynthesisUtterance;
+    delete globalThis.speechSynthesis;
     delete globalThis.navigator.mediaDevices;
   });
 });
