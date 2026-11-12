@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.15](https://github.com/PallierJean/lignee/compare/v4.1.14...v4.1.15) (2026-11-12)
+
+### Bug Fixes
+
+* Take the year of "a eu un fils, Jean, en 1995" as the birth ([9f5c367](https://github.com/PallierJean/lignee/commit/9f5c367974d1c11d788c3faa56fa1802052c96bf))
+
+---
+
+### Corrections
+
+* « a eu un fils, Jean, en 1995 » ajoute Jean, né en 1995, sans attendre le modèle de langage ([9f5c367](https://github.com/PallierJean/lignee/commit/9f5c367974d1c11d788c3faa56fa1802052c96bf))
+
 ## [4.1.14](https://github.com/PallierJean/lignee/compare/v4.1.13...v4.1.14) (2026-11-12)
 
 ### Bug Fixes
