@@ -135,6 +135,9 @@ describe('voix : phrases connues', () => {
     assert.equal(soundKey('Tellier'), soundKey('Telié'));
     assert.equal(soundKey('Tellier'), soundKey('Telier'));
     assert.notEqual(soundKey('Tellier'), soundKey('Pelletier'));
+    assert.equal(soundKey('Tellier'), soundKey('Delié'), 'Whisper confond t et d, p et b…');
+    assert.equal(soundKey('Grossmann'), soundKey('Krosman'));
+    assert.equal(fixName({ given: 'Sophie', surname: 'Delié' }, ['Tellier']).surname, 'Tellier', 'écrit comme dans l’arbre');
     const known = ['Tellier', 'Lamborre', 'Freyssinet'];
     assert.deepEqual(fixName({ given: 'Marc-Anatole-Octave-Tellier', surname: '' }, known), { given: 'Marc-Anatole-Octave', surname: 'Tellier' });
     assert.deepEqual(fixName({ given: 'Jean-Tellier', surname: 'Tellier' }, known), { given: 'Jean', surname: 'Tellier' });
