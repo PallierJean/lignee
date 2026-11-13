@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.32](https://github.com/PallierJean/lignee/compare/v4.1.31...v4.1.32) (2026-11-13)
+
+### Bug Fixes
+
+* Check what the voice filled in before saving it ([ea69bc9](https://github.com/PallierJean/lignee/commit/ea69bc9ec1b6c2e334e5c562bf7b2be8d14a3718))
+
+---
+
+### Corrections
+
+* Avant d'enregistrer, la voix signale ce qui paraît faux dans la fiche (parent plus jeune que son enfant, nom différent de celui du père, personne déjà dans l'arbre, date incomplète), à l'écran et à voix haute ([ea69bc9](https://github.com/PallierJean/lignee/commit/ea69bc9ec1b6c2e334e5c562bf7b2be8d14a3718))
+
 ## [4.1.31](https://github.com/PallierJean/lignee/compare/v4.1.30...v4.1.31) (2026-11-12)
 
 ### Performance Improvements
