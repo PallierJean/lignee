@@ -196,6 +196,23 @@
   font-weight: 600;
 }
 
+/* What looks wrong in it, before saving */
+.vb-check {
+  margin: 6px 0;
+  padding: 6px 8px;
+  border-left: 3px solid var(--warn);
+  background: var(--paper);
+}
+
+.vb-check b {
+  color: var(--warn);
+}
+
+.vb-check ul {
+  margin: 2px 0 0;
+  padding-left: 18px;
+}
+
 /* The voice conversation: on or off */
 .vb-pref {
   display: flex;
