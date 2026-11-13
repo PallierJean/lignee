@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.33](https://github.com/PallierJean/lignee/compare/v4.1.32...v4.1.33) (2026-11-13)
+
+### Bug Fixes
+
+* Match a surname Whisper heard with b for p, d for t ("Delié" for "Tellier") ([6754ca9](https://github.com/PallierJean/lignee/commit/6754ca97f74ce98a5d3bd6f5d00582854ee2d74b))
+
+---
+
+### Corrections
+
+* Un nom de famille entendu avec un b pour un p, un d pour un t, un v pour un f (« Delié » pour « Tellier ») est écrit comme dans l'arbre ([6754ca9](https://github.com/PallierJean/lignee/commit/6754ca97f74ce98a5d3bd6f5d00582854ee2d74b))
+
 ## [4.1.32](https://github.com/PallierJean/lignee/compare/v4.1.31...v4.1.32) (2026-11-13)
 
 ### Bug Fixes
