@@ -659,4 +659,34 @@ describe('voix : dans la page', () => {
     delete globalThis.speechSynthesis;
     delete globalThis.navigator.mediaDevices;
   });
+
+  test('ce qui paraît faux est dit avant d’enregistrer : à l’écran et à voix haute, sans bloquer', async () => {
+    const { S } = await import('../js/state.js');
+    const voice = await import('../js/ui/voice.js');
+    const { resetVoiceEngines } = await import('../js/services/voice.js');
+    const A = await import('../js/actions.js');
+    resetApp();
+    resetVoiceEngines();
+    globalThis.fetch = async (u) => (String(u) === 'api/voice'
+      ? new Response('{"listen":true,"understand":false}', { headers: { 'Content-Type': 'application/json' } }) : new Response('{}'));
+    loadTree([person('m', { given: 'Marguerite', surname: 'Maury', sex: 'F', birthDate: '1900' })]);
+    await voice.initVoice(A);
+    S.voiceReply = true;
+    const bubble = () => document.getElementById('voiceBubble').innerHTML;
+    globalThis.navigator.mediaDevices = { getUserMedia: async () => { throw new Error('pas de micro ici'); } };
+    const said = [];
+    globalThis.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
+    globalThis.speechSynthesis = { speak: (u) => { said.push(u.text); u.onend(); }, cancel: () => {}, getVoices: () => [{ lang: 'fr-FR', localService: true }] };
+
+    await voice.understand('ajoute Paul Lacoste, né en 1880, fils de Marguerite Maury', { spoken: true });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.match(bubble(), /class="vb-check"[^]*Marguerite MAURY est né\(e\) après son enfant Paul Lacoste/, 'à l’écran');
+    assert.match(said.at(-1), /Né : 1880\. À vérifier : Marguerite MAURY est né\(e\) après son enfant Paul Lacoste\. .*Je l’enregistre \?$/, 'lu');
+    assert.match(bubble(), /data-act="voice-save"/, 'Enregistrer reste possible');
+    A.cancelEdit();
+    voice.closeVoice();
+    delete globalThis.SpeechSynthesisUtterance;
+    delete globalThis.speechSynthesis;
+    delete globalThis.navigator.mediaDevices;
+  });
 });

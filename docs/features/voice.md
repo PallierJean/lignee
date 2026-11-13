@@ -79,6 +79,10 @@ pas suivie d'une écoute : on est alors au clavier.
   suite, au plus 30 secondes).
 - La bulle montre la phrase entendue : on peut la corriger au clavier, puis « Comprendre » (ou
   Entrée). « Parler à nouveau » relance l'écoute, Échap ferme la bulle.
+- Avant d'enregistrer, la bulle signale ce qui paraît faux dans le formulaire, et la voix le lit
+  avant de demander « Je l'enregistre ? » : les contrôles de cohérence de l'arbre (un parent plus
+  jeune que son enfant, un nom qui n'est pas celui du père…), une personne peut-être déjà dans
+  l'arbre, une date incomplète (« 28 »). Rien n'est bloqué : on corrige, ou on enregistre quand même.
 
 ## Où ça tourne
 

@@ -19,6 +19,7 @@ import { FIELDS, parseCommand, parseReply, parseDetails, parseChoice, isGoodbye,
 import { voiceEngines, warmVoice, record, listen, understandText, needsDownload, speak, hush, loadVoices, chime } from '../services/voice.js';
 import { parseSpokenPlace, formatPlace } from '../model/places.js';
 import { loadCommunes, findCommune } from '../model/communes.js';
+import { draftIssues, DRAFT_ID } from '../model/draft-checks.js';
 import { searchPeople, onFindInput } from './search.js';
 import { renderSide } from './render.js';
 
@@ -324,13 +325,23 @@ function recap() {
   ].filter(([, v]) => v);
 }
 
+/** What looks wrong in the form, as sentences (plain text: shown, and read aloud). */
+function warnings() {
+  const e = S.edit;
+  if (!e) return [];
+  const name = (id) => (id === DRAFT_ID || id === e.id ? [e.draft.given, e.draft.surname].filter(Boolean).join(' ') : P(id) ? longName(P(id)) : '');
+  return draftIssues(e).map((x) => String(t('chk.' + x.code, name(x.ids[0]), name(x.ids[1]), x.n)).replace(/<[^>]*>/g, ''));
+}
+
 /** Reads back the form and listens for the answer (unless switched off): a few answers at most. */
 async function askSave() {
   if (!talking() || rec || !formOpen() || replies >= MAX_REPLIES) return;
   replies++;
   const keep = { ...st, phase: 'done' };
   set({ ...keep, phase: 'speaking' });
-  await speak(recap().map(([k, v]) => `${k} : ${v}`).join('. ') + '. ' + t('voice.askSave'), S.lang);
+  const warn = warnings();
+  const check = warn.length ? ' ' + t('voice.toCheck') + ' ' + warn.join(' ') : '';
+  await speak(recap().map(([k, v]) => `${k} : ${v}`).join('. ') + '.' + check + ' ' + t('voice.askSave'), S.lang);
   if (st.phase !== 'speaking' || !formOpen()) return;
   await answerNow(keep);
 }
@@ -754,7 +765,10 @@ export function renderVoice() {
   // The form filled in: what will be saved, line by line
   const lines = form ? recap() : [];
   const sum = lines.length ? `<dl class="vb-recap">${lines.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : '';
-  const result = `<p class="vb-note">${st.note || ''}</p>${sum}${answer}${st.extra ? `<p class="vb-note">${st.extra}</p>` : ''}`;
+  // What looks wrong in it: said before saving, never blocking
+  const warn = form ? warnings() : [];
+  const checks = warn.length ? `<div class="vb-check" role="note"><b>${t('voice.toCheck')}</b><ul>${warn.map((w) => `<li>${esc(w)}</li>`).join('')}</ul></div>` : '';
+  const result = `<p class="vb-note">${st.note || ''}</p>${sum}${checks}${answer}${st.extra ? `<p class="vb-note">${st.extra}</p>` : ''}`;
   const live = (label, hintText) => `<div class="vb-row"><span class="vb-dot" aria-hidden="true"></span><b>${label}</b>`
     + `<span class="vb-level" id="voiceLevel" data-style="--level:${level}" aria-hidden="true"></span>${close}</div>`
     + (hintText ? `<p class="hint">${hintText}</p>` : '');
