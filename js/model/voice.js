@@ -503,12 +503,14 @@ export function parseChoice(text) {
 
 /**
  * What a French name sounds like, to find it however Whisper spelled it: "Tellier", "Telier" and
- * "Telié" give the same key; '' for a word too short to compare.
+ * "Telié" give the same key, and so does "Delié" (Whisper mixes up b/p, d/t, v/f, g/k, z/s);
+ * '' for a word too short to compare.
  */
 export function soundKey(word) {
   let w = String(word || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').replace(/[^a-z]/g, '');
   w = w.replace(/ph/g, 'f').replace(/qu/g, 'k').replace(/c(?=[eiy])/g, 's').replace(/ck|c/g, 'k')
     .replace(/gu(?=[eiy])/g, 'g').replace(/g(?=[eiy])/g, 'j').replace(/h/g, '').replace(/y/g, 'i')
+    .replace(/b/g, 'p').replace(/d/g, 't').replace(/v/g, 'f').replace(/g/g, 'k').replace(/z/g, 's')
     .replace(/eau|au/g, 'o').replace(/[ae]i(?![aeiou])/g, 'e').replace(/(.)\1+/g, '$1').replace(/(?:er|ez|et|ai)$/, 'e').replace(/e$/, '').replace(/[sxtdz]$/, '');
   return w.length >= 3 ? w : '';
 }
