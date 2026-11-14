@@ -8,7 +8,7 @@ import { openPersonDlg, closePersonDlg } from '../js/ui/person-dlg.js';
 import {
   openMedia, renderMedia, closeMedia, stepMedia, showMediaSide, placePin, addTag, removeTag, cancelPin, highlightTag, editCaption, saveCaption, onTagFind } from '../js/ui/media.js';
 import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind } from '../js/ui/search.js';
-import { onSpouseInput, onSpouseKey, closeSpouse } from '../js/ui/spouse-pick.js';
+import { onSpouseInput, onSpouseKey, closeSpouse, onPickInput, onPickKey, closePick } from '../js/ui/person-pick.js';
 import { resetHistory } from '../js/services/history.js';
 import { setLang } from '../js/i18n.js';
 import { mapZoom, mapFit, mapPick, mapDrag } from '../js/ui/places.js';
@@ -168,7 +168,27 @@ describe('onglet Analyse', () => {
     assert.ok(view('kin').includes('data-act="kin-hide"'));
   });
 
-  test('parenté : même personne, conjoints, alliance, aucun lien', () => {
+  test('parenté : les deux personnes cherchées comme dans l’en-tête', () => {
+    const michel = ex.people.find((p) => p.given === 'Michel');
+    S.kinB = michel.id;
+    const text = view('kin');
+    assert.match(text, /<input id="kinB"[^>]*role="combobox"/);
+    assert.match(text, new RegExp(`id="kinB"[^>]*value="Michel`), 'le nom de la personne choisie');
+    assert.doesNotMatch(text, /<select id="kin/, 'plus de liste de toutes les personnes');
+    const input = el('kinA');
+    input.value = 'mich';
+    document.activeElement = input;
+    onPickInput('kinA');
+    assert.match(html('kinAList'), /data-act="kin-pick" data-field="kinA" data-id="/);
+    let picked = null;
+    assert.equal(onPickKey({ key: 'Enter' }, 'kinA', (id) => { picked = id; }), true);
+    assert.equal(picked, michel.id);
+    document.activeElement = null; // the field left
+    closePick('kinA');
+    assert.equal(el('kinAList').hidden, true);
+  });
+
+    test('parenté : même personne, conjoints, alliance, aucun lien', () => {
     loadTree([person('a', { sex: 'F' }), person('b', { sex: 'M' }), person('c', { sex: 'M', fatherId: 'b' }), person('z')], [{ id: 'u', a: 'a', b: 'b' }]);
     S.focus = 'a';
     S.kinA = 'a';
