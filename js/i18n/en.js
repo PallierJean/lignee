@@ -681,7 +681,7 @@ export const EN = {
   'kin.ask': 'Relationship with…',
   'kin.first': 'First person',
   'kin.second': 'Second person',
-  'kin.pick': 'Choose…',
+  'kin.pick': 'Search for a person…',
   'kin.hint': 'Choose two people to see how they are related.',
   'kin.same': 'This is the same person.',
   'kin.none': 'No link found between these two people in this tree.',

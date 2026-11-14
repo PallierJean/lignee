@@ -2,7 +2,7 @@
 import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
-import { P, fullName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS, ARCHIVE_KIND, surname, maiden, given } from '../model/people.js';
+import { P, fullName, longName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS, ARCHIVE_KIND, surname, maiden, given } from '../model/people.js';
 import { relationship } from '../model/kinship.js';
 import { currentIssues } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
@@ -10,7 +10,7 @@ import { datesOfDay, datesOfMonth } from '../model/ephemerides.js';
 import { findDuplicates } from '../model/duplicates.js';
 import { ignoredPairs } from '../services/dup-ignore.js';
 import { timelineOf } from '../model/timeline.js';
-import { personOptions, placeFields, placeValue } from './form.js';
+import { placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
 import { placesByDepartment, parsePlace } from '../model/places.js';
 import {
@@ -80,9 +80,12 @@ function kinResult() {
 }
 
 function kinView() {
-  const select = (id, label, value) => `<label class="fld"><span>${t(label)}</span>`
-    + `<select id="${id}"><option value="">${t('kin.pick')}</option>${personOptions(value)}</select></label>`;
-  return `<div class="an-form">${select('kinA', 'kin.first', S.kinA)}${select('kinB', 'kin.second', S.kinB)}</div>${kinResult()}`;
+  // Searched as in the header: by name, first names, years…
+  const pick = (id, label, value) => `<div class="fld pick"><span id="${id}-lbl">${t(label)}</span>`
+    + `<input id="${id}" aria-labelledby="${id}-lbl" type="search" value="${esc(P(value) ? longName(P(value)) : '')}" placeholder="${t('kin.pick')}"`
+    + ` autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}List">`
+    + `<ul class="find-list" id="${id}List" role="listbox" aria-label="${t('find.list')}" hidden></ul></div>`;
+  return `<div class="an-form">${pick('kinA', 'kin.first', S.kinA)}${pick('kinB', 'kin.second', S.kinB)}</div>${kinResult()}`;
 }
 
 /* ---------- Consistency ---------- */
