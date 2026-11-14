@@ -416,6 +416,7 @@ describe('formulaire', () => {
     await A.submitEdit();
     const father = S.people.get('a').fatherId;
     assert.equal(S.people.get(father).given, 'Paul');
+    assert.equal(S.focus, father, 'l’arbre centré sur la fiche créée');
     assert.equal(S.unions.size, 1, 'union créée avec la mère');
     A.startAdd('child', 'a');
     assert.equal(S.edit.draft.motherId, 'a');
