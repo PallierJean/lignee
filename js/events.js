@@ -94,7 +94,7 @@ function unionFromSituation(code) {
 
 /**
  * Form: derives the birth surname from the father's (or the mother's).
- * It fills the surname when the parents change, and a woman's maiden name.
+ * It fills the surname when the parents change; for a woman, the maiden name only.
  */
 function updateNames(parentsChanged) {
   const father = document.getElementById('f-father');
@@ -107,9 +107,14 @@ function updateNames(parentsChanged) {
     input.value = auto;
     input.dataset.auto = auto;
   };
-  if (parentsChanged) fill(document.getElementById('f-surname'));
+  const sur = document.getElementById('f-surname');
   const sex = document.querySelector('input[name="f-sex"]:checked');
-  if (sex && sex.value === 'F') fill(document.getElementById('f-maiden'));
+  if (sex && sex.value === 'F') {
+    // A woman: her father's name is her maiden name only; the surname in use is for a marriage
+    const was = sur.value.trim().toUpperCase();
+    fill(document.getElementById('f-maiden'));
+    if (was && (was === (sur.dataset.auto || '').toUpperCase() || was === auto.toUpperCase())) sur.value = '';
+  } else if (parentsChanged || !sur.value.trim()) fill(sur);
 }
 
 // Faces of the document enlarged: its front and back (data-pair), or the image alone

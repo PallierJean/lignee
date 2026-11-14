@@ -1122,6 +1122,37 @@ describe('événements de la page', () => {
     A.cancelEdit();
   });
 
+  test('une fille : le nom de son père va dans le nom de jeune fille seulement', () => {
+    const father = [...S.people].find(([, p]) => p.sex === 'M' && p.surname)[0];
+    const name = S.people.get(father).surname;
+    A.startAdd('child', father);
+    const change = (props) => fire('change', { target: Object.assign(target({}, props.id || '', 'select'), props) });
+    // La fausse page ne lit ni value="" ni :checked : les champs, comme la page les tiendrait
+    el('f-surname').value = name;
+    el('f-surname').dataset.auto = name;
+    el('f-maiden').value = '';
+    el('f-father').value = father;
+    el('f-mother').value = '';
+    const query = document.querySelector;
+    let sex = 'F';
+    document.querySelector = (q) => (q === 'input[name="f-sex"]:checked' ? { value: sex } : query.call(document, q));
+    try {
+      change({ name: 'f-sex', value: 'F' });
+      assert.equal(el('f-maiden').value, name);
+      assert.equal(el('f-surname').value, '', 'le nom d’usage reste pour un mariage');
+      sex = 'M';
+      change({ name: 'f-sex', value: 'M' });
+      assert.equal(el('f-surname').value, name, 'un fils : le nom revient');
+      el('f-surname').value = 'Autre';
+      sex = 'F';
+      change({ name: 'f-sex', value: 'F' });
+      assert.equal(el('f-surname').value, 'Autre', 'un nom tapé à la main reste');
+    } finally {
+      document.querySelector = query;
+      A.cancelEdit();
+    }
+  });
+
   test('envois de formulaires', async () => {
     A.startNew();
     fill({ 'f-given': 'Ida' });

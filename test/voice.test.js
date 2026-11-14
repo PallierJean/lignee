@@ -561,7 +561,7 @@ describe('voix : dans la page', () => {
     const bubble = () => document.getElementById('voiceBubble').innerHTML;
     // The fake page doesn't read the value="" of the form: the fields, as the page would hold them
     const fill = () => {
-      for (const [id, k] of [['f-given', 'given'], ['f-surname', 'surname'], ['f-mother', 'motherId'], ['f-father', 'fatherId'], ['f-bdate', 'birthDate'], ['f-occ', 'occupation']]) {
+      for (const [id, k] of [['f-given', 'given'], ['f-surname', 'surname'], ['f-maiden', 'maidenName'], ['f-mother', 'motherId'], ['f-father', 'fatherId'], ['f-bdate', 'birthDate'], ['f-occ', 'occupation']]) {
         const el = document.getElementById(id);
         if (el) el.value = S.edit.draft[k] || '';
       }
@@ -578,6 +578,7 @@ describe('voix : dans la page', () => {
 
     await voice.understand('ajoute Anne Lacoste, fille de Marguerite Maury');
     await settle();
+    assert.deepEqual([S.edit.draft.surname, S.edit.draft.maidenName], ['', 'Lacoste'], 'une femme : le nom dit est son nom de jeune fille');
     assert.equal(asked, 0, 'phrase tapée : pas de conversation');
     assert.deepEqual(said, []);
     assert.match(bubble(), /data-act="voice-save"/, 'Enregistrer dans la bulle');
