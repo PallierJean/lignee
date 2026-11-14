@@ -313,7 +313,7 @@ function recap() {
   const name = (id) => (id && P(id) ? longName(P(id)) : '');
   const place = (date, where) => [date, where].filter(Boolean).join(t('voice.at'));
   return [
-    [t('voice.r.name'), [d.given, d.surname].filter(Boolean).join(' ')],
+    [t('voice.r.name'), [d.given, d.surname || d.maidenName].filter(Boolean).join(' ')],
     [t('voice.r.father'), name(d.fatherId)],
     [t('voice.r.mother'), name(d.motherId)],
     // The unions added, or completed by what was said
@@ -329,7 +329,7 @@ function recap() {
 function warnings() {
   const e = S.edit;
   if (!e) return [];
-  const name = (id) => (id === DRAFT_ID || id === e.id ? [e.draft.given, e.draft.surname].filter(Boolean).join(' ') : P(id) ? longName(P(id)) : '');
+  const name = (id) => (id === DRAFT_ID || id === e.id ? [e.draft.given, e.draft.surname || e.draft.maidenName].filter(Boolean).join(' ') : P(id) ? longName(P(id)) : '');
   return draftIssues(e).map((x) => String(t('chk.' + x.code, name(x.ids[0]), name(x.ids[1]), x.n)).replace(/<[^>]*>/g, ''));
 }
 
@@ -370,7 +370,7 @@ export async function reply(text, keep = { ...st, phase: 'done' }, spoken = fals
   const r = parseReply(text);
   if (r.reply === 'yes') return saveVoice(text, spoken);
   if (r.reply === 'no') return cancelVoice(text, spoken);
-  const said = await placesHeard(parseDetails(r.rest, { surname: S.edit.draft.surname }));
+  const said = await placesHeard(parseDetails(r.rest, { surname: S.edit.draft.surname || S.edit.draft.maidenName }));
   if (!formOpen()) return;
   // "Oui" and words that aren't a detail ("Oui, à l'île"): Whisper heard a noise after the "oui".
   // A "non" followed by such words is asked again: closing the form would lose what was said
@@ -716,6 +716,9 @@ function apply(c, id, text, fresh = false) {
   for (const f of FIELDS) {
     if (c.person[f] && (f !== 'sex' || c.action === 'add')) S.edit.draft[f] = c.person[f];
   }
+  // A new woman: the name said (or her father's) is her maiden name; the surname in use is for a marriage
+  const d = S.edit.draft;
+  if (!S.edit.id && d.sex === 'F' && d.surname.trim() && !d.maidenName.trim()) Object.assign(d, { maidenName: d.surname, surname: '' });
   renderSide(true);
   const name = [c.person.given, c.person.surname].filter(Boolean).join(' ');
   const facts = [
