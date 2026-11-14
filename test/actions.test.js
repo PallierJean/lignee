@@ -1118,7 +1118,7 @@ describe('événements de la page', () => {
     el('u-end-0').value = 'divorce';
     change({ id: 'u-end-0', value: 'divorce' });
     assert.equal(el('f-situ').value, 'divorced');
-    change({ id: 'kinB', value: camille });
+    fire('click', { target: target({ act: 'kin-pick', field: 'kinB', id: camille }, '', 'li') });
     assert.equal(S.kinB, camille);
     A.cancelEdit();
   });
@@ -1230,7 +1230,7 @@ describe('événements de la page', () => {
       fire('keydown', { key: 'x', target: target({}, 'f-spouse', 'input'), preventDefault() {} });
       fire('focusout', { target: target({}, 'f-spouse', 'input') });
       let kept = false;
-      fire('mousedown', { target: { closest: (sel) => (sel === '#f-spouseList' ? {} : null) }, preventDefault() { kept = true; } });
+      fire('mousedown', { target: { closest: (sel) => (sel.includes('#f-spouseList') ? {} : null) }, preventDefault() { kept = true; } });
       assert.ok(kept, 'a click in the spouse list keeps the cursor in the field');
       fire('dblclick', { target: target() });
       key('Escape');
