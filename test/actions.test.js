@@ -6,7 +6,7 @@ import { fire, FakeElement } from './setup.js';
 import { S, cardEls } from '../js/state.js';
 import * as A from '../js/actions.js';
 import { bindEvents } from '../js/events.js';
-import { afterData, renderAll } from '../js/ui/render.js';
+import { afterData, renderAll, renderSide } from '../js/ui/render.js';
 import { openPersonDlg } from '../js/ui/person-dlg.js';
 import { currentSituation, unionCauseText, hasDeathNumber, passesFilter } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
@@ -1123,7 +1123,25 @@ describe('événements de la page', () => {
     A.cancelEdit();
   });
 
-  test('une fille : le nom de son père va dans le nom de jeune fille seulement', () => {
+  test('dates de tout l’arbre mises en forme d’un coup, annulable', async () => {
+    loadTree([person('a', { given: 'Ana', birthDate: '4 jUIllet 1961', deathDate: '2001', events: [{ id: 'e1', type: 'baptism', date: '6/7/1961', place: '' }] }),
+      person('b', { given: 'Bob', birthDate: '04 Juillet 1960' })], [{ id: 'u1', a: 'a', b: 'b', date: '1er juin 1985' }]);
+    S.tab = 'analysis';
+    S.analysis = 'checks';
+    renderSide();
+    assert.match(html('paneAnalysis'), /2 fiches ont des dates écrites autrement[^]*data-act="tidy-dates"/);
+    fire('click', { target: target({ act: 'tidy-dates' }) });
+    await settle();
+    assert.equal(S.people.get('a').birthDate, '04 Juillet 1961');
+    assert.equal(S.people.get('a').deathDate, '2001');
+    assert.equal(S.people.get('a').events[0].date, '06/07/1961');
+    assert.equal(S.unions.get('u1').date, '01 Juin 1985');
+    assert.doesNotMatch(html('paneAnalysis'), /data-act="tidy-dates"/, 'plus rien à mettre en forme');
+    await A.undo();
+    assert.equal(S.people.get('a').birthDate, '4 jUIllet 1961', 'annulé d’un coup');
+  });
+
+    test('une fille : le nom de son père va dans le nom de jeune fille seulement', () => {
     const father = [...S.people].find(([, p]) => p.sex === 'M' && p.surname)[0];
     const name = S.people.get(father).surname;
     A.startAdd('child', father);

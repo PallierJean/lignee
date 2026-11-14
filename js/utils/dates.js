@@ -58,6 +58,59 @@ export function dateParts(s) {
   return m ? { q, y: +m[1] } : null;
 }
 
+/** Edits between two words (Levenshtein). */
+function edits(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (x, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// Months as written, in each language: [norm(name), name]
+const MONTH_NAMES = Object.values(DICT).flatMap((d) => d.months.map((name) => [norm(name), name]));
+
+/** A month's name well written ("juilet", "fevrier", "DECEMBRE" → "Juillet", "Février", "Décembre"); '' if none is close. */
+function monthName(word) {
+  const w = norm(word);
+  const exact = MONTH_NAMES.find(([n]) => n === w);
+  if (exact) return capitalized(exact[1]);
+  if (w.length < 4) return '';
+  const scored = MONTH_NAMES.map(([n, name]) => [edits(w, n), name]);
+  const fewest = Math.min(...scored.map(([d]) => d));
+  if (fewest > (w.length <= 5 ? 1 : 2)) return '';
+  // As close to two months ("septembr": septembre, september): the one of the interface's language
+  const close = [...new Set(scored.filter(([d]) => d === fewest).map(([, name]) => name))];
+  const mine = close.filter((name) => t('months').includes(name));
+  const name = close.length === 1 ? close[0] : mine.length === 1 ? mine[0] : '';
+  return name ? capitalized(name) : '';
+}
+
+/**
+ * A date written the same way as the others: the day and month on two figures, the month's
+ * name well spelled with its accents and capital ("4 jUIllet 1961" → "04 Juillet 1961",
+ * "4/7/1961" → "04/07/1961", "1er fevrier 1900" → "01 Février 1900"). Free text stays as is.
+ */
+export function tidyDate(s) {
+  const text = String(s ?? '').trim().replace(/\s+/g, ' ');
+  if (!text) return text;
+  const { rest } = splitQualifier(text);
+  const prefix = text.slice(0, text.length - rest.length);
+  const two = (n) => String(+n).padStart(2, '0');
+  let m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(rest);
+  if (m) return prefix + two(m[1]) + '/' + two(m[2]) + '/' + m[3];
+  m = /^(\d{1,2})[/.-](\d{4})$/.exec(rest);
+  if (m) return prefix + two(m[1]) + '/' + m[2];
+  m = /^(\d{1,2})(?:er|re|st|nd|rd|th)?\s+(\p{L}+)\.?\s+(\d{4})$/u.exec(rest);
+  const month = m && monthName(m[2]);
+  if (month) return prefix + two(m[1]) + ' ' + month + ' ' + m[3];
+  m = /^(\p{L}+)\.?\s+(\d{4})$/u.exec(rest);
+  const alone = m && monthName(m[1]);
+  return alone ? prefix + alone + ' ' + m[2] : text;
+}
+
 /** True if the date has the form dd/mm/yyyy, mm/yyyy or "dd month yyyy" but doesn't exist. */
 export function isImpossibleDate(s) {
   const { rest } = splitQualifier(s);

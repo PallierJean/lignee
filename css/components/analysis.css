@@ -32,6 +32,23 @@
   margin-top: 4px;
 }
 
+/* Dates written unlike the others, put right in one go */
+.an-tidy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--warn);
+  background: var(--paper);
+}
+
+.an-tidy p {
+  flex: 1 1 200px;
+  margin: 0;
+}
+
 /* Kinship result */
 .kin-result {
   margin-top: 16px;
