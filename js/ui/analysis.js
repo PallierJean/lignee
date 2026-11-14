@@ -4,7 +4,7 @@ import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
 import { P, fullName, longName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS, ARCHIVE_KIND, surname, maiden, given } from '../model/people.js';
 import { relationship } from '../model/kinship.js';
-import { currentIssues } from '../model/checks.js';
+import { currentIssues, datePatches } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
 import { datesOfDay, datesOfMonth } from '../model/ephemerides.js';
 import { findDuplicates } from '../model/duplicates.js';
@@ -98,9 +98,16 @@ function issueHTML(x) {
     + `<div class="chk-people">${x.ids.map(personLink).join('')}</div></li>`;
 }
 
+/** Dates not written as the others: how many records, and the button that puts them right. */
+function datesTidy() {
+  const n = S.canWrite ? datePatches().length : 0;
+  return n ? `<div class="an-tidy"><p>${t('chk.datesUntidy', n)}</p>`
+    + `<button class="btn small" type="button" data-act="tidy-dates">${t('chk.tidyDates')}</button></div>` : '';
+}
+
 function checksView() {
   const issues = currentIssues();
-  if (!issues.length) return `<p class="okmsg an-ok">✓ ${t('chk.none')}</p><p class="hint an-hint">${t('chk.scope')}</p>`;
+  if (!issues.length) return `${datesTidy()}<p class="okmsg an-ok">✓ ${t('chk.none')}</p><p class="hint an-hint">${t('chk.scope')}</p>`;
   const part = (level, sym) => {
     const list = issues.filter((x) => x.level === level);
     return list.length
@@ -108,7 +115,7 @@ function checksView() {
         + `<ul class="chks">${list.map(issueHTML).join('')}</ul></section>`
       : '';
   };
-  return part('error', '✕') + part('warn', '!') + `<p class="hint an-hint">${t('chk.scope')}</p>`;
+  return datesTidy() + part('error', '✕') + part('warn', '!') + `<p class="hint an-hint">${t('chk.scope')}</p>`;
 }
 
 /* ---------- Places ---------- */

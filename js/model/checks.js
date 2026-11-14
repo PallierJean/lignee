@@ -7,7 +7,7 @@
  * the main one first; `n`: age or date cited. Texts in i18n.js ("chk.<code>").
  */
 import { S } from '../state.js';
-import { dateBounds, isImpossibleDate, yearsBetween } from '../utils/dates.js';
+import { dateBounds, isImpossibleDate, yearsBetween, tidyDate } from '../utils/dates.js';
 import { norm } from '../utils/helpers.js';
 import { P, eventsOf, isDead, partnersOf, childrenOf, birthSurname, dataVersion } from './people.js';
 import { placeUses, parsePlace } from './places.js';
@@ -188,4 +188,35 @@ export function findIssues(now = new Date()) {
   }
 
   return out.sort((a, b) => (a.level === b.level ? 0 : a.level === 'error' ? -1 : 1));
+}
+
+/**
+ * Dates not written as the others ("4 jUIllet 1961", "4/7/1961", "juilet 1961"): the writes that
+ * put them right, [{ collection, id, patch }], for the people, their events, unions and pictures.
+ */
+export function datePatches() {
+  const out = [];
+  const fix = (record, keys) => {
+    const patch = {};
+    for (const k of keys) {
+      const v = record[k];
+      if (typeof v === 'string' && v.trim() && tidyDate(v) !== v) patch[k] = tidyDate(v);
+    }
+    return patch;
+  };
+  for (const [id, p] of S.people) {
+    const patch = fix(p, ['birthDate', 'deathDate', 'situationDate']);
+    const events = eventsOf(p);
+    if (events.some((e) => Object.keys(fix(e, ['date'])).length)) patch.events = events.map((e) => ({ ...e, ...fix(e, ['date']) }));
+    if (Object.keys(patch).length) out.push({ collection: 'people', id, patch });
+  }
+  for (const [id, u] of S.unions) {
+    const patch = fix(u, ['date', 'endDate']);
+    if (Object.keys(patch).length) out.push({ collection: 'unions', id, patch });
+  }
+  for (const [id, m] of S.media || []) {
+    const patch = fix(m, ['date']);
+    if (Object.keys(patch).length) out.push({ collection: 'media', id, patch });
+  }
+  return out;
 }

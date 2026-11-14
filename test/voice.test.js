@@ -619,7 +619,7 @@ describe('voix : dans la page', () => {
     assert.equal(S.people.size, before + 1);
     const anne = [...S.people.values()].find((p) => p.given === 'Anne');
     assert.equal(anne.motherId, 'm');
-    assert.equal(anne.birthDate, '3 mai 1872');
+    assert.equal(anne.birthDate, '03 Mai 1872', 'la date écrite comme les autres');
     assert.match(bubble(), /C’est enregistré/);
     assert.doesNotMatch(bubble(), /data-act="voice-save"/);
     assert.equal(said.at(-1), 'C’est enregistré. Autre chose ?');

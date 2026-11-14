@@ -12,6 +12,10 @@
   décès de plus de 110 ans (d'après sa naissance ou celle de son premier enfant), nom de naissance
   qui n'est ni celui du père, ni le double nom du père et de la mère (dans un sens ou dans l'autre,
   espaces et tirets indifférents).
+  Les dates écrites autrement que les autres (« 4 juilet 1961 », « 4/7/1961 ») sont comptées, et
+  « Mettre les dates en forme » les corrige toutes d'un coup (annulable) : jour et mois sur deux
+  chiffres, mois bien orthographié avec ses accents (« 04 Juillet 1961 », « 04/07/1961 »). Chaque
+  fiche enregistrée est déjà écrite ainsi.
 
 - **Doublons** : fiches au même prénom usuel et au même nom, sans date contradictoire. La fusion
   reporte enfants, unions et identifications sur la fiche gardée ; elle s'annule. « Ce n'est pas

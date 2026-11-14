@@ -8,6 +8,7 @@
  */
 import { S } from '../state.js';
 import { rid } from '../utils/helpers.js';
+import { tidyDate } from '../utils/dates.js';
 import {
   P, partnersOf, unionBetween, unionIdBetween, unionDeathEnd, currentSituation, reindex, unionType, isDead, DATED_SITUATIONS,
 } from '../model/people.js';
@@ -23,7 +24,7 @@ const ENDING_SITUATIONS = { widowed: 'death', divorced: 'divorce', separated: 's
 export function unionFields(u) {
   const cause = u.type === 'remarried' ? u.cause : '';
   return {
-    type: u.type, date: u.date.trim(), place: u.place.trim(), end: u.end, endDate: u.endDate.trim(),
+    type: u.type, date: tidyDate(u.date), place: u.place.trim(), end: u.end, endDate: tidyDate(u.endDate),
     cause, formerId: cause === 'widowed' ? u.formerId : '',
   };
 }
@@ -57,14 +58,15 @@ async function recordData(e, id, previous) {
     surname: d.surname.trim(),
     maidenName: d.sex === 'F' ? d.maidenName.trim() : '',
     sex: d.sex || 'U',
-    birthDate: d.birthDate.trim(),
+    // Dates written as the others: "04 Juillet 1961", "04/07/1961"
+    birthDate: tidyDate(d.birthDate),
     birthPlace: d.birthPlace.trim(),
-    deathDate: d.deathDate.trim(),
+    deathDate: tidyDate(d.deathDate),
     deathPlace: d.deathPlace.trim(),
     deceased: !!(d.deceased || d.deathDate.trim() || d.deathPlace.trim()),
     occupation: d.occupation.trim(),
     situation: d.situation || '',
-    situationDate: DATED_SITUATIONS.has(d.situation) ? d.situationDate.trim() : '',
+    situationDate: DATED_SITUATIONS.has(d.situation) ? tidyDate(d.situationDate) : '',
     notes: d.notes.trim(),
     fatherId: d.fatherId || null,
     motherId: d.motherId || null,
@@ -75,7 +77,7 @@ async function recordData(e, id, previous) {
   if (previous && previous.example) data.example = true;
 
   const events = e.events.filter((x) => !x.removed).map(({ removed, ...x }) => ({
-    ...x, date: x.date.trim(), place: x.place.trim(), note: x.note.trim(),
+    ...x, date: tidyDate(x.date), place: x.place.trim(), note: x.note.trim(),
   }));
   if (events.length) data.events = events;
   const facts = new Set(events.map((x) => x.id));
@@ -116,7 +118,7 @@ async function saveGallery(e, id) {
     if (!tags.some((tag) => tag.id === id)) tags.unshift({ id });
     const m = {
       ...(before || { createdAt: Date.now() }), ...x, tags,
-      title: x.title.trim(), date: x.date.trim(), note: x.note.trim(), photo: await storePhoto(x.photo, GALLERY_LABEL),
+      title: x.title.trim(), date: tidyDate(x.date), note: x.note.trim(), photo: await storePhoto(x.photo, GALLERY_LABEL),
     };
     // Its back: a contract's second side, a photo's annotated back
     if (x.back) m.back = await storePhoto(x.back, GALLERY_LABEL);

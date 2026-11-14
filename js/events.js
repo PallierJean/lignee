@@ -294,6 +294,7 @@ const CLICK_ACTIONS = {
   'voice-understand': () => understand($('#voiceText').value),
   'spouse-pick': (el) => A.addDraftUnion(el.dataset.id),
   'kin-pick': (el) => A.setKin(el.dataset.field, el.dataset.id),
+  'tidy-dates': () => A.tidyDates(),
 
   // Adding and editing
   new: () => A.startNew(),

@@ -8,6 +8,7 @@ import { relationship } from '../model/kinship.js';
 import { mergedData } from '../model/duplicates.js';
 import { sourcesOfPerson } from '../model/sources.js';
 import { renamePatches } from '../model/places.js';
+import { datePatches } from '../model/checks.js';
 import { deathDifferences } from '../model/insee.js';
 import { inseeMatch, ignoreInsee, confirmInsee } from '../services/insee.js';
 import { ignorePair } from '../services/dup-ignore.js';
@@ -198,6 +199,32 @@ export async function renamePlace(from, to) {
     if (S.edit) renderRecord(true); // the hidden form takes its draft back, with the new place
   }
   toast(t('pl.renamed', patches.length));
+}
+
+/** Writes every date of the tree as the others ("04 Juillet 1961"); undone in one go. */
+export async function tidyDates() {
+  if (!S.canWrite || S.busy) return;
+  if (S.edit) {
+    toast(t('finishFirst'));
+    return;
+  }
+  const patches = datePatches();
+  if (!patches.length) return;
+  S.busy = true;
+  beginAction('hist.dates');
+  try {
+    await inBatch(async () => {
+      for (const x of patches) await opUpdate(x.collection, x.id, x.patch);
+    });
+  } catch (e) {
+    reportError(e);
+    return;
+  } finally {
+    commitAction();
+    S.busy = false;
+    afterData();
+  }
+  toast(t('chk.datesTidied', patches.length));
 }
 
 /* ---------- INSEE deaths ---------- */
