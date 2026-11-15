@@ -699,7 +699,7 @@ export const EN = {
   'chk.error': 'Errors',
   'chk.warn': 'To check',
   'chk.none': 'No inconsistency found.',
-  'chk.untidy': (n) => `${n} record${sEn(n)} ${n > 1 ? 'have' : 'has'} dates or names written unlike the others (“4 jully 1961” for “04 July 1961”, “marie-lou” for “Marie-Lou”).`,
+  'chk.untidy': (n) => `${n} record${sEn(n)} ${n > 1 ? 'have' : 'has'} dates or names written unlike the others (“4 jully 1961” for “04 July 1961”, “marie-lou” for “Marie-Lou”, “Roux” for “ROUX”).`,
   'chk.tidy': 'Tidy up',
   'chk.tidied': (n) => `Dates and names tidied in ${n} record${sEn(n)}.`,
   'chk.scope': 'Free-text dates are not checked. “about” allows five years either way.',

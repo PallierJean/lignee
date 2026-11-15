@@ -725,7 +725,7 @@ export const FR = {
   'chk.error': 'Erreurs',
   'chk.warn': 'À vérifier',
   'chk.none': 'Aucune incohérence détectée.',
-  'chk.untidy': (n) => `${n} fiche${s(n)} ${n > 1 ? 'ont' : 'a'} des dates ou des noms écrits autrement que les autres (« 4 juilet 1961 » pour « 04 Juillet 1961 », « marie-lou » pour « Marie-Lou »).`,
+  'chk.untidy': (n) => `${n} fiche${s(n)} ${n > 1 ? 'ont' : 'a'} des dates ou des noms écrits autrement que les autres (« 4 juilet 1961 » pour « 04 Juillet 1961 », « marie-lou » pour « Marie-Lou », « Roux » pour « ROUX »).`,
   'chk.tidy': 'Mettre en forme',
   'chk.tidied': (n) => `Dates et noms mis en forme dans ${n} fiche${s(n)}.`,
   'chk.scope': 'Les dates en texte libre ne sont pas contrôlées. « vers » compte pour cinq ans de marge.',
