@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { capitalName } from '../js/utils/helpers.js';
+import { capitalName, upperName } from '../js/utils/helpers.js';
 import {
   maiden, birthSurname, fullName, longName, cardNames, situationLabel, situationText,
   childrenOf, partnersOf, siblingsOf, isDead, lifeYears, cardDates, ageInfo, matchesWords, queryWords,
@@ -171,4 +171,10 @@ test('une majuscule à chaque prénom et à chaque mot du nom', () => {
   assert.equal(capitalName('BOURREL'), 'BOURREL', 'le reste du mot reste tel quel');
   assert.equal(capitalName('McDonald'), 'McDonald');
   assert.equal(capitalName(undefined), '');
+});
+
+test('le nom de famille tout en majuscules', () => {
+  assert.equal(upperName(' de  la tour '), 'DE LA TOUR');
+  assert.equal(upperName('Lefèvre'), 'LEFÈVRE', 'les accents restent');
+  assert.equal(upperName(null), '');
 });

@@ -381,7 +381,7 @@ describe('formulaire', () => {
     await A.submitEdit();
     assert.equal(S.people.get('a').birthDate, '02 Janvier 1900');
     assert.equal(S.people.get('a').given, 'Jean Pierre', 'une majuscule à chaque prénom');
-    assert.equal(S.people.get('a').surname, 'De La Tour');
+    assert.equal(S.people.get('a').surname, 'DE LA TOUR', 'le nom tout en majuscules');
   });
 
   test('erreurs de saisie : nom, date, parents, fratrie', async () => {
@@ -1139,7 +1139,7 @@ describe('événements de la page', () => {
     assert.equal(S.people.get('a').events[0].date, '06 Juillet 1961');
     assert.equal(S.unions.get('u1').date, '01 Juin 1985');
     assert.equal(S.people.get('b').given, 'Marie-Lou', 'une majuscule à chaque prénom');
-    assert.equal(S.people.get('b').surname, 'Roux');
+    assert.equal(S.people.get('b').surname, 'ROUX');
     assert.doesNotMatch(html('paneAnalysis'), /data-act="tidy"/, 'plus rien à mettre en forme');
     await A.undo();
     assert.equal(S.people.get('a').birthDate, '4 jUIllet 1961', 'annulé d’un coup');

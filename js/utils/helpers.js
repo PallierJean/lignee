@@ -14,6 +14,9 @@ export const norm = (s) =>
 export const capitalName = (s) =>
   String(s ?? '').trim().replace(/\s+/g, ' ').replace(/(^|[\s\-'’])(\p{Ll})/gu, (m, sep, c) => sep + c.toUpperCase());
 
+/** A family name all in capitals, as the civil registers write it: "de la Tour" → "DE LA TOUR". */
+export const upperName = (s) => String(s ?? '').trim().replace(/\s+/g, ' ').toUpperCase();
+
 /** Runs `worker` on each item, at most `limit` at a time. */
 export async function pool(items, limit, worker) {
   let i = 0;
