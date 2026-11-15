@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.38](https://github.com/PallierJean/lignee/compare/v4.1.37...v4.1.38) (2026-11-15)
+
+### Bug Fixes
+
+* Give every first name and every word of the family name a capital ([35cce5a](https://github.com/PallierJean/lignee/commit/35cce5a990640263c76e1394dc92f99efcd62d25))
+
+---
+
+### Corrections
+
+* Chaque prénom et chaque mot du nom de famille commencent par une majuscule (« marie-lou » devient « Marie-Lou ») ; le bouton « Mettre en forme » de l'onglet Cohérence corrige aussi les noms déjà saisis ([35cce5a](https://github.com/PallierJean/lignee/commit/35cce5a990640263c76e1394dc92f99efcd62d25))
+
 ## [4.1.37](https://github.com/PallierJean/lignee/compare/v4.1.36...v4.1.37) (2026-11-15)
 
 ### Bug Fixes
