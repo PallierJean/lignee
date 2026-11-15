@@ -5,7 +5,7 @@
 import { S } from './state.js';
 import { $ } from './utils/dom.js';
 import { t } from './i18n.js';
-import { avatarOf, birthSurname, DATED_SITUATIONS, situationOfUnion } from './model/people.js';
+import { avatarOf, birthSurname, longName, DATED_SITUATIONS, situationOfUnion } from './model/people.js';
 import { situationOptions } from './ui/form.js';
 import * as A from './actions.js';
 import {
@@ -28,7 +28,7 @@ import { pinch } from './ui/pinch.js';
 import { defineDialogs, dialogOpen, closeTopDialog, closeOnBackdrop } from './ui/dialogs.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { toggleVoice, startVoice, closeVoice, pickVoice, newVoice, saveVoice, cancelVoice, toggleVoiceReply, answerConsent, understand, voiceOpen } from './ui/voice.js';
-import { onSpouseInput, onSpouseKey, closeSpouse } from './ui/spouse-pick.js';
+import { isPersonPick, onPickInput, onPickKey, closePick } from './ui/person-pick.js';
 import { confirmRepoSave, saveRepo, forgetRepo, chooseRepoSave, closeRepoDiff } from './ui/repo-link.js';
 import { openPrint, closePrint, updatePrintInfo, printTree, printFamilyBook } from './ui/print.js';
 import {
@@ -293,6 +293,7 @@ const CLICK_ACTIONS = {
   'voice-consent': (el) => answerConsent(el.dataset.what, el.dataset.yes === '1'),
   'voice-understand': () => understand($('#voiceText').value),
   'spouse-pick': (el) => A.addDraftUnion(el.dataset.id),
+  'kin-pick': (el) => A.setKin(el.dataset.field, el.dataset.id),
 
   // Adding and editing
   new: () => A.startNew(),
@@ -418,7 +419,7 @@ export function bindEvents() {
 
   // Add-a-union field: the form is recreated on every render, hence the delegation
   document.addEventListener('mousedown', (ev) => {
-    if (ev.target.closest('#f-spouseList')) ev.preventDefault();
+    if (ev.target.closest('#f-spouseList, #kinAList, #kinBList')) ev.preventDefault();
   });
   // Viewer: hovering an identified name lights up the person on the photo
   document.addEventListener('mouseover', (ev) => highlightTag(ev.target, true));
@@ -455,10 +456,18 @@ export function bindEvents() {
     highlightTag(ev.target, true);
     if (ev.target.dataset && ev.target.dataset.rdLine !== undefined) lightLine(+ev.target.dataset.rdLine);
     fanHover(ev.target, true);
-    if (ev.target.id === 'f-spouse') onSpouseInput();
+    if (ev.target.id === 'f-spouse') onPickInput('f-spouse');
+    // A person of the kinship view: typing replaces the name shown
+    if (ev.target.id === 'kinA' || ev.target.id === 'kinB') ev.target.select();
   });
   document.addEventListener('focusout', (ev) => {
-    if (ev.target.id === 'f-spouse') closeSpouse();
+    if (!isPersonPick(ev.target.id)) return;
+    closePick(ev.target.id);
+    // Left without choosing: the person chosen before, by name
+    if (ev.target.id === 'kinA' || ev.target.id === 'kinB') {
+      const p = S.people.get(S[ev.target.id]);
+      ev.target.value = p ? longName(p) : '';
+    }
   });
 
   document.addEventListener('click', (ev) => {
@@ -523,7 +532,6 @@ export function bindEvents() {
     if (el.matches('[data-src-back]') && el.files[0]) A.setDraftSourceBack(+el.dataset.srcBack, el.files[0]);
     if (el.matches('[id^="ev-type-"]')) A.refreshDraft();
     if (el.id === 'f-media' && el.files.length) A.addDraftMedia([...el.files]);
-    if (el.id === 'kinA' || el.id === 'kinB') A.setKin(el.id, el.value);
     // City or country changed: the department follows the city, in France only
     if (el.id && (el.id.endsWith('-city') || el.id.endsWith('-country'))) departmentFromCity(el.id.replace(/-(city|country)$/, ''));
   });
@@ -531,7 +539,7 @@ export function bindEvents() {
   document.addEventListener('input', (ev) => {
     if (ev.target.id === 'cropZoom') cropZoomInput(ev.target.value);
     if (ev.target.id === 'find') onFindInput();
-    if (ev.target.id === 'f-spouse') onSpouseInput();
+    if (isPersonPick(ev.target.id)) onPickInput(ev.target.id);
     if (ev.target.id.endsWith('-dept')) {
       const label = document.getElementById(ev.target.id + 'name');
       if (label) label.textContent = departmentHint(ev.target.id.slice(0, -'-dept'.length));
@@ -589,8 +597,9 @@ export function bindEvents() {
       pickFirstTag();
       return;
     }
-    if (ev.target.id === 'f-spouse') {
-      if (onSpouseKey(ev, A.addDraftUnion)) {
+    if (isPersonPick(ev.target.id)) {
+      const id = ev.target.id;
+      if (onPickKey(ev, id, (pid) => (id === 'f-spouse' ? A.addDraftUnion(pid) : A.setKin(id, pid)))) {
         ev.preventDefault();
         return;
       }

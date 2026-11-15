@@ -706,7 +706,7 @@ export const FR = {
   'kin.ask': 'Lien de parenté avec…',
   'kin.first': 'Première personne',
   'kin.second': 'Deuxième personne',
-  'kin.pick': 'Choisir…',
+  'kin.pick': 'Rechercher une personne…',
   'kin.hint': 'Choisissez deux personnes pour connaître leur lien.',
   'kin.same': 'C’est la même personne.',
   'kin.none': 'Aucun lien trouvé entre ces deux personnes dans cet arbre.',
