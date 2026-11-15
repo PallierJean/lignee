@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.39](https://github.com/PallierJean/lignee/compare/v4.1.38...v4.1.39) (2026-11-15)
+
+### Bug Fixes
+
+* Save family and maiden names all in capitals ([61bb04b](https://github.com/PallierJean/lignee/commit/61bb04b9952c1948402d3153a0cc04d83fed8104))
+
+---
+
+### Corrections
+
+* Le nom de famille et le nom de jeune fille s'enregistrent tout en majuscules (« Roux » devient « ROUX »), comme dans les registres ; le bouton « Mettre en forme » corrige aussi les noms déjà saisis ([61bb04b](https://github.com/PallierJean/lignee/commit/61bb04b9952c1948402d3153a0cc04d83fed8104))
+
 ## [4.1.38](https://github.com/PallierJean/lignee/compare/v4.1.37...v4.1.38) (2026-11-15)
 
 ### Bug Fixes
