@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.36](https://github.com/PallierJean/lignee/compare/v4.1.35...v4.1.36) (2026-11-15)
+
+### Bug Fixes
+
+* Search the two people of the kinship view as in the header ([bd123ca](https://github.com/PallierJean/lignee/commit/bd123cafbc45acc6ebbbc55b2ad05d85192ee4d3))
+
+---
+
+### Corrections
+
+* Dans l'onglet Parenté, les deux personnes se cherchent en tapant leur nom, comme dans la recherche de l'en-tête, au lieu d'une longue liste ([bd123ca](https://github.com/PallierJean/lignee/commit/bd123cafbc45acc6ebbbc55b2ad05d85192ee4d3))
+
 ## [4.1.35](https://github.com/PallierJean/lignee/compare/v4.1.34...v4.1.35) (2026-11-15)
 
 ### Bug Fixes
