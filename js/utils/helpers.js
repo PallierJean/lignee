@@ -10,6 +10,10 @@ export const rid = (prefix) =>
 export const norm = (s) =>
   String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
+/** A first name or a family name with a capital to each word: "marie-lou" → "Marie-Lou", "o'neil" → "O'Neil". */
+export const capitalName = (s) =>
+  String(s ?? '').trim().replace(/\s+/g, ' ').replace(/(^|[\s\-'’])(\p{Ll})/gu, (m, sep, c) => sep + c.toUpperCase());
+
 /** Runs `worker` on each item, at most `limit` at a time. */
 export async function pool(items, limit, worker) {
   let i = 0;

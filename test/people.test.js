@@ -1,5 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { capitalName } from '../js/utils/helpers.js';
 import {
   maiden, birthSurname, fullName, longName, cardNames, situationLabel, situationText,
   childrenOf, partnersOf, siblingsOf, isDead, lifeYears, cardDates, ageInfo, matchesWords, queryWords,
@@ -160,4 +161,14 @@ describe('avatars par défaut', () => {
     assert.equal(avatarOf(undefined), 'images/avatar_neutre.jpeg');
     for (const sex of ['F', 'M', 'U']) assert.ok(existsSync(new URL('../' + avatarOf(sex), import.meta.url)), avatarOf(sex));
   });
+});
+
+test('une majuscule à chaque prénom et à chaque mot du nom', () => {
+  assert.equal(capitalName('marie-lou'), 'Marie-Lou');
+  assert.equal(capitalName(' max  andré jean marie '), 'Max André Jean Marie');
+  assert.equal(capitalName('élise'), 'Élise', 'la lettre accentuée aussi');
+  assert.equal(capitalName("o'neil"), "O'Neil");
+  assert.equal(capitalName('BOURREL'), 'BOURREL', 'le reste du mot reste tel quel');
+  assert.equal(capitalName('McDonald'), 'McDonald');
+  assert.equal(capitalName(undefined), '');
 });

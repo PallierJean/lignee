@@ -377,9 +377,11 @@ describe('formulaire', () => {
     await A.submitEdit();
     assert.equal(S.people.get('a').birthDate, '01 Janvier 1900', 'en chiffres, la date s’écrit en toutes lettres');
     A.startEdit('a');
-    fill({ 'f-bdate': '02 Janvier 1900' });
+    fill({ 'f-bdate': '02 Janvier 1900', 'f-given': 'jean  pierre', 'f-surname': 'de la tour' });
     await A.submitEdit();
     assert.equal(S.people.get('a').birthDate, '02 Janvier 1900');
+    assert.equal(S.people.get('a').given, 'Jean Pierre', 'une majuscule à chaque prénom');
+    assert.equal(S.people.get('a').surname, 'De La Tour');
   });
 
   test('erreurs de saisie : nom, date, parents, fratrie', async () => {
@@ -1123,20 +1125,22 @@ describe('événements de la page', () => {
     A.cancelEdit();
   });
 
-  test('dates de tout l’arbre mises en forme d’un coup, annulable', async () => {
+  test('dates et noms de tout l’arbre mis en forme d’un coup, annulable', async () => {
     loadTree([person('a', { given: 'Ana', birthDate: '4 jUIllet 1961', deathDate: '2001', events: [{ id: 'e1', type: 'baptism', date: '6/7/1961', place: '' }] }),
-      person('b', { given: 'Bob', birthDate: '04 Juillet 1960' })], [{ id: 'u1', a: 'a', b: 'b', date: '1er juin 1985' }]);
+      person('b', { given: 'marie-lou', surname: 'roux', birthDate: '04 Juillet 1960' })], [{ id: 'u1', a: 'a', b: 'b', date: '1er juin 1985' }]);
     S.tab = 'analysis';
     S.analysis = 'checks';
     renderSide();
-    assert.match(html('paneAnalysis'), /2 fiches ont des dates écrites autrement[^]*data-act="tidy-dates"/);
-    fire('click', { target: target({ act: 'tidy-dates' }) });
+    assert.match(html('paneAnalysis'), /3 fiches ont des dates ou des noms écrits autrement[^]*data-act="tidy"/);
+    fire('click', { target: target({ act: 'tidy' }) });
     await settle();
     assert.equal(S.people.get('a').birthDate, '04 Juillet 1961');
     assert.equal(S.people.get('a').deathDate, '2001');
     assert.equal(S.people.get('a').events[0].date, '06 Juillet 1961');
     assert.equal(S.unions.get('u1').date, '01 Juin 1985');
-    assert.doesNotMatch(html('paneAnalysis'), /data-act="tidy-dates"/, 'plus rien à mettre en forme');
+    assert.equal(S.people.get('b').given, 'Marie-Lou', 'une majuscule à chaque prénom');
+    assert.equal(S.people.get('b').surname, 'Roux');
+    assert.doesNotMatch(html('paneAnalysis'), /data-act="tidy"/, 'plus rien à mettre en forme');
     await A.undo();
     assert.equal(S.people.get('a').birthDate, '4 jUIllet 1961', 'annulé d’un coup');
   });

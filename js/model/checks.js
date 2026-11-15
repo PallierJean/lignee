@@ -8,7 +8,7 @@
  */
 import { S } from '../state.js';
 import { dateBounds, isImpossibleDate, yearsBetween, tidyDate } from '../utils/dates.js';
-import { norm } from '../utils/helpers.js';
+import { norm, capitalName } from '../utils/helpers.js';
 import { P, eventsOf, isDead, partnersOf, childrenOf, birthSurname, dataVersion } from './people.js';
 import { placeUses, parsePlace } from './places.js';
 import { placeDepartmentIssue, departmentsText, communesLoaded } from './communes.js';
@@ -191,21 +191,22 @@ export function findIssues(now = new Date()) {
 }
 
 /**
- * Dates not written as the others ("4 jUIllet 1961", "4/7/1961", "juilet 1961"): the writes that
- * put them right, [{ collection, id, patch }], for the people, their events, unions and pictures.
+ * Dates not written as the others ("4 jUIllet 1961", "4/7/1961", "juilet 1961") and names without
+ * their capitals ("marie-lou"): the writes that put them right, [{ collection, id, patch }], for the
+ * people, their events, unions and pictures.
  */
-export function datePatches() {
+export function tidyPatches() {
   const out = [];
-  const fix = (record, keys) => {
+  const fix = (record, keys, tidy = tidyDate) => {
     const patch = {};
     for (const k of keys) {
       const v = record[k];
-      if (typeof v === 'string' && v.trim() && tidyDate(v) !== v) patch[k] = tidyDate(v);
+      if (typeof v === 'string' && v.trim() && tidy(v) !== v) patch[k] = tidy(v);
     }
     return patch;
   };
   for (const [id, p] of S.people) {
-    const patch = fix(p, ['birthDate', 'deathDate', 'situationDate']);
+    const patch = { ...fix(p, ['given', 'surname', 'maidenName'], capitalName), ...fix(p, ['birthDate', 'deathDate', 'situationDate']) };
     const events = eventsOf(p);
     if (events.some((e) => Object.keys(fix(e, ['date'])).length)) patch.events = events.map((e) => ({ ...e, ...fix(e, ['date']) }));
     if (Object.keys(patch).length) out.push({ collection: 'people', id, patch });
