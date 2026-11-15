@@ -390,7 +390,7 @@ export async function submitEdit() {
   try {
     const id = await inBatch(() => savePerson(e));
 
-    S.focus = e.rel && S.people.has(e.of) ? e.of : id;
+    S.focus = id; // the record just saved, a relative added included: the tree centred on it
     commitAction();
     S.edit = null;
     S.busy = false;
