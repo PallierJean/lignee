@@ -12,8 +12,9 @@
   décès de plus de 110 ans (d'après sa naissance ou celle de son premier enfant), nom de naissance
   qui n'est ni celui du père, ni le double nom du père et de la mère (dans un sens ou dans l'autre,
   espaces et tirets indifférents).
-  Les dates écrites autrement que les autres (« 4 juilet 1961 », « 4/7/1961 ») sont comptées, et
-  « Mettre les dates en forme » les corrige toutes d'un coup (annulable) : jour et mois sur deux
+  Les dates écrites autrement que les autres (« 4 juilet 1961 », « 4/7/1961 ») et les prénoms ou
+  noms sans leurs majuscules (« marie-lou ») sont comptés, et « Mettre en forme » les corrige tous
+  d'un coup (annulable) : une majuscule à chaque prénom et à chaque mot du nom, jour et mois sur deux
   chiffres, mois en toutes lettres bien orthographié avec ses accents (« 4/7/1961 » devient
   « 04 Juillet 1961 », « avant 3 aout 1914 » devient « Avant 03 Août 1914 »). Chaque
   fiche enregistrée est déjà écrite ainsi.

@@ -8,7 +8,7 @@ import { relationship } from '../model/kinship.js';
 import { mergedData } from '../model/duplicates.js';
 import { sourcesOfPerson } from '../model/sources.js';
 import { renamePatches } from '../model/places.js';
-import { datePatches } from '../model/checks.js';
+import { tidyPatches } from '../model/checks.js';
 import { deathDifferences } from '../model/insee.js';
 import { inseeMatch, ignoreInsee, confirmInsee } from '../services/insee.js';
 import { ignorePair } from '../services/dup-ignore.js';
@@ -201,17 +201,17 @@ export async function renamePlace(from, to) {
   toast(t('pl.renamed', patches.length));
 }
 
-/** Writes every date of the tree as the others ("04 Juillet 1961"); undone in one go. */
-export async function tidyDates() {
+/** Writes every date of the tree as the others ("04 Juillet 1961"), every name with its capitals; undone in one go. */
+export async function tidyRecords() {
   if (!S.canWrite || S.busy) return;
   if (S.edit) {
     toast(t('finishFirst'));
     return;
   }
-  const patches = datePatches();
+  const patches = tidyPatches();
   if (!patches.length) return;
   S.busy = true;
-  beginAction('hist.dates');
+  beginAction('hist.tidy');
   try {
     await inBatch(async () => {
       for (const x of patches) await opUpdate(x.collection, x.id, x.patch);
@@ -224,7 +224,7 @@ export async function tidyDates() {
     S.busy = false;
     afterData();
   }
-  toast(t('chk.datesTidied', patches.length));
+  toast(t('chk.tidied', patches.length));
 }
 
 /* ---------- INSEE deaths ---------- */

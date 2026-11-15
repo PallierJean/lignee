@@ -9,6 +9,7 @@
 import { S } from '../state.js';
 import { rid } from '../utils/helpers.js';
 import { tidyDate } from '../utils/dates.js';
+import { capitalName } from '../utils/helpers.js';
 import {
   P, partnersOf, unionBetween, unionIdBetween, unionDeathEnd, currentSituation, reindex, unionType, isDead, DATED_SITUATIONS,
 } from '../model/people.js';
@@ -54,9 +55,9 @@ async function endFormerUnion(id, row) {
 async function recordData(e, id, previous) {
   const d = e.draft;
   const data = {
-    given: d.given.trim(),
-    surname: d.surname.trim(),
-    maidenName: d.sex === 'F' ? d.maidenName.trim() : '',
+    given: capitalName(d.given),
+    surname: capitalName(d.surname),
+    maidenName: d.sex === 'F' ? capitalName(d.maidenName) : '',
     sex: d.sex || 'U',
     // Dates written as the others: "04 Juillet 1961", "04/07/1961"
     birthDate: tidyDate(d.birthDate),
