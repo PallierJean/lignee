@@ -11,6 +11,8 @@
  *
  * - LIGNEE_WHISPER: Python of faster-whisper's environment (default ~/lignee-voice/bin/python);
  * - LIGNEE_WHISPER_MODEL: Whisper model (default: small);
+ * - LIGNEE_WHISPER_DEVICE: auto (default: the NVIDIA graphics card if it can, else the processor),
+ *   cpu or cuda (read by the worker);
  * - LIGNEE_OLLAMA: Ollama's address (default http://127.0.0.1:11434);
  * - LIGNEE_LLM_MODEL: Ollama model (default: qwen2.5:7b);
  * - LIGNEE_LLM_KEEP: how long Ollama keeps the model loaded after the last sentence (default 4h):
