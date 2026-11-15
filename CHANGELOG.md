@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.1.37](https://github.com/PallierJean/lignee/compare/v4.1.36...v4.1.37) (2026-11-15)
+
+### Bug Fixes
+
+* Write dates in figures with the month in words, and the word before a date with a capital ([c22b33f](https://github.com/PallierJean/lignee/commit/c22b33f208b3107e4db4c948714b25d6d7270c1f))
+* Write every date the same way: day and month on two figures, month well spelled ([d325eb1](https://github.com/PallierJean/lignee/commit/d325eb17515db129a8a037e0b9ce9f20604ef89e))
+
+---
+
+### Corrections
+
+* Une date en chiffres s'écrit en toutes lettres (« 4/7/1961 » devient « 04 Juillet 1961 ») et le mot devant prend une majuscule (« Avant 03 Août 1914 ») ([c22b33f](https://github.com/PallierJean/lignee/commit/c22b33f208b3107e4db4c948714b25d6d7270c1f))
+* Les dates s'écrivent toutes de la même façon (« 04 Juillet 1961 », « 04/07/1961 ») : jour et mois sur deux chiffres, mois bien orthographié avec ses accents ; l'onglet Cohérence met en forme d'un coup celles déjà saisies ([d325eb1](https://github.com/PallierJean/lignee/commit/d325eb17515db129a8a037e0b9ce9f20604ef89e))
+
 ## [4.1.36](https://github.com/PallierJean/lignee/compare/v4.1.35...v4.1.36) (2026-11-15)
 
 ### Bug Fixes
