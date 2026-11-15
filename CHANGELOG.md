@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.35](https://github.com/PallierJean/lignee/compare/v4.1.34...v4.1.35) (2026-11-15)
+
+### Bug Fixes
+
+* Centre the tree on the record just created, a relative included ([f0bae70](https://github.com/PallierJean/lignee/commit/f0bae708e341c8cced1ab93c14c0ca83e3ca6297))
+
+---
+
+### Corrections
+
+* Après l'ajout d'un parent, d'un enfant ou d'un conjoint, l'arbre se centre sur la fiche créée ([f0bae70](https://github.com/PallierJean/lignee/commit/f0bae708e341c8cced1ab93c14c0ca83e3ca6297))
+
 ## [4.1.34](https://github.com/PallierJean/lignee/compare/v4.1.33...v4.1.34) (2026-11-15)
 
 ### Bug Fixes
