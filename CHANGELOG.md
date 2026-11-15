@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.34](https://github.com/PallierJean/lignee/compare/v4.1.33...v4.1.34) (2026-11-15)
+
+### Bug Fixes
+
+* Give a new woman her father's name as maiden name only ([befc2c9](https://github.com/PallierJean/lignee/commit/befc2c9547bb75900dfa139fd777ca1f99477d4f))
+
+---
+
+### Corrections
+
+* Une femme ajoutée reçoit le nom de son père en nom de jeune fille seulement ; le nom d'usage reste vide, pour un mariage (formulaire et voix) ([befc2c9](https://github.com/PallierJean/lignee/commit/befc2c9547bb75900dfa139fd777ca1f99477d4f))
+
 ## [4.1.33](https://github.com/PallierJean/lignee/compare/v4.1.32...v4.1.33) (2026-11-13)
 
 ### Bug Fixes
