@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.2.0](https://github.com/PallierJean/lignee/compare/v4.1.39...v4.2.0) (2026-11-15)
+
+### Features
+
+* Run Whisper on the NVIDIA graphics card when there is one ([1e6d33c](https://github.com/PallierJean/lignee/commit/1e6d33c81ad0f0ef130d12efe5573849733a4146))
+* Version the tree as GEDCOM in the GitHub repository too ([0de721d](https://github.com/PallierJean/lignee/commit/0de721d66f58caf277196f52a8479473b8952634))
+
+---
+
+### Nouveautés
+
+* Faire tourner Whisper sur la carte graphique NVIDIA quand il y en a une, environ six fois plus vite ([1e6d33c](https://github.com/PallierJean/lignee/commit/1e6d33c81ad0f0ef130d12efe5573849733a4146))
+* Chaque sauvegarde sur GitHub envoie aussi l'arbre au format GEDCOM (<nom>.ged, à côté du .json), dans le même commit : chaque version peut être ouverte ou comparée dans un autre logiciel de généalogie ([0de721d](https://github.com/PallierJean/lignee/commit/0de721d66f58caf277196f52a8479473b8952634))
+
 ## [4.1.39](https://github.com/PallierJean/lignee/compare/v4.1.38...v4.1.39) (2026-11-15)
 
 ### Bug Fixes
