@@ -1,6 +1,6 @@
 import { test, describe, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { yearOf, splitQualifier, shortDate, longDate, fullDate, dateParts, isImpossibleDate } from '../js/utils/dates.js';
+import { yearOf, splitQualifier, shortDate, longDate, fullDate, dateParts, isImpossibleDate, tidyDate } from '../js/utils/dates.js';
 import { setLang } from '../js/i18n.js';
 
 afterEach(() => setLang('fr'));
@@ -122,4 +122,27 @@ test('date en toutes lettres impossible : signalée', () => {
   assert.equal(isImpossibleDate('31 Février 1900'), true);
   assert.equal(isImpossibleDate('12 Javier 1950'), false); // mois inconnu : texte libre
   assert.equal(isImpossibleDate('28 Février 1900'), false);
+});
+
+test('dates mises en forme : jour et mois sur deux chiffres, mois bien écrit', () => {
+  assert.equal(tidyDate('4 jUIllet 1961'), '04 Juillet 1961');
+  assert.equal(tidyDate('1er fevrier 1900'), '01 Février 1900', 'accents remis');
+  assert.equal(tidyDate('12 decembre 1999'), '12 Décembre 1999');
+  assert.equal(tidyDate('juilet 1961'), 'Juillet 1961', 'une lettre oubliée');
+  assert.equal(tidyDate('janvie 1900'), 'Janvier 1900');
+  assert.equal(tidyDate('septembr 1944'), 'Septembre 1944', 'aussi proche de september : la langue de l’interface');
+  assert.equal(tidyDate('4/7/1961'), '04 Juillet 1961', 'les chiffres écrits en toutes lettres');
+  assert.equal(tidyDate('10-12-1995'), '10 Décembre 1995');
+  assert.equal(tidyDate('04.08.1961'), '04 Août 1961');
+  assert.equal(tidyDate('7/1961'), 'Juillet 1961');
+  assert.equal(tidyDate('vers 4/7/1961'), 'Vers 04 Juillet 1961');
+  assert.equal(tidyDate('VERS 1850'), 'Vers 1850');
+  assert.equal(tidyDate('31/2/1900'), '31/02/1900', 'une date qui n’existe pas reste en chiffres');
+  assert.equal(tidyDate('avant 3 aout 1914'), 'Avant 03 Août 1914', 'le préfixe reste, avec une majuscule');
+  assert.equal(tidyDate('  2  mars   1920 '), '02 Mars 1920');
+  assert.equal(tidyDate('5 july 1950'), '05 July 1950');
+  assert.equal(tidyDate('vers 1850'), 'Vers 1850');
+  assert.equal(tidyDate('apres 1900'), 'Après 1900', 'l’accent remis');
+  for (const free of ['1932', '28', 'mais 1920', '4 Agosto 1961', '']) assert.equal(tidyDate(free), free, free);
+  assert.equal(dateParts(tidyDate('4 jUIllet 1961')).d, 4, 'toujours lue');
 });
