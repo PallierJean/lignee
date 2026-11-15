@@ -120,6 +120,18 @@ Comme pour [la lecture des écritures](htr.md), si `ensurepip` manque : `python3
 --without-pip ~/lignee-voice` puis `curl -sS https://bootstrap.pypa.io/get-pip.py |
 ~/lignee-voice/bin/python`. Le modèle (`small`, environ 500 Mo) se télécharge à la première phrase.
 
+**Carte graphique NVIDIA** (facultatif) : Whisper l'utilise tout seul si les bibliothèques CUDA sont
+dans le même environnement (environ 1 Go), sans droits d'administrateur :
+
+```sh
+~/lignee-voice/bin/pip install nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"
+```
+
+Le pilote NVIDIA suffit, CUDA n'a pas à être installé sur le système. Sur une GeForce MX550 (2 Go),
+une phrase de 8 secondes est lue en 0,6 à 0,9 seconde avec `small` (3,6 à 4 secondes sur le
+processeur) et en 1,5 à 1,7 seconde avec `medium` (9 à 10 secondes sur le processeur). Si la carte
+manque ou échoue, Whisper revient au processeur.
+
 **Ollama** ([ollama.com](https://ollama.com), logiciel libre) et le modèle Qwen2.5 7B (environ 5 Go) :
 installer Ollama selon sa documentation (ou décompresser l'archive Linux dans `~/lignee-ollama`),
 le lancer (`ollama serve`), puis :
@@ -131,7 +143,10 @@ ollama pull qwen2.5:7b
 Relancer ensuite `npm start` : le micro apparaît. Réglages :
 
 - `LIGNEE_WHISPER` : Python de l'environnement de faster-whisper (par défaut `~/lignee-voice/bin/python`) ;
-- `LIGNEE_WHISPER_MODEL` : modèle Whisper (par défaut `small` ; `medium` est plus juste et plus lent) ;
+- `LIGNEE_WHISPER_MODEL` : modèle Whisper (par défaut `small` ; `medium` est plus juste et plus lent,
+  mais reste rapide sur une carte graphique) ;
+- `LIGNEE_WHISPER_DEVICE` : `auto` (par défaut : la carte graphique NVIDIA si elle peut, sinon le
+  processeur), `cpu` ou `cuda` ;
 - `LIGNEE_OLLAMA` : adresse d'Ollama (par défaut `http://127.0.0.1:11434`) ;
 - `LIGNEE_LLM_MODEL` : modèle d'Ollama (par défaut `qwen2.5:7b`). Des essais sur un portable sans
   carte graphique : Qwen2.5 7B comprend juste en 10 à 20 secondes ; Qwen2.5 3B répond en 6 à 10
