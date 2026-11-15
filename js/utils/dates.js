@@ -97,18 +97,23 @@ export function tidyDate(s) {
   const text = String(s ?? '').trim().replace(/\s+/g, ' ');
   if (!text) return text;
   const { rest } = splitQualifier(text);
-  const prefix = text.slice(0, text.length - rest.length);
+  // "avant 3 aout 1914" → "Avant 03 Août 1914": the word before the date takes a capital too
+  const before = text.slice(0, text.length - rest.length);
+  const word = before.toLowerCase().replace(/^apres/, 'après');
+  const prefix = word.charAt(0).toUpperCase() + word.slice(1);
   const two = (n) => String(+n).padStart(2, '0');
+  // In figures: the month written in words ("4/7/1961" → "04 Juillet 1961"); a date that doesn't exist stays in figures
   let m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(rest);
-  if (m) return prefix + two(m[1]) + '/' + two(m[2]) + '/' + m[3];
+  if (m) return prefix + longDate(two(m[1]) + '/' + two(m[2]) + '/' + m[3]);
   m = /^(\d{1,2})[/.-](\d{4})$/.exec(rest);
-  if (m) return prefix + two(m[1]) + '/' + m[2];
+  if (m) return prefix + longDate(two(m[1]) + '/' + m[2]);
   m = /^(\d{1,2})(?:er|re|st|nd|rd|th)?\s+(\p{L}+)\.?\s+(\d{4})$/u.exec(rest);
   const month = m && monthName(m[2]);
   if (month) return prefix + two(m[1]) + ' ' + month + ' ' + m[3];
   m = /^(\p{L}+)\.?\s+(\d{4})$/u.exec(rest);
   const alone = m && monthName(m[1]);
-  return alone ? prefix + alone + ' ' + m[2] : text;
+  if (alone) return prefix + alone + ' ' + m[2];
+  return /^\d{4}$/.test(rest) ? prefix + rest : text;
 }
 
 /** True if the date has the form dd/mm/yyyy, mm/yyyy or "dd month yyyy" but doesn't exist. */

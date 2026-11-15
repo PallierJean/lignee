@@ -14,7 +14,8 @@
   espaces et tirets indifférents).
   Les dates écrites autrement que les autres (« 4 juilet 1961 », « 4/7/1961 ») sont comptées, et
   « Mettre les dates en forme » les corrige toutes d'un coup (annulable) : jour et mois sur deux
-  chiffres, mois bien orthographié avec ses accents (« 04 Juillet 1961 », « 04/07/1961 »). Chaque
+  chiffres, mois en toutes lettres bien orthographié avec ses accents (« 4/7/1961 » devient
+  « 04 Juillet 1961 », « avant 3 aout 1914 » devient « Avant 03 Août 1914 »). Chaque
   fiche enregistrée est déjà écrite ainsi.
 
 - **Doublons** : fiches au même prénom usuel et au même nom, sans date contradictoire. La fusion

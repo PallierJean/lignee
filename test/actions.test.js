@@ -366,7 +366,7 @@ describe('formulaire', () => {
     }
   });
 
-  test('dates en toutes lettres dans le formulaire ; la saisie d’origine reste si le jour ne change pas', async () => {
+  test('dates en toutes lettres dans le formulaire, et enregistrées ainsi', async () => {
     loadTree([person('a', { given: 'Ana', surname: 'Roux', birthDate: '01/01/1900', deathDate: '1970' })]);
     S.focus = 'a';
     A.startEdit('a');
@@ -375,7 +375,7 @@ describe('formulaire', () => {
     assert.match(form, /id="f-ddate" value="1970"/);
     fill({ 'f-bdate': '01 Janvier 1900' });
     await A.submitEdit();
-    assert.equal(S.people.get('a').birthDate, '01/01/1900', 'même jour : rien ne change');
+    assert.equal(S.people.get('a').birthDate, '01 Janvier 1900', 'en chiffres, la date s’écrit en toutes lettres');
     A.startEdit('a');
     fill({ 'f-bdate': '02 Janvier 1900' });
     await A.submitEdit();
@@ -1134,7 +1134,7 @@ describe('événements de la page', () => {
     await settle();
     assert.equal(S.people.get('a').birthDate, '04 Juillet 1961');
     assert.equal(S.people.get('a').deathDate, '2001');
-    assert.equal(S.people.get('a').events[0].date, '06/07/1961');
+    assert.equal(S.people.get('a').events[0].date, '06 Juillet 1961');
     assert.equal(S.unions.get('u1').date, '01 Juin 1985');
     assert.doesNotMatch(html('paneAnalysis'), /data-act="tidy-dates"/, 'plus rien à mettre en forme');
     await A.undo();
