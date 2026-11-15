@@ -95,7 +95,8 @@ Modifiez l'arbre comme d'habitude : ajoutez une personne, une photo… Avec un j
 **chaque modification part sur GitHub toute seule**, quelques instants après l'avoir enregistrée :
 une fiche, une suppression, une fusion, un import, une annulation. Plusieurs modifications
 rapprochées font une seule sauvegarde, dont le message dit ce qui a changé. L'arbre et ses photos
-partent ensemble.
+partent ensemble, avec une copie de l'arbre au format GEDCOM (`<nom>.ged`, à côté du `.json`) :
+chaque version du dépôt peut ainsi être ouverte ou comparée dans un autre logiciel de généalogie.
 
 Il n'y a donc pas de bouton à cliquer. Le bouton **Sauvegarder sur GitHub** n'apparaît que la
 toute première fois, si le dépôt contient une sauvegarde écrite ailleurs : une fenêtre montre ce qui

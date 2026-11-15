@@ -410,6 +410,16 @@ describe('envoi vers le dépôt', () => {
     assert.equal(treeEntries().base_tree, 'arbre');
     assert.deepEqual(calls.find((c) => c.url.endsWith('/git/commits')).body.parents, ['c0']);
     assert.equal(repo.head, 'commits-sha');
+    assert.ok(!treeEntries().tree.some((x) => x.path.endsWith('.ged')), 'sans GEDCOM donné, pas de fichier .ged');
+  });
+
+  test('le GEDCOM part à côté de la sauvegarde, dans le même commit', async () => {
+    const { repo, target } = await opened();
+    calls.length = 0;
+    await pushBackup(repo, target, send([{ id: 'a', photo: data }]), 'msg', '0 HEAD\n0 TRLR\n');
+    const ged = treeEntries().tree.find((x) => x.path === 'principal.ged');
+    assert.equal(ged.content, '0 HEAD\n0 TRLR\n');
+    assert.equal(calls.filter((c) => c.url.endsWith('/git/commits') && c.method === 'POST').length, 1, 'un seul commit');
   });
 
   test('nouvelle photo transférée, photo retirée supprimée, sources comprises', async () => {
@@ -577,6 +587,8 @@ describe('connecter l’arbre ouvert', () => {
     await chooseRepoSave('replace');
     assert.equal(el('repoDiffDlg').hidden, true);
     assert.ok(calls.some((c) => c.method === 'PATCH'));
+    const ged = calls.findLast((c) => c.url.endsWith('/git/trees')).body.tree.find((x) => x.path === 'agathe.ged');
+    assert.match(ged.content, /^0 HEAD[^]*1 NAME Agathe[^]*0 TRLR/, 'l’arbre en GEDCOM, versionné avec la sauvegarde');
     head = S.repoLink.repo.head;
     calls.length = 0;
     await saveRepo();

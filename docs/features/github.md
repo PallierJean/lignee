@@ -21,7 +21,8 @@ fiche enregistrée, suppression, fusion, import, annuler, rétablir) programme u
 nomme l'action ; un contenu inchangé n'en fait aucun. Le bouton « Sauvegarder sur GitHub » n'apparaît
 que pour la première sauvegarde d'un dépôt écrit ailleurs, et « Réessayer l'envoi » après un échec ;
 les envois, automatiques ou par ces boutons, passent un par un. Rien ne part seul avant la première sauvegarde confirmée
-d'une sauvegarde écrite ailleurs, ni tant qu'un choix de conflit attend. Le `.json` et les photos
+d'une sauvegarde écrite ailleurs, ni tant qu'un choix de conflit attend. Le `.json`, les photos et le même arbre
+en GEDCOM (`<nom>.ged` à côté du `.json`, sans les photos : `buildGedcom` de `services/gedcom.js`)
 partent en un seul commit sur la branche par défaut, et une photo retirée de l'arbre quitte le dépôt (elle reste
 dans son historique). Une photo déjà dans le dépôt n'est pas renvoyée : elle est reconnue à son contenu.
 Les fichiers que Lignée a nommés dans le dossier des photos de la sauvegarde (`<nom>-<uuid>.jpg`) et

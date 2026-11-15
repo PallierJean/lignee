@@ -23,6 +23,9 @@ const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'im
 export const SENT_NAME = /-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp|gif)$/;
 const EMPTY_BACKUP = '{"format":"lignee","version":3,"people":[],"unions":[],"sources":[],"media":[]}\n';
 
+/** The GEDCOM file sent beside a backup: "famille.json" → "famille.ged". */
+export const gedPath = (path) => path.replace(/\.json$/i, '') + '.ged';
+
 const fail = (code) => Object.assign(new Error(code), { code });
 
 function checked(res) {
@@ -222,8 +225,10 @@ export async function attachPhotos(repo, backup) {
  * branch. Only new photos are transferred; those the tree no longer cites leave the
  * repository, while staying in its history. Refuses to overwrite a repository changed since it was read (`conflict`).
  * An empty repository first gets an initial commit, the only write the API accepts on it.
+ * `gedcom`: the same tree as a GEDCOM file, sent beside it in the same commit (<name>.ged), so
+ * that its versions can be read and compared by any genealogy software.
  */
-export async function pushBackup(repo, target, text, message) {
+export async function pushBackup(repo, target, text, message, gedcom = '') {
   if (!repo.head) {
     const path = target.path.split('/').map(encodeURIComponent).join('/');
     const { commit } = await repo.send('PUT', `/contents/${path}`, { message, content: btoa(EMPTY_BACKUP) });
@@ -277,6 +282,7 @@ export async function pushBackup(repo, target, text, message) {
     .filter((path) => !kept.has(path) && repo.files.has(path.normalize('NFC')));
   for (const path of gone) entries.push({ path, mode: '100644', type: 'blob', sha: null });
   entries.push({ path: target.path, mode: '100644', type: 'blob', content: JSON.stringify(backup, null, 2) });
+  if (gedcom) entries.push({ path: gedPath(target.path), mode: '100644', type: 'blob', content: gedcom });
 
   const { tree: { sha: baseTree } } = await (await repo.api(`/git/commits/${repo.head}`)).json();
   const { sha: tree } = await repo.send('POST', '/git/trees', { base_tree: baseTree, tree: entries });

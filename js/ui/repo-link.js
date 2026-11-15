@@ -15,6 +15,7 @@ import { fullName, isPhotoData } from '../model/people.js';
 import { afterData } from './render.js';
 import { toast } from './toast.js';
 import { markExported } from '../services/exported.js';
+import { buildGedcom } from '../services/gedcom.js';
 import { t } from '../i18n.js';
 
 function savedRepos() {
@@ -361,7 +362,7 @@ async function sendRepo(confirmed, prefer, { auto = false, label = '' } = {}) {
         // Nothing new since the last send (the date of the backup aside): no empty commit
         const content = text.replace(/\n\s*"exportedAt": "[^"]*",/, '');
         if (auto && content === link.lastSent) break;
-        await pushBackup(link.repo, link, text, commitMessage(label));
+        await pushBackup(link.repo, link, text, commitMessage(label), buildGedcom());
         link.lastSent = content;
         break;
       } catch (e) {
