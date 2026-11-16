@@ -120,6 +120,7 @@ export const EN = {
   'tr.repoConnectTree': (name) => `Connect “${name}” to this repository instead`,
   'tr.repoConnected': (name) => `“${name}” is connected: use “Save to GitHub” at the top of the page.`,
   'tr.repoLoading': 'Reading repository…',
+  'tr.repoPhotosProgress': (done, total) => `Reading repository: photos and documents ${done} / ${total}…`,
   'tr.repoPick': 'This repository holds several backups. Which one should be loaded?',
   'tr.repoPhotos': (n, missing) => `${n} photo${sEn(n)} loaded${missing ? `, ${missing} not found` : ''}.`,
   'tr.repoErr.invalid': 'Address not recognised. Enter for example https://github.com/account/repository.',

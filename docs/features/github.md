@@ -41,6 +41,14 @@ conservés. La fusion entre dans l'arbre ouvert en une seule action, annulable a
 même champ a été modifié différemment des deux côtés, ou si une fiche a été supprimée d'un côté et modifiée de l'autre,
 rien n'est envoyé : le bandeau nomme ces fiches et demande de garder « Mes modifications » ou « Celles du dépôt ».
 
+La lecture d'un dépôt prend surtout le temps des photos et documents (`attachPhotos` dans
+`services/github.js`) : ils sont lus 16 à la fois, et le dialogue affiche où elle en est. À la
+reconnexion d'un arbre déjà dans ce navigateur, ses images ne sont pas retéléchargées : chacune est
+reconnue à son nom git (SHA-1 de `blob <taille>\0` suivi du contenu, `gitBlobSha`), que la liste
+des fichiers du dépôt donne déjà. Seules les images nouvelles ou changées dans le dépôt sont lues.
+Sur un arbre de 170 images (27 Mo), la première ouverture passe de 29 à 12 secondes, la
+reconnexion de 27 à 2 secondes.
+
 Le site retient le dépôt de chaque arbre, jamais le jeton : il reste en mémoire jusqu'à la fermeture de la page.
 Après un rechargement, le bandeau propose de reconnecter l'arbre avec le jeton. Une importation avec « Charger le
 dépôt » relie aussi l'arbre créé, ou vide avant l'import ; avec un jeton en lecture, le bandeau indique « Lecture seule ».

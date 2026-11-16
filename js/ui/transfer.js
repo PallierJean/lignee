@@ -165,10 +165,15 @@ const ownTree = () => [...S.people.values()].some((p) => !p.example);
 const connectChoice = (repo) => (repo.write && ownTree()
   ? `<button class="btn" type="button" data-act="repo-connect-open">${t('tr.repoConnectTree', esc(treeName()))}</button>` : '');
 
+/** Where the repository's images stand, while they are read. */
+function showPhotoProgress(done, total) {
+  $('#importInfo').innerHTML = `<p>${t('tr.repoPhotosProgress', done, total)}</p>`;
+}
+
 /** Loads the photos of the chosen backup and opens it in a new tree, unless a choice remains to be made. */
 async function offerRepoBackup(repo, backup) {
   $('#importInfo').innerHTML = `<p>${t('tr.repoLoading')}</p>`;
-  const { found, missing, photos, base } = await attachPhotos(repo, backup);
+  const { found, missing, photos, base } = await attachPhotos(repo, backup, { onProgress: showPhotoProgress });
   pendingRepo = { repo, backup, photos, base };
   backup.fileName = backup.path.split('/').pop().replace(/\.json$/i, '');
   const note = (found || missing ? `<p>${t('tr.repoPhotos', found, missing)}</p>` : '')
@@ -183,7 +188,7 @@ async function offerRepoBackup(repo, backup) {
 /** Links the open tree to the repository. The example family doesn't go there: a new tree takes its place. */
 async function connectOpenTree(repo) {
   if (S.people.size && !ownTree() && !(await newTree(repo.name.split('/').pop()))) return;
-  await connectTree(repo);
+  await connectTree(repo, showPhotoProgress);
   closeTransfer();
   toast(t('tr.repoConnected', treeName()));
 }

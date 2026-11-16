@@ -9,7 +9,7 @@ import { norm } from '../utils/helpers.js';
 import {
   buildPortableBackup, convertPhotos, opSet, opDelete, inBatch, storePhotos, saveLocal, beginAction, commitAction, mapOf,
 } from '../services/storage.js';
-import { pushBackup, attachPhotos, readLatest, SENT_NAME } from '../services/github.js';
+import { pushBackup, attachPhotos, readLatest, knownImages, SENT_NAME } from '../services/github.js';
 import { mergeRecords, backupRecords, canonical, diffRecords, imagesOf } from '../services/merge.js';
 import { fullName, isPhotoData } from '../model/people.js';
 import { afterData } from './render.js';
@@ -60,6 +60,11 @@ export function linkRepo(repo, backup, photos, base) {
   S.repoLink = { tree: S.tree, name: repo.name, path: backup.path };
 }
 
+/** Images of the open tree (data URLs): photos, backs, documents, gallery. */
+const openTreeImages = () => COLLECTIONS.filter((c) => c !== 'unions')
+  .flatMap((c) => [...mapOf(c).values()].flatMap((x) => [x.photo, x.back]))
+  .filter(isPhotoData);
+
 /** Files of the open tree in this repository: the one already tracked, the one bearing its name. */
 function treePaths(repo) {
   const known = savedRepo();
@@ -74,14 +79,17 @@ export const holdsTree = (repo) => repo.backups.some((b) => treePaths(repo).incl
  * Links the open tree to the repository, empty or not. Resumes the backup already tracked, the one
  * named after the tree or the only one in the repository; otherwise a new file, named after the tree.
  * Replacing a backup you didn't write yourself will ask for confirmation.
+ * The open tree's images are not downloaded again: only those it doesn't have yet.
  */
-export async function connectTree(repo) {
+export async function connectTree(repo, onProgress = null) {
   const known = savedRepo();
   const paths = treePaths(repo);
   const backup = repo.backups.find((b) => paths.includes(b.path))
     || (repo.backups.length === 1 ? repo.backups[0] : null);
   const path = backup ? backup.path : paths[0] || paths[1];
-  const { photos, base } = backup ? await attachPhotos(repo, backup) : { photos: new Map() };
+  const { photos, base } = backup
+    ? await attachPhotos(repo, backup, { known: await knownImages(openTreeImages()), onProgress })
+    : { photos: new Map() };
   setLink(repo, path, photos, !!backup && !(known && known.head === repo.head), base);
   renderRepoBanner();
 }
