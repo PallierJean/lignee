@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.2.1](https://github.com/PallierJean/lignee/compare/v4.2.0...v4.2.1) (2026-11-16)
+
+### Bug Fixes
+
+* Keep browser trees in IndexedDB, so trees with photos fit ([3697de1](https://github.com/PallierJean/lignee/commit/3697de14531ab84ff8ebe6339459627f6924c56c))
+
+---
+
+### Corrections
+
+* Garder les arbres du navigateur dans IndexedDB, pour que les arbres avec leurs photos y tiennent (« le navigateur n'a plus de place » sur GitHub Pages) ([3697de1](https://github.com/PallierJean/lignee/commit/3697de14531ab84ff8ebe6339459627f6924c56c))
+
 ## [4.2.0](https://github.com/PallierJean/lignee/compare/v4.1.39...v4.2.0) (2026-11-15)
 
 ### Features
