@@ -16,6 +16,7 @@ const RAW = 'https://raw.githubusercontent.com/';
 const MAX_BACKUPS = 20; // .json files read at most to find the backups
 const HEAD_READS = 6; // reads of the last commit before concluding that it changed
 const HEAD_WAIT = 400; // ms entre deux lectures
+const PHOTO_READS = 16; // images read at the same time: 169 photos take 7 s instead of 17 with 4
 const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
 const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
 
@@ -162,6 +163,41 @@ export async function readLatest(repo, target) {
   return { backup, files, read, moveTo: () => Object.assign(repo, { head, read, files }) };
 }
 
+/** Bytes of a data URL. */
+function bytesOf(data) {
+  const text = atob(data.slice(data.indexOf(',') + 1));
+  const bytes = new Uint8Array(text.length);
+  for (let i = 0; i < text.length; i++) bytes[i] = text.charCodeAt(i);
+  return bytes;
+}
+
+/** Git's name for a file content, as the repository's file list gives it: SHA-1 of "blob <size>\0" + bytes. */
+export async function gitBlobSha(bytes) {
+  const head = new TextEncoder().encode(`blob ${bytes.length}\0`);
+  const all = new Uint8Array(head.length + bytes.length);
+  all.set(head);
+  all.set(bytes, head.length);
+  const hash = new Uint8Array(await crypto.subtle.digest('SHA-1', all));
+  return Array.from(hash, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Images already in the browser (data URLs), by their git name: sha -> data URL. Reading a repository
+ * then takes them from here instead of downloading them again.
+ */
+export async function knownImages(images) {
+  const known = new Map();
+  for (const data of new Set(images)) {
+    if (!isPhotoData(data)) continue;
+    try {
+      known.set(await gitBlobSha(bytesOf(data)), data);
+    } catch (e) {
+      /* unreadable image: it will be downloaded */
+    }
+  }
+  return known;
+}
+
 async function dataUrl(res, photo) {
   const bytes = new Uint8Array(await res.arrayBuffer());
   let binary = '';
@@ -172,11 +208,14 @@ async function dataUrl(res, photo) {
 /**
  * Replaces the backup's "photos/…" paths with the repository's images, looked up in
  * <backup name>/photos/ then next to the file. A missing image is removed from the record.
- * Returns { found, missing, photos, base }; photos maps each image to its file, for sending back;
+ * Returns { found, missing, reused, photos, base }; photos maps each image to its file, for sending back;
  * base holds the records as stored, the starting point of a later merge.
+ * `known` (from knownImages): images already in the browser, taken as they are when the repository's
+ * file has the same content (`reused` counts them); the others are downloaded, PHOTO_READS at a time.
+ * `onProgress(done, total)` follows the images.
  * Any other error (network, access) interrupts the read.
  */
-export async function attachPhotos(repo, backup) {
+export async function attachPhotos(repo, backup, { known = new Map(), onProgress = null } = {}) {
   // Already loaded (an import preview, then the open tree linked instead): the same answer, since
   // the backup's paths have become images and the repository's files could no longer be recognised
   if (backup.attached) return backup.attached;
@@ -190,14 +229,24 @@ export async function attachPhotos(repo, backup) {
     sources: (backup.sources || []).map((x) => ({ ...x.data, id: x.id })),
     media: (backup.media || []).map((x) => ({ ...x.data, id: x.id })),
   });
-  const count = { found: 0, missing: 0, photos: new Map(), base: stored };
+  const count = { found: 0, missing: 0, reused: 0, photos: new Map(), base: stored };
+  const records = [...backup.people, ...(backup.sources || []), ...(backup.media || [])];
+  const total = records.reduce((n, x) => n + [x.data.photo, x.data.back].filter(isPhotoFile).length, 0);
+  let done = 0;
+  const step = () => {
+    done++;
+    if (onProgress) onProgress(done, total);
+  };
+  if (onProgress && total) onProgress(0, total);
 
   const load = async (photo) => {
     if (!isPhotoFile(photo)) return photo;
     const file = find(photo);
     try {
       if (!file) throw fail('notFound');
-      const data = await dataUrl(await repo.read(file), photo);
+      let data = known.get(file.sha);
+      if (data) count.reused++;
+      else data = await dataUrl(await repo.read(file), photo);
       count.found++;
       count.photos.set(data, { ref: photo, path: file.path });
       return data;
@@ -205,10 +254,12 @@ export async function attachPhotos(repo, backup) {
       if (e.code !== 'notFound') throw e;
       count.missing++;
       return '';
+    } finally {
+      step();
     }
   };
 
-  await pool([...backup.people, ...(backup.sources || []), ...(backup.media || [])], 4, async (x) => {
+  await pool(records, PHOTO_READS, async (x) => {
     const p = await convertPhotos(x.data, load);
     if (!p.photo) delete p.photo;
     if (!p.photo || !p.back) delete p.back; // a back, alone, means nothing

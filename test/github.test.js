@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { test, describe, beforeEach, afterEach } from 'node:test';
 import { S } from '../js/state.js';
-import { parseRepo, openRepo, attachPhotos, pushBackup } from '../js/services/github.js';
+import { parseRepo, openRepo, attachPhotos, pushBackup, gitBlobSha, knownImages } from '../js/services/github.js';
 import { confirmRepoSave, saveRepo, forgetRepo, renderRepoBanner, chooseRepoSave, flushRepoSave, scheduleRepoSave } from '../js/ui/repo-link.js';
 import { beginAction, commitAction, opUpdate } from '../js/services/storage.js';
 import { readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo, openTransfer, closeTransfer } from '../js/ui/transfer.js';
@@ -14,6 +15,10 @@ const nativeFetch = globalThis.fetch;
 const backup = (extra = {}) => JSON.stringify({ format: 'lignee', version: 3, name: 'Famille', people: [{ id: 'a', given: 'Ana', photo: 'photos/Ané.jpg', ...extra }], unions: [] });
 let calls;
 let head;
+let delay = 0; // ms before each answer, to see the reads that overlap
+
+/** The name git gives a content, as `git hash-object` does. */
+const gitSha = (text) => createHash('sha1').update(`blob ${Buffer.byteLength(text)}\0`).update(text).digest('hex');
 
 /** Faux GitHub : `files` associe un chemin à son contenu ; `writable` : le jeton peut écrire. */
 function serve(files, status, writable = false) {
@@ -21,6 +26,7 @@ function serve(files, status, writable = false) {
   const paths = Object.keys(files);
   globalThis.fetch = async (url, init = {}) => {
     const method = init.method || 'GET';
+    if (delay) await new Promise((r) => setTimeout(r, delay));
     calls.push({ url, method, auth: init.headers && init.headers.Authorization, body: init.body && JSON.parse(init.body) });
     if (status) return new Response('', { status });
     if (method !== 'GET') {
@@ -33,10 +39,11 @@ function serve(files, status, writable = false) {
     if (url.endsWith('/compte/depot')) return Response.json({ default_branch: 'main' });
     if (url.includes('/git/commits/')) return Response.json({ tree: { sha: 'arbre' } });
     if (url.includes('/git/trees/')) {
-      return Response.json({ tree: [...paths.map((path) => ({ type: 'blob', path, sha: 'sha-' + paths.indexOf(path) })), { type: 'tree', path: 'x' }] });
+      return Response.json({ tree: [...paths.map((path) => ({ type: 'blob', path, sha: gitSha(files[path]) })), { type: 'tree', path: 'x' }] });
     }
-    const sha = url.match(/\/git\/blobs\/sha-(\d+)$/);
-    const path = sha ? paths[sha[1]] : decodeURIComponent(url.split(`/${head}/`)[1]);
+    const sha = url.match(/\/git\/blobs\/([0-9a-f]{40})$/);
+    // The files' current contents: a test may change them, as another save would
+    const path = sha ? paths.find((x) => gitSha(files[x]) === sha[1]) : decodeURIComponent(url.split(`/${head}/`)[1]);
     return path in files ? new Response(files[path]) : new Response('', { status: 404 });
   };
 }
@@ -52,7 +59,10 @@ beforeEach(() => {
   el('repoToken').value = '';
 });
 
-afterEach(() => { globalThis.fetch = nativeFetch; });
+afterEach(() => {
+  globalThis.fetch = nativeFetch;
+  delay = 0;
+});
 
 describe('adresse du dépôt', () => {
   test('formes acceptées', () => {
@@ -710,5 +720,76 @@ describe('connecter l’arbre ouvert', () => {
     forgetRepo();
     renderRepoBanner();
     assert.equal(el('repoBanner').hidden, true);
+  });
+});
+
+describe('lecture rapide du dépôt', () => {
+  const photoPath = (i) => `principal/photos/p${i}.jpg`;
+  const manyPhotos = (n) => {
+    const files = { 'principal.json': JSON.stringify({ format: 'lignee', version: 3, people: Array.from({ length: n }, (_, i) => ({ id: 'p' + i, given: 'P' + i, photo: `photos/p${i}.jpg` })), unions: [] }) };
+    for (let i = 0; i < n; i++) files[photoPath(i)] = 'image ' + i;
+    return files;
+  };
+  const photoReads = () => calls.filter((c) => /\/git\/blobs\/[0-9a-f]{40}$/.test(c.url) && c.method === 'GET').length - 1; // minus the .json
+
+  test('git names of images: as git hash-object gives them', async () => {
+    // Values given by `git hash-object`
+    assert.equal(await gitBlobSha(new TextEncoder().encode('img')), 'cf2d7699c6f20728bf126c8af08e7874a84b8696');
+    assert.equal(await gitBlobSha(new Uint8Array()), 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391');
+    const known = await knownImages(['data:image/jpeg;base64,' + btoa('img'), 'photos/x.jpg', '']);
+    assert.deepEqual([...known.keys()], [gitSha('img')]);
+  });
+
+  test('images read 16 at a time, with their progress', async () => {
+    serve(manyPhotos(40));
+    delay = 5;
+    const repo = await openRepo('compte/depot', 'jeton');
+    let running = 0;
+    let most = 0;
+    const read = repo.read;
+    repo.read = async (file) => {
+      most = Math.max(most, ++running);
+      try {
+        return await read(file);
+      } finally {
+        running--;
+      }
+    };
+    const steps = [];
+    const count = await attachPhotos(repo, repo.backups[0], { onProgress: (done, total) => steps.push([done, total]) });
+    assert.equal(count.found, 40);
+    assert.equal(most, 16);
+    assert.deepEqual(steps[0], [0, 40]);
+    assert.deepEqual(steps.at(-1), [40, 40]);
+    assert.equal(steps.length, 41);
+  });
+
+  test('images already in the browser are not downloaded again', async () => {
+    serve({ ...manyPhotos(3), 'principal/photos/p2.jpg': 'nouvelle' });
+    const repo = await openRepo('compte/depot', 'jeton');
+    const mine = (text) => 'data:image/jpeg;base64,' + btoa(text);
+    const known = await knownImages([mine('image 0'), mine('image 1'), mine('image 2, avant')]);
+    calls.length = 0;
+    const count = await attachPhotos(repo, repo.backups[0], { known });
+    assert.deepEqual([count.found, count.reused], [3, 2]);
+    assert.equal(photoReads() + 1, 1, 'only the changed image is read');
+    const people = repo.backups[0].people.map((x) => x.data.photo);
+    assert.deepEqual(people, [mine('image 0'), mine('image 1'), mine('nouvelle')]);
+    assert.equal(count.photos.get(mine('image 0')).path, photoPath(0), 'recognised for the next save');
+  });
+
+  test('reconnecting the open tree: its photos stay, nothing to download, nothing to send', async () => {
+    S.trees.get(S.tree).name = 'Principal';
+    S.people.set('p0', { given: 'P0', photo: 'data:image/jpeg;base64,' + btoa('image 0') });
+    S.people.set('p1', { given: 'P1', photo: 'data:image/jpeg;base64,' + btoa('image 1') });
+    serve(manyPhotos(2), 0, true);
+    el('repoToken').value = 'jeton';
+    await connectRepo(el('repoConnect'));
+    assert.equal(S.repoLink.path, 'principal.json');
+    assert.equal(photoReads(), 0, 'no image downloaded');
+    assert.equal(S.repoLink.photos.size, 2, 'both recognised: a save will not send them again');
+    calls.length = 0;
+    await saveRepo();
+    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs') && c.method === 'POST'), 'no photo sent again');
   });
 });

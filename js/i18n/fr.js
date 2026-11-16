@@ -125,6 +125,7 @@ export const FR = {
   'tr.repoConnectTree': (name) => `Connecter plutôt « ${name} » à ce dépôt`,
   'tr.repoConnected': (name) => `« ${name} » est connecté : utilisez « Sauvegarder sur GitHub » en haut de la page.`,
   'tr.repoLoading': 'Lecture du dépôt…',
+  'tr.repoPhotosProgress': (done, total) => `Lecture du dépôt : photos et documents ${done} / ${total}…`,
   'tr.repoPick': 'Ce dépôt contient plusieurs sauvegardes. Laquelle charger ?',
   'tr.repoPhotos': (n, missing) => `${n} photo${s(n)} chargée${s(n)}${missing ? `, ${missing} introuvable${s(missing)}` : ''}.`,
   'tr.repoErr.invalid': 'Adresse non reconnue. Indiquez par exemple https://github.com/compte/depot.',
