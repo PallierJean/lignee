@@ -122,8 +122,8 @@ Le dépôt est public : aucun jeton, aucun arbre réel ne doit y entrer. `.gitig
 
 ## Données dans le navigateur
 
-En mode navigateur (site GitHub Pages ou autre serveur), les arbres sont dans le `localStorage`
-de ce navigateur, sans chiffrement : toute personne qui utilise la même session y a accès.
+En mode navigateur (site GitHub Pages ou autre serveur), les arbres sont dans l'IndexedDB
+de ce navigateur (la liste des arbres dans le `localStorage`), sans chiffrement : toute personne qui utilise la même session y a accès.
 Effacer les données du site efface l'arbre ; d'où le conseil d'exporter une sauvegarde.
 
 Sur GitHub Pages, cette mémoire appartient à l'adresse `https://pallierjean.github.io`, commune à

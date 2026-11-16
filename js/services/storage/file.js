@@ -9,7 +9,7 @@ import { isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/peop
 import { pool } from '../../utils/helpers.js';
 import { say, failure } from '../notify.js';
 import { ensureTree, sortTrees } from './trees.js';
-import { readLocalTrees, readLocalData } from './local.js';
+import { readLocalTrees, readLocalData, openBrowserStore } from './local.js';
 
 const API = 'api/trees/';
 
@@ -58,6 +58,7 @@ export async function loadFile() {
 
   if (!list.length && !serverTooOld) {
     // First launch: the trees already kept in this browser are taken over, if any
+    await openBrowserStore();
     for (const t of readLocalTrees()) {
       const data = readLocalData(t.id);
       if (!data.people.size && !data.unions.size) continue;

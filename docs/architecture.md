@@ -92,7 +92,7 @@ lignee/
 │   │   ├── storage/
 │   │   │   ├── trees.js        Règles communes à la collection d'arbres
 │   │   │   ├── file.js         Mode fichier (server.js), photos en fichiers
-│   │   │   └── local.js        Mode navigateur (localStorage)
+│   │   │   └── local.js        Mode navigateur (IndexedDB, localStorage à défaut)
 │   │   ├── htr.js              Lecture d'une photo par le serveur local (Kraken)
 │   │   ├── voice.js            Voix : micro, Whisper et Qwen du serveur ou du navigateur
 │   │   ├── gedcom.js           Export et import GEDCOM 5.5.1
@@ -172,7 +172,7 @@ flowchart LR
   SV -->|opSet, opUpdate, opDelete| ST[storage.js]
   ST --> S[(S : state.js)]
   ST -->|mode file| F[(server.js : data/arbres/)]
-  ST -->|mode local| L[(localStorage)]
+  ST -->|mode local| L[(IndexedDB)]
   SV -->|emit via notify.js| C[ui/connect.js]
   C --> R[afterData : ui/render.js]
   S --> R

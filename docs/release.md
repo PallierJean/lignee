@@ -61,7 +61,7 @@ Sans ce fichier, `npm test` et la CI ignorent ces tests. Le cas du dépôt vide 
 À chaque push sur `main` d'un dépôt public, la CI publie l'application sur
 <https://pallierjean.github.io/lignee/>, en mode navigateur : chaque visiteur garde ses arbres dans son
 propre navigateur, et rien n'est envoyé au site. Pensez à exporter une sauvegarde `.json` : effacer les données du
-navigateur efface l'arbre. La place y est limitée (souvent 5 Mo), photos et documents compris.
+navigateur efface l'arbre. Les arbres sont dans l'IndexedDB du navigateur, qui prend des centaines de Mo, photos et documents compris.
 
 À la première visite, quand ce navigateur ne contient aucun arbre, la famille d'exemple s'ouvre sous le nom
 « Famille Bertrand (exemple) ». Elle ne remplace jamais un arbre existant, et le bandeau « Retirer les exemples » l'efface.
