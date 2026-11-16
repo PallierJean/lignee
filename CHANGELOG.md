@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.2.2](https://github.com/PallierJean/lignee/compare/v4.2.1...v4.2.2) (2026-11-16)
+
+### Performance Improvements
+
+* Read a GitHub repository faster: images already in the browser are reused ([d410adf](https://github.com/PallierJean/lignee/commit/d410adff41e0c76672d05dcb2294c8cd12fb3e5d))
+
+---
+
+### Performances
+
+* Lire un dépôt GitHub plus vite : la reconnexion ne retélécharge plus les photos déjà dans le navigateur (27 s → 2 s), la première ouverture lit 16 photos à la fois (29 s → 12 s) et affiche où elle en est ([d410adf](https://github.com/PallierJean/lignee/commit/d410adff41e0c76672d05dcb2294c8cd12fb3e5d))
+
 ## [4.2.1](https://github.com/PallierJean/lignee/compare/v4.2.0...v4.2.1) (2026-11-16)
 
 ### Bug Fixes
