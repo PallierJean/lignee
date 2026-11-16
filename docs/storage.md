@@ -16,7 +16,15 @@ Les exports (GEDCOM, .json) portent sur l'arbre ouvert et sont nommés d'après 
 | Où l'application est ouverte | Stockage |
 | --- | --- |
 | Avec `npm start` (server.js) | Un fichier par arbre dans `data/arbres/` du projet, photos dans `data/arbres/<id>/photos/` |
-| Avec un autre serveur ou un hébergement web | Navigateur (`localStorage`, clés `lignee.trees.v1` et `lignee.tree.<id>`) |
+| Avec un autre serveur ou un hébergement web | Navigateur : chaque arbre dans IndexedDB (base `lignee`, magasin `trees`, clé `<id>`), la liste des arbres dans le `localStorage` (`lignee.trees.v1`) |
+
+En mode navigateur, un arbre avec ses photos et documents intégrés pèse vite des dizaines de Mo :
+le `localStorage` n'en prend qu'environ 5 millions de caractères par site, IndexedDB des centaines
+de Mo. L'IndexedDB est lue une fois à l'ouverture de la page, puis gardée en mémoire. Les arbres
+qu'une version précédente avait laissés dans le `localStorage` (`lignee.tree.<id>`) y passent à ce
+moment-là, et quittent le `localStorage`. Si le navigateur refuse IndexedDB, tout reste dans le
+`localStorage`, comme avant. La page demande au navigateur de ne pas effacer ces données quand le
+disque se remplit (`navigator.storage.persist()`).
 
 Chaque fichier de `data/arbres/` a le même format que la sauvegarde .json (avec le
 nom de l'arbre dans `name`) : il se réimporte tel quel. Il est réécrit en entier à

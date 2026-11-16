@@ -40,7 +40,7 @@ async function init() {
   if (!(await loadFile())) {
     S.mode = 'local';
     await seedExample();
-    loadLocal();
+    await loadLocal();
   }
   afterData();
 

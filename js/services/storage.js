@@ -29,7 +29,7 @@ export function saveLocal() {
   const tree = S.trees.get(S.tree);
   if (tree) tree.count = S.people.size;
   if (S.mode === 'file') return saveFile();
-  saveBrowserTree();
+  return saveBrowserTree();
 }
 
 /* ---------- Writes (all modes) ---------- */
