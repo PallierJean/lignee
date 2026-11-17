@@ -358,8 +358,8 @@ describe('fiche : événements, sources, galerie', () => {
     // Repères invisibles, sans numéro ; le survol d'un nom éclaire son repère
     assert.match(html('mediaCard'), /class="tag-pin" type="button" data-tag="1"[^>]*><span class="tag-name"><b>Paul <span class="sur">BLANC<\/span><\/b><\/span><\/button>/);
     assert.equal((html('mediaCard').match(/class="tag-pin/g) || []).length, 1, 'Anne, sans repère : pas sur l’image');
-    assert.match(html('mediaCard'), /<li data-tag="0"><button class="link" type="button" data-act="media-person" data-id="a">/, 'mais dans la liste');
-    assert.match(html('mediaCard'), /<li data-tag="1"><button class="link"/);
+    assert.match(html('mediaCard'), /<li class="tag-chip" data-tag="0"><button class="tag-who" type="button" data-act="media-person" data-id="a">/, 'mais dans la liste');
+    assert.match(html('mediaCard'), /<li class="tag-chip" data-tag="1"><button class="tag-who"/);
     assert.doesNotMatch(html('mediaCard'), /class="tag-n"/);
     const pinEl = document.querySelector('.tag-pin[data-tag="1"]');
     const row = { closest: () => ({ dataset: { tag: '1' } }) };

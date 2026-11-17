@@ -22,6 +22,7 @@ import { captureDraft } from './form.js';
 import { searchPeople } from './search.js';
 import { toast, reportError } from './toast.js';
 import { mediaGroups } from './record.js';
+import { ICON_TO_GALLERY, ICON_TRASH } from './icons.js';
 
 /** Data changed: indexes and page follow (ui/render.js afterData, see ui/connect.js). */
 const afterData = () => emit('data');
@@ -91,9 +92,14 @@ export function renderMedia() {
   const shown = tags.filter((x) => P(x.id));
   const marks = shown.filter(hasPlace).map((x) => `<button class="tag-pin${pinSide(x)}" type="button" data-tag="${tags.indexOf(x)}" data-style="left:${x.x}%;top:${x.y}%"`
     + ` data-act="media-person" data-id="${esc(x.id)}" aria-label="${esc(fullName(P(x.id)))}">${tagLabel(P(x.id))}</button>`).join('');
-  const names = shown.map((x) => `<li data-tag="${tags.indexOf(x)}">`
-    + `<button class="link" type="button" data-act="media-person" data-id="${esc(x.id)}">${esc(fullName(P(x.id)))}</button>`
-    + (S.canWrite ? ` <button class="link" type="button" data-act="tag-remove" data-i="${tags.indexOf(x)}">${t('med.untag')}</button>` : '') + '</li>').join('');
+  // People on the image: boxes as on the record (name, years), × to remove them
+  const names = shown.map((x) => {
+    const years = lifeYears(P(x.id));
+    return `<li class="tag-chip" data-tag="${tags.indexOf(x)}">`
+      + `<button class="tag-who" type="button" data-act="media-person" data-id="${esc(x.id)}"><b>${esc(fullName(P(x.id)))}</b>${years ? ` <small>${esc(years)}</small>` : ''}</button>`
+      + (S.canWrite ? `<button class="tag-x" type="button" data-act="tag-remove" data-i="${tags.indexOf(x)}" aria-label="${esc(t('med.untagWho', fullName(P(x.id))))}" title="${esc(t('med.untagWho', fullName(P(x.id))))}">×</button>` : '')
+      + '</li>';
+  }).join('');
   // People named in the caption, without a marker yet, at the top of the list
   const tagged = new Set(tags.filter(hasPlace).map((x) => x.id));
   const named = peopleNamedIn([m.title, m.note].join(' ')).filter((id) => !tagged.has(id));
@@ -104,7 +110,7 @@ export function renderMedia() {
     : '';
   // The instruction above the image: that's where you click
   const hint = back ? `<p class="hint tag-hint">${t('med.backHint')}</p>`
-    : S.canWrite && !pin ? `<p class="hint tag-hint">${t('med.hint')}</p>` : '';
+    : S.canWrite && !pin ? `<p class="hint tag-hint">${t(isArchive() ? 'arc.hint' : 'med.hint')}</p>` : '';
   // Front and back: two sides of the same document
   const sides = photoSrc(m.back)
     ? `<div class="seg media-sides" role="group" aria-label="${t('med.sides')}">`
@@ -126,7 +132,7 @@ export function renderMedia() {
     + `<div class="media-pic${S.canWrite && !back ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(back ? m.back : m.photo))}" alt="${esc(m.title || '')}${back ? ' (' + t('med.back') + ')' : ''}">${marks}`
     + (pin ? `<span class="tag-pin new" data-style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
     + (isDraft() ? `<p class="hint">${t('med.draftHint')}</p>` : caption(m))
-    + (names ? `<ol class="tag-list">${names}</ol>` : '') + picker
+    + (names ? `<section class="media-people"><h3>${t('med.onImage')} <span class="n">${shown.length}</span></h3><ul class="tag-list">${names}</ul></section>` : '') + picker
     + (isDraft() || !S.canWrite || editing ? '' : deleteBlock()));
 }
 
@@ -171,26 +177,29 @@ function deleteBlock() {
         + `<button class="btn small danger" type="button" data-act="media-delete-yes">${t('arc.deleteYes')}</button>`
         + `<button class="btn small" type="button" data-act="media-delete-no">${t('cancel')}</button></div>`;
     }
-    return `<p class="media-delete"><button class="link" type="button" data-act="archive-to-gallery">${t('arc.toGallery')}</button> · `
-      + `<button class="link" type="button" data-act="media-delete">${t('arc.delete')}</button></p>`;
+    return actionBar(`<button class="btn small" type="button" data-act="archive-to-gallery">${ICON_TO_GALLERY}${t('arc.toGallery')}</button>`, 'arc.delete');
   }
-  const crop = back ? '' : `<button class="link" type="button" data-act="media-crop">${t('med.crop')}</button> · `;
+  const crop = back ? '' : `<button class="btn small" type="button" data-act="media-crop">${t('med.crop')}</button>`;
   // The back: a contract's second side, a photo's annotated back
   const side = photoSrc(m && m.back)
-    ? `<label class="link"><input type="file" accept="image/*" class="sr" data-media-back="1">${t('med.backChange')}</label> · `
-      + `<button class="link" type="button" data-act="media-back-remove">${t('med.backRemove')}</button> · `
-    : `<label class="link"><input type="file" accept="image/*" class="sr" data-media-back="1">${t('med.backAdd')}</label> · `;
+    ? `<label class="btn small"><input type="file" accept="image/*" class="sr" data-media-back="1">${t('med.backChange')}</label>`
+      + `<button class="btn small" type="button" data-act="media-back-remove">${t('med.backRemove')}</button>`
+    : `<label class="btn small"><input type="file" accept="image/*" class="sr" data-media-back="1">${t('med.backAdd')}</label>`;
   if (askArchive) {
     return `<div class="confirm media-delete"><p>${t('med.archiveAsk')}</p>`
       + `<button class="btn small primary" type="button" data-act="media-archive-yes">${t('med.archiveYes')}</button>`
       + `<button class="btn small" type="button" data-act="media-archive-no">${t('cancel')}</button></div>`;
   }
-  const archive = `<button class="link" type="button" data-act="media-archive">${t('med.archive')}</button> · `;
-  if (!askDelete) return `<p class="media-delete">${crop}${side}${archive}<button class="link" type="button" data-act="media-delete">${t('med.delete')}</button></p>`;
+  const archive = `<button class="btn small" type="button" data-act="media-archive">${t('med.archive')}</button>`;
+  if (!askDelete) return actionBar(crop + side + archive, 'med.delete');
   return `<div class="confirm media-delete"><p>${t('med.deleteAsk')}</p>`
     + `<button class="btn small danger" type="button" data-act="media-delete-yes">${t('med.deleteYes')}</button>`
     + `<button class="btn small" type="button" data-act="media-delete-no">${t('cancel')}</button></div>`;
 }
+
+/** The viewer's actions under the image: `buttons` on the left, the deletion apart, discreet, on the right. */
+const actionBar = (buttons, deleteLabel) => `<div class="media-actions"><div class="acts">${buttons}</div>`
+  + `<button class="btn small quiet" type="button" data-act="media-delete">${ICON_TRASH}${t(deleteLabel)}</button></div>`;
 
 /**
  * Crops the image shown (free frame): the cropped image replaces it, the people identified keep
@@ -308,6 +317,12 @@ export async function setMediaBack(file) {
 }
 
 /** Asks (true) or no longer asks to confirm the deletion of the image shown. */
+/** From the Archives list: the archive opens, its deletion waiting for confirmation under the image. */
+export function askArchiveDelete(sid) {
+  openArchive(sid);
+  if (isArchive() && current.archive === sid) askMediaDelete(true);
+}
+
 export function askMediaDelete(on) {
   if (on && (inForm() || (isArchive() && S.edit && citersOf(current.archive).includes(S.edit.id)))) {
     toast(t('finishFirst')); // the record form would bring the image back when saving
@@ -446,10 +461,9 @@ async function deleteArchive() {
  * Puts the archive shown back in the gallery, as it was classed: an image identifying the same
  * people, with their markers, its front, back, title, caption and readings. One undoable action.
  */
-export async function archiveToGallery() {
-  const m = item();
-  if (!m || !isArchive() || !S.canWrite) return;
-  const sid = current.archive;
+export async function archiveToGallery(sid = isArchive() ? current.archive : '') {
+  const m = archiveItem(sid);
+  if (!m || !S.canWrite) return;
   const src = S.sources.get(sid);
   if (S.edit && citersOf(sid).includes(S.edit.id)) {
     toast(t('finishFirst')); // the record form would cite the archive again when saving
@@ -471,7 +485,8 @@ export async function archiveToGallery() {
   } finally {
     commitAction();
   }
-  leaveCurrent(sid);
+  if (isArchive() && current.archive === sid) leaveCurrent(sid);
+  else afterData();
   toast(t('arc.backInGallery'));
 }
 
@@ -513,7 +528,8 @@ function caption(m) {
       + `<button class="btn small" type="button" data-act="caption-cancel">${t('cancel')}</button></div></div>`;
   }
   const text = [m.date, m.note].filter(Boolean).join(' · ');
-  const change = S.canWrite ? ` <button class="link" type="button" data-act="caption-edit">${t(text ? 'med.editCaption' : 'med.addCaption')}</button>` : '';
+  const label = isArchive() ? (text ? 'arc.editCaption' : 'arc.addCaption') : (text ? 'med.editCaption' : 'med.addCaption');
+  const change = S.canWrite ? ` <button class="link md-caption-edit" type="button" data-act="caption-edit">${t(label)}</button>` : '';
   return text || change ? `<p class="media-text">${esc(text)}${change}</p>` : '';
 }
 
@@ -577,11 +593,12 @@ export function openMedia(id, group = '') {
 }
 
 /** Opens archive `sid` (a source of the archives' kind); the arrows go through the Archives view's list. */
-export function openArchive(sid) {
-  if (!archiveItem(sid)) return;
+export function openArchive(sid, onBack = false) {
+  const m = archiveItem(sid);
+  if (!m) return;
   current = { archive: sid };
   sequence = (mediaGroups.get('archives') || []).filter((x) => archiveItem(x));
-  back = false;
+  back = !!onBack && !!photoSrc(m.back);
   askDelete = false;
   askArchive = false;
   pin = null;

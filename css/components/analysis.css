@@ -763,8 +763,24 @@
 }
 
 /* Photo caption, editable in place */
+.media-text {
+  margin: 10px 0 0;
+}
+
 .media-text .link {
   margin-left: 6px;
+}
+
+.media-text .md-caption-edit {
+  color: var(--muted);
+}
+
+.media-text .md-caption-edit::before {
+  content: "✎ ";
+}
+
+.media-text .md-caption-edit:hover {
+  color: var(--accent);
 }
 
 .media-caption {
@@ -895,19 +911,82 @@
   cursor: default;
 }
 
+/* People on the image: a heading and boxes, as the record's relatives */
+.media-people {
+  margin: 14px 0 0;
+}
+
+.media-people h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: .7188rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.media-people h3 .n {
+  font-family: var(--f-mono);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
 .tag-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
+  gap: 6px;
 }
 
-.tag-list li {
+.tag-chip {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  align-items: stretch;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.tag-chip:hover {
+  border-color: var(--accent);
+}
+
+.tag-who {
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  padding: 7px 4px 7px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tag-who small {
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.tag-x {
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: 0 6px 6px 0;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.tag-x:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 
 .tag-n {
@@ -994,6 +1073,43 @@
   border-top: 0;
 }
 
+.lib-item .lib-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* An archive's actions in the list: back to the gallery, delete */
+.lib-tools {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+
+.icon-btn.small {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.icon-btn.small:hover {
+  color: var(--accent);
+}
+
+.icon-btn.danger-hover:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* An icon before a button's label */
+.btn .ico {
+  vertical-align: -3px;
+  margin-right: 6px;
+}
+
 .lib-pic {
   flex: none;
   width: 44px;
@@ -1019,13 +1135,31 @@
   color: var(--accent);
 }
 
-/* Deleting an image from the viewer */
-.media-delete {
-  margin: 12px 0 0;
+/* The viewer's actions: a bar under a line, the deletion apart and discreet (as on the record) */
+.media-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line);
 }
 
-.media-delete [data-act="media-delete"] {
-  color: var(--danger, #c0392b);
+.media-actions .acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.media-actions label.btn {
+  cursor: pointer;
+}
+
+/* Confirmation of a deletion or a move to the archives, in place of the bar */
+.media-delete {
+  margin: 16px 0 0;
 }
 
 /* First cell of a gallery: adds photos */
