@@ -256,3 +256,127 @@ describe('galerie à la place de l’arbre', () => {
     S.gallery = false;
   });
 });
+
+describe('archives dans la visionneuse', () => {
+  /** Anne cites an archive where she and Paul are placed; Jean is in the tree, not on it. */
+  async function setup() {
+    const { S } = await import('../js/state.js');
+    const media = await import('../js/ui/media.js');
+    const { mediaGroups } = await import('../js/ui/record.js');
+    const { resetApp } = await import('./helpers.js');
+    resetApp();
+    loadTree([
+      person('a', { given: 'Anne', surname: 'Roux', media: [
+        { id: 'm1', photo: 'data:image/png;base64,A', back: 'data:image/png;base64,V', title: 'Mariage', date: '1912', note: 'à Lyon',
+          tags: [{ id: 'a', x: 10, y: 20 }, { id: 'b', x: 60, y: 30 }] }] }),
+      person('b', { given: 'Paul', surname: 'Roux' }),
+      person('c', { given: 'Jean', surname: 'Roux' }),
+    ]);
+    S.media.get('m1').text = { of: 'data:image/png;base64,A', model: 'Claude', lines: [{ box: [0, 0, 1, 1], text: 'Mariage' }] };
+    mediaGroups.set('g', ['m1']);
+    media.openMedia('m1', 'g');
+    await media.archiveMedia();
+    const [sid] = S.sources.keys();
+    mediaGroups.set('archives', [sid]);
+    const card = () => document.getElementById('mediaCard').innerHTML;
+    const citers = () => [...S.people].filter(([, p]) => (p.citations || []).some((c) => c.source === sid)).map(([id]) => id).sort();
+    return { S, media, sid, card, citers };
+  }
+
+  test('classer garde les repères et la lecture ; la visionneuse montre les ronds au survol', async () => {
+    const { S, media, sid, card } = await setup();
+    assert.deepEqual(S.sources.get(sid).tags, [{ id: 'a', x: 10, y: 20 }, { id: 'b', x: 60, y: 30 }]);
+    assert.equal(S.sources.get(sid).text.lines[0].text, 'Mariage', 'la lecture suit');
+    media.openArchive(sid);
+    assert.equal(document.getElementById('mediaDlg').hidden, false);
+    assert.equal((card().match(/class="tag-pin/g) || []).length, 2, 'un rond par visage');
+    assert.match(card(), /data-act="tag-remove"/);
+    assert.match(card(), /data-act="archive-to-gallery"/);
+    assert.match(card(), /data-act="media-delete"/);
+    assert.doesNotMatch(card(), /media-archive|media-crop/, 'ni « Classer aux archives », ni recadrage');
+    media.closeMedia();
+  });
+
+  test('identifier quelqu’un : il cite l’archive ; le retirer : il ne la cite plus ; la dernière personne reste', async () => {
+    const { S, media, sid, citers } = await setup();
+    const { undoAction } = await import('../js/services/storage.js');
+    media.openArchive(sid);
+    media.placePin({ querySelector: () => ({ getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 100 }) }) }, { clientX: 50, clientY: 50, target: { closest: () => null } });
+    await media.addTag('c');
+    assert.deepEqual(citers(), ['a', 'b', 'c'], 'Jean ajouté : il cite l’archive');
+    assert.deepEqual(S.sources.get(sid).tags.at(-1), { id: 'c', x: 25, y: 50 });
+    await media.removeTag(1);
+    assert.deepEqual(citers(), ['a', 'c'], 'Paul retiré : il ne la cite plus');
+    assert.ok(!S.sources.get(sid).tags.some((x) => x.id === 'b'));
+    await undoAction();
+    assert.deepEqual(citers(), ['a', 'b', 'c'], 'Ctrl+Z');
+    await media.removeTag(0);
+    await media.removeTag(0);
+    assert.deepEqual(citers(), ['c']);
+    await media.removeTag(0);
+    assert.deepEqual(citers(), ['c'], 'la dernière personne reste');
+    assert.match(document.getElementById('toast').textContent, /au moins une personne/);
+    assert.ok(S.sources.has(sid));
+    media.closeMedia();
+  });
+
+  test('remettre dans la galerie : la même image, ses repères et sa lecture ; plus d’archive ni de citation', async () => {
+    const { S, media, sid, citers } = await setup();
+    const { undoAction } = await import('../js/services/storage.js');
+    media.openArchive(sid);
+    await media.archiveToGallery();
+    assert.equal(S.sources.size, 0);
+    assert.deepEqual(citers(), []);
+    const [m] = [...S.media.values()];
+    assert.equal(m.photo, 'data:image/png;base64,A');
+    assert.equal(m.back, 'data:image/png;base64,V');
+    assert.equal(m.title, 'Mariage');
+    assert.equal(m.note, '1912 — à Lyon');
+    assert.deepEqual(m.tags, [{ id: 'a', x: 10, y: 20 }, { id: 'b', x: 60, y: 30 }]);
+    assert.equal(m.text.lines[0].text, 'Mariage');
+    assert.equal(document.getElementById('mediaDlg').hidden, true, 'plus rien à montrer : la visionneuse se ferme');
+    await undoAction();
+    assert.ok(S.sources.has(sid), 'Ctrl+Z la remet aux archives');
+    assert.equal(S.media.size, 0);
+    assert.deepEqual(citers(), ['a', 'b']);
+  });
+
+  test('supprimer l’archive : après confirmation, elle quitte l’arbre et les fiches', async () => {
+    const { S, media, sid, card, citers } = await setup();
+    const { undoAction } = await import('../js/services/storage.js');
+    media.openArchive(sid);
+    media.askMediaDelete(true);
+    assert.match(card(), /Supprimer cette archive/);
+    await media.deleteMedia();
+    assert.equal(S.sources.has(sid), false);
+    assert.deepEqual(citers(), []);
+    assert.equal(S.media.size, 0, 'pas remise dans la galerie');
+    await undoAction();
+    assert.deepEqual(citers(), ['a', 'b']);
+  });
+
+  test('une fiche qui cite l’archive, enregistrée par le formulaire, ne lui fait pas perdre ses repères', async () => {
+    const { S, sid } = await setup();
+    const { opUpdate } = await import('../js/services/storage.js');
+    const { sourcesOf } = await import('../js/model/sources.js');
+    const docs = sourcesOf(S.people.get('a'));
+    await opUpdate('people', 'a', { birthPlace: 'Lyon', sources: docs });
+    assert.equal(S.sources.get(sid).tags.length, 2, 'inchangée');
+    await opUpdate('people', 'a', { sources: docs.map((d) => ({ ...d, title: 'Noces' })) });
+    assert.equal(S.sources.get(sid).title, 'Noces');
+    assert.equal(S.sources.get(sid).tags.length, 2, 'titre changé depuis la fiche : les repères restent');
+  });
+
+  test('légende d’une archive : titre et texte modifiés sur la source, sans date', async () => {
+    const { S, media, sid, card } = await setup();
+    media.openArchive(sid);
+    media.editCaption(true);
+    assert.doesNotMatch(card(), /mdEditDate/);
+    document.getElementById('mdEditTitle').value = 'Noces';
+    document.getElementById('mdEditNote').value = 'Lyon, 1912';
+    await media.saveCaption();
+    assert.equal(S.sources.get(sid).title, 'Noces');
+    assert.equal(S.sources.get(sid).note, 'Lyon, 1912');
+    media.closeMedia();
+  });
+});

@@ -18,8 +18,14 @@ import { rid } from '../utils/helpers.js';
 export const CITATION_ROLES = ['subject', 'father', 'mother', 'spouse', 'witness'];
 const roleOf = (r) => (CITATION_ROLES.includes(r) && r !== 'subject' ? r : '');
 
-/** Fields of the document itself, shared by all who cite it. */
-export const SOURCE_FIELDS = ['kind', 'title', 'place', 'ref', 'note', 'photo', 'back', 'text', 'backText'];
+/** Fields that name a document converted from version 1 (documentId): unchanged, so are the ids. */
+const KEY_FIELDS = ['kind', 'title', 'place', 'ref', 'note', 'photo', 'back', 'text', 'backText'];
+
+/**
+ * Fields of the document itself, shared by all who cite it. `tags`: an archive's people placed on
+ * its image ([{ id, x, y }], see ui/media.js), as on a gallery image.
+ */
+export const SOURCE_FIELDS = [...KEY_FIELDS, 'tags'];
 
 /**
  * Text read on a side of document `src` (the front, or the back if `back`): { of, model, date,
@@ -67,7 +73,7 @@ function hash(text) {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 }
 
-const keyOf = (data) => JSON.stringify(SOURCE_FIELDS.map((k) => (typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k] ?? '')));
+const keyOf = (data) => JSON.stringify(KEY_FIELDS.map((k) => (typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k] ?? '')));
 
 /**
  * Id of an imported document. Two documents with the same certificate number or the same image,

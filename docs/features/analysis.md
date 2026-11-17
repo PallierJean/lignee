@@ -110,7 +110,12 @@
   `model/people.js`) : papiers de famille, et images classées depuis la galerie. Même liste que
   Sources, par famille, avec la recherche mais sans choix de nature. Ce sont toujours des sources,
   citées par les fiches ; changer la nature d'une source dans le formulaire la fait passer d'une
-  vue à l'autre.
+  vue à l'autre. Un clic sur une archive l'ouvre dans la visionneuse de la galerie (`openArchive`
+  dans `ui/media.js`) : les personnes qui la citent, un rond sur le visage de celles que ses `tags`
+  placent, qui s'allume au survol de leur nom. Identifier quelqu'un sur l'archive lui fait la citer ;
+  le retirer lui retire sa citation, sauf la dernière personne (sans elle, l'archive disparaîtrait).
+  « Remettre dans la galerie » en refait l'image de galerie, avec ses repères, son verso, sa légende et
+  sa lecture ; « Supprimer l'archive » la retire des fiches après confirmation ; tout est annulable.
 - **Galerie** : toutes les images de l'arbre, rangées à part des fiches (voir
   [Galerie](../data-format.md#galerie-media)). La première case ajoute des photos à la galerie de
   l'arbre, sans personne identifiée ; la même case, sur une fiche, ajoute des photos où la personne
@@ -118,7 +123,8 @@
   dans le recadrage libre (`ui/crop-free.js` : un cadre à poignées, déplaçable et redimensionnable,
   sans format imposé) ; ensuite, la visionneuse l'affiche pour identifier les personnes. Dans la
   visionneuse, « Recadrer », « Classer aux archives » (l'image devient une source « Archives
-  familiales », citée par les personnes identifiées, et passe dans la vue Archives) et « Supprimer
+  familiales », citée par les personnes identifiées, et passe dans la vue Archives avec ses repères
+  et sa lecture) et « Supprimer
   l'image » (après confirmation, annulable) ; recadrer
   garde les personnes identifiées à leur place, et retire celles qui sortent du cadre. Pour choisir
   la personne d'un visage, un champ de recherche (nom, lieu, année) remplace la liste de tout l'arbre ;

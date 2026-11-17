@@ -1,6 +1,9 @@
 /**
  * Gallery viewer: a photo or a document, with the people identified.
  * A click on the image places a marker, then you choose the person.
+ * It shows the archives too (images classed from the gallery, model/people.js ARCHIVE_KIND): a
+ * shared source whose `tags` place people on it, and whom every person identified cites. Identifying
+ * someone there adds their citation; removing them takes it away; the archive can go back to the gallery.
  * The images are the tree's gallery (model/media.js), apart from the records: a person is linked
  * to an image only by being identified on it, with a marker on their face or not yet.
  */
@@ -23,7 +26,7 @@ import { mediaGroups } from './record.js';
 /** Data changed: indexes and page follow (ui/render.js afterData, see ui/connect.js). */
 const afterData = () => emit('data');
 
-let current = null;  // { id }: image shown; { draft: index }: an image of the form, not saved yet
+let current = null;  // { id }: image shown; { draft: index }: an image of the form, not saved yet; { archive: source id }
 let pin = null;      // { x, y }: marker waiting for a person
 let editing = false; // caption being edited
 let sequence = [];    // [id]: the images of the grid it was opened from, in order
@@ -32,11 +35,35 @@ let askDelete = false; // the deletion of the image waits for its confirmation
 let askArchive = false; // moving the image to the archives waits for a confirmation
 
 const isDraft = () => !!current && current.draft !== undefined;
+const isArchive = () => !!current && current.archive !== undefined;
 const item = () => {
   if (!current) return null;
   if (isDraft()) return (S.edit && S.edit.media[current.draft] && !S.edit.media[current.draft].removed) ? S.edit.media[current.draft] : null;
+  if (isArchive()) return archiveItem(current.archive);
   return S.media.get(current.id) || null;
 };
+/** Id of the image or archive shown, as in `sequence`. */
+const shownId = () => (isArchive() ? current.archive : current.id);
+/** Shows image or archive `id`, in the same mode as now. */
+const show = (id) => { current = isArchive() ? { archive: id } : { id }; };
+
+const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') : []);
+
+/** People who cite source `sid`: [id], in the order of the tree. */
+const citersOf = (sid) => [...S.people].filter(([, p]) => listOf(p && p.citations).some((c) => c.source === sid)).map(([id]) => id);
+
+/**
+ * Archive `sid` as an image of the viewer: { title, note, photo, back, tags }. The people identified
+ * are those who cite it, with a marker where its `tags` place them.
+ */
+function archiveItem(sid) {
+  const src = S.sources.get(sid);
+  if (!src || src.kind !== ARCHIVE_KIND || !photoSrc(src.photo)) return null;
+  const citers = citersOf(sid);
+  const placed = tagsOf(src).filter((x) => hasPlace(x) && citers.includes(x.id));
+  const unplaced = citers.filter((id) => !placed.some((x) => x.id === id)).map((id) => ({ id }));
+  return { title: src.title || '', note: src.note || '', photo: src.photo, ...(src.back ? { back: src.back } : {}), tags: [...placed, ...unplaced] };
+}
 
 /** True if the record being edited holds the image shown: saving it would rewrite the image. */
 const inForm = () => !!(S.edit && current && !isDraft() && S.edit.media.some((x) => x.id === current.id));
@@ -85,7 +112,7 @@ export function renderMedia() {
       + `<button type="button" data-act="media-side" data-back="1" aria-pressed="${back}">${t('med.back')}</button></div>`
     : '';
   // From one image to the next: buttons, and the arrow keys (ui/events.js)
-  const at = sequence.indexOf(current.id);
+  const at = sequence.indexOf(shownId());
   const nav = sequence.length > 1 && at >= 0
     ? `<div class="media-nav"><button class="icon-btn" type="button" data-act="media-step" data-d="-1" aria-label="${t('med.prev')}" title="${t('med.prev')}">‹</button>`
       + `<span class="n">${t('med.position', at + 1, sequence.length)}</span>`
@@ -138,6 +165,15 @@ export function pickFirstTag() {
 /** Cropping and deleting the image: links, then a confirmation that says where it disappears. */
 function deleteBlock() {
   const m = item();
+  if (isArchive()) {
+    if (askDelete) {
+      return `<div class="confirm media-delete"><p>${t('arc.deleteAsk')}</p>`
+        + `<button class="btn small danger" type="button" data-act="media-delete-yes">${t('arc.deleteYes')}</button>`
+        + `<button class="btn small" type="button" data-act="media-delete-no">${t('cancel')}</button></div>`;
+    }
+    return `<p class="media-delete"><button class="link" type="button" data-act="archive-to-gallery">${t('arc.toGallery')}</button> · `
+      + `<button class="link" type="button" data-act="media-delete">${t('arc.delete')}</button></p>`;
+  }
   const crop = back ? '' : `<button class="link" type="button" data-act="media-crop">${t('med.crop')}</button> · `;
   // The back: a contract's second side, a photo's annotated back
   const side = photoSrc(m && m.back)
@@ -273,7 +309,7 @@ export async function setMediaBack(file) {
 
 /** Asks (true) or no longer asks to confirm the deletion of the image shown. */
 export function askMediaDelete(on) {
-  if (on && inForm()) {
+  if (on && (inForm() || (isArchive() && S.edit && citersOf(current.archive).includes(S.edit.id)))) {
     toast(t('finishFirst')); // the record form would bring the image back when saving
     return;
   }
@@ -300,7 +336,7 @@ function leaveCurrent(id) {
   const at = sequence.indexOf(id);
   sequence = sequence.filter((x) => x !== id);
   if (sequence.length) {
-    current = { id: sequence[Math.max(0, Math.min(at, sequence.length - 1))] };
+    show(sequence[Math.max(0, Math.min(at, sequence.length - 1))]);
     back = false;
   } else closeMedia();
   afterData();
@@ -324,9 +360,13 @@ export async function archiveMedia() {
   }
   askArchive = false;
   const source = rid('S');
+  // The markers on faces go with it: the archive shows them as the gallery did
+  const placed = tagsOf(m).filter((x) => hasPlace(x) && citers.includes(x.id));
   const doc = {
     source, fact: '', kind: ARCHIVE_KIND, title: m.title || '',
     note: [m.date, m.note].filter(Boolean).join(' — '), photo: m.photo, ...(photoSrc(m.back) ? { back: m.back } : {}),
+    ...(placed.length ? { tags: placed } : {}),
+    ...(m.text ? { text: m.text } : {}), ...(m.backText ? { backText: m.backText } : {}),
   };
   beginAction('hist.mediaArchive');
   try {
@@ -350,6 +390,10 @@ export async function archiveMedia() {
 export async function deleteMedia() {
   const m = item();
   if (!m || isDraft() || !S.canWrite) return;
+  if (isArchive()) {
+    await deleteArchive();
+    return;
+  }
   const { id } = current;
   askDelete = false;
   askArchive = false;
@@ -363,6 +407,72 @@ export async function deleteMedia() {
   }
   leaveCurrent(id);
   toast(t('med.deleted'));
+}
+
+/** Writes that take archive `sid` away from everyone citing it (people and unions); the source then goes. */
+async function uncite(sid) {
+  for (const [id, p] of [...S.people]) {
+    if (listOf(p.citations).some((c) => c.source === sid)) await opSet('people', id, withCitations(p, listOf(p.citations).filter((c) => c.source !== sid)));
+  }
+  for (const [id, u] of [...S.unions]) {
+    if (listOf(u && u.citations).some((c) => c.source === sid)) await opSet('unions', id, withCitations(u, listOf(u.citations).filter((c) => c.source !== sid)));
+  }
+  if (S.sources.has(sid)) await opDelete('sources', sid);
+}
+
+/** Record `x` with `citations`, the field left out when there are none. */
+function withCitations(x, citations) {
+  const { citations: _, ...rest } = x;
+  return citations.length ? { ...rest, citations } : rest;
+}
+
+/** Deletes the archive shown: its image and the citations of it. One undoable action. */
+async function deleteArchive() {
+  const sid = current.archive;
+  askDelete = false;
+  beginAction('hist.archiveDelete');
+  try {
+    await inBatch(() => uncite(sid));
+  } catch (e) {
+    reportError(e);
+  } finally {
+    commitAction();
+  }
+  leaveCurrent(sid);
+  toast(t('arc.deleted'));
+}
+
+/**
+ * Puts the archive shown back in the gallery, as it was classed: an image identifying the same
+ * people, with their markers, its front, back, title, caption and readings. One undoable action.
+ */
+export async function archiveToGallery() {
+  const m = item();
+  if (!m || !isArchive() || !S.canWrite) return;
+  const sid = current.archive;
+  const src = S.sources.get(sid);
+  if (S.edit && citersOf(sid).includes(S.edit.id)) {
+    toast(t('finishFirst')); // the record form would cite the archive again when saving
+    return;
+  }
+  const image = {
+    photo: m.photo, ...(m.back ? { back: m.back } : {}), title: m.title, date: '', note: m.note, tags: m.tags,
+    ...(src.text ? { text: src.text } : {}), ...(src.backText ? { backText: src.backText } : {}), createdAt: Date.now(),
+  };
+  beginAction('hist.archiveToGallery');
+  try {
+    await inBatch(async () => {
+      await opSet('media', rid('m'), image);
+      await uncite(sid);
+    });
+  } catch (e) {
+    reportError(e);
+    return;
+  } finally {
+    commitAction();
+  }
+  leaveCurrent(sid);
+  toast(t('arc.backInGallery'));
 }
 
 /**
@@ -397,7 +507,7 @@ function caption(m) {
     const off = S.busy ? ' disabled' : '';
     return `<div class="an-form media-caption">`
       + `<label class="fld"><span>${t('f.srcTitle')}</span><input id="mdEditTitle" value="${esc(fileTitle(m.title || '') ? m.title : '')}" placeholder="${t('f.medTitlePlaceholder')}"></label>`
-      + `<label class="fld"><span>${t('f.date')}</span><input id="mdEditDate" value="${esc(m.date)}"></label>`
+      + (isArchive() ? '' : `<label class="fld"><span>${t('f.date')}</span><input id="mdEditDate" value="${esc(m.date)}"></label>`)
       + `<label class="fld"><span>${t('med.caption')}</span><textarea id="mdEditNote" rows="3">${esc(m.note)}</textarea></label>`
       + `<div class="row-btns"><button class="btn small primary" type="button" data-act="caption-save"${off}>${t('save')}</button>`
       + `<button class="btn small" type="button" data-act="caption-cancel">${t('cancel')}</button></div></div>`;
@@ -427,7 +537,8 @@ export async function saveCaption() {
   editing = false;
   beginAction('hist.caption');
   try {
-    await opUpdate('media', current.id, patch);
+    if (isArchive()) await opUpdate('sources', current.archive, { title: patch.title, note: patch.note });
+    else await opUpdate('media', current.id, patch);
   } catch (e) {
     reportError(e);
   } finally {
@@ -465,15 +576,29 @@ export function openMedia(id, group = '') {
   renderMedia();
 }
 
+/** Opens archive `sid` (a source of the archives' kind); the arrows go through the Archives view's list. */
+export function openArchive(sid) {
+  if (!archiveItem(sid)) return;
+  current = { archive: sid };
+  sequence = (mediaGroups.get('archives') || []).filter((x) => archiveItem(x));
+  back = false;
+  askDelete = false;
+  askArchive = false;
+  pin = null;
+  editing = false;
+  $('#mediaDlg').hidden = false;
+  renderMedia();
+}
+
 /**
  * Next (d = 1) or previous (d = -1) image of the grid, going round; not while a marker waits for
  * its person or the caption is being edited.
  */
 export function stepMedia(d) {
   if (!current || pin || editing || sequence.length < 2) return false;
-  const at = sequence.indexOf(current.id);
+  const at = sequence.indexOf(shownId());
   if (at < 0) return false;
-  current = { id: sequence[(at + d + sequence.length) % sequence.length] };
+  show(sequence[(at + d + sequence.length) % sequence.length]);
   back = false;
   askDelete = false;
   askArchive = false;
@@ -516,6 +641,10 @@ export function cancelPin() {
 }
 
 async function saveTags(tags) {
+  if (isArchive()) {
+    await saveArchiveTags(tags);
+    return;
+  }
   if (isDraft()) {
     // An image of the form: the markers wait for the record to be saved
     item().tags = tags;
@@ -526,6 +655,48 @@ async function saveTags(tags) {
   beginAction('hist.tag');
   try {
     await opUpdate('media', current.id, { tags });
+  } catch (e) {
+    reportError(e);
+  } finally {
+    commitAction();
+    afterData();
+  }
+}
+
+/**
+ * The people identified on the archive shown become `tags`: the markers go to the source, a person
+ * added cites it, a person removed no longer does. The last one stays: without anyone citing it,
+ * the archive would disappear (deleting it says so).
+ */
+async function saveArchiveTags(tags) {
+  const sid = current.archive;
+  const ids = [...new Set(tags.map((x) => x.id))].filter((id) => P(id));
+  if (!ids.length) {
+    toast(t('arc.keepOne'), true);
+    renderMedia();
+    return;
+  }
+  if (S.edit && ids.concat(citersOf(sid)).includes(S.edit.id)) {
+    toast(t('finishFirst')); // the record form would rewrite that person's sources when saving
+    renderMedia();
+    return;
+  }
+  const before = citersOf(sid);
+  beginAction('hist.tag');
+  try {
+    await inBatch(async () => {
+      const { tags: _, ...src } = S.sources.get(sid);
+      const placed = tags.filter((x) => hasPlace(x) && ids.includes(x.id));
+      await opSet('sources', sid, placed.length ? { ...src, tags: placed } : src);
+      for (const id of ids.filter((x) => !before.includes(x))) {
+        const p = P(id);
+        await opSet('people', id, withCitations(p, [...listOf(p.citations), { id: rid('c'), source: sid, fact: '' }]));
+      }
+      for (const id of before.filter((x) => !ids.includes(x))) {
+        const p = P(id);
+        await opSet('people', id, withCitations(p, listOf(p.citations).filter((c) => c.source !== sid)));
+      }
+    });
   } catch (e) {
     reportError(e);
   } finally {

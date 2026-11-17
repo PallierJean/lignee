@@ -17,7 +17,7 @@ import {
   loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText, loadCommuneChanges, communeChangesLoaded, currentCommune,
   officialCommune, cityDepartments,
 } from '../model/communes.js';
-import { mediaGrid, addMediaTile } from './record.js';
+import { mediaGrid, addMediaTile, mediaGroups } from './record.js';
 import { readLink, readText, unread, batchState } from './reading.js';
 import { toast } from './toast.js';
 import { downloadBlob, fileBase } from './transfer.js';
@@ -734,7 +734,10 @@ function libraryItem({ src, cites }, kind) {
   const name = esc(String(src.title || t('src.' + kind)));
   // Front and back share data-pair: enlarged, one switches to the other (ui/events.js)
   const pair = (side) => (back ? ` data-pair="${esc(src.source || src.id || name)}" data-side="${side}"` : '');
-  const zoom = (url, label, side) => `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom"${pair(side)}>`;
+  const zoom = (url, label, side) => (kind === ARCHIVE_KIND && src.source
+    // An archive opens in the gallery's viewer: the people on it, and what can be done with it
+    ? `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('arc.open')}" loading="lazy" data-act="archive-open" data-id="${esc(src.source)}">`
+    : `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom"${pair(side)}>`);
   return `<li class="lib-item">${pic ? zoom(pic, name, 0) + (back ? zoom(back, `${name} (${t('med.back')})`, 1) : '') : '<span class="lib-pic none" aria-hidden="true"></span>'}`
     + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p>${readLink(src.source, S.sources.get(src.source))}</div></li>`;
 }
@@ -748,17 +751,21 @@ function libraryList(all, archives = false) {
   const list = all.filter((x) => (archives || !libKind || kindOf(x.src) === libKind) && (!q || text(x).includes(q)));
   if (!list.length) return `<p class="nofocus">${t('lib.noMatch')}</p>`;
   const kinds = [...new Set(list.map((x) => kindOf(x.src)))];
-  return kinds.map((kind) => {
+  const shown = []; // archives in the order shown: the viewer's arrows follow it
+  const html = kinds.map((kind) => {
     const items = list.filter((x) => kindOf(x.src) === kind);
     // Within the kind, one group per family, its name and count above (the list is already in that order)
     const families = [...new Set(items.map(familyOf))];
     const groups = families.map((family) => {
       const members = items.filter((x) => familyOf(x) === family);
+      shown.push(...members.map((x) => x.src.source).filter(Boolean));
       return `<li class="lib-family"><h4>${esc(family || t('lib.noName'))} - ${t(archives ? 'lib.docCount' : 'lib.count', members.length)}</h4>`
         + `<ul class="lib-list">${members.map((x) => libraryItem(x, kind)).join('')}</ul></li>`;
     }).join('');
     return `<section class="rel lib-kind"><h3>${esc(t('src.' + kind))} <span class="n">${items.length}</span></h3><ul class="lib-families">${groups}</ul></section>`;
   }).join('');
+  if (archives) mediaGroups.set('archives', shown);
+  return html;
 }
 
 /** Every image of the tree, the viewer going through them in this order as `group`. */
