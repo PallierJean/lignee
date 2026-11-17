@@ -18,6 +18,7 @@ import {
   officialCommune, cityDepartments,
 } from '../model/communes.js';
 import { mediaGrid, addMediaTile, mediaGroups } from './record.js';
+import { ICON_TO_GALLERY, ICON_TRASH } from './icons.js';
 import { readLink, readText, unread, batchState } from './reading.js';
 import { toast } from './toast.js';
 import { downloadBlob, fileBase } from './transfer.js';
@@ -736,10 +737,18 @@ function libraryItem({ src, cites }, kind) {
   const pair = (side) => (back ? ` data-pair="${esc(src.source || src.id || name)}" data-side="${side}"` : '');
   const zoom = (url, label, side) => (kind === ARCHIVE_KIND && src.source
     // An archive opens in the gallery's viewer: the people on it, and what can be done with it
-    ? `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('arc.open')}" loading="lazy" data-act="archive-open" data-id="${esc(src.source)}">`
+    ? `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('arc.open')}" loading="lazy" data-act="archive-open" data-id="${esc(src.source)}"${side ? ' data-back="1"' : ''}>`
     : `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom"${pair(side)}>`);
   return `<li class="lib-item">${pic ? zoom(pic, name, 0) + (back ? zoom(back, `${name} (${t('med.back')})`, 1) : '') : '<span class="lib-pic none" aria-hidden="true"></span>'}`
-    + `<div><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p>${readLink(src.source, S.sources.get(src.source))}</div></li>`;
+    + `<div class="lib-body"><p class="lib-what">${what}</p><p class="lib-who">${t('lib.citedBy')} ${who}</p>${readLink(src.source, S.sources.get(src.source))}</div>`
+    + (kind === ARCHIVE_KIND && src.source && S.canWrite ? archiveTools(src.source) : '') + '</li>';
+}
+
+/** An archive's two actions in the list: back to the gallery, delete (confirmed in the viewer). */
+function archiveTools(sid) {
+  const id = esc(sid);
+  return `<div class="lib-tools"><button class="icon-btn small" type="button" data-act="archive-to-gallery" data-id="${id}" aria-label="${t('arc.toGallery')}" title="${t('arc.toGallery')}">${ICON_TO_GALLERY}</button>`
+    + `<button class="icon-btn small danger-hover" type="button" data-act="archive-delete" data-id="${id}" aria-label="${t('arc.delete')}" title="${t('arc.delete')}">${ICON_TRASH}</button></div>`;
 }
 
 /** Family a document is filed under: the name shown of the first person citing it, or '' (no name). */

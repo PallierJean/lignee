@@ -660,6 +660,9 @@ export const EN = {
   'arc.deleteYes': 'Delete',
   'arc.deleted': 'Archive deleted',
   'arc.keepOne': 'An archive keeps at least one person: they are the one citing it. To take it out of the tree, delete the archive or move it back to the gallery.',
+  'arc.hint': 'To identify someone, click their face on the image, then choose the person: their record will cite the archive.',
+  'arc.addCaption': 'Add a title, a caption',
+  'arc.editCaption': 'edit the title, the caption',
   'med.delete': 'Delete the image',
   'med.deleteAsk': 'Delete this image? It disappears from the tree’s gallery and from those of the people identified on it. Ctrl+Z to undo.',
   'med.archiveNobody': 'First identify at least one person on the image: they will cite the source.',
@@ -995,6 +998,8 @@ export const EN = {
   'med.next': 'Next image (→)',
   'med.position': (i, n) => `${i} / ${n}`,
   'med.untag': 'remove',
+  'med.untagWho': (name) => `Remove ${name} from the image`,
+  'med.onImage': 'On the image',
 
   'pr.content': 'Content',
   'fb.open': 'Family booklet',

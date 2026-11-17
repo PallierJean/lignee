@@ -63,7 +63,7 @@ describe('supprimer une image depuis la visionneuse', () => {
     mediaGroups.set('g', ['m1', 'm2']);
     media.openMedia('m1', 'g');
     const card = () => document.getElementById('mediaCard').innerHTML;
-    assert.match(card(), /data-act="media-delete">Supprimer l’image/);
+    assert.match(card(), /data-act="media-delete"><svg[^]*?<\/svg>Supprimer l’image/);
     media.askMediaDelete(true);
     assert.match(card(), /galerie de l’arbre et de celles des personnes identifiées/);
     await media.deleteMedia();
@@ -205,7 +205,7 @@ describe('galerie indépendante des fiches', () => {
     media.openMedia('m1');
     const card = () => document.getElementById('mediaCard').innerHTML;
     assert.equal((card().match(/class="tag-pin/g) || []).length, 1, 'un seul repère sur l’image');
-    assert.match(card(), /data-act="media-person" data-id="a">Anne ROUX/, 'mais les deux dans la liste');
+    assert.match(card(), /data-act="media-person" data-id="a"><b>Anne ROUX/, 'mais les deux dans la liste');
     media.placePin({ querySelector: () => ({ getBoundingClientRect: () => ({ left: 0, top: 0, width: 100, height: 100 }) }) }, { clientX: 20, clientY: 30, target: { closest: () => null } });
     await media.addTag('a');
     assert.deepEqual(S.media.get('m1').tags, [{ id: 'b', x: 3, y: 4 }, { id: 'a', x: 20, y: 30 }]);
@@ -378,5 +378,43 @@ describe('archives dans la visionneuse', () => {
     assert.equal(S.sources.get(sid).title, 'Noces');
     assert.equal(S.sources.get(sid).note, 'Lyon, 1912');
     media.closeMedia();
+  });
+});
+
+describe('archives : icônes dans la liste', () => {
+  test('flèche vers la galerie et poubelle sur chaque archive ; la poubelle demande confirmation dans la visionneuse', async () => {
+    const { S } = await import('../js/state.js');
+    const media = await import('../js/ui/media.js');
+    const { mediaGroups } = await import('../js/ui/record.js');
+    const { renderAnalysis } = await import('../js/ui/analysis.js');
+    const { resetApp } = await import('./helpers.js');
+    resetApp();
+    loadTree([
+      person('a', { given: 'Anne', surname: 'Roux', media: [{ id: 'm1', photo: 'data:image/png;base64,A', back: 'data:image/png;base64,V', title: 'Lettre', tags: [{ id: 'a', x: 5, y: 5 }] }] }),
+    ]);
+    mediaGroups.set('g', ['m1']);
+    media.openMedia('m1', 'g');
+    await media.archiveMedia();
+    const [sid] = S.sources.keys();
+    S.tab = 'analysis';
+    S.analysis = 'archives';
+    renderAnalysis();
+    const pane = () => document.getElementById('paneAnalysis').innerHTML;
+    assert.match(pane(), new RegExp(`data-act="archive-to-gallery" data-id="${sid}" aria-label="Remettre dans la galerie"[^>]*><svg`));
+    assert.match(pane(), new RegExp(`data-act="archive-delete" data-id="${sid}" aria-label="Supprimer l’archive"[^>]*><svg`));
+    assert.match(pane(), /data-act="archive-open"[^>]*data-back="1"/, 'la vignette du verso ouvre le verso');
+    media.openArchive(sid, true);
+    assert.match(document.getElementById('mediaCard').innerHTML, /<img src="data:image\/png;base64,V"/);
+    media.closeMedia();
+    // The bin: the viewer opens on the archive, the deletion asked under the image
+    media.askArchiveDelete(sid);
+    assert.equal(document.getElementById('mediaDlg').hidden, false);
+    assert.match(document.getElementById('mediaCard').innerHTML, /Supprimer cette archive/);
+    media.closeMedia();
+    // The arrow: straight back to the gallery, without opening anything
+    await media.archiveToGallery(sid);
+    assert.equal(S.sources.size, 0);
+    assert.equal(S.media.size, 1);
+    assert.equal(document.getElementById('mediaDlg').hidden, true);
   });
 });

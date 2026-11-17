@@ -683,6 +683,9 @@ export const FR = {
   'arc.deleteYes': 'Supprimer',
   'arc.deleted': 'Archive supprimée',
   'arc.keepOne': 'Une archive garde au moins une personne : c’est elle qui la cite. Pour l’enlever de l’arbre, supprimez l’archive ou remettez-la dans la galerie.',
+  'arc.hint': 'Pour identifier quelqu’un, cliquez sur son visage dans l’image, puis choisissez la personne : sa fiche citera l’archive.',
+  'arc.addCaption': 'Ajouter un titre, une légende',
+  'arc.editCaption': 'modifier le titre, la légende',
   'med.delete': 'Supprimer l’image',
   'med.deleteAsk': 'Supprimer cette image ? Elle disparaît de la galerie de l’arbre et de celles des personnes identifiées dessus. Ctrl+Z pour annuler.',
   'med.archiveNobody': 'Identifie d’abord au moins une personne sur l’image : c’est elle qui citera la source.',
@@ -1028,6 +1031,8 @@ export const FR = {
   'med.next': 'Image suivante (→)',
   'med.position': (i, n) => `${i} / ${n}`,
   'med.untag': 'retirer',
+  'med.untagWho': (name) => `Retirer ${name} de l’image`,
+  'med.onImage': 'Sur l’image',
 
   // Printing: contents
   'pr.content': 'Contenu',

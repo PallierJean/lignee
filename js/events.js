@@ -17,7 +17,7 @@ import {
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
-  openMedia, openArchive, archiveToGallery, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, askMediaArchive, archiveMedia, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack } from './ui/media.js';
+  openMedia, openArchive, archiveToGallery, askArchiveDelete, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, askMediaArchive, archiveMedia, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack } from './ui/media.js';
 import { closeCropFree, resetCropFree, cropFreeDrag, cropFreeOpen } from './ui/crop-free.js';
 import { openReading, closeReading, readingSide, runReading, lightLine, editLine, readAll, stopBatch, readingOpen } from './ui/reading.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
@@ -236,8 +236,9 @@ const CLICK_ACTIONS = {
 
   // Gallery
   'media-open': (el) => openMedia(el.dataset.id, el.dataset.group),
-  'archive-open': (el) => openArchive(el.dataset.id),
-  'archive-to-gallery': once(() => archiveToGallery()),
+  'archive-open': (el) => openArchive(el.dataset.id, el.dataset.back === '1'),
+  'archive-to-gallery': once((el) => archiveToGallery(el.dataset.id || undefined)),
+  'archive-delete': (el) => askArchiveDelete(el.dataset.id),
   'media-step': (el) => stepMedia(Number(el.dataset.d)),
   'media-side': (el) => showMediaSide(el.dataset.back === '1'),
   'media-close': () => closeMedia(),
