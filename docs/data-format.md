@@ -200,6 +200,7 @@ Dans le formulaire, « Ou citer un document déjà dans l'arbre » ajoute une ci
 | `back` | `Image` | | Verso du document (second côté d'un contrat de mariage, d'un acte) ; seulement avec `photo` | non exporté |
 | `text` | `Reading` | | Texte lu sur `photo` (voir ci-dessous) | non exporté |
 | `backText` | `Reading` | | Texte lu sur `back` | non exporté |
+| `tags` | `Tag[]` | | Archive (`kind` `family`) : personnes placées sur l'image, comme dans la [galerie](#galerie-media) ; les personnes identifiées sont celles qui la citent | non exporté |
 
 `kind` : `birth`, `baptism`, `marriage`, `death`, `burial`, `census`, `military`, `notary`,
 `family`, `book`, `web`, `other`.
