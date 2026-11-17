@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.2.4](https://github.com/PallierJean/lignee/compare/v4.2.3...v4.2.4) (2026-11-17)
+
+### Bug Fixes
+
+* Tidy the viewer's footer, with icons to move an archive back or delete it ([7ad244f](https://github.com/PallierJean/lignee/commit/7ad244fde2a072736ffe7c3b2d470ef09f2d3f6a))
+
+---
+
+### Corrections
+
+* Une visionneuse plus lisible : personnes en cases avec ×, actions sous un trait avec une poubelle ; dans les Archives, une flèche pour remettre dans la galerie et une poubelle pour supprimer ([7ad244f](https://github.com/PallierJean/lignee/commit/7ad244fde2a072736ffe7c3b2d470ef09f2d3f6a))
+
 ## [4.2.3](https://github.com/PallierJean/lignee/compare/v4.2.2...v4.2.3) (2026-11-17)
 
 ### Bug Fixes
