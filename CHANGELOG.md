@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.2.3](https://github.com/PallierJean/lignee/compare/v4.2.2...v4.2.3) (2026-11-17)
+
+### Bug Fixes
+
+* Open archives in the gallery viewer, with their people, markers and actions ([935cc6a](https://github.com/PallierJean/lignee/commit/935cc6a467fea075e5c1aaf200743bb26f22b4b3))
+
+---
+
+### Corrections
+
+* Les archives s'ouvrent dans la visionneuse de la galerie : ronds sur les visages au survol, personnes identifiées à ajouter ou retirer, suppression et retour dans la galerie ; classer une image garde ses repères ([935cc6a](https://github.com/PallierJean/lignee/commit/935cc6a467fea075e5c1aaf200743bb26f22b4b3))
+
 ## [4.2.2](https://github.com/PallierJean/lignee/compare/v4.2.1...v4.2.2) (2026-11-16)
 
 ### Performance Improvements
