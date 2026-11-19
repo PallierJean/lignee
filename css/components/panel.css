@@ -141,6 +141,10 @@
   overflow-wrap: anywhere;
 }
 
+.facts .archives-link {
+  margin-left: 4px;
+}
+
 /* Parents, unions, children, siblings */
 .rel {
   margin-top: 20px;
