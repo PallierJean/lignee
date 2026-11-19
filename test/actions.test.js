@@ -257,6 +257,13 @@ describe('navigation et affichage', () => {
     assert.equal(hasDeathNumber(withDocs([{ kind: 'death', title: 'Décès en 1950' }])), false, 'une année n’est pas un numéro');
     assert.equal(hasDeathNumber(withDocs([{ kind: 'birth', title: 'Acte n°5' }])), false, 'un autre acte');
     assert.equal(hasDeathNumber({}), false);
+    // Filtre « Acte de décès » : le numéro, ou la photo de l'acte (une sépulture paroissiale n'a pas de numéro)
+    const photo = 'photos/acte.jpg';
+    assert.equal(passesFilter(withDocs([{ kind: 'death', title: 'Acte n°5' }]), 'certificate'), true);
+    assert.equal(passesFilter(withDocs([{ kind: 'death', title: 'Sépulture (1696)', photo }]), 'certificate'), true);
+    assert.equal(passesFilter(withDocs([{ kind: 'burial', title: 'Inhumation', photo }]), 'certificate'), true);
+    assert.equal(passesFilter(withDocs([{ kind: 'death', title: 'Sépulture (1696)' }]), 'certificate'), false, 'ni numéro ni photo');
+    assert.equal(passesFilter(withDocs([{ kind: 'birth', title: 'Baptême', photo }]), 'certificate'), false, 'un autre acte');
     assert.equal(passesFilter({ deceased: true }, 'living'), false);
     assert.equal(passesFilter({}, 'living'), true);
     assert.equal(passesFilter({ deceased: true }, ''), true);
