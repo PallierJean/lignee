@@ -13,3 +13,4 @@ coverage/
 
 # Tokens for the real GitHub tests
 .env.test
+.claude/settings.local.json
