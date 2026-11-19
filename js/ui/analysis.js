@@ -8,7 +8,7 @@ import { currentIssues, tidyPatches } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
 import { datesOfDay, datesOfMonth } from '../model/ephemerides.js';
 import { findDuplicates } from '../model/duplicates.js';
-import { ignoredPairs } from '../services/dup-ignore.js';
+import { ignoredPairs, ignoredIssues, issueKey } from '../services/dup-ignore.js';
 import { timelineOf } from '../model/timeline.js';
 import { placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
@@ -96,7 +96,16 @@ function issueHTML(x) {
   const other = x.ids[1] && x.code !== 'cycle' ? name(x.ids[1]) : '';
   const detail = x.n && x.n.type ? eventLabel(x.n) : x.n;
   return `<li class="chk ${x.level}"><p>${t('chk.' + x.code, names, other, typeof detail === 'string' ? esc(detail) : detail)}</p>`
-    + `<div class="chk-people">${x.ids.map(personLink).join('')}</div></li>`;
+    + `<div class="chk-people">${x.ids.map(personLink).join('')}</div>`
+    + `<div class="row-btns"><button class="btn small quiet" type="button" data-act="chk-ignore" data-key="${esc(issueKey(x))}">${t('chk.ignore')}</button></div></li>`;
+}
+
+/** Issues of the open tree, less those the user dismissed; and how many were. */
+function shownIssues() {
+  const all = currentIssues();
+  const ignored = ignoredIssues();
+  const shown = ignored.size ? all.filter((x) => !ignored.has(issueKey(x))) : all;
+  return { shown, hidden: all.length - shown.length };
 }
 
 /** Dates not written as the others: how many records, and the button that puts them right. */
@@ -107,8 +116,9 @@ function recordsTidy() {
 }
 
 function checksView() {
-  const issues = currentIssues();
-  if (!issues.length) return `${recordsTidy()}<p class="okmsg an-ok">✓ ${t('chk.none')}</p><p class="hint an-hint">${t('chk.scope')}</p>`;
+  const { shown: issues, hidden } = shownIssues();
+  const restore = hidden ? `<p class="hint an-hint">${t('chk.hidden', hidden)} <button class="link" type="button" data-act="chk-restore">${t('chk.restore')}</button></p>` : '';
+  if (!issues.length) return `${recordsTidy()}<p class="okmsg an-ok">✓ ${t('chk.none')}</p>${restore}<p class="hint an-hint">${t('chk.scope')}</p>`;
   const part = (level, sym) => {
     const list = issues.filter((x) => x.level === level);
     return list.length
@@ -116,7 +126,7 @@ function checksView() {
         + `<ul class="chks">${list.map(issueHTML).join('')}</ul></section>`
       : '';
   };
-  return recordsTidy() + part('error', '✕') + part('warn', '!') + `<p class="hint an-hint">${t('chk.scope')}</p>`;
+  return recordsTidy() + part('error', '✕') + part('warn', '!') + restore + `<p class="hint an-hint">${t('chk.scope')}</p>`;
 }
 
 /* ---------- Places ---------- */
@@ -793,7 +803,7 @@ const galleryView = () => galleryHTML('all');
 export const startLocate = () => locateMissing(renderAnalysis);
 
 export function renderAnalysis() {
-  const count = S.people.size ? currentIssues().length : 0;
+  const count = S.people.size ? shownIssues().shown.length : 0;
   $('#anCount').textContent = count ? String(count) : '';
   if (S.tab !== 'analysis') return;
   if (!S.people.size) {

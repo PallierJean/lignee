@@ -215,6 +215,8 @@ const CLICK_ACTIONS = {
   'kin-hide': () => A.hideKin(),
   'dup-merge': once((el) => A.mergePeople(el.dataset.keep, el.dataset.drop)),
   'dup-ignore': (el) => A.ignoreDuplicate(el.dataset.key),
+  'chk-ignore': (el) => A.ignoreCheck(el.dataset.key),
+  'chk-restore': () => A.restoreChecks(),
   'time-scope': (el) => A.setTimeScope(el.dataset.family === 'true'),
   'map-locate': () => startLocate(),
   'crop-ok': () => closeCrop(true),

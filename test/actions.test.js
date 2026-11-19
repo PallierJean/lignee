@@ -10,7 +10,7 @@ import { afterData, renderAll, renderSide } from '../js/ui/render.js';
 import { openPersonDlg } from '../js/ui/person-dlg.js';
 import { currentSituation, unionCauseText, hasDeathNumber, passesFilter } from '../js/model/people.js';
 import { renderTree } from '../js/tree/render.js';
-import { CW, CH, CARD_W, PHOTO_D, DUP_KEY, PREF_KEY } from '../js/config.js';
+import { CW, CH, CARD_W, PHOTO_D, DUP_KEY, CHK_KEY, PREF_KEY } from '../js/config.js';
 import { ignoredPairs } from '../js/services/dup-ignore.js';
 import { parsePlace } from '../js/model/places.js';
 import { resetHistory, canUndo } from '../js/services/history.js';
@@ -974,6 +974,8 @@ describe('événements de la page', () => {
     click({ act: 'time-scope', family: 'true' });
     click({ act: 'kin-open', id: camille });
     click({ act: 'dup-ignore', key: 'x|y' });
+    click({ act: 'chk-ignore', key: 'x|y' });
+    click({ act: 'chk-restore' });
     click({ act: 'focus', id: camille });
     click({ act: 'new' });
     click({ act: 'ev-add' });
@@ -1279,5 +1281,32 @@ describe('événements de la page', () => {
     } finally {
       globalThis.setTimeout = realTimeout;
     }
+  });
+});
+
+describe('cohérence : ignorer une alerte', () => {
+  test('l’alerte disparaît, reste ignorée après rechargement, propre à l’arbre, et se réaffiche', () => {
+    resetApp();
+    loadTree([
+      person('f', { sex: 'M', birthDate: '01/01/1900', deathDate: '01/03/1930' }),
+      person('b', { fatherId: 'f', birthDate: '01/06/1932' }),
+    ]);
+    S.tab = 'analysis';
+    S.analysis = 'checks';
+    renderSide();
+    assert.equal(el('anCount').textContent, '1');
+    const key = html('paneAnalysis').match(/data-act="chk-ignore" data-key="([^"]+)"/)[1];
+    A.ignoreCheck(key);
+    assert.equal(el('anCount').textContent, '', 'plus compté dans le badge');
+    assert.doesNotMatch(html('paneAnalysis'), /data-act="chk-ignore"/);
+    assert.match(html('paneAnalysis'), /1 alerte ignorée\. <button class="link" type="button" data-act="chk-restore">Tout réafficher/);
+    assert.deepEqual(JSON.parse(localStorage.getItem(CHK_KEY)), { principal: [key] }, 'gardé après rechargement');
+    S.tree = 'autre';
+    renderSide();
+    assert.equal(el('anCount').textContent, '1', 'propre à chaque arbre');
+    S.tree = 'principal';
+    A.restoreChecks();
+    assert.equal(el('anCount').textContent, '1');
+    assert.equal(localStorage.getItem(CHK_KEY), '{}');
   });
 });
