@@ -1,5 +1,27 @@
 # Changelog
 
+## [4.4.0](https://github.com/PallierJean/lignee/compare/v4.3.2...v4.4.0) (2026-11-19)
+
+### Features
+
+* Dismiss a consistency warning ([e4eb09a](https://github.com/PallierJean/lignee/commit/e4eb09acb448e6a21ff89e7c5b8ff3c0b81fe476))
+
+### Bug Fixes
+
+* Translate more occupations found in the trees ([bba0a28](https://github.com/PallierJean/lignee/commit/bba0a28eeee5cd68751255ff0c195c5ec68b3a5c))
+* Translate an occupation followed by its place ([e938ed2](https://github.com/PallierJean/lignee/commit/e938ed21dafd12a4763a4e0cd16366b2d0957cf0))
+
+---
+
+### Nouveautés
+
+* Une alerte de cohérence peut être ignorée, et toutes réaffichées. ([e4eb09a](https://github.com/PallierJean/lignee/commit/e4eb09acb448e6a21ff89e7c5b8ff3c0b81fe476))
+
+### Corrections
+
+* D'autres professions sont traduites (docteur en médecine, mécanicien automobile, cadre bancaire…). ([bba0a28](https://github.com/PallierJean/lignee/commit/bba0a28eeee5cd68751255ff0c195c5ec68b3a5c))
+* Une profession suivie de son lieu (« Cultivateur à X ») est désormais traduite. ([e938ed2](https://github.com/PallierJean/lignee/commit/e938ed21dafd12a4763a4e0cd16366b2d0957cf0))
+
 ## [4.3.2](https://github.com/PallierJean/lignee/compare/v4.3.1...v4.3.2) (2026-11-19)
 
 ### Bug Fixes
