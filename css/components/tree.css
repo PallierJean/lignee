@@ -2,8 +2,9 @@
    Tree: toolbar, dotted canvas, lines, cards
    ========================================================== */
 
-/* Toolbar above the tree: always one line. When the tree is narrow (side panel open), labels
-   become arrows and some buttons icons; if that is still too wide, the bar scrolls sideways */
+/* Toolbar above the tree: always one line. When the text of its buttons doesn't fit (.short, set
+   by ui/header.js), labels become arrows and some buttons icons; if that is still too wide, the
+   bar scrolls sideways */
 .stage {
   container: stage / inline-size;
 }
@@ -43,33 +44,32 @@
   vertical-align: -3px;
 }
 
-@container stage (max-width: 1300px) {
-  .stage-bar {
-    gap: 10px 12px;
-  }
+/* Text too wide for the bar: the short forms */
+.stage-bar.short {
+  gap: 10px 12px;
+}
 
-  .stage-bar .ctl {
-    gap: 6px;
-  }
+.stage-bar.short .ctl {
+  gap: 6px;
+}
 
-  .stage-bar .ico {
-    display: inline-block;
-  }
+.stage-bar.short .ico {
+  display: inline-block;
+}
 
-  /* The text stays for screen readers; the title gives it on hover */
-  .stage-bar .lbl .txt,
-  .stage-bar .has-ico .txt {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+/* The text stays for screen readers; the title gives it on hover */
+.stage-bar.short .lbl .txt,
+.stage-bar.short .has-ico .txt {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
-  .stage-bar .lbl .ico {
-    font-size: .9375rem;
-  }
+.stage-bar.short .lbl .ico {
+  font-size: .9375rem;
 }
 
 .lbl {
