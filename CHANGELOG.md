@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.2.5](https://github.com/PallierJean/lignee/compare/v4.2.4...v4.2.5) (2026-11-19)
+
+### Bug Fixes
+
+* The death certificate filter also keeps the records with the picture of their certificate ([8055ed7](https://github.com/PallierJean/lignee/commit/8055ed71d0dee903051424cbb3c6174ffd9df305))
+
+---
+
+### Corrections
+
+* Le filtre « Acte de décès » garde aussi les fiches qui ont la photo de leur acte ([8055ed7](https://github.com/PallierJean/lignee/commit/8055ed71d0dee903051424cbb3c6174ffd9df305))
+
 ## [4.2.4](https://github.com/PallierJean/lignee/compare/v4.2.3...v4.2.4) (2026-11-17)
 
 ### Bug Fixes
