@@ -8,7 +8,7 @@ import { renderHeader, renderControls } from './header.js';
 import { recordHTML } from './record.js';
 import { formHTML } from './form.js';
 import { renderRegister } from './register.js';
-import { renderAnalysis, galleryHTML } from './analysis.js';
+import { renderAnalysis, galleryHTML, sourceLibrary, stageSourcesHTML } from './analysis.js';
 import { refreshFind } from './search.js';
 import { renderTrees } from './trees.js';
 import { renderPersonDlg } from './person-dlg.js';
@@ -54,19 +54,21 @@ export function renderSide(force) {
   renderRecord(force);
 }
 
-/** The whole gallery over the tree (toolbar button): the tree stays drawn underneath, where it was. */
+/** The whole gallery, or every source, over the tree (toolbar buttons): the tree stays drawn underneath, where it was. */
 export function renderStageGallery() {
   const el = $('#stageGallery');
-  const show = S.gallery && !isLoading();
+  const show = !!S.stage && !isLoading();
   el.hidden = !show;
   $('#canvas').hidden = show;
   if (!show) {
     el.innerHTML = '';
     return;
   }
-  const n = allMedia().filter(({ m }) => m && m.photo).length;
-  setHTML(el, `<div class="sg-head"><h2>${t('ctl.gallery')} <span class="n">${n}</span></h2>`
-    + `<button class="btn small" type="button" data-act="stage-gallery">${t('sg.back')}</button></div>${galleryHTML('stage')}`);
+  const sources = S.stage === 'sources';
+  const n = sources ? sourceLibrary().length : allMedia().filter(({ m }) => m && m.photo).length;
+  setHTML(el, `<div class="sg-head"><h2>${t(sources ? 'ctl.sources' : 'ctl.gallery')} <span class="n">${n}</span></h2>`
+    + `<button class="btn small" type="button" data-act="stage-${S.stage}">${t('sg.back')}</button></div>`
+    + (sources ? stageSourcesHTML() : galleryHTML('stage')));
 }
 
 export function renderAll(force) {

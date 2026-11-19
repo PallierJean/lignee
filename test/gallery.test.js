@@ -253,7 +253,40 @@ describe('galerie à la place de l’arbre', () => {
     A.toggleStageGallery();
     assert.equal(el('stageGallery').hidden, true);
     assert.equal(el('canvas').hidden, false);
-    S.gallery = false;
+    S.stage = '';
+  });
+
+  test('les sources à la place de l’arbre, exclusives de la galerie, filtrées sans toucher au panneau', async () => {
+    const { S } = await import('../js/state.js');
+    const A = await import('../js/actions.js');
+    const { renderAll } = await import('../js/ui/render.js');
+    const { setLibraryFilter } = await import('../js/ui/analysis.js');
+    const { resetApp } = await import('./helpers.js');
+    resetApp();
+    loadTree([
+      person('a', { given: 'Anne', surname: 'Roux', sources: [{ kind: 'birth', title: 'Acte de naissance', ref: 'n°3' }] }),
+      person('b', { given: 'Paul', surname: 'Roux', sources: [{ kind: 'marriage', title: 'Contrat', ref: 'n°9' }] }),
+    ]);
+    S.focus = 'a';
+    renderAll();
+    const el = (id) => document.getElementById(id);
+    A.toggleStageGallery();
+    A.toggleStageSources();
+    assert.equal(el('btnGallery').getAttribute('aria-pressed'), 'false', 'la galerie laisse la place');
+    assert.equal(el('btnSources').getAttribute('aria-pressed'), 'true');
+    assert.equal(el('canvas').hidden, true);
+    const out = el('stageGallery').innerHTML;
+    assert.match(out, /Sources <span class="n">2<\/span>/);
+    assert.match(out, /id="sg-lib-q"/);
+    assert.match(out, /data-act="stage-sources">Revenir à l’arbre/);
+    assert.match(out, /Acte de naissance/);
+    setLibraryFilter(undefined, 'contrat');
+    assert.doesNotMatch(el('sg-libList').innerHTML, /Acte de naissance/);
+    assert.match(el('sg-libList').innerHTML, /Contrat/);
+    setLibraryFilter(undefined, '');
+    A.toggleStageSources();
+    assert.equal(el('stageGallery').hidden, true);
+    assert.equal(el('canvas').hidden, false);
   });
 });
 

@@ -703,7 +703,7 @@ let libQuery = '';
 const kindOf = (src) => (SOURCE_KINDS.includes(src.kind) ? src.kind : 'other');
 
 /** The Sources view, or with `archives` the Archives view (family papers, images archived from the gallery). */
-function sourcesView(archives = false) {
+function sourcesView(archives = false, p = '') {
   const list = sourceLibrary(archives);
   if (!list.length) return `<p class="nofocus">${t(archives ? 'lib.noArchive' : 'lib.none')}</p>`;
   const shared = list.filter((x) => new Set(x.cites.map((c) => c.id)).size > 1).length;
@@ -715,13 +715,16 @@ function sourcesView(archives = false) {
     ? `<p class="rd-batch" role="status">${t('htr.batch', batch.done, batch.total)} <button class="link" type="button" data-act="read-stop">${t('htr.stop')}</button></p>`
     : todo ? `<p class="rd-batch"><button class="btn small" type="button" data-act="read-all">${t('htr.readAll', todo)}</button> <span class="hint">${t('htr.allHint')}</span></p>` : '';
   // One kind in the archives: no choice of kind
-  const kind = archives ? '' : `<label class="fld"><span>${t('lib.kind')}</span><select id="lib-kind"><option value="">${t('lib.allKinds')}</option>`
+  const kind = archives ? '' : `<label class="fld"><span>${t('lib.kind')}</span><select id="${p}lib-kind"><option value="">${t('lib.allKinds')}</option>`
     + kinds.map((k) => `<option value="${k}"${k === libKind ? ' selected' : ''}>${esc(t('src.' + k))}</option>`).join('') + '</select></label>';
   return `<p class="hint an-hint">${t(archives ? 'lib.archiveHint' : 'lib.hint', list.length, shared)}</p>${reading}`
     + `<div class="${archives ? '' : 'row2 '}lib-filters">${kind}`
-    + `<label class="fld"><span>${t('lib.search')}</span><input id="lib-q" type="search" value="${esc(libQuery)}" placeholder="${t('lib.searchPlaceholder')}" autocomplete="off"></label></div>`
-    + `<div id="libList">${libraryList(list, archives)}</div>`;
+    + `<label class="fld"><span>${t('lib.search')}</span><input id="${p}lib-q" type="search" value="${esc(libQuery)}" placeholder="${t('lib.searchPlaceholder')}" autocomplete="off"></label></div>`
+    + `<div id="${p}libList">${libraryList(list, archives)}</div>`;
 }
+
+/** Every source over the tree (toolbar button): the Sources view, its filters shared with the panel's. */
+export const stageSourcesHTML = () => `<div class="sg-sources">${sourcesView(false, 'sg-')}</div>`;
 
 /** Sets the Sources view's filters; the list alone is redrawn, the search field keeps the cursor. */
 export function setLibraryFilter(kind, query) {
@@ -730,6 +733,8 @@ export function setLibraryFilter(kind, query) {
   const el = document.getElementById('libList');
   const archives = S.analysis === 'archives';
   if (el) el.innerHTML = libraryList(sourceLibrary(archives), archives);
+  const stage = document.getElementById('sg-libList');
+  if (stage) stage.innerHTML = libraryList(sourceLibrary());
 }
 
 /** One document of the Sources view: its thumbnail(s), what it is, and who cites it. */

@@ -927,6 +927,8 @@ export const EN = {
   'ctl.gallery': 'Gallery',
   'ctl.galleryTitle': 'Show every image of the gallery in place of the tree',
   'sg.back': 'Back to the tree',
+  'ctl.sources': 'Sources',
+  'ctl.sourcesTitle': 'Show every source in place of the tree',
   'ctl.fan': 'Fan chart',
   'ctl.line': 'Direct line',
   'ctl.photos': 'Photos',

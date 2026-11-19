@@ -199,6 +199,7 @@ const CLICK_ACTIONS = {
   full: () => A.toggleFull(),
   fan: () => A.toggleFan(),
   'stage-gallery': () => A.toggleStageGallery(),
+  'stage-sources': () => A.toggleStageSources(),
   line: () => A.toggleLine(),
   photos: () => A.togglePhotos(),
   filter: (el) => A.toggleFilter(el.dataset.filter),
@@ -511,7 +512,7 @@ export function bindEvents() {
     if (el.id === 'themeSel') A.setTheme(el.value);
     if (el.id === 'actsCc') setActsCc(el.value);
     if (el.id === 'src-cite' && el.value) A.citeDraftSource(el.value);
-    if (el.id === 'lib-kind') setLibraryFilter(el.value);
+    if (el.id === 'lib-kind' || el.id === 'sg-lib-kind') setLibraryFilter(el.value);
     if (el.id === 'textSel') A.setTextSize(el.value);
     if (el.name === 'f-sex') updateNames(false);
     if (el.id === 'f-father' || el.id === 'f-mother') updateNames(true);
@@ -552,7 +553,7 @@ export function bindEvents() {
       const label = document.getElementById(ev.target.id + 'name');
       if (label) label.textContent = departmentHint(ev.target.id.slice(0, -'-dept'.length));
     }
-    if (ev.target.id === 'lib-q') setLibraryFilter(undefined, ev.target.value);
+    if (ev.target.id === 'lib-q' || ev.target.id === 'sg-lib-q') setLibraryFilter(undefined, ev.target.value);
     if (ev.target.id === 'tagFind') onTagFind(ev.target.value);
     if (ev.target.id === 'q') {
       S.query = ev.target.value;
@@ -662,7 +663,7 @@ export function bindEvents() {
     }
     if (closeTopDialog()) return;
     if (S.edit && !S.busy) A.cancelEdit();
-    else if (S.gallery) A.toggleStageGallery();
+    else if (S.stage) A.toggleStage(S.stage);
     else if (S.sheet) A.closeSheet();
   });
 }

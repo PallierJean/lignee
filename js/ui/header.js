@@ -44,7 +44,8 @@ export function renderControls() {
   $('#btnLine').disabled = S.fan;
   $('#btnLine').title = t(S.fan ? 'ctl.lineFanTitle' : 'ctl.lineTitle');
   $('#btnPhotos').setAttribute('aria-pressed', String(S.photos));
-  $('#btnGallery').setAttribute('aria-pressed', String(S.gallery));
+  $('#btnGallery').setAttribute('aria-pressed', String(S.stage === 'gallery'));
+  $('#btnSources').setAttribute('aria-pressed', String(S.stage === 'sources'));
   $('#btnLiving').setAttribute('aria-pressed', String(S.filter === 'living'));
   $('#btnCertificate').setAttribute('aria-pressed', String(S.filter === 'certificate'));
   $('#btnPanel').setAttribute('aria-pressed', String(narrow() ? S.sheet : S.panel));
