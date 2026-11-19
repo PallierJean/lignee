@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.3.2](https://github.com/PallierJean/lignee/compare/v4.3.1...v4.3.2) (2026-11-19)
+
+### Bug Fixes
+
+* Switch the tree toolbar to icons as soon as its text no longer fits ([804c7fa](https://github.com/PallierJean/lignee/commit/804c7fa563da889d16268986d8729c324db9749d))
+
+---
+
+### Corrections
+
+* Passer la barre d'outils de l'arbre en icônes dès que son texte ne tient plus ([804c7fa](https://github.com/PallierJean/lignee/commit/804c7fa563da889d16268986d8729c324db9749d))
+
 ## [4.3.1](https://github.com/PallierJean/lignee/compare/v4.3.0...v4.3.1) (2026-11-19)
 
 ### Bug Fixes
