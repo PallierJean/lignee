@@ -37,6 +37,15 @@ describe('traduction des professions', () => {
     assert.equal(job('Baker / Boulanger'), 'Baker');
   });
 
+  test('métier suivi du lieu', () => {
+    setLang('en');
+    assert.equal(job('Cultivateur à Bressounaix d’Organde'), 'Farmer in Bressounaix d’Organde');
+    assert.equal(job('Astronaute à Paris'), 'Astronaute à Paris');
+    setLang('fr');
+    assert.equal(job('Baker in Lyon', 'F'), 'Boulangère à Lyon');
+    assert.equal(job('Cultivateur à Lyon'), 'Cultivateur à Lyon');
+  });
+
   test('métiers au féminin', () => {
     setLang('en');
     for (const [fr, en] of [['Couturière', 'Dressmaker'], ['Passementière', 'Trimmings maker'], ['Tanneur', 'Tanner'], ['Cheminot', 'Railway worker']]) assert.equal(job(fr), en);

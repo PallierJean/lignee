@@ -17,6 +17,7 @@ const OCCUPATIONS = [
   ['Banquier', 'Banquière', 'Banker'],
   ['Berger', 'Bergère', 'Shepherd'],
   ['Bijoutier', 'Bijoutière', 'Jeweller'],
+  ['Bourrelier', 'Bourrelière', 'Saddler'],
   ['Boucher', 'Bouchère', 'Butcher'],
   ['Boulanger', 'Boulangère', 'Baker'],
   ['Brasseur', 'Brasseuse', 'Brewer'],
@@ -69,6 +70,7 @@ const OCCUPATIONS = [
   ['Notaire', 'Notaire', 'Notary'],
   ['Ouvrier', 'Ouvrière', 'Worker'],
   ['Passementier', 'Passementière', 'Trimmings maker'],
+  ['Percepteur', 'Perceptrice', 'Tax collector'],
   ['Pâtissier', 'Pâtissière', 'Pastry chef'],
   ['Pêcheur', 'Pêcheuse', 'Fisherman'],
   ['Peintre', 'Peintre', 'Painter'],
@@ -76,6 +78,7 @@ const OCCUPATIONS = [
   ['Plombier', 'Plombière', 'Plumber'],
   ['Policier', 'Policière', 'Police officer'],
   ['Professeur', 'Professeure', 'Teacher'],
+  ['Propriétaire', 'Propriétaire', 'Landowner'],
   ['Retraité', 'Retraitée', 'Retired'],
   ['Sage-femme', 'Sage-femme', 'Midwife'],
   ['Sans profession', 'Sans profession', 'No occupation'],
@@ -85,6 +88,7 @@ const OCCUPATIONS = [
   ['Tanneur', 'Tanneuse', 'Tanner'],
   ['Tisserand', 'Tisserande', 'Weaver'],
   ['Tonnelier', 'Tonnelière', 'Cooper'],
+  ['Valet de labour', 'Servante de labour', 'Farmhand'],
   ['Vigneron', 'Vigneronne', 'Winegrower'],
   ['Visiteur médical', 'Visiteuse médicale', 'Medical visitor'],
 ];
@@ -99,10 +103,20 @@ for (const row of OCCUPATIONS) {
   if (!ENGLISH.has(key(row[2]))) ENGLISH.set(key(row[2]), row);
 }
 
-function translate(text, sex) {
+function translateWord(text, sex) {
   const k = key(text);
   if (getLang() === 'en') return !ENGLISH.has(k) && FRENCH.has(k) ? FRENCH.get(k)[2] : text;
   return !FRENCH.has(k) && ENGLISH.has(k) ? ENGLISH.get(k)[sex === 'F' ? 1 : 0] : text;
+}
+
+/** A known occupation, possibly followed by its place: "Cultivateur à X" ↔ "Farmer in X". */
+function translate(text, sex) {
+  const whole = translateWord(text, sex);
+  if (whole !== text) return whole;
+  const m = text.match(getLang() === 'en' ? /^(.+?)\s+à\s+(.+)$/i : /^(.+?)\s+in\s+(.+)$/i);
+  if (!m) return text;
+  const job = translateWord(m[1], sex);
+  return job === m[1] ? text : `${job} ${getLang() === 'en' ? 'in' : 'à'} ${m[2]}`;
 }
 
 /** A person's occupation in the chosen language; "Baker / Boulanger" gives a single word. */
