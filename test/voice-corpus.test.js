@@ -30,6 +30,8 @@ const CORPUS = [
   ['Ajoute Jean Tellier, né le 10-12-95 à Bordeaux.', { action: 'add', person: { given: 'Jean', surname: 'Tellier', birthDate: '10/12/1995', birthPlace: 'Bordeaux' } }],
   ['Ajoute la fiche, Jean Tellier, né le 10-12-95 à Bordeaux.', { action: 'add', person: { given: 'Jean', surname: 'Tellier', birthDate: '10/12/1995', birthPlace: 'Bordeaux' } }],
   ['Ajoute la carte, la fiche, Jean Telier, né en 1995.', { action: 'add', person: { given: 'Jean', surname: 'Telier', birthDate: '1995' } }],
+  ['Ajoute la fiche, Simone, Marie, Césarie, Durand.', { action: 'add', person: { given: 'Simone Marie Césarie', surname: 'Durand' } }],
+  ['Ajoute Anne, Louise Tellier, née en 1890.', { action: 'add', person: { given: 'Anne Louise', surname: 'Tellier', birthDate: '1890' } }],
   ['Ajoute une fiche pour Anne Tellier.', { action: 'add', person: { given: 'Anne', surname: 'Tellier' } }],
   ['Ajoute Marie de la Borie.', { action: 'add', person: { given: 'Marie', surname: 'De la Borie' } }],
 

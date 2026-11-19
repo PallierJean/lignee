@@ -337,7 +337,14 @@ export function parseCommand(sentence) {
   }
   if (add) {
     const { person, raw } = facts(body);
-    const [name = '', ...more] = raw.split(/\s*[,;:]\s*/).map(str).filter(Boolean);
+    const parts = raw.split(/\s*[,;:]\s*/).map(str).filter(Boolean);
+    // "Simone, Marie, Césarie, Bounichou": Whisper puts a comma after each first name said one by one
+    let name = parts.shift() || '';
+    for (let last = name; !last.includes(' ') && /^\p{Lu}/u.test(parts[0] || '') && isName(`${name} ${parts[0]}`); ) {
+      last = parts.shift();
+      name += ` ${last}`;
+    }
+    const more = parts;
     // "Louis Martin, cultivateur": a word or two after the name, the occupation
     if (more.length === 1 && !person.occupation && more[0].split(' ').length <= 2 && !/^(?:à|a|au|aux|en|le|la|les|de|du|des|in|at|the)\s/i.test(more[0]) && !NOT_NAME.test(more[0])) {
       person.occupation = more.pop();
