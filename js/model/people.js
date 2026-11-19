@@ -389,10 +389,17 @@ export const isDead = (p) =>
 export const hasDeathNumber = (p) => sourcesOf(p).some((s) => (s.kind === 'death' || s.fact === 'death')
   && (/\d/.test(String(s.ref || '')) || /\b(n|no|num[ée]ro)\s*[°º.]?\s*\d/i.test(String(s.title || ''))));
 
+/**
+ * Whether the death certificate of `p` is already in hand: a source with its picture, of a death or a
+ * burial, or citing the death. It isn't to be requested again.
+ */
+export const hasDeathDocument = (p) => sourcesOf(p).some((src) => src.photo && (['death', 'burial'].includes(src.kind) || src.fact === 'death'));
+
 /** Whether `p` passes tree filter `filter` ('' lets everyone through). */
 export function passesFilter(p, filter) {
   if (filter === 'living') return !isDead(p);
-  if (filter === 'certificate') return hasDeathNumber(p);
+  // A parish burial has no number: the picture of the certificate counts as much as its number
+  if (filter === 'certificate') return hasDeathNumber(p) || hasDeathDocument(p);
   return true;
 }
 

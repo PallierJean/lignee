@@ -8,7 +8,9 @@
  *                  deathDate: 'yyyymmdd', death: { city, dept, country }, certificate }
  */
 import { S } from '../state.js';
-import { P, isDead, partnersOf, childrenOf, sourcesOf } from './people.js';
+import { P, isDead, partnersOf, childrenOf, sourcesOf, hasDeathDocument } from './people.js';
+
+export { hasDeathDocument };
 import { dateParts, dateBounds, yearOf } from '../utils/dates.js';
 import { norm, rid } from '../utils/helpers.js';
 import { DICT } from '../i18n.js';
@@ -266,12 +268,6 @@ export function recordDeathAct(p, deptOf = () => '') {
     certificate: '', record: true,
   };
 }
-
-/**
- * Whether the death certificate of `p` is already in hand: a source with its picture, of a death or a
- * burial, or citing the death. It isn't to be requested again.
- */
-export const hasDeathDocument = (p) => sourcesOf(p).some((src) => src.photo && (['death', 'burial'].includes(src.kind) || src.fact === 'death'));
 
 /** Deaths before this year are asked of the departmental archives, not of the town hall. */
 export const ARCHIVES_BEFORE = 1800;
