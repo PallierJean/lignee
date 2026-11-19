@@ -109,12 +109,18 @@ export function toggleFull() {
 }
 
 /** Switches between the tree and the fan chart. */
-/** Shows the whole gallery in place of the tree, or the tree again. */
-export function toggleStageGallery() {
-  S.gallery = !S.gallery;
+/** Shows `what` ('gallery' or 'sources') in place of the tree, or the tree again. */
+export function toggleStage(what) {
+  S.stage = S.stage === what ? '' : what;
   renderControls();
   renderStageGallery();
 }
+
+/** Shows the whole gallery in place of the tree, or the tree again. */
+export const toggleStageGallery = () => toggleStage('gallery');
+
+/** Shows every source in place of the tree, or the tree again. */
+export const toggleStageSources = () => toggleStage('sources');
 
 export function toggleFan() {
   S.fan = !S.fan;

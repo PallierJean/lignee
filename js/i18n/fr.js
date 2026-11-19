@@ -956,6 +956,8 @@ export const FR = {
   'ctl.gallery': 'Galerie',
   'ctl.galleryTitle': 'Afficher toutes les images de la galerie à la place de l’arbre',
   'sg.back': 'Revenir à l’arbre',
+  'ctl.sources': 'Sources',
+  'ctl.sourcesTitle': 'Afficher toutes les sources à la place de l’arbre',
   'ctl.fan': 'Éventail',
   'ctl.line': 'Lignée directe',
   'ctl.photos': 'Photos',
