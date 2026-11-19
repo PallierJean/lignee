@@ -201,7 +201,7 @@ const kinOf = (word) => {
 
 const DATE = String.raw`(?:le |en |on |in |depuis |since )?((?:vers |avant |après |about |before |after )?(?:\d{1,2}(?:er)? )?(?:[a-zéû]+ )?\d{4}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{4}|\d{2}))`;
 // A place, and its department said in figures after it: "à Confolens, 16", "à Confolens (16)"
-const PLACE = String.raw`(?: (?:à|a|au|en|at|in) ([^,;.()]+?(?:\s*,\s*(?:\d{1,3}|2[AB])(?=[,;.\s]|$)|\s*\([^()]*\))?))?`;
+const PLACE = String.raw`(?:,?\s+(?:à|a|au|en|at|in) ([^,;.()]+?(?:\s*,\s*(?:\d{1,3}|2[AB])(?=[,;.\s]|$)|\s*\([^()]*\))?))?`;
 const BORN = String.raw`(?:n[ée]e?|born)`;
 const DIED = String.raw`(?:mort|morte|d[ée]c[ée]d[ée]e?|died)`;
 const END_BIRTH = String.raw`(?=[,;.]|\s+(?:et|and|il|elle|he|she|mort|morte|d[ée]c[ée]d[ée]e?|died|fils|fille|enfant|p[eè]re|m[eè]re|qui)${R}|$)`;
