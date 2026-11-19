@@ -53,6 +53,26 @@ export function renderControls() {
   $('#undoCtl').hidden = !S.canWrite;
   $('#btnUndo').disabled = !canUndo();
   $('#btnRedo').disabled = !canRedo();
+  fitToolbar();
+}
+
+let watched = false;
+
+/**
+ * The tree toolbar stays on one line: when its buttons with their text don't fit, labels become
+ * arrows and buttons icons (.short); if that is still too wide, the bar scrolls sideways.
+ * Measured rather than a fixed width: it depends on the language and on the buttons shown.
+ */
+export function fitToolbar() {
+  const bar = document.querySelector('.stage-bar');
+  if (!bar) return;
+  if (!watched && typeof ResizeObserver === 'function') {
+    watched = true;
+    new ResizeObserver(() => fitToolbar()).observe(bar);
+    document.fonts?.ready.then(() => fitToolbar());
+  }
+  bar.classList.remove('short');
+  bar.classList.toggle('short', bar.scrollWidth > bar.clientWidth);
 }
 
 function renderSummary() {
