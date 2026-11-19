@@ -7,7 +7,7 @@ import {
   P, given, surname, maiden, fullName, photoOf, photoSrc, avatarOf, lifeYears, ageInfo,
   partnersOf, childrenOf, siblingsOf, isMinor, UNION_AGE, situationText, eventsOf, sourcesOf, eventLabel, factLabel, SOURCE_KINDS, mediaOf, mediaLabel, unionTypeLabel, unionCauseText, unionEndText,
 } from '../model/people.js';
-import { sourcesOfPerson } from '../model/sources.js';
+import { sourcesOfPerson, inLifeOrder } from '../model/sources.js';
 import { readLink } from './reading.js';
 import { occupationLabel } from '../model/occupations.js';
 
@@ -43,7 +43,7 @@ export function addMediaTile(who = '') {
 
 /** A person's sources: certificate, supported fact, reference, note and document. */
 export function sourcesHTML(id) {
-  const items = sourcesOfPerson(id).map((s) => {
+  const items = inLifeOrder(sourcesOfPerson(id)).map((s) => {
     const img = photoSrc(s.photo);
     const back = photoSrc(s.back); // second side: a marriage contract, a two-sided certificate
     const kind = t('src.' + (SOURCE_KINDS.includes(s.kind) ? s.kind : 'other'));

@@ -196,6 +196,20 @@ export function sourcesOfPerson(id, { people = S.people, unions = S.unions, sour
   return [...own, ...fromUnions];
 }
 
+/** Place of a document in a life: birth or baptism, then marriage, then death or burial, then the rest. */
+function lifeRank(s) {
+  if (s.fact === 'birth' || (!s.fact && ['birth', 'baptism'].includes(s.kind))) return 0;
+  if (unionOfFact(s.fact) || (!s.fact && s.kind === 'marriage')) return 1;
+  if (s.fact === 'death' || (!s.fact && ['death', 'burial'].includes(s.kind))) return 2;
+  return 3;
+}
+
+/** Documents in the order of a life (birth, marriage, death, others), each group in its own order. */
+export const inLifeOrder = (docs) => docs
+  .map((s, i) => [lifeRank(s), i, s])
+  .sort((x, y) => x[0] - y[0] || x[1] - y[1])
+  .map(([, , s]) => s);
+
 /**
  * Documents (version 1 style, as the form or a merge produce them) to citations:
  * { citations, docs: Map source id -> document }. A document keeps its source when it has one:
