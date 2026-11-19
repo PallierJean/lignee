@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.3.1](https://github.com/PallierJean/lignee/compare/v4.3.0...v4.3.1) (2026-11-19)
+
+### Bug Fixes
+
+* Understand a voice command with a comma between the date and the place of birth ([cb4d0c2](https://github.com/PallierJean/lignee/commit/cb4d0c2fea2533b98cea477fd1624febac74e6a9))
+
+---
+
+### Corrections
+
+* Comprendre une commande vocale avec une virgule entre la date et le lieu de naissance ([cb4d0c2](https://github.com/PallierJean/lignee/commit/cb4d0c2fea2533b98cea477fd1624febac74e6a9))
+
 ## [4.3.0](https://github.com/PallierJean/lignee/compare/v4.2.6...v4.3.0) (2026-11-19)
 
 ### Features
