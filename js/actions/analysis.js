@@ -11,7 +11,7 @@ import { renamePatches } from '../model/places.js';
 import { tidyPatches } from '../model/checks.js';
 import { deathDifferences } from '../model/insee.js';
 import { inseeMatch, ignoreInsee, confirmInsee } from '../services/insee.js';
-import { ignorePair } from '../services/dup-ignore.js';
+import { ignorePair, ignoreIssue, restoreIssues } from '../services/dup-ignore.js';
 import { renderTree, scrollToFocus, scrollToPerson } from '../tree/render.js';
 import { renderSide, renderRecord, afterData } from '../ui/render.js';
 import { renderControls } from '../ui/header.js';
@@ -76,6 +76,20 @@ export function hideKin() {
   renderTree();
   renderSide();
   requestAnimationFrame(scrollToFocus);
+}
+
+/* ---------- Consistency ---------- */
+
+/** "Ignore": the warning is no longer shown, even after a reload. */
+export function ignoreCheck(key) {
+  ignoreIssue(key);
+  renderSide();
+}
+
+/** Shows again the warnings dismissed in the open tree. */
+export function restoreChecks() {
+  restoreIssues();
+  renderSide();
 }
 
 /* ---------- Duplicates ---------- */
