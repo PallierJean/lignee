@@ -25,6 +25,7 @@ import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hove
 import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
 import { closeCrop, cropZoomInput, cropWheel, cropDrag, cropOpen } from './ui/crop.js';
 import { pinch } from './ui/pinch.js';
+import { openArchives } from './ui/record.js';
 import { defineDialogs, dialogOpen, closeTopDialog, closeOnBackdrop } from './ui/dialogs.js';
 import { onFindInput, onFindKey, closeFind, pickFind, showAllFind } from './ui/search.js';
 import { toggleVoice, startVoice, closeVoice, pickVoice, newVoice, saveVoice, cancelVoice, toggleVoiceReply, answerConsent, understand, voiceOpen } from './ui/voice.js';
@@ -165,6 +166,7 @@ const once = (fn) => (el) => {
 const CLICK_ACTIONS = {
   // Record photo
   'photo-zoom': (el) => openPhotoZoom(el),
+  'archives-open': (el) => openArchives(el.dataset.place),
 
   // Record dialog
   // In the fan chart, the record waits a moment: a double-click recentres the fan (ui/fan-hover.js)

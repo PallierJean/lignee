@@ -10,6 +10,11 @@ import {
 import { sourcesOfPerson, inLifeOrder } from '../model/sources.js';
 import { readLink } from './reading.js';
 import { occupationLabel } from '../model/occupations.js';
+import { parsePlace } from '../model/places.js';
+import { loadCommunes, placeDepartment } from '../model/communes.js';
+import { departmentName } from '../model/departments.js';
+import { findArchives, archivesSearchUrl } from '../services/town-hall.js';
+import { toast } from './toast.js';
 
 /** Gallery thumbnails; a click opens the viewer. */
 /** Images of each grid shown, in order: group -> [id] (see ui/media.js). */
@@ -84,9 +89,38 @@ function unionText(partner) {
   return '× ' + (parts.join(', ') || t('record.union')) + (end ? ' · ' + t('ue.ended', end) : '');
 }
 
+/**
+ * Date and place of a fact; a place in France gets a link to its departmental archives, where
+ * the registers of births, marriages and deaths are often online.
+ */
 function fact(date, place) {
-  const text = [longDate(date), String(place || '').trim()].filter(Boolean).join(', ');
-  return text ? esc(text) : `<span class="muted">${t('record.notSet')}</span>`;
+  const where = String(place || '').trim();
+  const text = [longDate(date), where].filter(Boolean).join(', ');
+  if (!text) return `<span class="muted">${t('record.notSet')}</span>`;
+  const pl = parsePlace(where);
+  const french = !pl.country && (pl.city || pl.dept);
+  return esc(text) + (french ? ` <button class="link archives-link" type="button" data-act="archives-open" data-place="${esc(where)}" title="${esc(t('record.archivesHint'))}">${t('record.archives')}</button>` : '');
+}
+
+/**
+ * Opens the website of the departmental archives of `place` (found in the service-public.fr
+ * directory, only the department's number is sent), or the directory's search for them.
+ * The tab is opened at once, while the click still allows it, then sent there.
+ */
+export async function openArchives(place) {
+  const tab = window.open('about:blank', '_blank');
+  if (tab) tab.opener = null;
+  await loadCommunes();
+  const dept = placeDepartment(place);
+  if (!dept) {
+    if (tab) tab.close();
+    toast(t('record.archivesNone', place), true);
+    return;
+  }
+  const found = await findArchives(dept).catch(() => null);
+  const url = (found && found.site) || archivesSearchUrl(departmentName(dept));
+  if (tab) tab.location.href = url;
+  else window.open(url, '_blank', 'noopener');
 }
 
 export function recordHTML(id) {

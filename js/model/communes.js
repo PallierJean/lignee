@@ -77,6 +77,20 @@ export function currentCommune(city, dept) {
 /** Departments with a commune of this name: [] if unknown, or if the list isn't loaded yet. */
 export const cityDepartments = (city) => (index && index.get(key(city))) || [];
 
+/**
+ * Department of a French place, whose departmental archives hold its registers: the number it
+ * gives ("Tulle (19)", "Tulle (Corrèze)"), otherwise that of its city when only one department
+ * has a commune of that name (list loaded). '' abroad or when unknown.
+ */
+export function placeDepartment(place) {
+  const pl = parsePlace(place);
+  if (pl.country) return '';
+  const code = departmentCode(pl.dept);
+  if (code) return code;
+  const depts = cityDepartments(pl.city);
+  return depts.length === 1 ? depts[0] : '';
+}
+
 /** Departments, spelled out: "Charente (16)", "Creuse (23), Haute-Vienne (87)". */
 export const departmentsText = (codes) => codes.map((c) => `${departmentName(c)} (${c})`).join(', ');
 
