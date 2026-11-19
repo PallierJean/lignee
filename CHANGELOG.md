@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.3.0](https://github.com/PallierJean/lignee/compare/v4.2.6...v4.3.0) (2026-11-19)
+
+### Features
+
+* Link each place in France on a record to its departmental archives ([16f6386](https://github.com/PallierJean/lignee/commit/16f6386b832114798f6604a2ee78dc965458fc51))
+
+### Bug Fixes
+
+* Understand a voice command with a comma after each first name ([af38711](https://github.com/PallierJean/lignee/commit/af38711bcf22aeefb77f3f73921386bebe75e582))
+
+---
+
+### Nouveautés
+
+* Relier chaque lieu en France d'une fiche aux archives départementales ([16f6386](https://github.com/PallierJean/lignee/commit/16f6386b832114798f6604a2ee78dc965458fc51))
+
+### Corrections
+
+* Comprendre une commande vocale avec une virgule après chaque prénom ([af38711](https://github.com/PallierJean/lignee/commit/af38711bcf22aeefb77f3f73921386bebe75e582))
+
 ## [4.2.6](https://github.com/PallierJean/lignee/compare/v4.2.5...v4.2.6) (2026-11-19)
 
 ### Bug Fixes
