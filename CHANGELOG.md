@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.2.6](https://github.com/PallierJean/lignee/compare/v4.2.5...v4.2.6) (2026-11-19)
+
+### Bug Fixes
+
+* List a record's sources in the order of a life: birth, marriage, death, then the rest ([212bae3](https://github.com/PallierJean/lignee/commit/212bae3afd1a3ed9f79e5d5bf5a99b788709fce5))
+
+---
+
+### Corrections
+
+* Classer les sources d'une fiche dans l'ordre de la vie : naissance, mariage, décès, puis les autres ([212bae3](https://github.com/PallierJean/lignee/commit/212bae3afd1a3ed9f79e5d5bf5a99b788709fce5))
+
 ## [4.2.5](https://github.com/PallierJean/lignee/compare/v4.2.4...v4.2.5) (2026-11-19)
 
 ### Bug Fixes
