@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.5.0](https://github.com/PallierJean/lignee/compare/v4.4.0...v4.5.0) (2026-11-19)
+
+### Features
+
+* Show every source in place of the tree ([2d1fb98](https://github.com/PallierJean/lignee/commit/2d1fb985da70c329a73df9676913c346cb249fe8))
+
+---
+
+### Nouveautés
+
+* Un bouton Sources, à droite de Galerie, affiche toutes les sources à la place de l'arbre. ([2d1fb98](https://github.com/PallierJean/lignee/commit/2d1fb985da70c329a73df9676913c346cb249fe8))
+
 ## [4.4.0](https://github.com/PallierJean/lignee/compare/v4.3.2...v4.4.0) (2026-11-19)
 
 ### Features
