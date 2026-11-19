@@ -37,6 +37,15 @@ describe('traduction des professions', () => {
     assert.equal(job('Baker / Boulanger'), 'Baker');
   });
 
+  test('métiers composés', () => {
+    setLang('en');
+    assert.equal(job('Docteur en médecine', 'F'), 'Doctor of medicine');
+    assert.equal(job("Ingénieur d'étude et de developpement"), 'Software development engineer');
+    assert.equal(job('Mécanicien Automobile'), 'Car mechanic');
+    setLang('fr');
+    assert.equal(job('Doctor', 'F'), 'Médecin');
+  });
+
   test('métier suivi du lieu', () => {
     setLang('en');
     assert.equal(job('Cultivateur à Bressounaix d’Organde'), 'Farmer in Bressounaix d’Organde');
