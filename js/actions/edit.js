@@ -20,7 +20,7 @@ import { askLeave, closeLeave } from '../ui/leave-dlg.js';
 import { setFocus, setTab, revealPanel } from './view.js';
 import { openMedia } from '../ui/media.js';
 import { mediaGroups } from '../ui/record.js';
-import { sourcesOfPerson } from '../model/sources.js';
+import { sourcesOfPerson, inLifeOrder } from '../model/sources.js';
 
 /** Edits person `id` from outside their record (person dialog). */
 export function editPerson(id) {
@@ -135,7 +135,7 @@ export function startEdit(id) {
   // Strings, even if the record comes from a malformed imported file
   const texts = (x, keys) => Object.fromEntries(keys.map((k) => [k, x[k] == null ? '' : String(x[k])]));
   const events = eventsOf(p).map((x) => ({ ...x, ...texts(x, ['date', 'place', 'note']), removed: false }));
-  const sources = sourcesOfPerson(id).map((x) => ({
+  const sources = inLifeOrder(sourcesOfPerson(id)).map((x) => ({
     ...x, kind: 'other', ...texts(x, ['fact', 'role', 'title', 'place', 'ref', 'note']), ...(x.kind ? { kind: String(x.kind) } : {}),
     photo: photoSrc(x.photo) ? x.photo : '', back: photoSrc(x.photo) && photoSrc(x.back) ? x.back : '', removed: false,
   }));
