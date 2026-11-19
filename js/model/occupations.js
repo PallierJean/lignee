@@ -11,6 +11,7 @@ const OCCUPATIONS = [
   ['Agriculteur', 'Agricultrice', 'Farmer'],
   ['Cultivateur', 'Cultivatrice', 'Farmer'],
   ['Ajusteur', 'Ajusteuse', 'Fitter'],
+  ['Assistant social', 'Assistante sociale', 'Social worker'],
   ['Architecte', 'Architecte', 'Architect'],
   ['Artisan', 'Artisane', 'Craftsman'],
   ['Avocat', 'Avocate', 'Lawyer'],
@@ -18,6 +19,7 @@ const OCCUPATIONS = [
   ['Berger', 'Bergère', 'Shepherd'],
   ['Bijoutier', 'Bijoutière', 'Jeweller'],
   ['Bourrelier', 'Bourrelière', 'Saddler'],
+  ['Cadre bancaire', 'Cadre bancaire', 'Bank executive'],
   ['Boucher', 'Bouchère', 'Butcher'],
   ['Boulanger', 'Boulangère', 'Baker'],
   ['Brasseur', 'Brasseuse', 'Brewer'],
@@ -31,6 +33,7 @@ const OCCUPATIONS = [
   ['Chirurgien', 'Chirurgienne', 'Surgeon'],
   ['Coiffeur', 'Coiffeuse', 'Hairdresser'],
   ['Commerçant', 'Commerçante', 'Shopkeeper'],
+  ['Coach et formateur', 'Coach et formatrice', 'Coach and trainer'],
   ['Comptable', 'Comptable', 'Accountant'],
   ['Cordonnier', 'Cordonnière', 'Shoemaker'],
   ['Couturier', 'Couturière', 'Dressmaker'],
@@ -52,20 +55,27 @@ const OCCUPATIONS = [
   ['Infirmier', 'Infirmière', 'Nurse'],
   ['Ingénieur', 'Ingénieure', 'Engineer'],
   ['Ingénieur intégration et déploiement continu', 'Ingénieure intégration et déploiement continu', 'Continuous integration and deployment engineer'],
+  ['Ingénieur en informatique', 'Ingénieure en informatique', 'Software engineer'],
+  ['Ingénieur d’étude et de développement', 'Ingénieure d’étude et de développement', 'Software development engineer'],
   ['Instituteur', 'Institutrice', 'Primary school teacher'],
   ['Jardinier', 'Jardinière', 'Gardener'],
   ['Journalier', 'Journalière', 'Day labourer'],
   ['Avocat en droit des contrats', 'Avocate en droit des contrats', 'Contracts lawyer'],
   ['Laboureur', 'Laboureuse', 'Ploughman'],
+  ['Maire', 'Maire', 'Mayor'],
   ['Maçon', 'Maçonne', 'Mason'],
   ['Maréchal-ferrant', 'Maréchale-ferrante', 'Farrier'],
   ['Marin', 'Marin', 'Sailor'],
   ['Mécanicien', 'Mécanicienne', 'Mechanic'],
+  ['Mécanicien automobile', 'Mécanicienne automobile', 'Car mechanic'],
   ['Médecin', 'Médecin', 'Doctor'],
+  ['Docteur', 'Docteure', 'Doctor'],
+  ['Docteur en médecine', 'Docteure en médecine', 'Doctor of medicine'],
   ['Menuisier', 'Menuisière', 'Joiner'],
   ['Meunier', 'Meunière', 'Miller'],
   ['Militaire', 'Militaire', 'Soldier'],
   ['Mineur', 'Mineuse', 'Miner'],
+  ['Naturopathe et doula', 'Naturopathe et doula', 'Naturopath and doula'],
   ['Négociant en vin', 'Négociante en vin', 'Wine merchant'],
   ['Notaire', 'Notaire', 'Notary'],
   ['Ouvrier', 'Ouvrière', 'Worker'],
@@ -93,8 +103,8 @@ const OCCUPATIONS = [
   ['Visiteur médical', 'Visiteuse médicale', 'Medical visitor'],
 ];
 
-/** Comparison key: no case, no accents, no extra spaces. */
-const key = (s) => norm(s).trim().replace(/\s+/g, ' ');
+/** Comparison key: no case, no accents, no extra spaces, one kind of apostrophe. */
+const key = (s) => norm(s).trim().replace(/\s+/g, ' ').replace(/[’‘]/g, "'");
 
 const FRENCH = new Map();
 const ENGLISH = new Map();
