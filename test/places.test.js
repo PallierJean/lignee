@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
 import { placeUses, placesByDepartment, migrations, cityOf, cityUses, datedBirths } from '../js/model/places.js';
-import { knownPlaces, locatePlaces } from '../js/services/geocode.js';
-import { GEO_KEY } from '../js/config.js';
+import { knownPlaces, locatePlaces, placeQuery, placesToLocate } from '../js/services/geocode.js';
+import { GEO_KEY, GEO_OLD_KEY } from '../js/config.js';
 import { loadTree, person } from './helpers.js';
 
 describe('lieux', () => {
@@ -80,16 +80,35 @@ describe('lieux', () => {
     localStorage.removeItem(GEO_KEY);
     const asked = [];
     globalThis.fetch = async (url) => {
-      asked.push(decodeURIComponent(url.split('q=')[1]));
+      asked.push([decodeURIComponent(url.split('q=')[1]), url.includes('countrycodes=fr')]);
       return { ok: true, json: async () => (url.includes('Lyon') ? [{ lat: '45.7', lon: '4.8' }] : []) };
     };
     assert.equal(await locatePlaces(['Lyon'], () => {}), 1);
     await locatePlaces(['Nulle-Part'], () => {});
     assert.deepEqual(Object.fromEntries(knownPlaces()), { Lyon: { lat: 45.7, lon: 4.8 }, 'Nulle-Part': null });
-    assert.deepEqual(asked, ['Lyon, France', 'Nulle-Part, France'], 'un lieu sans pays est cherché en France');
+    assert.deepEqual(asked, [['Lyon', true], ['Nulle-Part', true]], 'un lieu sans pays est cherché en France');
     await locatePlaces(['Bruxelles, Belgique'], () => {});
-    assert.equal(asked.at(-1), 'Bruxelles, Belgique');
+    assert.deepEqual(asked.at(-1), ['Bruxelles, Belgique', false]);
     globalThis.fetch = async () => ({ ok: false, status: 429 });
     await assert.rejects(locatePlaces(['Paris'], () => {}));
+  });
+
+  test('localisation : la commune est cherchée dans son département, un homonyme ailleurs est écarté', async () => {
+    localStorage.removeItem(GEO_KEY);
+    assert.equal(placeQuery('Troche (19)').q, 'Troche, Corrèze');
+    assert.equal(placeQuery('Roussely, Orgnac-sur-Vézère (19)').q, 'Orgnac-sur-Vézère, Corrèze');
+    const at = (lat, dept) => ({ lat: String(lat), lon: '1', address: { 'ISO3166-2-lvl6': 'FR-' + dept } });
+    globalThis.fetch = async (url) => ({ ok: true, json: async () => (url.includes('Troche') ? [at(46, '69'), at(45.39, '19')] : [at(48, '75')]) });
+    await locatePlaces(['Troche (19)', 'Brive-la-Gaillarde (19)'], () => {});
+    assert.deepEqual(Object.fromEntries(knownPlaces()), { 'Troche (19)': { lat: 45.39, lon: 1 }, 'Brive-la-Gaillarde (19)': null });
+  });
+
+  test('localisation : les lieux trouvés avant restent affichés, mais sont à relocaliser', () => {
+    localStorage.setItem(GEO_OLD_KEY, JSON.stringify({ 'Troche (19)': { lat: 46, lon: 4.4 }, 'Tulle (19)': { lat: 45.27, lon: 1.77 } }));
+    localStorage.setItem(GEO_KEY, JSON.stringify({ 'Tulle (19)': { lat: 45.267, lon: 1.77 } }));
+    assert.deepEqual(knownPlaces().get('Troche (19)'), { lat: 46, lon: 4.4 });
+    assert.deepEqual(knownPlaces().get('Tulle (19)'), { lat: 45.267, lon: 1.77 }, 'la nouvelle localisation l’emporte');
+    assert.deepEqual(placesToLocate(['Troche (19)', 'Tulle (19)', 'Ussel (19)']), ['Troche (19)', 'Ussel (19)']);
+    localStorage.removeItem(GEO_OLD_KEY);
   });
 });

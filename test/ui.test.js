@@ -11,7 +11,7 @@ import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind }
 import { onSpouseInput, onSpouseKey, closeSpouse, onPickInput, onPickKey, closePick } from '../js/ui/person-pick.js';
 import { resetHistory } from '../js/services/history.js';
 import { setLang } from '../js/i18n.js';
-import { mapZoom, mapFit, mapPick, mapDrag, mapPlay, setMapYear } from '../js/ui/places.js';
+import { mapZoom, mapFit, mapPick, mapDrag, mapPlay, setMapYear, tilesSVG } from '../js/ui/places.js';
 import { example, loadTree, person, resetApp, html } from './helpers.js';
 import { markExported } from '../js/services/exported.js';
 import { EXPORT_KEY } from '../js/config.js';
@@ -249,7 +249,7 @@ describe('onglet Analyse', () => {
   });
 
   test('carte : lieux déjà localisés, migrations, lieu introuvable', () => {
-    localStorage.setItem('lignee.geo.v1', JSON.stringify({ Lyon: { lat: 45.7, lon: 4.8 }, Paris: { lat: 48.8, lon: 2.3 }, Nantes: null }));
+    localStorage.setItem('lignee.geo.v2', JSON.stringify({ Lyon: { lat: 45.7, lon: 4.8 }, Paris: { lat: 48.8, lon: 2.3 }, Nantes: null }));
     loadTree([
       person('p', { birthPlace: 'Lyon' }), person('c', { birthPlace: 'Paris', fatherId: 'p' }), person('d', { birthPlace: 'Nantes' }),
     ]);
@@ -261,8 +261,19 @@ describe('onglet Analyse', () => {
     assert.ok(out.includes('© les contributeurs d’<a href="https://www.openstreetmap.org/copyright"'), 'mention de la licence ODbL');
   });
 
+  test('carte : fond OpenStreetMap, tuiles alignées sur la projection', () => {
+    // Monde entier sur une tuile de 256 pixels : la tuile 0/0/0, centrée
+    const one = tilesSVG({ lon: 0, lat: 0, k: 256 / 360 });
+    assert.match(one, /href="https:\/\/tile\.openstreetmap\.org\/0\/0\/0\.png" x="42\.0" y="52\.0" width="256\.6"/);
+    // Plus près : niveau de zoom plus fin, tuiles voisines, colonne qui fait le tour du monde
+    const near = tilesSVG({ lon: 1.77, lat: 45.27, k: 3000 });
+    assert.ok(near.includes('/13/'), near.slice(0, 200));
+    assert.ok((near.match(/<image/g) || []).length <= 16);
+    assert.match(tilesSVG({ lon: -179.9, lat: 0, k: 2 }), /\/2\/3\//, 'à l’ouest de −180°, les tuiles de l’est');
+  });
+
   test('carte explorable : commune choisie, zoom, département, glisser', () => {
-    localStorage.setItem('lignee.geo.v1', JSON.stringify({ 'Tulle (19)': { lat: 45.27, lon: 1.77 }, 'Brive-la-Gaillarde (19)': { lat: 45.16, lon: 1.53 }, 'Bordeaux (33)': { lat: 44.84, lon: -0.58 } }));
+    localStorage.setItem('lignee.geo.v2', JSON.stringify({ 'Tulle (19)': { lat: 45.27, lon: 1.77 }, 'Brive-la-Gaillarde (19)': { lat: 45.16, lon: 1.53 }, 'Bordeaux (33)': { lat: 44.84, lon: -0.58 } }));
     loadTree([
       person('p', { given: 'Jean', surname: 'Roux', birthPlace: 'Le Bourg, Tulle (19)' }),
       person('c', { given: 'Anne', surname: 'Roux', birthPlace: 'Brive-la-Gaillarde (19)', deathPlace: 'Bordeaux (33)', fatherId: 'p' }),
@@ -305,7 +316,7 @@ describe('onglet Analyse', () => {
   });
 
   test('carte : la frise des décennies, naissances et migrations au fil du temps', () => {
-    localStorage.setItem('lignee.geo.v1', JSON.stringify({ 'Tulle (19)': { lat: 45.27, lon: 1.77 }, 'Brive-la-Gaillarde (19)': { lat: 45.16, lon: 1.53 }, 'Bordeaux (33)': { lat: 44.84, lon: -0.58 } }));
+    localStorage.setItem('lignee.geo.v2', JSON.stringify({ 'Tulle (19)': { lat: 45.27, lon: 1.77 }, 'Brive-la-Gaillarde (19)': { lat: 45.16, lon: 1.53 }, 'Bordeaux (33)': { lat: 44.84, lon: -0.58 } }));
     loadTree([
       person('p', { given: 'Jean', surname: 'Roux', birthDate: '1852', birthPlace: 'Tulle (19)' }),
       person('c', { given: 'Anne', surname: 'Roux', birthDate: '1884', birthPlace: 'Brive-la-Gaillarde (19)', fatherId: 'p' }),
