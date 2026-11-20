@@ -1,5 +1,6 @@
 /**
- * Commune map: dots and migrations, drawn in SVG with no external base map.
+ * Commune map: dots and migrations drawn in SVG over OpenStreetMap tiles (Web Mercator, the
+ * projection of the tiles), with a simplified outline of France underneath when they can't load.
  * It can be explored: zoom (buttons, wheel), mouse drag, framing a department;
  * a click on a commune lists its people and highlights its migrations.
  */
@@ -9,7 +10,7 @@ import { t } from '../i18n.js';
 import { P, fullName, lifeYears } from '../model/people.js';
 import { cityUses, migrations, datedBirths, parsePlace } from '../model/places.js';
 import { departmentCode, departmentName } from '../model/departments.js';
-import { knownPlaces, locatePlaces } from '../services/geocode.js';
+import { knownPlaces, locatePlaces, placesToLocate } from '../services/geocode.js';
 import { toast } from './toast.js';
 
 const W = 340;
@@ -17,7 +18,10 @@ const H = 360;
 const PAD = 26;
 const MIN_SPAN = 0.4;  // degrees: a single commune isn't enlarged infinitely
 const ZOOM = 1.6;      // factor of one zoom step
-const K_MAX = 4000;    // pixels per degree at most
+const K_MAX = 12000;   // pixels per degree of longitude at most
+const RAD = Math.PI / 180;
+const TILES = 'https://tile.openstreetmap.org';
+const TILE = 256;      // pixels of a tile
 
 // Very simplified outline of France, the only background landmark: [longitude, latitude]
 const FRANCE = [[2.5, 51.1], [4.2, 50], [5.9, 49.5], [8.2, 49], [7.6, 47.6], [6.1, 46.2], [7, 45.9], [6.7, 45], [7.6, 44.1],
@@ -25,7 +29,7 @@ const FRANCE = [[2.5, 51.1], [4.2, 50], [5.9, 49.5], [8.2, 49], [7.6, 47.6], [6.
   [-2.2, 47.2], [-3.1, 47.6], [-4.8, 48.4], [-2, 48.65], [-1.9, 49.7], [-1.3, 49.7], [-1.1, 49.3], [0.1, 49.5], [1.6, 50.4], [1.8, 50.9]];
 
 let busy = null;     // { done, total } while locating
-let view = null;     // { lon, lat, k }: centre and pixels per degree; null: show everything
+let view = null;     // { lon, lat, k }: centre and pixels per degree of longitude; null: show everything
 let selected = '';   // chosen commune
 let drag = null;     // { x, y, lon, lat, k, moved } during a drag
 let year = null;     // timeline: births and migrations up to this year; null: everything
@@ -109,22 +113,56 @@ export function mapPlay() {
 /** View that shows all these communes. */
 function fit(points) {
   const lons = points.map((x) => x.lon);
-  const lats = points.map((x) => x.lat);
-  const lat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  const ys = points.map((x) => mercY(x.lat));
   const lon = (Math.min(...lons) + Math.max(...lons)) / 2;
-  const squeeze = Math.cos((lat * Math.PI) / 180);
-  const spanX = Math.max((Math.max(...lons) - Math.min(...lons)) * squeeze, MIN_SPAN);
-  const spanY = Math.max(Math.max(...lats) - Math.min(...lats), MIN_SPAN);
-  return { lon, lat, k: Math.min((W - 2 * PAD) / spanX, (H - 2 * PAD) / spanY) };
+  const lat = latOf((Math.min(...ys) + Math.max(...ys)) / 2);
+  const spanX = Math.max(Math.max(...lons) - Math.min(...lons), MIN_SPAN);
+  const spanY = Math.max(Math.max(...ys) - Math.min(...ys), MIN_SPAN);
+  return { lon, lat, k: Math.min((W - 2 * PAD) / spanX, (H - 2 * PAD) / spanY, K_MAX) };
 }
+
+/** Web Mercator: latitude ↔ vertical position, in degrees like the longitude. */
+const mercY = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * RAD) / 2)) / RAD;
+const latOf = (y) => (2 * Math.atan(Math.exp(y * RAD)) - Math.PI / 2) / RAD;
+
+/** View `v` moved so that coordinates (lon, lat) are at map point (x, y). */
+const placeAt = (k, lon, lat, x, y) => ({ k, lon: lon - (x - W / 2) / k, lat: latOf(mercY(lat) + (y - H / 2) / k) });
 
 /** Conversion from coordinates to the map (xy) and back (lonLat), for view `v`. */
 function projector(v) {
-  const squeeze = Math.cos((v.lat * Math.PI) / 180);
+  const cy = mercY(v.lat);
   return {
-    xy: (lon, lat) => [W / 2 + (lon - v.lon) * squeeze * v.k, H / 2 - (lat - v.lat) * v.k],
-    lonLat: (x, y) => [v.lon + (x - W / 2) / (squeeze * v.k), v.lat - (y - H / 2) / v.k],
+    xy: (lon, lat) => [W / 2 + (lon - v.lon) * v.k, H / 2 - (mercY(lat) - cy) * v.k],
+    lonLat: (x, y) => [v.lon + (x - W / 2) / v.k, latOf(cy - (y - H / 2) / v.k)],
   };
+}
+
+/** OpenStreetMap tiles covering view `v`, at the zoom level just finer than the map. */
+export function tilesSVG(v) {
+  const z = Math.max(0, Math.min(18, Math.ceil(Math.log2((v.k * 360) / TILE))));
+  const n = 2 ** z;
+  const size = (v.k * 360) / n; // a tile on the map
+  const tx = ((v.lon + 180) / 360) * n;
+  const ty = ((1 - mercY(v.lat) / 180) / 2) * n;
+  const out = [];
+  for (let j = Math.max(0, Math.floor(ty - H / 2 / size)); j <= Math.min(n - 1, Math.floor(ty + H / 2 / size)); j++) {
+    for (let i = Math.floor(tx - W / 2 / size); i <= Math.floor(tx + W / 2 / size); i++) {
+      const x = W / 2 + (i - tx) * size;
+      const y = H / 2 + (j - ty) * size;
+      // A hair wider than the tile: no seam between two of them
+      out.push(`<image href="${TILES}/${z}/${((i % n) + n) % n}/${j}.png" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(size + 0.6).toFixed(1)}" height="${(size + 0.6).toFixed(1)}" preserveAspectRatio="none"/>`);
+    }
+  }
+  return `<g class="tiles">${out.join('')}</g>`;
+}
+
+/** Dark theme: the tiles are darkened to match. */
+function darkTheme() {
+  try {
+    return getComputedStyle(document.documentElement).colorScheme.includes('dark');
+  } catch (e) {
+    return false;
+  }
 }
 
 function mapSVG(points, moves, v) {
@@ -158,9 +196,9 @@ function mapSVG(points, moves, v) {
     placed.push([x0, y, w]);
     return `<text class="pl-t" x="${(x + (right ? 9 : -9)).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="${right ? 'start' : 'end'}">${esc(p.name)}</text>`;
   }).join('');
-  return `<svg class="map${selected ? ' picking' : ''}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t('map.label')}">`
+  return `<svg class="map${selected ? ' picking' : ''}${darkTheme() ? ' dark' : ''}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t('map.label')}">`
     + '<defs><marker id="mvEnd" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0L8,4L0,8Z" class="mv-end"/></marker></defs>'
-    + `<polygon class="fr" points="${outline}"/>${lines}${dots}${labels}</svg>`;
+    + `<polygon class="fr" points="${outline}"/>${tilesSVG(v)}${lines}${dots}${labels}</svg>`;
 }
 
 /** Departments (or countries) of the located communes, most cited first: [{ key, label, n, points }]. */
@@ -194,7 +232,7 @@ export function mapView() {
   if (!uses.length) return `<p class="nofocus">${t('map.empty')}</p>`;
   const known = knownPlaces();
   const points = located();
-  const missing = uses.filter((u) => !known.has(u.name));
+  const missing = placesToLocate(uses.map((u) => u.name));
   const notFound = uses.filter((u) => known.get(u.name) === null);
   const moves = migrations();
 
@@ -254,10 +292,8 @@ export function mapZoom(d, x = W / 2, y = H / 2) {
   if (!points.length) return;
   const v = view || fit(points);
   const [lon, lat] = projector(v).lonLat(x, y);
-  const k = Math.min(K_MAX, Math.max(5, v.k * ZOOM ** d));
   // The target point stays under the mouse
-  const squeeze = Math.cos((v.lat * Math.PI) / 180);
-  view = { k, lon: lon - (x - W / 2) / (squeeze * k), lat: lat + (y - H / 2) / k };
+  view = placeAt(Math.min(K_MAX, Math.max(5, v.k * ZOOM ** d)), lon, lat, x, y);
   redraw();
 }
 
@@ -305,8 +341,7 @@ export function mapDrag(ev) {
     const dy = ((ev.clientY - drag.y) * H) / r.height;
     if (!drag.moved && Math.hypot(dx, dy) < 4) return;
     drag.moved = true;
-    const squeeze = Math.cos((drag.lat * Math.PI) / 180);
-    view = { k: drag.k, lon: drag.lon - dx / (squeeze * drag.k), lat: drag.lat + dy / drag.k };
+    view = placeAt(drag.k, drag.lon, drag.lat, W / 2 + dx, H / 2 + dy);
     redraw();
     return;
   }
@@ -320,8 +355,7 @@ export function mapDrag(ev) {
 /** Locates the places still unknown, then redraws the map. */
 export async function locateMissing(refresh) {
   if (busy) return;
-  const known = knownPlaces();
-  const names = cityUses().map((u) => u.name).filter((n) => !known.has(n));
+  const names = placesToLocate(cityUses().map((u) => u.name));
   busy = { done: 0, total: names.length };
   refresh();
   try {
