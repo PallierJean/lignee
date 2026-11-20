@@ -7,6 +7,7 @@
  * the main one first; `n`: age or date cited. Texts in i18n.js ("chk.<code>").
  */
 import { S } from '../state.js';
+import { occupationTypoFix } from './occupations.js';
 import { dateBounds, isImpossibleDate, yearsBetween, tidyDate } from '../utils/dates.js';
 import { norm, capitalName, upperName } from '../utils/helpers.js';
 import { P, eventsOf, isDead, partnersOf, childrenOf, birthSurname, dataVersion } from './people.js';
@@ -84,6 +85,8 @@ export function findIssues(now = new Date()) {
   for (const ids of findCycles()) add('cycle', 'error', ids);
 
   for (const [id, p] of S.people) {
+    const occupation = p.occupation && occupationTypoFix(p.occupation);
+    if (occupation) add('occupationTypo', 'warn', [id], occupation);
     const birth = dateBounds(p.birthDate);
     const death = dateBounds(p.deathDate);
     const events = eventsOf(p);

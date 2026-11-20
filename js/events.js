@@ -217,6 +217,7 @@ const CLICK_ACTIONS = {
   'dup-merge': once((el) => A.mergePeople(el.dataset.keep, el.dataset.drop)),
   'dup-ignore': (el) => A.ignoreDuplicate(el.dataset.key),
   'chk-ignore': (el) => A.ignoreCheck(el.dataset.key),
+  'chk-occupation': once((el) => A.fixOccupation(el.dataset.id, el.dataset.value)),
   'chk-restore': () => A.restoreChecks(),
   'time-scope': (el) => A.setTimeScope(el.dataset.family === 'true'),
   'map-locate': () => startLocate(),

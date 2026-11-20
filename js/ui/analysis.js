@@ -97,7 +97,9 @@ function issueHTML(x) {
   const detail = x.n && x.n.type ? eventLabel(x.n) : x.n;
   return `<li class="chk ${x.level}"><p>${t('chk.' + x.code, names, other, typeof detail === 'string' ? esc(detail) : detail)}</p>`
     + `<div class="chk-people">${x.ids.map(personLink).join('')}</div>`
-    + `<div class="row-btns"><button class="btn small quiet" type="button" data-act="chk-ignore" data-key="${esc(issueKey(x))}">${t('chk.ignore')}</button></div></li>`;
+    + `<div class="row-btns">${x.code === 'occupationTypo' && S.canWrite
+      ? `<button class="btn small" type="button" data-act="chk-occupation" data-id="${esc(x.ids[0])}" data-value="${esc(x.n)}">${t('chk.fix')}</button>` : ''}`
+    + `<button class="btn small quiet" type="button" data-act="chk-ignore" data-key="${esc(issueKey(x))}">${t('chk.ignore')}</button></div></li>`;
 }
 
 /** Issues of the open tree, less those the user dismissed; and how many were. */
