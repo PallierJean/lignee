@@ -1,5 +1,27 @@
 # Changelog
 
+## [4.6.0](https://github.com/PallierJean/lignee/compare/v4.5.0...v4.6.0) (2026-11-20)
+
+### Features
+
+* Keep track of the death certificates already requested ([e4d148f](https://github.com/PallierJean/lignee/commit/e4d148f66c4cac5619c0db06a4de9feea690c5cf))
+* Choose which death certificates to request ([b8acd39](https://github.com/PallierJean/lignee/commit/b8acd397217dcca303deef85b9dfe7a99fff6d38))
+
+### Bug Fixes
+
+* Stop a hidden file field from stretching the page ([181863f](https://github.com/PallierJean/lignee/commit/181863fd6df5c13e4dc320a3c8a10ece362f0f3a))
+
+---
+
+### Nouveautés
+
+* Un bouton « Déjà demandé » sous chaque mairie garde la trace des demandes d'actes. ([e4d148f](https://github.com/PallierJean/lignee/commit/e4d148f66c4cac5619c0db06a4de9feea690c5cf))
+* Un menu trie les actes à demander : en mairie avec le numéro de l'INSEE, en mairie avant 1970, ou aux archives départementales. ([b8acd39](https://github.com/PallierJean/lignee/commit/b8acd397217dcca303deef85b9dfe7a99fff6d38))
+
+### Corrections
+
+* Ajouter une photo à une source ne fait plus apparaître un ascenseur géant. ([181863f](https://github.com/PallierJean/lignee/commit/181863fd6df5c13e4dc320a3c8a10ece362f0f3a))
+
 ## [4.5.0](https://github.com/PallierJean/lignee/compare/v4.4.0...v4.5.0) (2026-11-19)
 
 ### Features
