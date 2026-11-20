@@ -37,6 +37,18 @@ describe('traduction des professions', () => {
     assert.equal(job('Baker / Boulanger'), 'Baker');
   });
 
+  test('liste de métiers, et charges « de » un lieu', () => {
+    setLang('en');
+    assert.equal(job('Maire, conseiller général, greffier de la justice de paix'), 'Mayor, General councillor, Clerk of the justice of the peace');
+    assert.equal(job('Maire d’Eyburie'), 'Mayor of Eyburie');
+    assert.equal(job("Maire de Tulle"), 'Mayor of Tulle');
+    assert.equal(job('Professeur de mathématiques'), 'Professeur de mathématiques', '« de » n’est un lieu que pour une charge');
+    assert.equal(job('Astronaute, boulanger'), 'Astronaute, Baker');
+    setLang('fr');
+    assert.equal(job('Mayor of Eyburie'), 'Maire d’Eyburie');
+    assert.equal(job('Mayor of Tulle'), 'Maire de Tulle');
+  });
+
   test('métiers composés', () => {
     setLang('en');
     assert.equal(job('Docteur en médecine', 'F'), 'Doctor of medicine');
