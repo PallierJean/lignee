@@ -22,7 +22,7 @@ import { closeCropFree, resetCropFree, cropFreeDrag, cropFreeOpen } from './ui/c
 import { openReading, closeReading, readingSide, runReading, lightLine, editLine, readAll, stopBatch, readingOpen } from './ui/reading.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
-import { mapZoom, mapFit, mapPick, mapWheel, mapDrag } from './ui/places.js';
+import { mapZoom, mapFit, mapPick, mapWheel, mapDrag, mapPlay, setMapYear } from './ui/places.js';
 import { closeCrop, cropZoomInput, cropWheel, cropDrag, cropOpen } from './ui/crop.js';
 import { pinch } from './ui/pinch.js';
 import { openArchives } from './ui/record.js';
@@ -233,6 +233,8 @@ const CLICK_ACTIONS = {
   'map-zoom': (el) => mapZoom(+el.dataset.d),
   'map-region': (el) => mapFit(el.dataset.key || ''),
   'map-point': (el) => mapPick(el.dataset.name),
+  'map-play': () => mapPlay(),
+  'map-all': () => setMapYear(null),
   'place-rename': (el) => A.renamePlace(el.dataset.from, placeRowValue(+el.dataset.i)),
   'insee-check': () => startInsee(),
   'acts-copy': (el) => copyActs(el.dataset.i === undefined ? undefined : Number(el.dataset.i)),
@@ -571,6 +573,7 @@ export function bindEvents() {
       if (label) label.textContent = departmentHint(ev.target.id.slice(0, -'-dept'.length));
     }
     if (ev.target.id === 'lib-q' || ev.target.id === 'sg-lib-q') setLibraryFilter(undefined, ev.target.value);
+    if (ev.target.id === 'map-year') setMapYear(ev.target.value);
     if (ev.target.id === 'tagFind') onTagFind(ev.target.value);
     if (ev.target.id === 'q') {
       S.query = ev.target.value;

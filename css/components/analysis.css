@@ -1384,3 +1384,43 @@
 .acts-types {
   margin-bottom: 12px;
 }
+
+/* Map timeline: births and migrations decade after decade; the last decade stands out */
+.map-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.map-time input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.map-year {
+  min-width: 7.5em;
+  font-size: .8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.map .mv.fresh {
+  stroke: var(--accent);
+  opacity: 1;
+}
+
+.map .pt.fresh {
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .map .pt.fresh {
+    animation: pt-born .6s ease-out;
+  }
+}
+
+@keyframes pt-born {
+  from { r: 0; }
+}

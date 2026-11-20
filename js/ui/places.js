@@ -7,7 +7,7 @@ import { S } from '../state.js';
 import { $, esc } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { P, fullName, lifeYears } from '../model/people.js';
-import { cityUses, migrations, parsePlace } from '../model/places.js';
+import { cityUses, migrations, datedBirths, parsePlace } from '../model/places.js';
 import { departmentCode, departmentName } from '../model/departments.js';
 import { knownPlaces, locatePlaces } from '../services/geocode.js';
 import { toast } from './toast.js';
@@ -28,11 +28,82 @@ let busy = null;     // { done, total } while locating
 let view = null;     // { lon, lat, k }: centre and pixels per degree; null: show everything
 let selected = '';   // chosen commune
 let drag = null;     // { x, y, lon, lat, k, moved } during a drag
+let year = null;     // timeline: births and migrations up to this year; null: everything
+let playing = null;  // timer while the timeline plays
+const STEP = 10;     // years per step of the timeline
+const PLAY_MS = 900; // pause between two steps
 
 /** Located communes: [{ name, n, ids, lat, lon }]. */
 function located() {
   const known = knownPlaces();
   return cityUses().filter((u) => known.get(u.name)).map((u) => ({ ...u, ...known.get(u.name) }));
+}
+
+/** First and last decade of the dated births, or null when there are none. */
+function span() {
+  const years = datedBirths().map((b) => b.year);
+  if (!years.length) return null;
+  return { from: Math.floor(Math.min(...years) / STEP) * STEP, to: Math.ceil((Math.max(...years) + 1) / STEP) * STEP - 1 };
+}
+
+/**
+ * What the map shows: every commune cited and every migration, or, on the timeline, the communes
+ * of birth up to `year` (born in the last decade: fresh) and the migrations already made.
+ */
+function shown() {
+  const all = located();
+  if (year === null) return { points: all, moves: migrations(), frame: all };
+  const known = knownPlaces();
+  const cities = new Map();
+  for (const b of datedBirths()) {
+    if (b.year > year || !known.get(b.name)) continue;
+    const c = cities.get(b.name) || cities.set(b.name, { name: b.name, n: 0, ids: new Set(), fresh: false, ...known.get(b.name) }).get(b.name);
+    c.n++;
+    c.ids.add(b.id);
+    if (b.year > year - STEP) c.fresh = true;
+  }
+  const moves = migrations(year).map((m) => ({ ...m, fresh: m.years.some((y) => y > year - STEP) }));
+  return { points: [...cities.values()], moves, frame: all };
+}
+
+/** The timeline under the map: a slider by decade, play or pause, everything. */
+function timelineHTML() {
+  const s = span();
+  if (!s || s.to - s.from < STEP) return '';
+  const at = year === null ? s.to : year;
+  return `<button class="btn small" type="button" data-act="map-play" aria-pressed="${!!playing}" aria-label="${t(playing ? 'map.pause' : 'map.play')}">${playing ? '⏸' : '▶'}</button>`
+    + `<input type="range" id="map-year" min="${s.from + STEP - 1}" max="${s.to}" step="${STEP}" value="${at}" aria-label="${t('map.year')}">`
+    + `<span class="map-year" id="mapYear">${year === null ? t('map.allYears') : t('map.until', year)}</span>`
+    + `<button class="btn small quiet" type="button" data-act="map-all" id="mapAll"${year === null ? ' hidden' : ''}>${t('map.all')}</button>`;
+}
+
+/** Shows the map up to `y` (a year of the timeline), or everything with null. */
+export function setMapYear(y) {
+  const s = span();
+  year = y === null || !s ? null : Math.min(s.to, Math.max(s.from + STEP - 1, Number(y)));
+  redraw();
+}
+
+/** Plays the timeline, decade after decade from the first; a second press pauses it. */
+export function mapPlay() {
+  if (playing) {
+    clearInterval(playing);
+    playing = null;
+    redraw();
+    return;
+  }
+  const s = span();
+  if (!s) return;
+  if (year === null || year >= s.to) year = s.from + STEP - 1;
+  playing = setInterval(() => {
+    // The map left the screen (another view, another tab): the timeline stops
+    if (!$('#mapBox') || year >= s.to) {
+      clearInterval(playing);
+      playing = null;
+    } else year = Math.min(s.to, year + STEP);
+    redraw();
+  }, PLAY_MS);
+  redraw();
 }
 
 /** View that shows all these communes. */
@@ -61,19 +132,19 @@ function mapSVG(points, moves, v) {
   const at = new Map(points.map((p) => [p.name, xy(p.lon, p.lat)]));
   const inside = ([x, y]) => x > -20 && x < W + 20 && y > -20 && y < H + 20;
   const outline = FRANCE.map(([lon, lat]) => xy(lon, lat).map((n) => n.toFixed(1)).join(',')).join(' ');
-  const maxN = Math.max(...points.map((p) => p.n));
+  const maxN = Math.max(1, ...points.map((p) => p.n));
   const lines = moves.filter((m) => at.has(m.from) && at.has(m.to)).map((m) => {
     const [ax, ay] = at.get(m.from);
     const [bx, by] = at.get(m.to);
     const cx = (ax + bx) / 2 + (by - ay) * 0.14;
     const cy = (ay + by) / 2 - (bx - ax) * 0.14;
-    const on = selected && (m.from === selected || m.to === selected) ? ' on' : '';
+    const on = (selected && (m.from === selected || m.to === selected) ? ' on' : '') + (m.fresh ? ' fresh' : '');
     return `<path class="mv${on}" d="M${ax.toFixed(1)},${ay.toFixed(1)}Q${cx.toFixed(1)},${cy.toFixed(1)} ${bx.toFixed(1)},${by.toFixed(1)}" stroke-width="${Math.min(4, 1 + m.n * 0.5)}" marker-end="url(#mvEnd)"><title>${esc(m.from)} → ${esc(m.to)} (${m.n})</title></path>`;
   }).join('');
   const shown = points.filter((p) => inside(at.get(p.name)));
   const dots = shown.map((p) => {
     const [x, y] = at.get(p.name);
-    return `<circle class="pt${p.name === selected ? ' sel' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(3 + 6 * Math.sqrt(p.n / maxN)).toFixed(1)}"`
+    return `<circle class="pt${p.name === selected ? ' sel' : ''}${p.fresh ? ' fresh' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(3 + 6 * Math.sqrt(p.n / maxN)).toFixed(1)}"`
       + ` data-act="map-point" data-name="${esc(p.name)}"><title>${esc(p.name)} (${p.n})</title></circle>`;
   }).join('');
   // Most cited communes first (the chosen one above all); a label that would overlap another is left out
@@ -134,7 +205,7 @@ export function mapView() {
     html += `<div class="row-btns map-tools"><button class="btn small" type="button" data-act="map-zoom" data-d="1" aria-label="${t('ctl.zoomIn')}">+</button>`
       + `<button class="btn small" type="button" data-act="map-zoom" data-d="-1" aria-label="${t('ctl.zoomOut')}">−</button>`
       + `<button class="btn small" type="button" data-act="map-region">${t('map.fit')}</button>${chips}</div>`
-      + `<div class="map-box" id="mapBox">${mapSVG(points, moves, view || fit(points))}</div>`
+      + `<div class="map-box" id="mapBox">${mapBox()}</div><div class="map-time" id="mapTime">${timelineHTML()}</div>`
       + `<p class="hint an-hint map-credit">${t('map.credit')}</p>`
       + `<p class="hint an-hint">${t('map.help')}</p><div id="mapPlace">${placeHTML(points)}</div>`;
   } else {
@@ -155,13 +226,26 @@ export function mapView() {
   return html;
 }
 
-/** Redraws the map and the chosen commune, without the rest of the view (drag, wheel). */
+/** The map as framed. */
+function mapBox() {
+  const { points, moves, frame } = shown();
+  return mapSVG(points, moves, view || fit(frame));
+}
+
+/** Redraws the map, its timeline and the chosen commune, without the rest of the view (drag, wheel, timeline). */
 function redraw() {
   const box = $('#mapBox');
   const points = located();
   if (!box || !points.length) return;
-  box.innerHTML = mapSVG(points, migrations(), view || fit(points));
+  box.innerHTML = mapBox();
   $('#mapPlace').innerHTML = placeHTML(points);
+  const time = $('#mapTime');
+  if (!time) return;
+  // The slider being dragged stays in place: only its label and the "All" button follow
+  if (document.activeElement && document.activeElement.id === 'map-year') {
+    $('#mapYear').textContent = year === null ? t('map.allYears') : t('map.until', year);
+    $('#mapAll').hidden = year === null;
+  } else time.innerHTML = timelineHTML();
 }
 
 /** Zooms one step (`d` = 1 in, -1 out) around map point (x, y), the centre by default. */
