@@ -45,7 +45,9 @@ export function buildActsCsv(groups, dates) {
   for (const g of groups) {
     const hall = g.archives ? t('acts.archivesOf', g.place) : g.place || t('acts.unknown');
     for (const { id, act, former } of g.rows) {
-      rows.push([hall, former || hall, act.married ? `${act.last} (${act.married})` : act.last, act.first.join(' '), dates.born(act), dates.died(act), act.certificate, P(id) ? fullName(P(id)) : '']);
+      // A marriage names both spouses
+      const first = act.first.join(' ') + (act.spouseLast ? ` & ${act.spouseLast} ${act.spouseFirst.join(' ')}` : '');
+      rows.push([hall, former || hall, act.married ? `${act.last} (${act.married})` : act.last, first, dates.born(act), dates.died(act), act.certificate, P(id) ? fullName(P(id)) : '']);
     }
   }
   return '\ufeff' + rows.map((r) => r.map((v) => cell(v, sep)).join(sep)).join('\r\n') + '\r\n';

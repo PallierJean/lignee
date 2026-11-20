@@ -1379,3 +1379,8 @@
 .acts-asked {
   color: var(--ok);
 }
+
+/* Deaths, births, marriages: which certificates the Certificates view is about */
+.acts-types {
+  margin-bottom: 12px;
+}

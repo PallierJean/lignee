@@ -25,6 +25,7 @@ import { downloadBlob, fileBase } from './transfer.js';
 import { buildActsCsv } from '../services/csv.js';
 import { findTownHall, townHallSearchUrl, findArchives, archivesSearchUrl } from '../services/town-hall.js';
 import { departmentName } from '../model/departments.js';
+import { birthActRows, marriageActRows, hasBirthDocument, hasMarriageDocument, FREE_AFTER } from '../model/civil-acts.js';
 import { CC_KEY } from '../config.js';
 import { sleep, norm } from '../utils/helpers.js';
 import { longDate, dateParts } from '../utils/dates.js';
@@ -226,10 +227,34 @@ function inseeView() {
   return html;
 }
 
-/* ---------- Death certificates to request ---------- */
+/* ---------- Certificates to request: deaths, births, marriages ---------- */
+
+/** Which certificates the view is about (buttons at its top). */
+const ACT_TYPES = ['death', 'birth', 'marriage'];
+let actsType = 'death';
+
+/** Department of a town written without one, when only one town has that name. */
+const uniqueDept = (city) => {
+  const depts = cityDepartments(city);
+  return depts.length === 1 ? depts[0] : '';
+};
+const todayCommune = (where) => currentCommune(where.city, where.dept);
+
+/** Certificates of type `type` to request, grouped by the town hall that holds them. */
+function actGroups(type = actsType) {
+  if (type === 'birth') return deathActsByCommune(birthActRows(uniqueDept), todayCommune);
+  if (type === 'marriage') return deathActsByCommune(marriageActRows(uniqueDept), todayCommune);
+  return deathGroups();
+}
+
+/** Chooses the certificates the view is about: deaths, births or marriages. */
+export function setActsType(type) {
+  actsType = ACT_TYPES.includes(type) ? type : 'death';
+  renderAnalysis();
+}
 
 /** Records verified by INSEE (sure, likely or confirmed) with a certificate number, grouped by town of death. */
-function actGroups() {
+function deathGroups() {
   const results = inseeResults();
   const rows = [];
   for (const id of S.people.keys()) {
@@ -240,25 +265,22 @@ function actGroups() {
     if (m && m.level !== 'lead' && m.act.certificate) rows.push({ id, act: m.act });
   }
   // Deaths before 1970, which INSEE can't have: from the records, without a number
-  const unique = (city) => {
-    const depts = cityDepartments(city);
-    return depts.length === 1 ? depts[0] : '';
-  };
   const known = new Set(rows.map((r) => r.id));
   for (const [id, p] of S.people) {
-    const act = !known.has(id) && !hasDeathDocument(p) && recordDeathAct(p, unique);
+    const act = !known.has(id) && !hasDeathDocument(p) && recordDeathAct(p, uniqueDept);
     if (act) rows.push({ id, act });
   }
-  return deathActsByCommune(rows, (death) => currentCommune(death.city, death.dept));
+  return deathActsByCommune(rows, todayCommune);
 }
 
 /**
  * Which certificates the view lists: every one, those the town hall finds with INSEE's number, deaths
  * before 1970 (no number: from the records), or those for the departmental archives (before 1800).
  */
-const ACT_KINDS = ['all', 'insee', 'old', 'archives'];
+const ACT_KINDS = ['all', 'insee', 'old', 'hall', 'archives'];
 let actsKind = 'all';
-const rowKind = (g, r) => (g.archives ? 'archives' : r.act.record ? 'old' : 'insee');
+/** Births and marriages: the town hall or the archives, the INSEE number being for deaths only. */
+const rowKind = (g, r) => (g.archives ? 'archives' : r.act.type ? 'hall' : r.act.record ? 'old' : 'insee');
 
 /**
  * And where the request stands: still to request, requested and waiting, or without an answer for
@@ -281,15 +303,32 @@ const daysSince = (text, now = new Date()) => {
 };
 
 /**
- * Certificates already requested: { [record]: { on, reminded } }, kept in the records (actAsked,
- * actReminded); the requests marked before in this browser only still count.
+ * Where each type's request is kept: the record (death, birth) or the union (marriage), and
+ * its fields for the day it was asked and last reminded.
  */
-export function requestedActs() {
+const REQUEST_FIELDS = {
+  death: { collection: 'people', asked: 'actAsked', reminded: 'actReminded' },
+  birth: { collection: 'people', asked: 'birthActAsked', reminded: 'birthActReminded' },
+  marriage: { collection: 'unions', asked: 'actAsked', reminded: 'actReminded' },
+};
+
+/**
+ * Certificates of the type shown already requested: { [record or union]: { on, reminded } }, kept in
+ * the tree; for deaths, the requests marked before in this browser only still count.
+ */
+export function requestedActs(type = actsType) {
+  const f = REQUEST_FIELDS[type];
   const out = {};
-  for (const [id, on] of Object.entries(browserRequested())) if (S.people.has(id)) out[id] = { on, reminded: '' };
-  for (const [id, p] of S.people) if (p.actAsked) out[id] = { on: p.actAsked, reminded: p.actReminded || '' };
+  if (type === 'death') for (const [id, on] of Object.entries(browserRequested())) if (S.people.has(id)) out[id] = { on, reminded: '' };
+  for (const [id, x] of S[f.collection]) if (x[f.asked]) out[id] = { on: x[f.asked], reminded: x[f.reminded] || '' };
   return out;
 }
+
+/** What to write for row `id` of the type shown: `on` the day asked ('' to undo), `reminded` the last reminder. */
+const requestPatch = (id, on, reminded = '') => {
+  const f = REQUEST_FIELDS[actsType];
+  return { collection: f.collection, id, patch: { [f.asked]: on, [f.reminded]: reminded } };
+};
 
 /** Days a requested certificate has waited since it was asked or last reminded. */
 const waited = (a) => daysSince(a.reminded || a.on);
@@ -297,7 +336,7 @@ const rowStatus = (r, asked) => (!asked[r.id] ? 'todo' : waited(asked[r.id]) >= 
 
 /** How many certificates of each kind and of each status: { kind: { all, insee, … }, status: { all, todo, done, late } }. */
 function actCounts(groups, asked = requestedActs()) {
-  const kind = { all: 0, insee: 0, old: 0, archives: 0 };
+  const kind = { all: 0, insee: 0, old: 0, hall: 0, archives: 0 };
   const status = { all: 0, todo: 0, done: 0, late: 0 };
   for (const g of groups) for (const r of g.rows) {
     kind.all++;
@@ -356,7 +395,7 @@ export function askedPatches(i) {
   const g = shownActGroups()[i];
   if (!g) return [];
   const on = isRequested(g) ? '' : today();
-  return g.rows.map((r) => ({ id: r.id, patch: { actAsked: on, actReminded: '' } }));
+  return g.rows.map((r) => requestPatch(r.id, on));
 }
 
 /** "Remind" on group `i`: its certificates without an answer, reminded today, and the prefilled reminder e-mail when the address is known. */
@@ -368,7 +407,7 @@ export function remindPatches(i) {
   const found = halls.get(hallKey(g));
   const email = found && found.hall && found.hall.email;
   return {
-    patches: late.map((r) => ({ id: r.id, patch: { actAsked: asked[r.id].on, actReminded: today() } })),
+    patches: late.map((r) => requestPatch(r.id, asked[r.id].on, today())),
     url: email && late.length ? reminderTo(email, { ...g, rows: late }, asked[late[0].id].on) : '',
   };
 }
@@ -412,13 +451,21 @@ function actsMenus(groups) {
 }
 
 /** A certificate in plain text, as written in a request to the town hall; `former`: town of death if since merged. */
-const bornOf = (a) => longDate(a.record ? a.birthText : actDateText(a.birthDate));
-const diedOf = (a) => longDate(a.record ? a.deathText : actDateText(a.deathDate));
+const bornOf = (a) => longDate(a.type === 'birth' ? a.dateText : a.type ? '' : a.record ? a.birthText : actDateText(a.birthDate));
+const diedOf = (a) => longDate(a.type ? (a.type === 'marriage' ? a.dateText : '') : a.record ? a.deathText : actDateText(a.deathDate));
 /** "le 05 Juin 1940", or "en 1930" / "en Mars 1930" when the day isn't known (record dates). */
 const onDate = (text) => (text ? t(dateParts(text) && dateParts(text).d ? 'acts.on' : 'acts.in', longDate(text)) : '');
-const actRequestLine = (a, former) => (a.record
-  ? t('acts.lineOld', a.last, a.first.join(' '), onDate(a.birthText), onDate(a.deathText), former, a.married)
-  : t('acts.line', a.last, a.first.join(' '), bornOf(a), diedOf(a), a.certificate, former));
+const actRequestLine = (a, former) => (a.type === 'birth' ? t('acts.lineBirth', a.last, a.first.join(' '), onDate(a.dateText), former, a.married)
+  : a.type === 'marriage' ? t('acts.lineMarriage', `${a.last} ${a.first.join(' ')}`, `${a.spouseLast} ${a.spouseFirst.join(' ')}`, onDate(a.dateText), former)
+    : a.record
+      ? t('acts.lineOld', a.last, a.first.join(' '), onDate(a.birthText), onDate(a.deathText), former, a.married)
+      : t('acts.line', a.last, a.first.join(' '), bornOf(a), diedOf(a), a.certificate, former));
+
+/** A certificate in the view's list, after the people it names. */
+const actRowText = (act, former) => (act.type === 'birth' ? t('acts.rowBirth', esc(onDate(act.dateText)), esc(former))
+  : act.type === 'marriage' ? t('acts.rowMarriage', esc(onDate(act.dateText)), esc(former))
+    : act.record ? t('acts.rowOld', esc(onDate(act.deathText)), esc(former))
+      : t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former)));
 
 /** Who receives group `g`'s request: its town hall, or its department's archives (deaths before 1800). */
 const groupTitle = (g) => (g.archives ? t('acts.archivesOf', g.place) : g.place || t('acts.unknown'));
@@ -429,22 +476,38 @@ const canLookUp = (g) => g.archives || Boolean(g.city && g.dept);
 /** Directory search page for group `g`'s recipient, when it isn't found automatically. */
 const searchUrl = (g, found) => (g.archives ? archivesSearchUrl(departmentName(g.dept)) : townHallSearchUrl(found.city || g.city));
 
+/** Buttons choosing deaths, births or marriages, each with how many certificates are left to request. */
+function actsTypes() {
+  const count = (type) => actGroups(type).reduce((n, g) => n + g.rows.length, 0);
+  return `<div class="seg acts-types" role="group" aria-label="${t('acts.types')}">` + ACT_TYPES.map((type) => `<button type="button" data-act="acts-type" data-type="${type}" aria-pressed="${type === actsType}">`
+    + `${t('acts.type.' + type)} <span class="n">${count(type)}</span></button>`).join('') + '</div>';
+}
+
+/** How many records or unions of the type shown already have a picture of their certificate. */
+function obtainedCount() {
+  if (actsType === 'birth') return [...S.people.values()].filter(hasBirthDocument).length;
+  if (actsType === 'marriage') return [...S.unions.keys()].filter(hasMarriageDocument).length;
+  return [...S.people.values()].filter(hasDeathDocument).length;
+}
+
 function actsView() {
-  if (!inseeAvailable()) return inseeLocal();
   if (!communeChangesLoaded()) loadCommuneChanges().then(renderAnalysis); // today's communes, then redraw
   if (!communesLoaded()) loadCommunes().then(renderAnalysis); // departments of places written without one
+  const types = actsTypes();
+  if (actsType === 'death' && !inseeAvailable()) return types + inseeLocal();
+  const death = actsType === 'death';
   const every = actGroups();
-  const obtained = [...S.people.values()].filter(hasDeathDocument).length;
-  const obtainedHint = obtained ? `<p class="hint an-hint">${t('acts.obtained', obtained)}</p>` : '';
-  if (!every.length) return `<p class="nofocus">${t('acts.none')}</p>${obtainedHint}`;
+  const obtained = obtainedCount();
+  const obtainedHint = obtained ? `<p class="hint an-hint">${t(death ? 'acts.obtained' : 'acts.obtainedCivil', obtained)}</p>` : '';
+  if (!every.length) return `${types}<p class="nofocus">${t(death ? 'acts.none' : 'acts.noneCivil.' + actsType, FREE_AFTER)}</p>${obtainedHint}`;
   const total = every.reduce((n, g) => n + g.rows.length, 0);
-  const old = every.reduce((n, g) => n + g.rows.filter((r) => r.act.record).length, 0);
+  const old = death ? every.reduce((n, g) => n + g.rows.filter((r) => r.act.record).length, 0) : 0;
   const archives = every.filter((g) => g.archives);
   const groups = shownActGroups(every);
-  return `<p class="hint an-hint">${t('acts.hint', total, every.length - archives.length)}</p>`
+  return types + `<p class="hint an-hint">${death ? t('acts.hint', total, every.length - archives.length) : t('acts.hintCivil.' + actsType, total, every.length - archives.length, FREE_AFTER)}</p>`
     + (old ? `<p class="hint an-hint">${t('acts.oldHint', old)}</p>` : '')
     + obtainedHint
-    + (archives.length ? `<p class="hint an-hint">${t('acts.archivesHint', archives.reduce((n, g) => n + g.rows.length, 0), archives.length)}</p>` : '')
+    + (archives.length ? `<p class="hint an-hint">${t(death ? 'acts.archivesHint' : 'acts.archivesHintCivil', archives.reduce((n, g) => n + g.rows.length, 0), archives.length)}</p>` : '')
     + askedHint(every)
     + actsMenus(every)
     + `<label class="fld acts-cc"><span>${t('acts.cc')}</span><input type="email" id="actsCc" autocomplete="email" value="${esc(ccEmail())}" placeholder="${t('acts.ccPlaceholder')}"></label>`
@@ -458,8 +521,7 @@ function actsView() {
     + groups.map((g, i) => {
       const asked = requestedActs();
       const done = isRequested(g, asked);
-      const rows = g.rows.map(({ id, act, former }) => `<li>${personLink(id)} <small>${act.record
-        ? t('acts.rowOld', esc(onDate(act.deathText)), esc(former)) : t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small>`
+      const rows = g.rows.map(({ id, act, former, people }) => `<li>${(people || [id]).map(personLink).join(' & ')} <small>${actRowText(act, former)}</small>`
         + (asked[id] ? ` <small class="acts-asked">✓ ${t('acts.askedOn', esc(longDate(asked[id].on)))}`
           + (asked[id].reminded ? t('acts.remindedOn', esc(longDate(asked[id].reminded))) : '') + '</small>' : '') + '</li>').join('');
       const weeks = lateWeeks(g, asked);
@@ -509,8 +571,12 @@ export function setActsCc(value) {
 /** Prefilled e-mail asking the town hall or archives of group `g` for its certificates, with the user's address in copy. */
 function mailTo(email, g) {
   const lines = g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former)).join('\n');
-  const body = (g.archives ? t('acts.mailBodyArchives', g.place, lines) : t('acts.mailBody', g.place, lines, g.rows.some((r) => r.act.record))).replace(/\n/g, '\r\n');
-  const subject = t(g.archives ? 'acts.mailSubjectArchives' : 'acts.mailSubject');
+  const civil = actsType !== 'death';
+  const body = (g.archives ? t(civil ? 'acts.mailBodyArchivesCivil' : 'acts.mailBodyArchives', g.place, lines, t('acts.nounArchives.' + actsType))
+    : civil ? t('acts.mailBodyCivil', g.place, lines, t('acts.noun.' + actsType))
+      : t('acts.mailBody', g.place, lines, g.rows.some((r) => r.act.record))).replace(/\n/g, '\r\n');
+  const subject = civil ? t('acts.mailSubjectCivil', t(g.archives ? 'acts.nounArchives.' + actsType : 'acts.noun.' + actsType))
+    : t(g.archives ? 'acts.mailSubjectArchives' : 'acts.mailSubject');
   const cc = ccEmail();
   return `mailto:${email}?subject=${encodeURIComponent(subject)}${cc ? '&cc=' + encodeURIComponent(cc) : ''}&body=${encodeURIComponent(body)}`;
 }
@@ -518,9 +584,9 @@ function mailTo(email, g) {
 /** Prefilled reminder to the town hall or archives of group `g`, for a request sent on `on`. */
 function reminderTo(email, g, on) {
   const lines = g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former)).join('\n');
-  const body = t('acts.remindBody', longDate(on), lines).replace(/\n/g, '\r\n');
+  const body = t('acts.remindBody', longDate(on), lines, t('acts.noun.' + actsType)).replace(/\n/g, '\r\n');
   const cc = ccEmail();
-  return `mailto:${email}?subject=${encodeURIComponent(t('acts.remindSubject'))}${cc ? '&cc=' + encodeURIComponent(cc) : ''}&body=${encodeURIComponent(body)}`;
+  return `mailto:${email}?subject=${encodeURIComponent(t('acts.remindSubject', t('acts.noun.' + actsType)))}${cc ? '&cc=' + encodeURIComponent(cc) : ''}&body=${encodeURIComponent(body)}`;
 }
 
 /** What was found for the town hall of group `g`: contact details and prefilled e-mail. */
@@ -617,6 +683,7 @@ export const resetActsHalls = () => {
   hallsBusy = null;
   actsKind = 'all';
   actsStatus = 'all';
+  actsType = 'death';
 };
 
 /** A town's list: its town hall, then one line per certificate. */
@@ -644,7 +711,7 @@ export async function exportActsCsv() {
   await Promise.all([loadCommunes(), loadCommuneChanges()]);
   const groups = shownActGroups();
   if (!groups.length) return;
-  const name = `${fileBase()}-${t('acts.fileSuffix')}.csv`;
+  const name = `${fileBase()}-${t(actsType === 'death' ? 'acts.fileSuffix' : 'acts.fileSuffix.' + actsType)}.csv`;
   downloadBlob(name, buildActsCsv(groups, { born: bornOf, died: diedOf }), 'text/csv;charset=utf-8');
   toast(t('acts.saved', name));
 }
