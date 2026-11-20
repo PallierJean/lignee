@@ -417,6 +417,16 @@
   stroke-width: 1;
 }
 
+/* OpenStreetMap tiles: a little faded under the dots, darkened in a dark theme */
+.map .tiles {
+  opacity: .85;
+  pointer-events: none;
+}
+
+.map.dark .tiles {
+  filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85);
+}
+
 .map .mv {
   fill: none;
   stroke: var(--edge);
