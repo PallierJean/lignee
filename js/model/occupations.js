@@ -159,3 +159,48 @@ export function occupationLabel(p) {
     .map((x) => x.split(',').map((y) => translate(y.trim(), sex)).filter(Boolean).join(', ')).filter(Boolean);
   return [...new Map(parts.map((x) => [key(x), x])).values()].join(' / ');
 }
+
+/** Edit distance between `a` and `b`: insertions, deletions, substitutions, and two letters swapped ("tn" for "nt"). */
+function distance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  }
+  return d[a.length][b.length];
+}
+
+/** Every spelling of the dictionary, French (both sexes) and English. */
+const SPELLINGS = [...new Set(OCCUPATIONS.flat())];
+
+/** The dictionary spelling `part` is probably a typo of, or ''; known or too far from any: ''. */
+function closest(part) {
+  const k = key(part);
+  if (k.length < 6 || FRENCH.has(k) || ENGLISH.has(k)) return '';
+  const most = k.length >= 10 ? 2 : 1; // one letter in a short word, two in a long one
+  let best = '';
+  let bestD = most + 1;
+  for (const word of SPELLINGS) {
+    const d = distance(k, key(word));
+    if (d < bestD) [best, bestD] = [word, d];
+  }
+  return best;
+}
+
+/**
+ * The occupation with its probable typos put right ("Enseignatne" → "Enseignante"), each
+ * occupation of a list on its own; '' when nothing looks misspelt.
+ */
+export function occupationTypoFix(text) {
+  let changed = false;
+  const fixed = String(text || '').split('/').map((x) => x.split(',').map((part) => {
+    const word = closest(part);
+    if (!word) return part.trim();
+    changed = true;
+    return word;
+  }).join(', ')).join(' / ');
+  return changed ? fixed : '';
+}

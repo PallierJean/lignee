@@ -80,6 +80,27 @@ export function hideKin() {
 
 /* ---------- Consistency ---------- */
 
+/** Puts right a misspelt occupation, as suggested by the consistency check (Ctrl+Z undoes it). */
+export async function fixOccupation(id, value) {
+  if (!S.canWrite || S.busy || !S.people.has(id) || !value) return;
+  if (S.edit) {
+    toast(t('finishFirst'));
+    return;
+  }
+  S.busy = true;
+  beginAction('hist.occupation');
+  try {
+    await opUpdate('people', id, { occupation: value });
+  } catch (e) {
+    reportError(e);
+    return;
+  } finally {
+    commitAction();
+    S.busy = false;
+    afterData();
+  }
+}
+
 /** "Ignore": the warning is no longer shown, even after a reload. */
 export function ignoreCheck(key) {
   ignoreIssue(key);

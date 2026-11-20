@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test, describe, afterEach } from 'node:test';
 import { setLang } from '../js/i18n.js';
-import { occupationLabel } from '../js/model/occupations.js';
+import { occupationLabel, occupationTypoFix } from '../js/model/occupations.js';
 
 const job = (occupation, sex = 'M') => occupationLabel({ occupation, sex });
 
@@ -70,5 +70,20 @@ describe('traduction des professions', () => {
   test('métiers au féminin', () => {
     setLang('en');
     for (const [fr, en] of [['Couturière', 'Dressmaker'], ['Passementière', 'Trimmings maker'], ['Tanneur', 'Tanner'], ['Cheminot', 'Railway worker']]) assert.equal(job(fr), en);
+  });
+});
+
+describe('fautes de frappe dans les professions', () => {
+  test('la profession du dictionnaire la plus proche, chaque métier d’une liste à part', () => {
+    assert.equal(occupationTypoFix('Enseignatne'), 'Enseignante');
+    assert.equal(occupationTypoFix('Avocate en droit  des contracts'), 'Avocate en droit des contrats');
+    assert.equal(occupationTypoFix('Maire, conseiler général'), 'Maire, Conseiller général');
+    assert.equal(occupationTypoFix('Boulangr / Baker'), 'Boulanger / Baker');
+  });
+
+  test('connue, inconnue, courte ou lointaine : rien à corriger', () => {
+    for (const x of ['Enseignante', 'medecin', 'Astronaute', 'Marin', 'Maçon', 'Cultivateur à Tulle', 'Mineur', 'Meunier', '', undefined]) {
+      assert.equal(occupationTypoFix(x), '', String(x));
+    }
   });
 });

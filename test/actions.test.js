@@ -1310,3 +1310,21 @@ describe('cohérence : ignorer une alerte', () => {
     assert.equal(localStorage.getItem(CHK_KEY), '{}');
   });
 });
+
+describe('cohérence : profession mal écrite', () => {
+  test('signalée avec la correction, corrigée d’un clic, Ctrl+Z la remet', async () => {
+    resetApp();
+    resetHistory();
+    loadTree([person('a', { given: 'Anne', surname: 'Roux', sex: 'F', occupation: 'Enseignatne' })]);
+    S.tab = 'analysis';
+    S.analysis = 'checks';
+    renderSide();
+    assert.match(html('paneAnalysis'), /profession peut-être mal écrite, « Enseignante » \?/);
+    assert.match(html('paneAnalysis'), /data-act="chk-occupation" data-id="a" data-value="Enseignante">Corriger/);
+    await A.fixOccupation('a', 'Enseignante');
+    assert.equal(S.people.get('a').occupation, 'Enseignante');
+    assert.doesNotMatch(html('paneAnalysis'), /mal écrite/);
+    await A.undo();
+    assert.equal(S.people.get('a').occupation, 'Enseignatne');
+  });
+});
