@@ -8,7 +8,7 @@ import { currentIssues, tidyPatches } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
 import { datesOfDay, datesOfMonth } from '../model/ephemerides.js';
 import { findDuplicates } from '../model/duplicates.js';
-import { ignoredPairs, ignoredIssues, issueKey } from '../services/dup-ignore.js';
+import { ignoredPairs, ignoredIssues, issueKey, requestedActs, setRequested } from '../services/dup-ignore.js';
 import { timelineOf } from '../model/timeline.js';
 import { placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
@@ -277,6 +277,31 @@ function shownActGroups(groups = actGroups()) {
   }).filter((g) => g.rows.length);
 }
 
+/** Whether every certificate of group `g` was already requested. */
+const isRequested = (g, asked = requestedActs()) => g.rows.every((r) => asked[r.id]);
+
+/** How many certificates were already requested, out of all. */
+function askedHint(groups) {
+  const asked = requestedActs();
+  const rows = groups.flatMap((g) => g.rows);
+  const n = rows.filter((r) => asked[r.id]).length;
+  return n ? `<p class="hint an-hint">${t('acts.askedCount', n, rows.length)}</p>` : '';
+}
+
+/** Today as "DD/MM/YYYY", the way dates are written in the records. */
+const today = () => {
+  const d = new Date();
+  return [d.getDate(), d.getMonth() + 1].map((x) => String(x).padStart(2, '0')).join('/') + '/' + d.getFullYear();
+};
+
+/** "Already requested": marks every certificate of group `i` as requested today, or as still to request. */
+export function toggleActsAsked(i) {
+  const g = shownActGroups()[i];
+  if (!g) return;
+  setRequested(g.rows.map((r) => r.id), isRequested(g) ? '' : today());
+  renderAnalysis();
+}
+
 /** Chooses the certificates listed (menu of the view). */
 export function setActsKind(kind) {
   actsKind = ACT_KINDS.includes(kind) ? kind : 'all';
@@ -328,6 +353,7 @@ function actsView() {
     + (old ? `<p class="hint an-hint">${t('acts.oldHint', old)}</p>` : '')
     + obtainedHint
     + (archives.length ? `<p class="hint an-hint">${t('acts.archivesHint', archives.reduce((n, g) => n + g.rows.length, 0), archives.length)}</p>` : '')
+    + askedHint(every)
     + actsKindMenu(every)
     + `<label class="fld acts-cc"><span>${t('acts.cc')}</span><input type="email" id="actsCc" autocomplete="email" value="${esc(ccEmail())}" placeholder="${t('acts.ccPlaceholder')}"></label>`
     + `<p class="hint an-hint">${t('acts.ccHint')}</p>`
@@ -337,13 +363,17 @@ function actsView() {
     + (hallsBusy ? `<p class="hint an-hint">${t('acts.hallsProgress', hallsBusy.done, hallsBusy.total)}</p>` : '')
     + readyBlock(groups)
     + groups.map((g, i) => {
+      const asked = requestedActs();
+      const done = isRequested(g, asked);
       const rows = g.rows.map(({ id, act, former }) => `<li>${personLink(id)} <small>${act.record
-        ? t('acts.rowOld', esc(onDate(act.deathText)), esc(former)) : t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small></li>`).join('');
-      return `<section class="rel acts-town"><h3>${esc(groupTitle(g))} <span class="n">${g.rows.length}</span></h3>`
+        ? t('acts.rowOld', esc(onDate(act.deathText)), esc(former)) : t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small>`
+        + (asked[id] ? ` <small class="acts-asked">✓ ${t('acts.askedOn', esc(longDate(asked[id])))}</small>` : '') + '</li>').join('');
+      return `<section class="rel acts-town${done ? ' done' : ''}"><h3>${esc(groupTitle(g))} <span class="n">${g.rows.length}</span></h3>`
         + (g.former.length ? `<p class="hint an-hint">${t('acts.former', esc(g.former.join(', ')))}</p>` : '')
         + `<ul class="ins-diffs">${rows}</ul>`
         + `<div class="row-btns"><button class="btn small" type="button" data-act="acts-copy" data-i="${i}">${t('acts.copy')}</button>`
         + (canLookUp(g) && !halls.has(hallKey(g)) ? `<button class="btn small" type="button" data-act="acts-hall" data-i="${i}">${t(g.archives ? 'acts.findArchives' : 'acts.findHall')}</button>` : '')
+        + `<button class="btn small toggle" type="button" data-act="acts-asked" data-i="${i}" aria-pressed="${done}">${done ? '✓ ' : ''}${t('acts.asked')}</button>`
         + `</div>${hallBlock(g)}</section>`;
     }).join('');
 }
@@ -432,7 +462,7 @@ export async function findActsHall(i) {
 let hallsBusy = null; // { done, total } while every town hall is being looked up
 
 /** Town halls still to look up: French towns not found yet, or whose search failed. */
-const hallsToFind = (groups) => groups.filter((g) => canLookUp(g) && (!halls.has(hallKey(g)) || halls.get(hallKey(g)).error));
+const hallsToFind = (groups) => groups.filter((g) => canLookUp(g) && !isRequested(g) && (!halls.has(hallKey(g)) || halls.get(hallKey(g)).error));
 
 /** One click for every request: looks up all the town halls, one after the other. */
 export async function findAllActsHalls() {
@@ -459,7 +489,7 @@ function readyBlock(groups) {
   const manual = [];
   for (const g of groups) {
     const found = halls.get(hallKey(g));
-    if (!found || found.busy) continue;
+    if (!found || found.busy || isRequested(g)) continue;
     if (found.hall && found.hall.email) {
       ready.push(`<li><a href="${esc(mailTo(found.hall.email, g))}">${t(g.archives ? 'acts.writeToArchives' : 'acts.writeTo', esc(g.place))}</a> <small>${t('acts.count', g.rows.length)}</small></li>`);
     } else {
