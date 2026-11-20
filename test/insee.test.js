@@ -8,7 +8,7 @@ import {
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc, setActsKind, toggleActsAsked } from '../js/ui/analysis.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc, setActsKind, setActsStatus, toggleActsAsked } from '../js/ui/analysis.js';
 import { REQ_KEY } from '../js/config.js';
 import { findTownHall, findArchives, resetTownHalls } from '../js/services/town-hall.js';
 import { setLang } from '../js/i18n.js';
@@ -595,6 +595,23 @@ describe('actes de décès à demander, par commune', () => {
     assert.match(shown, /✓ demandé le /);
     assert.match(shown, /1 acte sur 3 déjà demandé/);
     assert.deepEqual(JSON.parse(localStorage.getItem(REQ_KEY)), { [S.tree]: { h: day } });
+    // Le menu « Demandes », combiné au menu des actes : seulement ce qui reste à demander
+    assert.match(shown, /<select id="acts-status"><option value="all" selected>Toutes \(3\)<\/option><option value="todo">À demander \(2\)<\/option><option value="done">Déjà demandées \(1\)<\/option><\/select>/);
+    setActsStatus('todo');
+    shown = html('paneAnalysis');
+    assert.doesNotMatch(shown, /Octeville/, 'la mairie déjà sollicitée disparaît');
+    assert.match(shown, /Limoges \(87\)/);
+    assert.match(shown, /<option value="all" selected>Tous \(2\)<\/option><option value="insee">En mairie, avec le numéro de l’INSEE \(1\)<\/option><option value="old">En mairie, décès d’avant 1970 \(1\)<\/option>/, 'le menu des actes compte ce qui reste à demander');
+    setActsKind('old');
+    shown = html('paneAnalysis');
+    assert.match(shown, /Louis BERTRAND/);
+    assert.doesNotMatch(shown, /Lucien BERTRAND|Rose PETIT/, 'les deux filtres à la fois');
+    setActsStatus('done');
+    assert.match(html('paneAnalysis'), /Rose PETIT/);
+    setActsKind('insee');
+    assert.match(html('paneAnalysis'), /Aucun acte pour ces deux choix\./);
+    setActsKind('all');
+    setActsStatus('all');
     toggleActsAsked(0);
     assert.doesNotMatch(html('paneAnalysis'), /acts-town done|déjà demandé :/);
     assert.deepEqual(JSON.parse(localStorage.getItem(REQ_KEY)), { [S.tree]: {} });
