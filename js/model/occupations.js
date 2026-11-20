@@ -34,9 +34,11 @@ const OCCUPATIONS = [
   ['Coiffeur', 'Coiffeuse', 'Hairdresser'],
   ['Commerçant', 'Commerçante', 'Shopkeeper'],
   ['Coach et formateur', 'Coach et formatrice', 'Coach and trainer'],
+  ['Conseiller général', 'Conseillère générale', 'General councillor'],
   ['Comptable', 'Comptable', 'Accountant'],
   ['Cordonnier', 'Cordonnière', 'Shoemaker'],
   ['Couturier', 'Couturière', 'Dressmaker'],
+  ['Curé', 'Curé', 'Parish priest'],
   ['Cuisinier', 'Cuisinière', 'Cook'],
   ['Dentiste', 'Dentiste', 'Dentist'],
   ['Domestique', 'Domestique', 'Servant'],
@@ -51,6 +53,7 @@ const OCCUPATIONS = [
   ['Fonctionnaire', 'Fonctionnaire', 'Civil servant'],
   ['Garçon de labour', 'Fille de labour', 'Ploughman’s assistant'],
   ['Gendarme', 'Gendarme', 'Gendarme'],
+  ['Greffier de la justice de paix', 'Greffière de la justice de paix', 'Clerk of the justice of the peace'],
   ['Horloger', 'Horlogère', 'Watchmaker'],
   ['Infirmier', 'Infirmière', 'Nurse'],
   ['Ingénieur', 'Ingénieure', 'Engineer'],
@@ -119,18 +122,40 @@ function translateWord(text, sex) {
   return !FRENCH.has(k) && ENGLISH.has(k) ? ENGLISH.get(k)[sex === 'F' ? 1 : 0] : text;
 }
 
-/** A known occupation, possibly followed by its place: "Cultivateur à X" ↔ "Farmer in X". */
+/** Offices held "of" a place: "Maire d’Eyburie" ↔ "Mayor of Eyburie" (other occupations: "de" isn't a place). */
+const OF_PLACE = new Set(['maire', 'cure', 'mayor', 'parish priest']);
+
+/** "de X", or "d’X" before a vowel or a mute h. */
+const ofFr = (place) => (/^[aeiouyhâàéèêëîïôöûüœ]/i.test(place) ? `d’${place}` : `de ${place}`);
+
+/**
+ * A known occupation, possibly followed by its place: "Cultivateur à X" ↔ "Farmer in X",
+ * "Maire d’X" ↔ "Mayor of X".
+ */
 function translate(text, sex) {
   const whole = translateWord(text, sex);
   if (whole !== text) return whole;
-  const m = text.match(getLang() === 'en' ? /^(.+?)\s+à\s+(.+)$/i : /^(.+?)\s+in\s+(.+)$/i);
-  if (!m) return text;
-  const job = translateWord(m[1], sex);
-  return job === m[1] ? text : `${job} ${getLang() === 'en' ? 'in' : 'à'} ${m[2]}`;
+  const en = getLang() === 'en';
+  const at = text.match(en ? /^(.+?)\s+à\s+(.+)$/i : /^(.+?)\s+in\s+(.+)$/i);
+  if (at) {
+    const job = translateWord(at[1], sex);
+    if (job !== at[1]) return `${job} ${en ? 'in' : 'à'} ${at[2]}`;
+  }
+  const of = text.match(en ? /^(.+?)(?:\s+de\s+|\s+d['’]\s*)(.+)$/i : /^(.+?)\s+of\s+(.+)$/i);
+  if (of && OF_PLACE.has(key(of[1]))) {
+    const job = translateWord(of[1], sex);
+    if (job !== of[1]) return en ? `${job} of ${of[2]}` : `${job} ${ofFr(of[2])}`;
+  }
+  return text;
 }
 
-/** A person's occupation in the chosen language; "Baker / Boulanger" gives a single word. */
+/**
+ * A person's occupation in the chosen language, each one of a list translated: "Maire, conseiller général"
+ * gives "Mayor, General councillor"; "Baker / Boulanger" (the same in two languages) gives a single word.
+ */
 export function occupationLabel(p) {
-  const parts = String((p && p.occupation) || '').split('/').map((x) => translate(x.trim(), p && p.sex)).filter(Boolean);
+  const sex = p && p.sex;
+  const parts = String((p && p.occupation) || '').split('/')
+    .map((x) => x.split(',').map((y) => translate(y.trim(), sex)).filter(Boolean).join(', ')).filter(Boolean);
   return [...new Map(parts.map((x) => [key(x), x])).values()].join(' / ');
 }
