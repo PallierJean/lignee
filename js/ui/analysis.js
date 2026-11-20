@@ -8,7 +8,7 @@ import { currentIssues, tidyPatches } from '../model/checks.js';
 import { treeStats } from '../model/stats.js';
 import { datesOfDay, datesOfMonth } from '../model/ephemerides.js';
 import { findDuplicates } from '../model/duplicates.js';
-import { ignoredPairs, ignoredIssues, issueKey, requestedActs, setRequested } from '../services/dup-ignore.js';
+import { ignoredPairs, ignoredIssues, issueKey, browserRequested } from '../services/dup-ignore.js';
 import { timelineOf } from '../model/timeline.js';
 import { placeFields, placeValue } from './form.js';
 import { mapView, locateMissing } from './places.js';
@@ -260,15 +260,45 @@ const ACT_KINDS = ['all', 'insee', 'old', 'archives'];
 let actsKind = 'all';
 const rowKind = (g, r) => (g.archives ? 'archives' : r.act.record ? 'old' : 'insee');
 
-/** And whether they were already requested: every certificate, those still to request, or those already requested. */
-const ACT_STATUSES = ['all', 'todo', 'done'];
+/**
+ * And where the request stands: still to request, requested and waiting, or without an answer for
+ * REMIND_DAYS since it was sent or last reminded.
+ */
+const ACT_STATUSES = ['all', 'todo', 'done', 'late'];
 let actsStatus = 'all';
-const rowStatus = (r, asked) => (asked[r.id] ? 'done' : 'todo');
+const REMIND_DAYS = 42;
 
-/** How many certificates of each kind and of each status: { kind: { all, insee, … }, status: { all, todo, done } }. */
+/** "DD/MM/YYYY" as a date, or null. */
+function dayOf(text) {
+  const m = String(text || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+}
+
+/** Days since "DD/MM/YYYY". */
+const daysSince = (text, now = new Date()) => {
+  const d = dayOf(text);
+  return d ? Math.floor((now - d) / 86400000) : 0;
+};
+
+/**
+ * Certificates already requested: { [record]: { on, reminded } }, kept in the records (actAsked,
+ * actReminded); the requests marked before in this browser only still count.
+ */
+export function requestedActs() {
+  const out = {};
+  for (const [id, on] of Object.entries(browserRequested())) if (S.people.has(id)) out[id] = { on, reminded: '' };
+  for (const [id, p] of S.people) if (p.actAsked) out[id] = { on: p.actAsked, reminded: p.actReminded || '' };
+  return out;
+}
+
+/** Days a requested certificate has waited since it was asked or last reminded. */
+const waited = (a) => daysSince(a.reminded || a.on);
+const rowStatus = (r, asked) => (!asked[r.id] ? 'todo' : waited(asked[r.id]) >= REMIND_DAYS ? 'late' : 'done');
+
+/** How many certificates of each kind and of each status: { kind: { all, insee, … }, status: { all, todo, done, late } }. */
 function actCounts(groups, asked = requestedActs()) {
   const kind = { all: 0, insee: 0, old: 0, archives: 0 };
-  const status = { all: 0, todo: 0, done: 0 };
+  const status = { all: 0, todo: 0, done: 0, late: 0 };
   for (const g of groups) for (const r of g.rows) {
     kind.all++;
     kind[rowKind(g, r)]++;
@@ -318,12 +348,35 @@ const today = () => {
   return [d.getDate(), d.getMonth() + 1].map((x) => String(x).padStart(2, '0')).join('/') + '/' + d.getFullYear();
 };
 
-/** "Already requested": marks every certificate of group `i` as requested today, or as still to request. */
-export function toggleActsAsked(i) {
+/**
+ * "Already requested" on group `i`: what to write in its records, as [{ id, patch }] — requested today,
+ * or, when they all were, still to request.
+ */
+export function askedPatches(i) {
   const g = shownActGroups()[i];
-  if (!g) return;
-  setRequested(g.rows.map((r) => r.id), isRequested(g) ? '' : today());
-  renderAnalysis();
+  if (!g) return [];
+  const on = isRequested(g) ? '' : today();
+  return g.rows.map((r) => ({ id: r.id, patch: { actAsked: on, actReminded: '' } }));
+}
+
+/** "Remind" on group `i`: its certificates without an answer, reminded today, and the prefilled reminder e-mail when the address is known. */
+export function remindPatches(i) {
+  const g = shownActGroups()[i];
+  if (!g) return { patches: [], url: '' };
+  const asked = requestedActs();
+  const late = g.rows.filter((r) => rowStatus(r, asked) === 'late');
+  const found = halls.get(hallKey(g));
+  const email = found && found.hall && found.hall.email;
+  return {
+    patches: late.map((r) => ({ id: r.id, patch: { actAsked: asked[r.id].on, actReminded: today() } })),
+    url: email && late.length ? reminderTo(email, { ...g, rows: late }, asked[late[0].id].on) : '',
+  };
+}
+
+/** How long group `g`'s oldest request waits without an answer, in weeks; 0 when none is late. */
+function lateWeeks(g, asked) {
+  const days = g.rows.filter((r) => rowStatus(r, asked) === 'late').map((r) => waited(asked[r.id]));
+  return days.length ? Math.floor(Math.max(...days) / 7) : 0;
 }
 
 /** Chooses the kind of certificates listed (menu of the view). */
@@ -407,14 +460,17 @@ function actsView() {
       const done = isRequested(g, asked);
       const rows = g.rows.map(({ id, act, former }) => `<li>${personLink(id)} <small>${act.record
         ? t('acts.rowOld', esc(onDate(act.deathText)), esc(former)) : t('acts.row', actDay(act.deathDate), esc(act.certificate), esc(former))}</small>`
-        + (asked[id] ? ` <small class="acts-asked">✓ ${t('acts.askedOn', esc(longDate(asked[id])))}</small>` : '') + '</li>').join('');
-      return `<section class="rel acts-town${done ? ' done' : ''}"><h3>${esc(groupTitle(g))} <span class="n">${g.rows.length}</span></h3>`
+        + (asked[id] ? ` <small class="acts-asked">✓ ${t('acts.askedOn', esc(longDate(asked[id].on)))}`
+          + (asked[id].reminded ? t('acts.remindedOn', esc(longDate(asked[id].reminded))) : '') + '</small>' : '') + '</li>').join('');
+      const weeks = lateWeeks(g, asked);
+      return `<section class="rel acts-town${done && !weeks ? ' done' : ''}"><h3>${esc(groupTitle(g))} <span class="n">${g.rows.length}</span></h3>`
         + (g.former.length ? `<p class="hint an-hint">${t('acts.former', esc(g.former.join(', ')))}</p>` : '')
         + `<ul class="ins-diffs">${rows}</ul>`
         + `<div class="row-btns"><button class="btn small" type="button" data-act="acts-copy" data-i="${i}">${t('acts.copy')}</button>`
         + (canLookUp(g) && !halls.has(hallKey(g)) ? `<button class="btn small" type="button" data-act="acts-hall" data-i="${i}">${t(g.archives ? 'acts.findArchives' : 'acts.findHall')}</button>` : '')
         + `<button class="btn small toggle" type="button" data-act="acts-asked" data-i="${i}" aria-pressed="${done}">${done ? '✓ ' : ''}${t('acts.asked')}</button>`
-        + `</div>${hallBlock(g)}</section>`;
+        + (weeks ? `<button class="btn small primary" type="button" data-act="acts-remind" data-i="${i}">${t('acts.remind')}</button>` : '')
+        + `</div>${weeks ? `<p class="hint an-hint acts-late">${t('acts.lateFor', weeks)}</p>` : ''}${hallBlock(g)}</section>`;
     }).join('');
 }
 
@@ -457,6 +513,14 @@ function mailTo(email, g) {
   const subject = t(g.archives ? 'acts.mailSubjectArchives' : 'acts.mailSubject');
   const cc = ccEmail();
   return `mailto:${email}?subject=${encodeURIComponent(subject)}${cc ? '&cc=' + encodeURIComponent(cc) : ''}&body=${encodeURIComponent(body)}`;
+}
+
+/** Prefilled reminder to the town hall or archives of group `g`, for a request sent on `on`. */
+function reminderTo(email, g, on) {
+  const lines = g.rows.map(({ act, former }) => '- ' + actRequestLine(act, former)).join('\n');
+  const body = t('acts.remindBody', longDate(on), lines).replace(/\n/g, '\r\n');
+  const cc = ccEmail();
+  return `mailto:${email}?subject=${encodeURIComponent(t('acts.remindSubject'))}${cc ? '&cc=' + encodeURIComponent(cc) : ''}&body=${encodeURIComponent(body)}`;
 }
 
 /** What was found for the town hall of group `g`: contact details and prefilled e-mail. */

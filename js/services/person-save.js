@@ -76,6 +76,8 @@ async function recordData(e, id, previous) {
   };
   if (d.photo) data.photo = await storePhoto(d.photo, data);
   if (previous && previous.example) data.example = true;
+  // Where the request for the death certificate stands (Certificates view): not in the form, kept
+  for (const k of ['actAsked', 'actReminded']) if (previous && previous[k]) data[k] = previous[k];
 
   const events = e.events.filter((x) => !x.removed).map(({ removed, ...x }) => ({
     ...x, date: tidyDate(x.date), place: x.place.trim(), note: x.note.trim(),

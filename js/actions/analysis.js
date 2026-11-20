@@ -11,7 +11,7 @@ import { renamePatches } from '../model/places.js';
 import { tidyPatches } from '../model/checks.js';
 import { deathDifferences } from '../model/insee.js';
 import { inseeMatch, ignoreInsee, confirmInsee } from '../services/insee.js';
-import { ignorePair, ignoreIssue, restoreIssues } from '../services/dup-ignore.js';
+import { ignorePair, ignoreIssue, restoreIssues, browserRequested, setBrowserRequested, forgetBrowserRequested } from '../services/dup-ignore.js';
 import { renderTree, scrollToFocus, scrollToPerson } from '../tree/render.js';
 import { renderSide, renderRecord, afterData } from '../ui/render.js';
 import { renderControls } from '../ui/header.js';
@@ -79,6 +79,43 @@ export function hideKin() {
 }
 
 /* ---------- Consistency ---------- */
+
+/* ---------- Death certificates requested ---------- */
+
+/**
+ * Writes where requests stand ([{ id, patch: { actAsked, actReminded } }]) into the records, with the
+ * requests kept before in this browser; Ctrl+Z undoes it. A read-only tree keeps them in this browser.
+ */
+export async function setActRequests(patches) {
+  if (!patches.length || S.busy) return;
+  if (!S.canWrite) {
+    for (const { id, patch } of patches) setBrowserRequested([id], patch.actAsked);
+    renderSide();
+    return;
+  }
+  if (S.edit) {
+    toast(t('finishFirst'));
+    return;
+  }
+  const changed = new Set(patches.map((x) => x.id));
+  const legacy = Object.entries(browserRequested()).filter(([id]) => !changed.has(id) && S.people.has(id) && !P(id).actAsked);
+  S.busy = true;
+  beginAction('hist.asked');
+  try {
+    await inBatch(async () => {
+      for (const [id, on] of legacy) await opUpdate('people', id, { actAsked: on });
+      for (const { id, patch } of patches) await opUpdate('people', id, patch);
+    });
+    forgetBrowserRequested();
+  } catch (e) {
+    reportError(e);
+    return;
+  } finally {
+    commitAction();
+    S.busy = false;
+    afterData();
+  }
+}
 
 /** Puts right a misspelt occupation, as suggested by the consistency check (Ctrl+Z undoes it). */
 export async function fixOccupation(id, value) {

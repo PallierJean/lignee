@@ -8,7 +8,7 @@ import {
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc, setActsKind, setActsStatus, toggleActsAsked } from '../js/ui/analysis.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc, setActsKind, setActsStatus, askedPatches, remindPatches } from '../js/ui/analysis.js';
 import { REQ_KEY } from '../js/config.js';
 import { findTownHall, findArchives, resetTownHalls } from '../js/services/town-hall.js';
 import { setLang } from '../js/i18n.js';
@@ -585,18 +585,22 @@ describe('actes de décès à demander, par commune', () => {
     assert.equal(copied, 'Mairie de Limoges (87)\n- Bertrand Lucien Marcel, né(e) le 12 Mars 1920, décédé(e) le 04 Juillet 1995, acte n° 412');
     setActsKind('all');
 
-    // « Déjà demandé » : gardé par fiche, dans ce navigateur ; un second clic l'annule
+    // « Déjà demandé » : gardé dans la fiche ; un second clic l'annule
     const day = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    toggleActsAsked(0);
+    S.mode = 'local'; // enregistrement en mémoire du navigateur, sans serveur
+    await A.setActRequests(askedPatches(0));
+    S.mode = 'file'; // la vue Actes, avec l'INSEE
+    renderAnalysis();
     shown = html('paneAnalysis');
     assert.match(shown, /<section class="rel acts-town done"><h3>Cherbourg-en-Cotentin \(50\)/);
     assert.match(shown, /data-act="acts-asked" data-i="0" aria-pressed="true">✓ Déjà demandé/);
     assert.match(shown, /data-act="acts-asked" data-i="1" aria-pressed="false">Déjà demandé/);
     assert.match(shown, /✓ demandé le /);
     assert.match(shown, /1 acte sur 3 déjà demandé/);
-    assert.deepEqual(JSON.parse(localStorage.getItem(REQ_KEY)), { [S.tree]: { h: day } });
+    assert.equal(S.people.get('h').actAsked, day);
+    assert.equal(localStorage.getItem(REQ_KEY), '{}', 'plus rien dans le navigateur');
     // Le menu « Demandes », combiné au menu des actes : seulement ce qui reste à demander
-    assert.match(shown, /<select id="acts-status"><option value="all" selected>Toutes \(3\)<\/option><option value="todo">À demander \(2\)<\/option><option value="done">Déjà demandées \(1\)<\/option><\/select>/);
+    assert.match(shown, /<select id="acts-status"><option value="all" selected>Toutes \(3\)<\/option><option value="todo">À demander \(2\)<\/option><option value="done">Demandées, en attente \(1\)<\/option><\/select>/);
     setActsStatus('todo');
     shown = html('paneAnalysis');
     assert.doesNotMatch(shown, /Octeville/, 'la mairie déjà sollicitée disparaît');
@@ -612,9 +616,68 @@ describe('actes de décès à demander, par commune', () => {
     assert.match(html('paneAnalysis'), /Aucun acte pour ces deux choix\./);
     setActsKind('all');
     setActsStatus('all');
-    toggleActsAsked(0);
+    S.mode = 'local';
+    await A.setActRequests(askedPatches(0));
+    S.mode = 'file';
+    renderAnalysis();
     assert.doesNotMatch(html('paneAnalysis'), /acts-town done|déjà demandé :/);
-    assert.deepEqual(JSON.parse(localStorage.getItem(REQ_KEY)), { [S.tree]: {} });
+    assert.equal(S.people.get('h').actAsked, '');
+  });
+
+  test('suivi des demandes : celles du navigateur passent dans les fiches, relance après 6 semaines', async () => {
+    resetTownHalls();
+    resetActsHalls();
+    S.mode = 'file';
+    loadTree([
+      person('g', { given: 'Louis', surname: 'Bertrand', sex: 'M', birthDate: '03/02/1870', deathDate: '05/06/1940', deathPlace: 'Limoges (87)', deceased: true }),
+      person('h', { given: 'Rose', surname: 'Petit', sex: 'F', deathDate: '1930', deathPlace: 'Tulle (19)', deceased: true, actAsked: '01/01/2020' }),
+    ]);
+    localStorage.setItem(REQ_KEY, JSON.stringify({ [S.tree]: { g: '02/03/2021' } }));
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    await loadCommuneChanges();
+    renderAnalysis();
+    let out = html('paneAnalysis');
+    assert.match(out, /2 actes sur 2 déjà demandés/, 'les demandes du navigateur comptent encore');
+    assert.doesNotMatch(out, /id="acts-status"/, 'toutes en retard : rien à choisir');
+    assert.match(out, /Sans réponse depuis \d+ semaines/);
+    assert.match(out, /data-act="acts-remind" data-i="0">Relancer/);
+    assert.doesNotMatch(out, /acts-town done/, 'une demande en retard ne s’estompe pas');
+
+    // Relancer : la date de relance dans la fiche, et les demandes du navigateur rejoignent les fiches
+    const { patches, url } = remindPatches(0);
+    assert.equal(url, '', 'adresse de la mairie pas encore trouvée');
+    S.mode = 'local';
+    await A.setActRequests(patches);
+    S.mode = 'file';
+    renderAnalysis();
+    const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const reminded = ['g', 'h'].find((id) => S.people.get(id).actReminded);
+    assert.equal(S.people.get(reminded).actReminded, today);
+    assert.equal(S.people.get('g').actAsked, '02/03/2021', 'reprise du navigateur');
+    assert.equal(localStorage.getItem(REQ_KEY), '{}');
+    out = html('paneAnalysis');
+    assert.match(out, /, relancé le /);
+    assert.match(out, /<option value="done">Demandées, en attente \(1\)<\/option><option value="late">Sans réponse depuis 6 semaines \(1\)<\/option>/);
+    await A.undo();
+    assert.equal(S.people.get(reminded).actReminded, undefined);
+  });
+
+  test('relance : l’e-mail prérempli quand l’adresse de la mairie est connue', async () => {
+    resetTownHalls();
+    resetActsHalls();
+    S.mode = 'file';
+    loadTree([
+      person('g', { given: 'Louis', surname: 'Bertrand', sex: 'M', birthDate: '03/02/1870', deathDate: '05/06/1940', deathPlace: 'Limoges (87)', deceased: true, actAsked: '02/03/2021' }),
+    ]);
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ results: [{ nom: 'Mairie - Limoges', adresse_courriel: 'etat-civil@limoges.fr' }] }) });
+    A.setTab('analysis');
+    A.setAnalysisView('acts');
+    await loadCommuneChanges();
+    await findActsHall(0);
+    const { url } = remindPatches(0);
+    assert.match(url, /^mailto:etat-civil@limoges\.fr\?subject=Relance/);
+    assert.match(decodeURIComponent(url), /Le 02 Mars 2021, je vous ai demandé une copie intégrale des actes de décès suivants :\r\n\r\n- Bertrand Louis/);
   });
 
   test('décès d’avant 1800 : aux archives du département, une demande par département', () => {

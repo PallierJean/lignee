@@ -13,7 +13,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
 import {
-  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc, setActsKind, setActsStatus, toggleActsAsked, setLibraryFilter,
+  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc, setActsKind, setActsStatus, askedPatches, remindPatches, setLibraryFilter,
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
@@ -158,6 +158,13 @@ function closePhotoZoom() {
 }
 
 /** Disables the button during a long action. */
+/** Opens a prefilled e-mail in the user's mail program (a mailto: link). */
+function openMail(url) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.click();
+}
+
 const once = (fn) => (el) => {
   el.disabled = true;
   return fn(el);
@@ -231,7 +238,12 @@ const CLICK_ACTIONS = {
   'acts-copy': (el) => copyActs(el.dataset.i === undefined ? undefined : Number(el.dataset.i)),
   'acts-csv': () => exportActsCsv(),
   'acts-hall': (el) => findActsHall(Number(el.dataset.i)),
-  'acts-asked': (el) => toggleActsAsked(Number(el.dataset.i)),
+  'acts-asked': once((el) => A.setActRequests(askedPatches(Number(el.dataset.i)))),
+  'acts-remind': once((el) => {
+    const { patches, url } = remindPatches(Number(el.dataset.i));
+    if (url) openMail(url);
+    return A.setActRequests(patches);
+  }),
   'acts-halls': () => findAllActsHalls(),
   'insee-register': () => inseeSendCode(),
   'insee-auth': () => inseeSendAuth(),
