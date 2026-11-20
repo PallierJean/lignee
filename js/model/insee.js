@@ -286,10 +286,11 @@ export function deathActsByCommune(rows, today = () => null) {
   const groups = new Map();
   for (const row of rows) {
     if (!row.act.certificate && !row.act.record) continue;
-    const death = row.act.death || {};
+    // Where and when the event was recorded: the death, or a birth or marriage (model/civil-acts.js)
+    const death = row.act.place || row.act.death || {};
     const now = death.city && isFrance(death.country) ? today(death) : null;
     const where = now ? { ...death, ...now } : death;
-    const year = parseInt(String(row.act.deathDate || '').slice(0, 4), 10);
+    const year = parseInt(String(row.act.date || row.act.deathDate || '').slice(0, 4), 10);
     const archives = year < ARCHIVES_BEFORE && Boolean(where.city) && isFrance(where.country) && Boolean(departmentName(where.dept));
     const place = archives ? `${departmentName(where.dept)} (${where.dept})` : where.city ? actPlace(where) : '';
     const key = (archives ? 'archives|' : '') + place;
@@ -305,7 +306,7 @@ export function deathActsByCommune(rows, today = () => null) {
     .sort((a, b) => (!a.place) - (!b.place) || a.abroad - b.abroad
       || a.dept.localeCompare(b.dept, 'fr', { numeric: true }) || b.archives - a.archives || a.city.localeCompare(b.city, 'fr'))
     .map(({ place, archives, abroad, dept, city, former, rows: list }) => ({
-      place, city, dept: abroad ? '' : dept, archives, former: [...former].sort(), rows: list.sort((a, b) => a.act.deathDate.localeCompare(b.act.deathDate)),
+      place, city, dept: abroad ? '' : dept, archives, former: [...former].sort(), rows: list.sort((a, b) => String(a.act.date || a.act.deathDate).localeCompare(String(b.act.date || b.act.deathDate))),
     }));
 }
 const placeText = actPlace;

@@ -89,7 +89,7 @@ export function hideKin() {
 export async function setActRequests(patches) {
   if (!patches.length || S.busy) return;
   if (!S.canWrite) {
-    for (const { id, patch } of patches) setBrowserRequested([id], patch.actAsked);
+    for (const { collection = 'people', id, patch } of patches) if (collection === 'people' && 'actAsked' in patch) setBrowserRequested([id], patch.actAsked);
     renderSide();
     return;
   }
@@ -104,7 +104,7 @@ export async function setActRequests(patches) {
   try {
     await inBatch(async () => {
       for (const [id, on] of legacy) await opUpdate('people', id, { actAsked: on });
-      for (const { id, patch } of patches) await opUpdate('people', id, patch);
+      for (const { collection = 'people', id, patch } of patches) await opUpdate(collection, id, patch);
     });
     forgetBrowserRequested();
   } catch (e) {
