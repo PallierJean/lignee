@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.7.0](https://github.com/PallierJean/lignee/compare/v4.6.0...v4.7.0) (2026-11-20)
+
+### Features
+
+* Show only the death certificates still to request ([cb502e8](https://github.com/PallierJean/lignee/commit/cb502e828ab4bf0937d9e020f6152901424eebd8))
+
+---
+
+### Nouveautés
+
+* Un menu « Demandes » n'affiche que les actes à demander, ou déjà demandés, en plus du choix du type d'acte. ([cb502e8](https://github.com/PallierJean/lignee/commit/cb502e828ab4bf0937d9e020f6152901424eebd8))
+
 ## [4.6.0](https://github.com/PallierJean/lignee/compare/v4.5.0...v4.6.0) (2026-11-20)
 
 ### Features
