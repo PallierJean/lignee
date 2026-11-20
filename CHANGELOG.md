@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.8.0](https://github.com/PallierJean/lignee/compare/v4.7.0...v4.8.0) (2026-11-20)
+
+### Features
+
+* Play the family's migrations on the map, decade by decade ([2b95f7b](https://github.com/PallierJean/lignee/commit/2b95f7b134f29faba676da257aff527348521b84))
+* Request birth and marriage certificates too ([5bd1127](https://github.com/PallierJean/lignee/commit/5bd112701c457c5fd6c50451bb5c3d7229485277))
+* Keep certificate requests in the tree and remind town halls ([49d6f96](https://github.com/PallierJean/lignee/commit/49d6f9614931dc5408175f327e569d212af0595d))
+* Flag misspelt occupations and correct them in one click ([dfeaf8f](https://github.com/PallierJean/lignee/commit/dfeaf8f4561b926fc8af623279d9609b390325f9))
+* Translate lists of occupations and offices held in a place ([e12e68b](https://github.com/PallierJean/lignee/commit/e12e68bdfdf5e77c481a85e98df95590c21551c0))
+
+---
+
+### Nouveautés
+
+* Une frise sous la carte fait défiler les naissances et les migrations de la famille, décennie par décennie. ([2b95f7b](https://github.com/PallierJean/lignee/commit/2b95f7b134f29faba676da257aff527348521b84))
+* La vue Actes propose aussi les actes de naissance et de mariage de plus de 75 ans, à demander par mairie comme les actes de décès. ([5bd1127](https://github.com/PallierJean/lignee/commit/5bd112701c457c5fd6c50451bb5c3d7229485277))
+* Les demandes d'actes sont gardées dans l'arbre, et après 6 semaines sans réponse un bouton « Relancer » prépare l'e-mail de relance. ([49d6f96](https://github.com/PallierJean/lignee/commit/49d6f9614931dc5408175f327e569d212af0595d))
+* Une profession mal écrite (« Enseignatne ») est signalée dans la cohérence, avec un bouton « Corriger ». ([dfeaf8f](https://github.com/PallierJean/lignee/commit/dfeaf8f4561b926fc8af623279d9609b390325f9))
+* Les listes de professions séparées par des virgules et « Maire d'une commune » sont traduites. ([e12e68b](https://github.com/PallierJean/lignee/commit/e12e68bdfdf5e77c481a85e98df95590c21551c0))
+
 ## [4.7.0](https://github.com/PallierJean/lignee/compare/v4.6.0...v4.7.0) (2026-11-20)
 
 ### Features
