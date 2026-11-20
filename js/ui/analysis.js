@@ -250,6 +250,50 @@ function actGroups() {
   return deathActsByCommune(rows, (death) => currentCommune(death.city, death.dept));
 }
 
+/**
+ * Which certificates the view lists: every one, those the town hall finds with INSEE's number, deaths
+ * before 1970 (no number: from the records), or those for the departmental archives (before 1800).
+ */
+const ACT_KINDS = ['all', 'insee', 'old', 'archives'];
+let actsKind = 'all';
+const rowKind = (g, r) => (g.archives ? 'archives' : r.act.record ? 'old' : 'insee');
+
+/** How many certificates of each kind: { all, insee, old, archives }. */
+function actKindCounts(groups) {
+  const n = { all: 0, insee: 0, old: 0, archives: 0 };
+  for (const g of groups) for (const r of g.rows) {
+    n.all++;
+    n[rowKind(g, r)]++;
+  }
+  return n;
+}
+
+/** The groups of the kind chosen, each keeping only its certificates of that kind; all of them when that kind has none left. */
+function shownActGroups(groups = actGroups()) {
+  if (actsKind === 'all' || !actKindCounts(groups)[actsKind]) return groups;
+  return groups.map((g) => {
+    const rows = g.rows.filter((r) => rowKind(g, r) === actsKind);
+    return { ...g, rows, former: g.archives ? g.former : [...new Set(rows.map((r) => r.former).filter(Boolean))].sort() };
+  }).filter((g) => g.rows.length);
+}
+
+/** Chooses the certificates listed (menu of the view). */
+export function setActsKind(kind) {
+  actsKind = ACT_KINDS.includes(kind) ? kind : 'all';
+  renderAnalysis();
+}
+
+/** The menu of kinds, each with its count; a kind without certificates isn't offered. */
+function actsKindMenu(groups) {
+  const n = actKindCounts(groups);
+  const kinds = ACT_KINDS.filter((k) => k === 'all' || n[k]);
+  if (kinds.length < 3) return ''; // a single kind: nothing to choose
+  const chosen = n[actsKind] ? actsKind : 'all';
+  return `<label class="fld acts-kind"><span>${t('acts.kind')}</span><select id="acts-kind">`
+    + kinds.map((k) => `<option value="${k}"${k === chosen ? ' selected' : ''}>${esc(t('acts.kind.' + k, n[k]))}</option>`).join('')
+    + '</select></label>';
+}
+
 /** A certificate in plain text, as written in a request to the town hall; `former`: town of death if since merged. */
 const bornOf = (a) => longDate(a.record ? a.birthText : actDateText(a.birthDate));
 const diedOf = (a) => longDate(a.record ? a.deathText : actDateText(a.deathDate));
@@ -272,17 +316,19 @@ function actsView() {
   if (!inseeAvailable()) return inseeLocal();
   if (!communeChangesLoaded()) loadCommuneChanges().then(renderAnalysis); // today's communes, then redraw
   if (!communesLoaded()) loadCommunes().then(renderAnalysis); // departments of places written without one
-  const groups = actGroups();
+  const every = actGroups();
   const obtained = [...S.people.values()].filter(hasDeathDocument).length;
   const obtainedHint = obtained ? `<p class="hint an-hint">${t('acts.obtained', obtained)}</p>` : '';
-  if (!groups.length) return `<p class="nofocus">${t('acts.none')}</p>${obtainedHint}`;
-  const total = groups.reduce((n, g) => n + g.rows.length, 0);
-  const old = groups.reduce((n, g) => n + g.rows.filter((r) => r.act.record).length, 0);
-  const archives = groups.filter((g) => g.archives);
-  return `<p class="hint an-hint">${t('acts.hint', total, groups.length - archives.length)}</p>`
+  if (!every.length) return `<p class="nofocus">${t('acts.none')}</p>${obtainedHint}`;
+  const total = every.reduce((n, g) => n + g.rows.length, 0);
+  const old = every.reduce((n, g) => n + g.rows.filter((r) => r.act.record).length, 0);
+  const archives = every.filter((g) => g.archives);
+  const groups = shownActGroups(every);
+  return `<p class="hint an-hint">${t('acts.hint', total, every.length - archives.length)}</p>`
     + (old ? `<p class="hint an-hint">${t('acts.oldHint', old)}</p>` : '')
     + obtainedHint
     + (archives.length ? `<p class="hint an-hint">${t('acts.archivesHint', archives.reduce((n, g) => n + g.rows.length, 0), archives.length)}</p>` : '')
+    + actsKindMenu(every)
     + `<label class="fld acts-cc"><span>${t('acts.cc')}</span><input type="email" id="actsCc" autocomplete="email" value="${esc(ccEmail())}" placeholder="${t('acts.ccPlaceholder')}"></label>`
     + `<p class="hint an-hint">${t('acts.ccHint')}</p>`
     + `<div class="row-btns reg-tools"><button class="btn small" type="button" data-act="acts-copy">${t('acts.copyAll')}</button>`
@@ -375,7 +421,7 @@ async function lookUpHall(g) {
 /** Looks up the town hall of group `i` in the service-public.fr directory, then shows how to write to it. */
 export async function findActsHall(i) {
   await Promise.all([loadCommunes(), loadCommuneChanges()]);
-  const g = actGroups()[i];
+  const g = shownActGroups()[i];
   if (!g || !canLookUp(g)) return;
   halls.set(hallKey(g), { busy: true });
   renderAnalysis();
@@ -392,7 +438,7 @@ const hallsToFind = (groups) => groups.filter((g) => canLookUp(g) && (!halls.has
 export async function findAllActsHalls() {
   if (hallsBusy) return;
   await Promise.all([loadCommunes(), loadCommuneChanges()]);
-  const todo = hallsToFind(actGroups());
+  const todo = hallsToFind(shownActGroups());
   if (!todo.length) return;
   hallsBusy = { done: 0, total: todo.length };
   for (const g of todo) halls.set(hallKey(g), { busy: true });
@@ -435,6 +481,7 @@ function readyBlock(groups) {
 export const resetActsHalls = () => {
   halls.clear();
   hallsBusy = null;
+  actsKind = 'all';
 };
 
 /** A town's list: its town hall, then one line per certificate. */
@@ -446,7 +493,7 @@ const townText = (g) => [g.archives ? groupTitle(g) : t('acts.townHall', g.place
  */
 export async function copyActs(i) {
   await Promise.all([loadCommunes(), loadCommuneChanges()]);
-  const groups = actGroups();
+  const groups = shownActGroups();
   const chosen = i === undefined ? groups : groups.slice(i, i + 1);
   if (!chosen.length) return;
   try {
@@ -460,7 +507,7 @@ export async function copyActs(i) {
 /** Downloads every certificate to request as a CSV file, for a spreadsheet. */
 export async function exportActsCsv() {
   await Promise.all([loadCommunes(), loadCommuneChanges()]);
-  const groups = actGroups();
+  const groups = shownActGroups();
   if (!groups.length) return;
   const name = `${fileBase()}-${t('acts.fileSuffix')}.csv`;
   downloadBlob(name, buildActsCsv(groups, { born: bornOf, died: diedOf }), 'text/csv;charset=utf-8');

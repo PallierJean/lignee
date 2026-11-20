@@ -8,7 +8,7 @@ import {
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc } from '../js/ui/analysis.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc, setActsKind } from '../js/ui/analysis.js';
 import { findTownHall, findArchives, resetTownHalls } from '../js/services/town-hall.js';
 import { setLang } from '../js/i18n.js';
 import { loadCommuneChanges, currentCommune } from '../js/model/communes.js';
@@ -564,6 +564,25 @@ describe('actes de décès à demander, par commune', () => {
     await copyActs();
     assert.match(copied, /Mairie de Limoges \(87\)\n- Bertrand Louis, né\(e\) le 03 Février 1870, décédé\(e\) le 05 Juin 1940 \(numéro d’acte inconnu\)\n- Bertrand Lucien Marcel, né\(e\) le 12 Mars 1920, décédé\(e\) le 04 Juillet 1995, acte n° 412/);
     assert.match(copied, /- Petit Rose, décédé\(e\) en 1930 à Octeville \(50\) \(numéro d’acte inconnu\)/);
+
+    // Le menu : avec le numéro de l'INSEE d'un côté, avant 1970 de l'autre
+    assert.match(out, /<select id="acts-kind"><option value="all" selected>Tous \(3\)<\/option><option value="insee">En mairie, avec le numéro de l’INSEE \(1\)<\/option><option value="old">En mairie, décès d’avant 1970 \(2\)<\/option><\/select>/);
+    setActsKind('old');
+    let shown = html('paneAnalysis');
+    assert.match(shown, /<option value="old" selected>/);
+    assert.match(shown, /Bertrand Louis|Louis BERTRAND/);
+    assert.doesNotMatch(shown, /acte n° 412/, 'pas l’acte numéroté');
+    await copyActs();
+    assert.doesNotMatch(copied, /Lucien/);
+    assert.match(copied, /Bertrand Louis/);
+    setActsKind('insee');
+    shown = html('paneAnalysis');
+    assert.match(shown, /acte n° 412/);
+    assert.doesNotMatch(shown, /sans numéro \(avant 1970\)/);
+    assert.doesNotMatch(shown, /Octeville/, 'la mairie sans acte de ce genre disparaît');
+    await copyActs(0);
+    assert.equal(copied, 'Mairie de Limoges (87)\n- Bertrand Lucien Marcel, né(e) le 12 Mars 1920, décédé(e) le 04 Juillet 1995, acte n° 412');
+    setActsKind('all');
   });
 
   test('décès d’avant 1800 : aux archives du département, une demande par département', () => {

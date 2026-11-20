@@ -13,7 +13,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
 import {
-  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc, setLibraryFilter,
+  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc, setActsKind, setLibraryFilter,
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
@@ -513,6 +513,7 @@ export function bindEvents() {
     if (el.id === 'actsCc') setActsCc(el.value);
     if (el.id === 'src-cite' && el.value) A.citeDraftSource(el.value);
     if (el.id === 'lib-kind' || el.id === 'sg-lib-kind') setLibraryFilter(el.value);
+    if (el.id === 'acts-kind') setActsKind(el.value);
     if (el.id === 'textSel') A.setTextSize(el.value);
     if (el.name === 'f-sex') updateNames(false);
     if (el.id === 'f-father' || el.id === 'f-mother') updateNames(true);
