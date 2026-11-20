@@ -269,3 +269,17 @@ test('ancien titre qui n’est qu’un nom de fichier : ignoré à l’affichage
   assert.equal(mediaLabel({ title: '20260730_210013.heic', date: '2026', tags: [] }), '2026');
   assert.equal(mediaLabel({ title: 'Noces d’or', date: '2026' }), 'Noces d’or');
 });
+
+test('le suivi de la demande d’acte, absent du formulaire, reste dans la fiche enregistrée', async () => {
+  S.edit = null;
+  loadTree([person('a', { given: 'Anne', surname: 'Roux', actAsked: '02/03/2021', actReminded: '04/05/2021' })]);
+  A.startEdit('a');
+  document.getElementById('f-given').value = 'Anne';
+  document.getElementById('f-surname').value = 'Roux';
+  document.getElementById('f-occ').value = 'Boulangère';
+  await A.submitEdit();
+  const p = S.people.get('a');
+  assert.equal(p.occupation, 'Boulangère');
+  assert.equal(p.actAsked, '02/03/2021');
+  assert.equal(p.actReminded, '04/05/2021');
+});

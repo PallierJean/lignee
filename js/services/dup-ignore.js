@@ -52,11 +52,14 @@ export function restoreIssues() {
   write(CHK_KEY, all);
 }
 
-/** Death certificates already requested in the open tree: { [record]: "DD/MM/YYYY" }. */
-export const requestedActs = () => readAll(REQ_KEY)[S.tree] || {};
+/**
+ * Death certificates marked as requested in this browser, before they were kept in the records:
+ * { [record]: "DD/MM/YYYY" }. Still shown, and moved into the records at the next change.
+ */
+export const browserRequested = () => readAll(REQ_KEY)[S.tree] || {};
 
-/** Marks the certificates of `ids` as requested on `day` ("DD/MM/YYYY"), or with `day` empty, as still to request. */
-export function setRequested(ids, day) {
+/** Marks the certificates of `ids` as requested on `day` in this browser (read-only tree), or with `day` empty, as still to request. */
+export function setBrowserRequested(ids, day) {
   const all = readAll(REQ_KEY);
   const tree = { ...(all[S.tree] || {}) };
   for (const id of ids) {
@@ -64,5 +67,12 @@ export function setRequested(ids, day) {
     else delete tree[id];
   }
   all[S.tree] = tree;
+  write(REQ_KEY, all);
+}
+
+/** Forgets the requests kept in this browser for the open tree, once they are in the records. */
+export function forgetBrowserRequested() {
+  const all = readAll(REQ_KEY);
+  delete all[S.tree];
   write(REQ_KEY, all);
 }
