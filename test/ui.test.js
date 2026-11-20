@@ -11,7 +11,7 @@ import { onFindInput, onFindKey, pickFind, showAllFind, closeFind, refreshFind }
 import { onSpouseInput, onSpouseKey, closeSpouse, onPickInput, onPickKey, closePick } from '../js/ui/person-pick.js';
 import { resetHistory } from '../js/services/history.js';
 import { setLang } from '../js/i18n.js';
-import { mapZoom, mapFit, mapPick, mapDrag } from '../js/ui/places.js';
+import { mapZoom, mapFit, mapPick, mapDrag, mapPlay, setMapYear } from '../js/ui/places.js';
 import { example, loadTree, person, resetApp, html } from './helpers.js';
 import { markExported } from '../js/services/exported.js';
 import { EXPORT_KEY } from '../js/config.js';
@@ -302,6 +302,42 @@ describe('onglet Analyse', () => {
     mapPick('Tulle (19)');
     assert.equal(document.getElementById('mapPlace').innerHTML, '', 'fin de glissé, pas un clic');
     mapFit('');
+  });
+
+  test('carte : la frise des décennies, naissances et migrations au fil du temps', () => {
+    localStorage.setItem('lignee.geo.v1', JSON.stringify({ 'Tulle (19)': { lat: 45.27, lon: 1.77 }, 'Brive-la-Gaillarde (19)': { lat: 45.16, lon: 1.53 }, 'Bordeaux (33)': { lat: 44.84, lon: -0.58 } }));
+    loadTree([
+      person('p', { given: 'Jean', surname: 'Roux', birthDate: '1852', birthPlace: 'Tulle (19)' }),
+      person('c', { given: 'Anne', surname: 'Roux', birthDate: '1884', birthPlace: 'Brive-la-Gaillarde (19)', fatherId: 'p' }),
+      person('g', { given: 'Paul', surname: 'Roux', birthDate: '1913', birthPlace: 'Bordeaux (33)', fatherId: 'c' }),
+    ]);
+    const out = view('map');
+    const svg = () => document.getElementById('mapBox').innerHTML;
+    const time = () => document.getElementById('mapTime').innerHTML;
+    assert.match(out, /<input type="range" id="map-year" min="1859" max="1919" step="10" value="1919"/);
+    assert.match(out, /Toutes les années/);
+    const frame = /cx="([\d.-]+)"[^>]*data-name="Tulle/.exec(out)[1];
+
+    setMapYear(1889);
+    assert.match(time(), /Jusqu’en 1889/);
+    assert.match(svg(), /data-name="Brive-la-Gaillarde \(19\)"/);
+    assert.doesNotMatch(svg(), /data-name="Bordeaux \(33\)"/, 'pas encore né à Bordeaux');
+    assert.match(svg(), /class="pt fresh"[^>]*data-name="Brive/, 'née dans la décennie');
+    assert.match(svg(), /class="mv fresh"/, 'migration de la décennie');
+    assert.equal(/cx="([\d.-]+)"[^>]*data-name="Tulle/.exec(svg())[1], frame, 'le cadre ne bouge pas');
+    setMapYear(1919);
+    assert.match(svg(), /class="mv"/, 'migration d’avant : plus en évidence');
+    assert.match(svg(), /class="mv fresh"/);
+
+    // Lecture : depuis la première décennie, puis pause ; « Tout » revient à toute la carte
+    mapPlay();
+    assert.match(time(), /data-act="map-play" aria-pressed="true"/);
+    assert.match(time(), /Jusqu’en 1859/);
+    mapPlay();
+    assert.match(time(), /data-act="map-play" aria-pressed="false"/);
+    setMapYear(null);
+    assert.match(time(), /Toutes les années/);
+    assert.match(time(), /data-act="map-all" id="mapAll" hidden>/);
   });
 });
 

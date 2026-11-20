@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
-import { placeUses, placesByDepartment, migrations, cityOf, cityUses } from '../js/model/places.js';
+import { placeUses, placesByDepartment, migrations, cityOf, cityUses, datedBirths } from '../js/model/places.js';
 import { knownPlaces, locatePlaces } from '../js/services/geocode.js';
 import { GEO_KEY } from '../js/config.js';
 import { loadTree, person } from './helpers.js';
@@ -14,7 +14,23 @@ describe('lieux', () => {
       person('d', { birthPlace: 'Lyon', fatherId: 'p' }),
     ]);
     assert.deepEqual(placeUses().map((x) => [x.name, x.n]), [['Lyon', 3], ['Paris', 2]]);
-    assert.deepEqual(migrations(), [{ from: 'Lyon', to: 'Paris', n: 2 }]);
+    assert.deepEqual(migrations(), [{ from: 'Lyon', to: 'Paris', n: 2, years: [] }]);
+  });
+
+  test('migrations jusqu’à une année : celles des enfants nés avant', () => {
+    loadTree([
+      person('p', { birthDate: '1850', birthPlace: 'Tulle (19)' }),
+      person('c', { birthDate: '12/03/1880', birthPlace: 'Brive-la-Gaillarde (19)', fatherId: 'p' }),
+      person('d', { birthDate: '1910', birthPlace: 'Brive-la-Gaillarde (19)', fatherId: 'p' }),
+      person('e', { birthPlace: 'Paris', fatherId: 'c' }),
+    ]);
+    assert.deepEqual(migrations(), [
+      { from: 'Tulle (19)', to: 'Brive-la-Gaillarde (19)', n: 2, years: [1880, 1910] },
+      { from: 'Brive-la-Gaillarde (19)', to: 'Paris', n: 1, years: [] },
+    ]);
+    assert.deepEqual(migrations(1899), [{ from: 'Tulle (19)', to: 'Brive-la-Gaillarde (19)', n: 1, years: [1880] }], 'sans année de naissance : pas sur la frise');
+    assert.deepEqual(migrations(1849), []);
+    assert.deepEqual(datedBirths().map((b) => [b.id, b.name, b.year]), [['p', 'Tulle (19)', 1850], ['c', 'Brive-la-Gaillarde (19)', 1880], ['d', 'Brive-la-Gaillarde (19)', 1910]]);
   });
 
   test('carte : communes seulement, lieux-dits réunis, migrations entre communes', () => {
@@ -29,7 +45,7 @@ describe('lieux', () => {
       person('e', { birthPlace: 'Le Bourg, Brive-la-Gaillarde (19)', fatherId: 'c' }),
     ]);
     assert.deepEqual(cityUses().map((x) => [x.name, x.n, x.ids.size]), [['Orgnac-sur-Vézère (19)', 3, 3], ['Brive-la-Gaillarde (19)', 2, 2]]);
-    assert.deepEqual(migrations(), [{ from: 'Orgnac-sur-Vézère (19)', to: 'Brive-la-Gaillarde (19)', n: 1 }], 'd’un lieu-dit à l’autre de la même commune : pas de migration');
+    assert.deepEqual(migrations(), [{ from: 'Orgnac-sur-Vézère (19)', to: 'Brive-la-Gaillarde (19)', n: 1, years: [] }], 'd’un lieu-dit à l’autre de la même commune : pas de migration');
     assert.equal(placeUses().length, 5, 'la vue Lieux garde les lieux-dits');
   });
 

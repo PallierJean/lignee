@@ -1,6 +1,7 @@
 /** Places in the tree and moves from one generation to the next. */
 import { S } from '../state.js';
 import { P, eventsOf } from './people.js';
+import { yearOf } from '../utils/dates.js';
 import { departmentCode } from './departments.js';
 import { countryName, isFrance } from './countries.js';
 
@@ -140,19 +141,37 @@ export function cityUses() {
   return [...cities.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
 }
 
-/** Migrations: birth commune of a parent -> that of their child: [{ from, to, n }]. */
-export function migrations() {
+/**
+ * Migrations: birth commune of a parent -> that of their child: [{ from, to, n, years }], `years` the
+ * children's years of birth known. With `until`, only the children born that year or before.
+ */
+export function migrations(until = Infinity) {
   const moves = new Map();
   for (const p of S.people.values()) {
     const to = p.birthPlace && cityOf(p.birthPlace);
     if (!to) continue;
+    const year = yearOf(p.birthDate);
+    if (until !== Infinity && !(year && year <= until)) continue;
     for (const parent of new Set([p.fatherId, p.motherId])) {
       const from = P(parent) && P(parent).birthPlace && cityOf(P(parent).birthPlace);
       if (!from || from === to) continue;
       const key = from + '→' + to;
-      if (!moves.has(key)) moves.set(key, { from, to, n: 0 });
-      moves.get(key).n++;
+      if (!moves.has(key)) moves.set(key, { from, to, n: 0, years: [] });
+      const m = moves.get(key);
+      m.n++;
+      if (year) m.years.push(year);
     }
   }
   return [...moves.values()];
+}
+
+/** Births with a known year and commune, for the map's timeline: [{ id, name, year }]. */
+export function datedBirths() {
+  const out = [];
+  for (const [id, p] of S.people) {
+    const year = yearOf(p.birthDate);
+    const name = p.birthPlace && cityOf(p.birthPlace);
+    if (year && name) out.push({ id, name, year });
+  }
+  return out;
 }
