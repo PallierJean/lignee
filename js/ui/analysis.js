@@ -258,23 +258,45 @@ const ACT_KINDS = ['all', 'insee', 'old', 'archives'];
 let actsKind = 'all';
 const rowKind = (g, r) => (g.archives ? 'archives' : r.act.record ? 'old' : 'insee');
 
-/** How many certificates of each kind: { all, insee, old, archives }. */
-function actKindCounts(groups) {
-  const n = { all: 0, insee: 0, old: 0, archives: 0 };
+/** And whether they were already requested: every certificate, those still to request, or those already requested. */
+const ACT_STATUSES = ['all', 'todo', 'done'];
+let actsStatus = 'all';
+const rowStatus = (r, asked) => (asked[r.id] ? 'done' : 'todo');
+
+/** How many certificates of each kind and of each status: { kind: { all, insee, … }, status: { all, todo, done } }. */
+function actCounts(groups, asked = requestedActs()) {
+  const kind = { all: 0, insee: 0, old: 0, archives: 0 };
+  const status = { all: 0, todo: 0, done: 0 };
   for (const g of groups) for (const r of g.rows) {
-    n.all++;
-    n[rowKind(g, r)]++;
+    kind.all++;
+    kind[rowKind(g, r)]++;
+    status.all++;
+    status[rowStatus(r, asked)]++;
   }
-  return n;
+  return { kind, status };
 }
 
-/** The groups of the kind chosen, each keeping only its certificates of that kind; all of them when that kind has none left. */
+/** Each group keeping only the certificates `keep(g, row)` accepts; groups left empty are dropped. */
+const keepRows = (groups, keep) => groups.map((g) => {
+  const rows = g.rows.filter((r) => keep(g, r));
+  return { ...g, rows, former: g.archives ? g.former : [...new Set(rows.map((r) => r.former).filter(Boolean))].sort() };
+}).filter((g) => g.rows.length);
+
+/** The kind and status chosen, or 'all' for a choice that no certificate matches any more. */
+function chosenFilters(groups, asked) {
+  const n = actCounts(groups, asked);
+  return { kind: n.kind[actsKind] ? actsKind : 'all', status: n.status[actsStatus] ? actsStatus : 'all' };
+}
+
+/** By kind only, by status only: what each menu counts, the other menu's choice applied. */
+const byKind = (groups, kind) => (kind === 'all' ? groups : keepRows(groups, (g, r) => rowKind(g, r) === kind));
+const byStatus = (groups, status, asked) => (status === 'all' ? groups : keepRows(groups, (g, r) => rowStatus(r, asked) === status));
+
+/** The groups shown: the certificates of the kind and status chosen (both menus at once). */
 function shownActGroups(groups = actGroups()) {
-  if (actsKind === 'all' || !actKindCounts(groups)[actsKind]) return groups;
-  return groups.map((g) => {
-    const rows = g.rows.filter((r) => rowKind(g, r) === actsKind);
-    return { ...g, rows, former: g.archives ? g.former : [...new Set(rows.map((r) => r.former).filter(Boolean))].sort() };
-  }).filter((g) => g.rows.length);
+  const asked = requestedActs();
+  const { kind, status } = chosenFilters(groups, asked);
+  return byStatus(byKind(groups, kind), status, asked);
 }
 
 /** Whether every certificate of group `g` was already requested. */
@@ -302,21 +324,36 @@ export function toggleActsAsked(i) {
   renderAnalysis();
 }
 
-/** Chooses the certificates listed (menu of the view). */
+/** Chooses the kind of certificates listed (menu of the view). */
 export function setActsKind(kind) {
   actsKind = ACT_KINDS.includes(kind) ? kind : 'all';
   renderAnalysis();
 }
 
-/** The menu of kinds, each with its count; a kind without certificates isn't offered. */
-function actsKindMenu(groups) {
-  const n = actKindCounts(groups);
-  const kinds = ACT_KINDS.filter((k) => k === 'all' || n[k]);
-  if (kinds.length < 3) return ''; // a single kind: nothing to choose
-  const chosen = n[actsKind] ? actsKind : 'all';
-  return `<label class="fld acts-kind"><span>${t('acts.kind')}</span><select id="acts-kind">`
-    + kinds.map((k) => `<option value="${k}"${k === chosen ? ' selected' : ''}>${esc(t('acts.kind.' + k, n[k]))}</option>`).join('')
-    + '</select></label>';
+/** Chooses the certificates listed by request: all, still to request, already requested. */
+export function setActsStatus(status) {
+  actsStatus = ACT_STATUSES.includes(status) ? status : 'all';
+  renderAnalysis();
+}
+
+/** One menu: "all" then the choices given, each with its count. */
+const filterMenu = (id, label, keys, counts, chosen) => `<label class="fld ${id}"><span>${t(label)}</span><select id="${id}">`
+  + ['all', ...keys].map((k) => `<option value="${k}"${k === chosen ? ' selected' : ''}>${esc(t(label + '.' + k, counts[k]))}</option>`).join('')
+  + '</select></label>';
+
+/**
+ * The two menus, side by side: kind of certificate and request. Each counts the certificates the other
+ * leaves; a choice no certificate has isn't offered, a menu with a single choice isn't shown.
+ */
+function actsMenus(groups) {
+  const asked = requestedActs();
+  const all = actCounts(groups, asked);
+  const { kind, status } = chosenFilters(groups, asked);
+  const kinds = ACT_KINDS.filter((k) => k !== 'all' && all.kind[k]);
+  const statuses = ACT_STATUSES.filter((k) => k !== 'all' && all.status[k]);
+  const menus = (kinds.length > 1 ? filterMenu('acts-kind', 'acts.kind', kinds, actCounts(byStatus(groups, status, asked), asked).kind, kind) : '')
+    + (statuses.length > 1 ? filterMenu('acts-status', 'acts.status', statuses, actCounts(byKind(groups, kind), asked).status, status) : '');
+  return menus ? `<div class="acts-menus">${menus}</div>` : '';
 }
 
 /** A certificate in plain text, as written in a request to the town hall; `former`: town of death if since merged. */
@@ -354,7 +391,7 @@ function actsView() {
     + obtainedHint
     + (archives.length ? `<p class="hint an-hint">${t('acts.archivesHint', archives.reduce((n, g) => n + g.rows.length, 0), archives.length)}</p>` : '')
     + askedHint(every)
-    + actsKindMenu(every)
+    + actsMenus(every)
     + `<label class="fld acts-cc"><span>${t('acts.cc')}</span><input type="email" id="actsCc" autocomplete="email" value="${esc(ccEmail())}" placeholder="${t('acts.ccPlaceholder')}"></label>`
     + `<p class="hint an-hint">${t('acts.ccHint')}</p>`
     + `<div class="row-btns reg-tools"><button class="btn small" type="button" data-act="acts-copy">${t('acts.copyAll')}</button>`
@@ -362,6 +399,7 @@ function actsView() {
     + `<button class="btn small" type="button" data-act="acts-csv">${t('acts.csv')}</button></div>`
     + (hallsBusy ? `<p class="hint an-hint">${t('acts.hallsProgress', hallsBusy.done, hallsBusy.total)}</p>` : '')
     + readyBlock(groups)
+    + (groups.length ? '' : `<p class="nofocus">${t('acts.noneShown')}</p>`)
     + groups.map((g, i) => {
       const asked = requestedActs();
       const done = isRequested(g, asked);
@@ -512,6 +550,7 @@ export const resetActsHalls = () => {
   halls.clear();
   hallsBusy = null;
   actsKind = 'all';
+  actsStatus = 'all';
 };
 
 /** A town's list: its town hall, then one line per certificate. */
