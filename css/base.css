@@ -53,6 +53,12 @@ img {
   white-space: nowrap;
 }
 
+/* A hidden file field stays in its button: placed against the page, low down in a long
+   scrolled form, it would stretch the whole page and give it a huge scrollbar */
+label:has(> input.sr) {
+  position: relative;
+}
+
 .muted {
   color: var(--muted);
 }
