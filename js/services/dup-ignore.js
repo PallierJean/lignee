@@ -1,9 +1,9 @@
 /**
  * What the user dismissed, kept in this browser, per tree: { [tree]: [key, …] }.
  * Pairs of records marked "Not a duplicate" ("idA|idB"), and consistency warnings
- * marked "Ignore" ("code|id|id…").
+ * marked "Ignore" ("code|id|id…"); death certificates already requested ({ [record]: day }).
  */
-import { DUP_KEY, CHK_KEY } from '../config.js';
+import { DUP_KEY, CHK_KEY, REQ_KEY } from '../config.js';
 import { S } from '../state.js';
 
 function readAll(storeKey) {
@@ -50,4 +50,19 @@ export function restoreIssues() {
   const all = readAll(CHK_KEY);
   delete all[S.tree];
   write(CHK_KEY, all);
+}
+
+/** Death certificates already requested in the open tree: { [record]: "DD/MM/YYYY" }. */
+export const requestedActs = () => readAll(REQ_KEY)[S.tree] || {};
+
+/** Marks the certificates of `ids` as requested on `day` ("DD/MM/YYYY"), or with `day` empty, as still to request. */
+export function setRequested(ids, day) {
+  const all = readAll(REQ_KEY);
+  const tree = { ...(all[S.tree] || {}) };
+  for (const id of ids) {
+    if (day) tree[id] = day;
+    else delete tree[id];
+  }
+  all[S.tree] = tree;
+  write(REQ_KEY, all);
 }

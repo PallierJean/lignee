@@ -1369,3 +1369,13 @@
     max-height: none;
   }
 }
+
+/* Certificates already requested: the town hall stays listed, faded */
+.acts-town.done h3,
+.acts-town.done .ins-diffs {
+  opacity: .55;
+}
+
+.acts-asked {
+  color: var(--ok);
+}

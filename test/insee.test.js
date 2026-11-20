@@ -8,7 +8,8 @@ import {
 } from '../js/model/insee.js';
 import { inseePending, checkInsee, inseeResults, inseeMatch, ignoreInsee, forgetInsee, resetInseeMemo } from '../js/services/insee.js';
 import { resetHistory } from '../js/services/history.js';
-import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc, setActsKind } from '../js/ui/analysis.js';
+import { renderAnalysis, startInsee, inseeSendCode, inseeSendAuth, copyActs, exportActsCsv, findActsHall, findAllActsHalls, resetActsHalls, setActsCc, setActsKind, toggleActsAsked } from '../js/ui/analysis.js';
+import { REQ_KEY } from '../js/config.js';
 import { findTownHall, findArchives, resetTownHalls } from '../js/services/town-hall.js';
 import { setLang } from '../js/i18n.js';
 import { loadCommuneChanges, currentCommune } from '../js/model/communes.js';
@@ -583,6 +584,20 @@ describe('actes de décès à demander, par commune', () => {
     await copyActs(0);
     assert.equal(copied, 'Mairie de Limoges (87)\n- Bertrand Lucien Marcel, né(e) le 12 Mars 1920, décédé(e) le 04 Juillet 1995, acte n° 412');
     setActsKind('all');
+
+    // « Déjà demandé » : gardé par fiche, dans ce navigateur ; un second clic l'annule
+    const day = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    toggleActsAsked(0);
+    shown = html('paneAnalysis');
+    assert.match(shown, /<section class="rel acts-town done"><h3>Cherbourg-en-Cotentin \(50\)/);
+    assert.match(shown, /data-act="acts-asked" data-i="0" aria-pressed="true">✓ Déjà demandé/);
+    assert.match(shown, /data-act="acts-asked" data-i="1" aria-pressed="false">Déjà demandé/);
+    assert.match(shown, /✓ demandé le /);
+    assert.match(shown, /1 acte sur 3 déjà demandé/);
+    assert.deepEqual(JSON.parse(localStorage.getItem(REQ_KEY)), { [S.tree]: { h: day } });
+    toggleActsAsked(0);
+    assert.doesNotMatch(html('paneAnalysis'), /acts-town done|déjà demandé :/);
+    assert.deepEqual(JSON.parse(localStorage.getItem(REQ_KEY)), { [S.tree]: {} });
   });
 
   test('décès d’avant 1800 : aux archives du département, une demande par département', () => {

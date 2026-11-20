@@ -13,7 +13,7 @@ import {
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
 import {
-  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc, setActsKind, setLibraryFilter,
+  startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc, setActsKind, toggleActsAsked, setLibraryFilter,
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
@@ -230,6 +230,7 @@ const CLICK_ACTIONS = {
   'acts-copy': (el) => copyActs(el.dataset.i === undefined ? undefined : Number(el.dataset.i)),
   'acts-csv': () => exportActsCsv(),
   'acts-hall': (el) => findActsHall(Number(el.dataset.i)),
+  'acts-asked': (el) => toggleActsAsked(Number(el.dataset.i)),
   'acts-halls': () => findAllActsHalls(),
   'insee-register': () => inseeSendCode(),
   'insee-auth': () => inseeSendAuth(),
