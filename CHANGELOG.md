@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.10.0](https://github.com/PallierJean/lignee/compare/v4.9.1...v4.10.0) (2026-11-23)
+
+### Features
+
+* Show a document's modern French translation beside it ([08fe07d](https://github.com/PallierJean/lignee/commit/08fe07d6f45003b8d126484025eeea2ed622e01d))
+
+### Bug Fixes
+
+* Rename a person's photo files along with their folder ([ddd9de1](https://github.com/PallierJean/lignee/commit/ddd9de1e71af38b0c87754ee82bcbdc89e33bff4))
+
+---
+
+### Nouveautés
+
+* Un clic sur la photo d'un acte l'affiche avec sa traduction en français moderne à côté, et le lien « Texte lu » devient un bouton. ([08fe07d](https://github.com/PallierJean/lignee/commit/08fe07d6f45003b8d126484025eeea2ed622e01d))
+
+### Corrections
+
+* Une personne renommée : ses photos prennent aussi son nouveau nom, pas seulement son nouveau dossier. ([ddd9de1](https://github.com/PallierJean/lignee/commit/ddd9de1e71af38b0c87754ee82bcbdc89e33bff4))
+
 ## [4.9.1](https://github.com/PallierJean/lignee/compare/v4.9.0...v4.9.1) (2026-11-23)
 
 ### Bug Fixes
