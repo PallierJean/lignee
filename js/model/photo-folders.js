@@ -1,6 +1,7 @@
 /**
  * Where a photo file is kept, in the tree's photos folder (on this computer and in a GitHub
  * repository): a person's portrait and documents in a folder named after them ("DUPONT_Jean"),
+ * a marriage's documents in the couple's folder ("DUPONT_Jean_X_FAURE_Marie", the man first),
  * everything else (gallery images, documents nobody cites) in "galerie".
  * A record keeps "photos/<folder>/<file>"; one saved before keeps "photos/<file>" until it is filed.
  */
@@ -34,10 +35,11 @@ export function personFolder(p, people, id = null) {
 export const folderOfRef = (ref) => (/^photos\/([^/]+)\//.exec(String(ref || '')) || [])[1] || '';
 
 /**
- * Folders of a tree's records: { person(id), source(id), media() }. A shared document goes with the
- * person it is about (the first citing it with no other part in it), else the first who cites
- * it, else the husband of a union citing it; between two people it is about equally (a marriage
- * certificate cited by both spouses), always the man. One nobody cites goes to the gallery.
+ * Folders of a tree's records: { person(id), source(id), couple(union id), media() }. A document a
+ * union cites (its marriage certificate) goes to the couple's folder, the man's name first. Any
+ * other shared document goes with the person it is about (the first citing it with no other part
+ * in it), else the first who cites it; between two people it is about equally, the man. One
+ * nobody cites goes to the gallery.
  */
 export function photoFolders({ people, unions = new Map(), sources = new Map() }) {
   const folders = new Map();
@@ -45,8 +47,15 @@ export function photoFolders({ people, unions = new Map(), sources = new Map() }
     if (!folders.has(id)) folders.set(id, people.has(id) ? personFolder(people.get(id), people, id) : GALLERY_FOLDER);
     return folders.get(id);
   };
-  const owner = new Map(); // source id -> { id, rank }
   const man = (id) => (people.get(id) || {}).sex === 'M';
+  const couple = (uid) => {
+    const u = unions.get(uid) || {};
+    const ids = [u.a, u.b].filter((id) => id && people.has(id));
+    if (!ids.length) return GALLERY_FOLDER;
+    if (ids.length > 1 && man(ids[1]) && !man(ids[0])) ids.reverse();
+    return ids.map(person).join('_X_').slice(0, 80); // as long as the server keeps a folder name
+  };
+  const owner = new Map(); // source id -> { id, rank } (a person) or { union, rank: -1 }
   const claim = (source, id, rank) => {
     const was = owner.get(source);
     if (!sources.has(source) || !people.has(id)) return;
@@ -57,14 +66,16 @@ export function photoFolders({ people, unions = new Map(), sources = new Map() }
       if (c && c.source) claim(c.source, id, c.role && c.role !== 'subject' ? 1 : 0);
     }
   }
-  for (const [, u] of unions) {
+  for (const [uid, u] of unions) {
     for (const c of Array.isArray(u && u.citations) ? u.citations : []) {
-      if (c && c.source) for (const id of [u.a, u.b]) claim(c.source, id, 2);
+      const was = c && owner.get(c.source);
+      if (c && c.source && sources.has(c.source) && !(was && was.union) && [u.a, u.b].some((id) => people.has(id))) owner.set(c.source, { union: uid, rank: -1 });
     }
   }
-  return {
-    person,
-    source: (id) => (owner.has(id) ? person(owner.get(id).id) : GALLERY_FOLDER),
-    media: () => GALLERY_FOLDER,
+  const source = (id) => {
+    const o = owner.get(id);
+    if (!o) return GALLERY_FOLDER;
+    return o.union ? couple(o.union) : person(o.id);
   };
+  return { person, source, couple, media: () => GALLERY_FOLDER };
 }
