@@ -5,7 +5,7 @@
  * everything else (gallery images, documents nobody cites) in "galerie".
  * A record keeps "photos/<folder>/<file>"; one saved before keeps "photos/<file>" until it is filed.
  */
-import { given, surname } from './people.js';
+import { given, surname, photoLabel } from './people.js';
 import { yearOf } from '../utils/dates.js';
 
 export const GALLERY_FOLDER = 'galerie';
@@ -34,12 +34,27 @@ export function personFolder(p, people, id = null) {
 /** Folder of a photo reference ("photos/DUPONT_Jean/x.jpg" → "DUPONT_Jean"), '' for one not filed. */
 export const folderOfRef = (ref) => (/^photos\/([^/]+)\//.exec(String(ref || '')) || [])[1] || '';
 
+// A file Lignée named: "<label>-<uuid>.<ext>"
+const NAMED_FILE = /-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:jpg|png|webp|gif))$/;
+
+/**
+ * Where photo `ref` belongs: "photos/<folder>/<file>". With a `label` ("DUPONT-Jean"), a file Lignée
+ * named takes it in place of the one it was saved under (a person renamed), the same uuid after it.
+ */
+export function filedRef(ref, folder, label = '') {
+  const file = String(ref || '').split('/').pop();
+  const m = label ? NAMED_FILE.exec(file) : null;
+  return `photos/${folder}/${m ? label.slice(0, 80) + '-' + m[1] : file}`;
+}
+
 /**
  * Folders of a tree's records: { person(id), source(id), couple(union id), media() }. A document a
  * union cites (its marriage certificate) goes to the couple's folder, the man's name first. Any
  * other shared document goes with the person it is about (the first citing it with no other part
  * in it), else the first who cites it; between two people it is about equally, the man. One
- * nobody cites goes to the gallery.
+ * nobody cites goes to the gallery. `label(kind, id, ref)`: the name file `ref` of a person's folder
+ * takes ("DUPONT-Jean", the person's name of today), '' to keep its own: in a couple's folder or the
+ * gallery, or a document named after its source.
  */
 export function photoFolders({ people, unions = new Map(), sources = new Map() }) {
   const folders = new Map();
@@ -77,5 +92,17 @@ export function photoFolders({ people, unions = new Map(), sources = new Map() }
     if (!o) return GALLERY_FOLDER;
     return o.union ? couple(o.union) : person(o.id);
   };
-  return { person, source, couple, media: () => GALLERY_FOLDER };
+  const label = (kind, id, ref = '') => {
+    const o = kind === 'source' ? owner.get(id) : null;
+    const pid = kind === 'person' ? id : o && !o.union ? o.id : '';
+    if (!pid || !people.has(pid)) return '';
+    if (kind === 'source') {
+      // A document named after its source (its title, its kind) keeps that name
+      const s = sources.get(id) || {};
+      const file = String(ref || '').split('/').pop();
+      if (file.startsWith(photoLabel({ given: s.title || s.kind || 'source' }).slice(0, 80) + '-')) return '';
+    }
+    return photoLabel(people.get(pid));
+  };
+  return { person, source, couple, media: () => GALLERY_FOLDER, label };
 }

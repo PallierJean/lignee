@@ -110,6 +110,23 @@ describe('mode fichier, sur le vrai serveur', () => {
     assert.equal(bad.status, 400);
   });
 
+  test('personne renommée : ses photos changent de dossier et de nom, même identifiant', async () => {
+    const uuid = '0b1c2d3e-4f50-4a6b-8c7d-9e0f1a2b3c4d';
+    const dir = path.join(dataDir, 'principal', 'photos');
+    await mkdir(path.join(dir, 'ROUX_Bob'), { recursive: true });
+    await writeFile(path.join(dir, 'ROUX_Bob', `ROUX-Bob-${uuid}.png`), 'img');
+    await opUpdate('people', 'b', { photo: `photos/ROUX_Bob/ROUX-Bob-${uuid}.png` });
+    await opUpdate('people', 'b', { given: 'Bob Henri' });
+    await loadFile();
+    assert.equal(S.people.get('b').photo, `photos/ROUX_Bob-Henri/ROUX-Bob-Henri-${uuid}.png`);
+    await access(path.join(dir, 'ROUX_Bob-Henri', `ROUX-Bob-Henri-${uuid}.png`));
+    for (const name of ['../x.png', 'autre.jpg', 'a:b.png']) {
+      const bad = await fetch('api/trees/principal/photos/move', { method: 'POST', body: JSON.stringify({ from: `photos/ROUX_Bob-Henri/ROUX-Bob-Henri-${uuid}.png`, folder: 'ROUX_Bob', name }) });
+      assert.equal(bad.status, 400, name);
+    }
+    await opUpdate('people', 'b', { given: 'Bob' });
+  });
+
   test('collection d’arbres', async () => {
     const id = await createTree('Second');
     assert.ok(S.trees.has(id));

@@ -7,7 +7,7 @@ import { S, treeName } from '../../state.js';
 import { buildBackup, parseBackup, FORMAT_VERSION } from '../backup.js';
 import { isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
 import { pool } from '../../utils/helpers.js';
-import { GALLERY_FOLDER, personFolder, photoFolders, folderOfRef } from '../../model/photo-folders.js';
+import { GALLERY_FOLDER, personFolder, photoFolders, filedRef } from '../../model/photo-folders.js';
 import { say, failure } from '../notify.js';
 import { ensureTree, sortTrees } from './trees.js';
 import { readLocalTrees, readLocalData, openBrowserStore } from './local.js';
@@ -190,31 +190,34 @@ export async function storePhotos() {
   return n;
 }
 
-/** Copy of photo file `photo` in `folder` ("photos/<folder>/<file>"); the original goes with the next sweep. */
-async function movePhoto(photo, folder) {
+/** Copy of photo file `photo` at `to` ("photos/<folder>/<file>"); the original goes with the next sweep. */
+async function movePhoto(photo, to) {
+  const [, folder, name] = /^photos\/([^/]+)\/([^/]+)$/.exec(to);
   const res = await fetch(API + encodeURIComponent(S.tree) + '/photos/move', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: photo, folder }),
+    body: JSON.stringify({ from: photo, folder, name }),
   });
   if (!res.ok) throw new Error(String(res.status));
   return (await res.json()).photo;
 }
 
 /**
- * Files the open tree's photos: a person's portrait and documents in their folder, the rest in
- * "galerie" (model/photo-folders.js). Returns the number of records changed; a photo that can't be
+ * Files the open tree's photos: a person's portrait and documents in their folder, named after
+ * them ("DUPONT-Jean-<uuid>.jpg", renamed with the person), the rest in "galerie"
+ * (model/photo-folders.js). Returns the number of records changed; a photo that can't be
  * moved stays where it is, for another try on the next load.
  */
 export async function arrangePhotos() {
   if (S.mode !== 'file' || !S.canWrite) return 0;
   let n = 0;
   const folders = photoFolders(S);
-  for (const [map, folder] of [[S.people, folders.person], [S.sources, folders.source], [S.media, folders.media]]) {
-    const misplaced = ([id, p]) => [p.photo, ...attached(p)].some((x) => isPhotoFile(x) && folderOfRef(x) !== folder(id));
+  for (const [map, folder, kind] of [[S.people, folders.person, 'person'], [S.sources, folders.source, 'source'], [S.media, folders.media, 'media']]) {
+    const target = (id, photo) => filedRef(photo, folder(id), folders.label(kind, id, photo));
+    const misplaced = ([id, p]) => [p.photo, ...attached(p)].some((x) => isPhotoFile(x) && target(id, x) !== x);
     await pool([...map].filter(misplaced), 4, async ([id, p]) => {
       try {
-        const moved = await convertPhotos(p, (photo) => (isPhotoFile(photo) && folderOfRef(photo) !== folder(id) ? movePhoto(photo, folder(id)) : photo));
+        const moved = await convertPhotos(p, (photo) => (isPhotoFile(photo) && target(id, photo) !== photo ? movePhoto(photo, target(id, photo)) : photo));
         if (map.get(id) === p) map.set(id, moved);
         n++;
       } catch (e) {

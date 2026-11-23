@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { nameFolder, personFolder, photoFolders, folderOfRef } from '../js/model/photo-folders.js';
+import { nameFolder, personFolder, photoFolders, folderOfRef, filedRef } from '../js/model/photo-folders.js';
 
 test('dossier d’une personne : NOM_Prénom, l’année de naissance pour deux homonymes', () => {
   assert.equal(nameFolder({ surname: 'Dupont', given: 'Jean Pierre' }), 'DUPONT_Jean-Pierre');
@@ -55,4 +55,20 @@ test('acte de mariage : l’union l’emporte sur une fiche qui le cite, un seul
 test('dossier d’un chemin de photo', () => {
   assert.equal(folderOfRef('photos/DUPONT_Jean/x.jpg'), 'DUPONT_Jean');
   assert.equal(folderOfRef('photos/x.jpg'), '');
+});
+
+test('nom du fichier : celui de la personne du dossier, renommé avec elle', () => {
+  const uuid = '0b1c2d3e-4f50-4a6b-8c7d-9e0f1a2b3c4d';
+  assert.equal(filedRef(`photos/DUPONT_Jean/DUPONT-Jean-${uuid}.jpg`, 'DUPONT_Jean-Paul', 'DUPONT-Jean-Paul'), `photos/DUPONT_Jean-Paul/DUPONT-Jean-Paul-${uuid}.jpg`);
+  assert.equal(filedRef(`photos/x/Acte-n-3-${uuid}.png`, 'galerie'), `photos/galerie/Acte-n-3-${uuid}.png`, 'sans nom : le fichier garde le sien');
+  assert.equal(filedRef('photos/vieux.png', 'ROUX_Bob', 'ROUX-Bob'), 'photos/ROUX_Bob/vieux.png', 'un fichier mis à la main garde son nom');
+  const people = new Map([['h', { surname: 'Blanc', given: 'Jules', sex: 'M', citations: [{ source: 'n' }] }], ['f', { surname: 'Noir', given: 'Lise', sex: 'F' }]]);
+  const unions = new Map([['u', { a: 'h', b: 'f', citations: [{ source: 'm' }] }]]);
+  const f = photoFolders({ people, unions, sources: new Map([['m', {}], ['n', { title: 'Acte n°3' }], ['g', {}]]) });
+  assert.equal(f.label('person', 'f'), 'NOIR-Lise');
+  assert.equal(f.label('source', 'n', `photos/BLANC_Jules/BLANC-Jul-${uuid}.jpg`), 'BLANC-Jules', 'un acte nommé d’après une personne : son nom d’aujourd’hui');
+  assert.equal(f.label('source', 'n', `photos/BLANC_Jules/Acte-n-3-${uuid}.jpg`), '', 'nommé d’après sa source : gardé');
+  assert.equal(f.label('source', 'm'), '', 'acte du couple : nom gardé');
+  assert.equal(f.label('source', 'g'), '', 'galerie : nom gardé');
+  assert.equal(f.label('media', 'x'), '');
 });

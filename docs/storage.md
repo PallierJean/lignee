@@ -40,8 +40,10 @@ la femme : `DUPONT_Jean_X_FAURE_Marie`), et `galerie` pour les images de la
 galerie et les documents que personne ne cite ; deux homonymes sont distingués par leur année de
 naissance (`DUPONT_Jean_1850`). À l'ouverture de l'arbre, une photo qui n'est pas dans son
 dossier (enregistrée avant les dossiers, personne renommée) y est copiée et la fiche suit ;
-l'ancien fichier part au balayage. Un dépôt GitHub suit le même rangement : à l'envoi, une photo
-déjà présente ailleurs y est déplacée sans être renvoyée. Renommer l'arbre ne déplace rien. Une
+l'ancien fichier part au balayage. Dans le dossier d'une personne, un fichier nommé d'après elle
+prend aussi son nom à jour (`NOM-Prénom-<uuid>`, même uuid) ; un acte nommé d'après sa source, et
+les fichiers des dossiers de couple et de la galerie, gardent le leur. Un dépôt GitHub suit le même rangement : à l'envoi, une photo
+déjà présente ailleurs ou sous un ancien nom y est déplacée sans être renvoyée. Renommer l'arbre ne déplace rien. Une
 photo retirée ou remplacée, ou celle d'une personne supprimée, reste sur le disque le temps
 que l'action puisse être annulée, puis est effacée à la prochaine ouverture de l'arbre. Les photos
 encore intégrées (arbre importé, ou enregistré avant ce changement) sont sorties en
