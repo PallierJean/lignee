@@ -429,6 +429,15 @@ describe('envoi vers le dépôt', () => {
     assert.ok(!treeEntries().tree.some((x) => x.path.includes('/photos/')), 'déjà rangée : plus rien ne bouge');
   });
 
+  test('image de la galerie déjà dans le dépôt : rangée dans « galerie », pas renvoyée', async () => {
+    const { repo, target } = await opened();
+    calls.length = 0;
+    const text = JSON.stringify({ format: 'lignee', version: 3, name: 'F', people: [], unions: [], sources: [], media: [{ id: 'm', photo: data, tags: [] }] });
+    await pushBackup(repo, target, text, 'msg');
+    assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')));
+    assert.equal(json().media[0].photo, 'photos/galerie/Ané.jpg', 'nom gardé');
+  });
+
   test('le GEDCOM part à côté de la sauvegarde, dans le même commit', async () => {
     const { repo, target } = await opened();
     calls.length = 0;
