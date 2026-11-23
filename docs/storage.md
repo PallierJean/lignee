@@ -35,7 +35,7 @@ Les photos n'y sont pas intégrées : chacune est un fichier
 `data/arbres/<id de l'arbre>/photos/<dossier>/NOM-Prénom-<uuid>.jpg` (même identifiant que le
 fichier `<id>.json`), et la fiche garde `"photo": "photos/<dossier>/<fichier>"`. Le dossier est
 `NOM_Prénom` pour le portrait d'une personne et ses actes (un acte partagé va chez la personne
-dont il parle, l'acte de mariage chez le premier époux), et `galerie` pour les images de la
+dont il parle, l'acte de mariage chez l'homme), et `galerie` pour les images de la
 galerie et les documents que personne ne cite ; deux homonymes sont distingués par leur année de
 naissance (`DUPONT_Jean_1850`). À l'ouverture de l'arbre, une photo qui n'est pas dans son
 dossier (enregistrée avant les dossiers, personne renommée) y est copiée et la fiche suit ;
