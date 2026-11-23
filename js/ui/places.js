@@ -361,7 +361,7 @@ export async function locateMissing(refresh) {
   try {
     await locatePlaces(names, (done, total) => {
       busy = { done, total };
-      if (S.tab === 'analysis' && S.analysis === 'map') refresh();
+      if ((S.tab === 'analysis' && S.analysis === 'map') || S.stage === 'map') refresh();
     });
   } catch (e) {
     toast(t('map.failed'), true);

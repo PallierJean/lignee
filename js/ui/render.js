@@ -8,7 +8,8 @@ import { renderHeader, renderControls } from './header.js';
 import { recordHTML } from './record.js';
 import { formHTML } from './form.js';
 import { renderRegister } from './register.js';
-import { renderAnalysis, galleryHTML, sourceLibrary, stageSourcesHTML } from './analysis.js';
+import { renderAnalysis, onStageRefresh, galleryHTML, sourceLibrary, stageSourcesHTML } from './analysis.js';
+import { mapView } from './places.js';
 import { refreshFind } from './search.js';
 import { renderTrees } from './trees.js';
 import { renderPersonDlg } from './person-dlg.js';
@@ -64,12 +65,18 @@ export function renderStageGallery() {
     el.innerHTML = '';
     return;
   }
+  const back = `<button class="btn small" type="button" data-act="stage-${S.stage}">${t('sg.back')}</button></div>`;
+  if (S.stage === 'map') {
+    setHTML(el, `<div class="sg-head"><h2>${t('ctl.map')}</h2>${back}<div class="stage-map">${mapView()}</div>`);
+    return;
+  }
   const sources = S.stage === 'sources';
   const n = sources ? sourceLibrary().length : allMedia().filter(({ m }) => m && m.photo).length;
-  setHTML(el, `<div class="sg-head"><h2>${t(sources ? 'ctl.sources' : 'ctl.gallery')} <span class="n">${n}</span></h2>`
-    + `<button class="btn small" type="button" data-act="stage-${S.stage}">${t('sg.back')}</button></div>`
+  setHTML(el, `<div class="sg-head"><h2>${t(sources ? 'ctl.sources' : 'ctl.gallery')} <span class="n">${n}</span></h2>${back}`
     + (sources ? stageSourcesHTML() : galleryHTML('stage')));
 }
+
+onStageRefresh(() => renderStageGallery());
 
 export function renderAll(force) {
   renderHeader();

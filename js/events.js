@@ -207,6 +207,7 @@ const CLICK_ACTIONS = {
   fan: () => A.toggleFan(),
   'stage-gallery': () => A.toggleStageGallery(),
   'stage-sources': () => A.toggleStageSources(),
+  'stage-map': () => A.toggleStageMap(),
   line: () => A.toggleLine(),
   photos: () => A.togglePhotos(),
   filter: (el) => A.toggleFilter(el.dataset.filter),

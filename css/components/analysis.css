@@ -444,6 +444,12 @@
   cursor: pointer;
 }
 
+/* Full-size map, in place of the tree: as high as the screen allows */
+.stage-map {
+  max-width: min(100%, calc((100vh - 220px) * 340 / 360));
+  margin-inline: auto;
+}
+
 /* Explorable map (ui/places.js): drag to move, click a commune */
 .map-tools {
   margin-top: 4px;
