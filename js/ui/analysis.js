@@ -11,7 +11,7 @@ import { findDuplicates } from '../model/duplicates.js';
 import { ignoredPairs, ignoredIssues, issueKey, browserRequested } from '../services/dup-ignore.js';
 import { timelineOf } from '../model/timeline.js';
 import { placeFields, placeValue } from './form.js';
-import { mapView, locateMissing } from './places.js';
+import { mapView, locateMissing, setMapRefresh } from './places.js';
 import { placesByDepartment, parsePlace } from '../model/places.js';
 import {
   loadCommunes, communesLoaded, placeDepartmentIssue, departmentsText, loadCommuneChanges, communeChangesLoaded, currentCommune,
@@ -1054,11 +1054,15 @@ const galleryView = () => galleryHTML('all');
 
 /* ---------- Rendering ---------- */
 
-/** Locates the places still unknown; the map follows, in the Analysis tab or full size. */
-export const startLocate = () => locateMissing(() => {
+/** Redraws the map, in the Analysis tab or full size. */
+const refreshMap = () => {
   renderAnalysis();
   if (S.stage === 'map') refreshStage();
-});
+};
+setMapRefresh(refreshMap);
+
+/** Locates the places still unknown; the map follows. */
+export const startLocate = () => locateMissing(refreshMap);
 
 let refreshStage = () => {};
 /** The full-size map redraws through this (set by render.js, which imports this module). */

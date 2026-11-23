@@ -444,10 +444,31 @@
   cursor: pointer;
 }
 
-/* Full-size map, in place of the tree: as high as the screen allows */
+/* Full-size map, in place of the tree: drawn at the size of the screen (ui/render.js),
+   notes and migrations in a column on the right */
 .stage-map {
-  max-width: min(100%, calc((100vh - 220px) * 340 / 360));
-  margin-inline: auto;
+  margin-inline: 20px;
+}
+
+.map-split {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.map-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.map-side {
+  flex: 0 0 320px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.map-side > :first-child {
+  margin-top: 4px;
 }
 
 /* Explorable map (ui/places.js): drag to move, click a commune */

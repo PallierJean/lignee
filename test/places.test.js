@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test, describe } from 'node:test';
 import { placeUses, placesByDepartment, migrations, cityOf, cityUses, datedBirths } from '../js/model/places.js';
-import { knownPlaces, locatePlaces, placeQuery, placesToLocate } from '../js/services/geocode.js';
+import { knownPlaces, locatePlaces, placeQuery, placesToLocate, placesToRelocate } from '../js/services/geocode.js';
 import { GEO_KEY, GEO_OLD_KEY } from '../js/config.js';
 import { loadTree, person } from './helpers.js';
 
@@ -103,12 +103,15 @@ describe('lieux', () => {
     assert.deepEqual(Object.fromEntries(knownPlaces()), { 'Troche (19)': { lat: 45.39, lon: 1 }, 'Brive-la-Gaillarde (19)': null });
   });
 
-  test('localisation : les lieux trouvés avant restent affichés, mais sont à relocaliser', () => {
+  test('localisation : les lieux trouvés avant ne sont plus affichés, ils sont à relocaliser, puis oubliés', () => {
     localStorage.setItem(GEO_OLD_KEY, JSON.stringify({ 'Troche (19)': { lat: 46, lon: 4.4 }, 'Tulle (19)': { lat: 45.27, lon: 1.77 } }));
     localStorage.setItem(GEO_KEY, JSON.stringify({ 'Tulle (19)': { lat: 45.267, lon: 1.77 } }));
-    assert.deepEqual(knownPlaces().get('Troche (19)'), { lat: 46, lon: 4.4 });
-    assert.deepEqual(knownPlaces().get('Tulle (19)'), { lat: 45.267, lon: 1.77 }, 'la nouvelle localisation l’emporte');
+    assert.equal(knownPlaces().has('Troche (19)'), false, 'position douteuse : pas sur la carte');
+    assert.deepEqual(knownPlaces().get('Tulle (19)'), { lat: 45.267, lon: 1.77 });
     assert.deepEqual(placesToLocate(['Troche (19)', 'Tulle (19)', 'Ussel (19)']), ['Troche (19)', 'Ussel (19)']);
-    localStorage.removeItem(GEO_OLD_KEY);
+    assert.deepEqual(placesToRelocate(['Troche (19)', 'Tulle (19)', 'Ussel (19)']), ['Troche (19)'], 'Ussel n’a jamais été demandé');
+    localStorage.setItem(GEO_KEY, JSON.stringify({ 'Tulle (19)': { lat: 45.267, lon: 1.77 }, 'Troche (19)': { lat: 45.39, lon: 1.44 } }));
+    assert.deepEqual(placesToRelocate(['Troche (19)']), []);
+    assert.equal(localStorage.getItem(GEO_OLD_KEY), null, 'tout est relocalisé : les anciennes positions sont oubliées');
   });
 });
