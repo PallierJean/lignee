@@ -77,7 +77,8 @@ const CSP = "default-src 'self'; script-src 'self'; style-src 'self'; font-src '
 function send(res, status, body, type = 'text/plain; charset=utf-8', headers = {}) {
   res.writeHead(status, {
     'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
-    'Content-Security-Policy': CSP, 'Referrer-Policy': 'no-referrer',
+    // The origin alone (never the page's path): OpenStreetMap refuses map tiles asked with no Referer
+    'Content-Security-Policy': CSP, 'Referrer-Policy': 'strict-origin',
     // The page checks it: a server started before an update must not write a newer format
     'X-Lignee-Format': String(FORMAT_VERSION), ...headers,
   });

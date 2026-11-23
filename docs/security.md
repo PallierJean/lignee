@@ -84,7 +84,9 @@ l'ordinateur.
 
 Une balise `<meta>` ne peut pas porter `frame-ancestors` : sur GitHub Pages, `js/main.js` refuse
 donc de démarrer dans le cadre d'un autre site et propose de l'ouvrir dans un onglet. Le serveur envoie aussi
-`Referrer-Policy: no-referrer`.
+`Referrer-Policy: strict-origin` : un autre site ne reçoit que l'adresse du serveur
+(`http://localhost:…`), jamais le chemin de la page. Les tuiles d'OpenStreetMap l'exigent : demandées
+sans Referer, elles sont remplacées par une image « Access blocked ».
 
 ## Textes saisis et fichiers importés
 
