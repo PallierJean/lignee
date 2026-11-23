@@ -109,7 +109,7 @@ export function toggleFull() {
 }
 
 /** Switches between the tree and the fan chart. */
-/** Shows `what` ('gallery' or 'sources') in place of the tree, or the tree again. */
+/** Shows `what` ('gallery', 'sources' or 'map') in place of the tree, or the tree again. */
 export function toggleStage(what) {
   S.stage = S.stage === what ? '' : what;
   renderControls();
@@ -121,6 +121,9 @@ export const toggleStageGallery = () => toggleStage('gallery');
 
 /** Shows every source in place of the tree, or the tree again. */
 export const toggleStageSources = () => toggleStage('sources');
+
+/** Shows the map of places in place of the tree, or the tree again. */
+export const toggleStageMap = () => toggleStage('map');
 
 export function toggleFan() {
   S.fan = !S.fan;

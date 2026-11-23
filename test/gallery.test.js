@@ -288,6 +288,31 @@ describe('galerie à la place de l’arbre', () => {
     assert.equal(el('stageGallery').hidden, true);
     assert.equal(el('canvas').hidden, false);
   });
+
+  test('la carte en grand, à la place de l’arbre, avec un bouton à droite des sources', async () => {
+    const { S } = await import('../js/state.js');
+    const A = await import('../js/actions.js');
+    const { renderAll } = await import('../js/ui/render.js');
+    const { resetApp } = await import('./helpers.js');
+    resetApp();
+    localStorage.setItem('lignee.geo.v2', JSON.stringify({ 'Tulle (19)': { lat: 45.27, lon: 1.77 } }));
+    loadTree([person('a', { given: 'Anne', surname: 'Roux', birthPlace: 'Tulle (19)' })]);
+    S.focus = 'a';
+    renderAll();
+    const el = (id) => document.getElementById(id);
+    A.toggleStageMap();
+    assert.equal(el('btnMap').getAttribute('aria-pressed'), 'true');
+    assert.equal(el('btnSources').getAttribute('aria-pressed'), 'false');
+    assert.equal(el('canvas').hidden, true);
+    const out = el('stageGallery').innerHTML;
+    assert.match(out, /<h2>Carte<\/h2>/);
+    assert.match(out, /data-act="map-point" data-name="Tulle \(19\)"/);
+    assert.match(out, /data-act="stage-map">Revenir à l’arbre/);
+    A.toggleStageMap();
+    assert.equal(el('stageGallery').hidden, true);
+    assert.equal(el('canvas').hidden, false);
+    localStorage.removeItem('lignee.geo.v2');
+  });
 });
 
 describe('archives dans la visionneuse', () => {

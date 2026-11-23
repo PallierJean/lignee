@@ -977,6 +977,8 @@ export const EN = {
   'sg.back': 'Back to the tree',
   'ctl.sources': 'Sources',
   'ctl.sourcesTitle': 'Show every source in place of the tree',
+  'ctl.map': 'Map',
+  'ctl.mapTitle': 'Show the map of places in place of the tree',
   'ctl.fan': 'Fan chart',
   'ctl.line': 'Direct line',
   'ctl.photos': 'Photos',
@@ -1013,6 +1015,7 @@ export const EN = {
   'time.family': 'Close family',
   'time.empty': 'No known date for this person.',
 
+  'map.onStage': 'The map is shown full size in place of the tree.',
   'map.label': 'Map of places and migrations',
   'map.empty': 'No place recorded in this tree.',
   'map.none': 'No place has been located yet.',

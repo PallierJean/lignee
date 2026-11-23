@@ -1006,6 +1006,8 @@ export const FR = {
   'sg.back': 'Revenir à l’arbre',
   'ctl.sources': 'Sources',
   'ctl.sourcesTitle': 'Afficher toutes les sources à la place de l’arbre',
+  'ctl.map': 'Carte',
+  'ctl.mapTitle': 'Afficher la carte des lieux à la place de l’arbre',
   'ctl.fan': 'Éventail',
   'ctl.line': 'Lignée directe',
   'ctl.photos': 'Photos',
@@ -1045,6 +1047,7 @@ export const FR = {
   'time.empty': 'Aucune date connue pour cette personne.',
 
   // Map
+  'map.onStage': 'La carte est affichée en grand à la place de l’arbre.',
   'map.label': 'Carte des lieux et des migrations',
   'map.empty': 'Aucun lieu renseigné dans cet arbre.',
   'map.none': 'Aucun lieu n’est encore localisé.',

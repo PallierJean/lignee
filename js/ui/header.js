@@ -46,6 +46,7 @@ export function renderControls() {
   $('#btnPhotos').setAttribute('aria-pressed', String(S.photos));
   $('#btnGallery').setAttribute('aria-pressed', String(S.stage === 'gallery'));
   $('#btnSources').setAttribute('aria-pressed', String(S.stage === 'sources'));
+  $('#btnMap').setAttribute('aria-pressed', String(S.stage === 'map'));
   $('#btnLiving').setAttribute('aria-pressed', String(S.filter === 'living'));
   $('#btnCertificate').setAttribute('aria-pressed', String(S.filter === 'certificate'));
   $('#btnPanel').setAttribute('aria-pressed', String(narrow() ? S.sheet : S.panel));

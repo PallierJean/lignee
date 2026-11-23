@@ -1054,7 +1054,17 @@ const galleryView = () => galleryHTML('all');
 
 /* ---------- Rendering ---------- */
 
-export const startLocate = () => locateMissing(renderAnalysis);
+/** Locates the places still unknown; the map follows, in the Analysis tab or full size. */
+export const startLocate = () => locateMissing(() => {
+  renderAnalysis();
+  if (S.stage === 'map') refreshStage();
+});
+
+let refreshStage = () => {};
+/** The full-size map redraws through this (set by render.js, which imports this module). */
+export const onStageRefresh = (fn) => {
+  refreshStage = fn;
+};
 
 export function renderAnalysis() {
   const count = S.people.size ? shownIssues().shown.length : 0;
@@ -1067,7 +1077,7 @@ export function renderAnalysis() {
   if (!S.kinA && P(S.focus)) S.kinA = S.focus;
   const seg = VIEWS.map(([view, label]) => `<button type="button" data-act="analysis-view" data-view="${view}" aria-pressed="${S.analysis === view}">${t(label)}</button>`).join('');
   const body = {
-    kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, acts: actsView, stats: statsView, cal: calView, time: timeView, map: mapView, gallery: galleryView, sources: () => sourcesView(), archives: () => sourcesView(true),
+    kin: kinView, checks: checksView, places: placesView, dups: dupsView, insee: inseeView, acts: actsView, stats: statsView, cal: calView, time: timeView, map: () => (S.stage === 'map' ? `<p class="nofocus">${t('map.onStage')}</p>` : mapView()), gallery: galleryView, sources: () => sourcesView(), archives: () => sourcesView(true),
   }[S.analysis]();
   setHTML($('#paneAnalysis'), `<div class="seg an-views" role="group" aria-label="${t('an.views')}" lang="${getLang()}">${seg}</div>${body}`);
 }
