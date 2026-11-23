@@ -306,7 +306,7 @@ describe('bandeaux', () => {
     assert.equal(S.repoError, '');
     assert.deepEqual(calls.find((c) => c.url.endsWith('/git/commits')).body.parents, ['c1']);
     const json = pushed();
-    assert.deepEqual(json.people.find((p) => p.id === id), { id, given: 'Ana', surname: 'Durand', birthPlace: 'Lyon', photo: 'photos/Ané.jpg' });
+    assert.deepEqual(json.people.find((p) => p.id === id), { id, given: 'Ana', surname: 'Durand', birthPlace: 'Lyon', photo: 'photos/DURAND_Ana/Ané.jpg' });
     assert.ok(json.people.some((p) => p.id === 'b'));
     assert.equal(S.people.get(id).surname, 'Durand');
     assert.match(S.people.get(id).photo, /^data:image\/jpeg/);
@@ -416,11 +416,17 @@ describe('envoi vers le dépôt', () => {
     calls.length = 0;
     await pushBackup(repo, target, send([{ id: 'a', photo: data }]), 'msg');
     assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')));
-    assert.equal(json().people[0].photo, 'photos/Ané.jpg');
+    assert.equal(json().people[0].photo, 'photos/sans-nom/Ané.jpg', 'rangée dans un dossier : déplacée, pas renvoyée');
+    assert.ok(treeEntries().tree.some((x) => x.path === 'principal/photos/sans-nom/Ané.jpg' && x.sha));
+    assert.ok(treeEntries().tree.some((x) => x.path === 'principal/photos/Ané.jpg' && x.sha === null));
     assert.equal(treeEntries().base_tree, 'arbre');
     assert.deepEqual(calls.find((c) => c.url.endsWith('/git/commits')).body.parents, ['c0']);
     assert.equal(repo.head, 'commits-sha');
     assert.ok(!treeEntries().tree.some((x) => x.path.endsWith('.ged')), 'sans GEDCOM donné, pas de fichier .ged');
+    head = repo.head;
+    calls.length = 0;
+    await pushBackup(repo, target, send([{ id: 'a', photo: data }]), 'msg');
+    assert.ok(!treeEntries().tree.some((x) => x.path.includes('/photos/')), 'déjà rangée : plus rien ne bouge');
   });
 
   test('le GEDCOM part à côté de la sauvegarde, dans le même commit', async () => {
@@ -439,7 +445,7 @@ describe('envoi vers le dépôt', () => {
     const blob = calls.find((c) => c.url.endsWith('/git/blobs')).body;
     assert.deepEqual(blob, { content: btoa('neuf'), encoding: 'base64' });
     const ref = json().sources[0].photo;
-    assert.match(ref, /^photos\/Naissance-[0-9a-f-]{36}\.png$/, 'nommée d’après le titre de la source');
+    assert.match(ref, /^photos\/GARNIER_Paul\/Naissance-[0-9a-f-]{36}\.png$/, 'dans le dossier de la personne, nommée d’après le titre de la source');
     const entries = treeEntries().tree;
     assert.ok(entries.some((x) => x.path === 'principal/' + ref && x.sha === 'blobs-sha'));
     assert.ok(entries.some((x) => x.path === 'principal/photos/Ané.jpg' && x.sha === null));
@@ -451,7 +457,7 @@ describe('envoi vers le dépôt', () => {
     const body = JSON.parse(send([{ id: 'a' }], [{ id: 'S', kind: 'birth', photo: data, text: { of: data, lines: [{ text: 'Né le' }] } }]));
     await pushBackup(repo, target, JSON.stringify(body), 'msg');
     const [s] = json().sources;
-    assert.equal(s.photo, 'photos/Ané.jpg');
+    assert.equal(s.photo, 'photos/galerie/Ané.jpg', 'document cité par personne : galerie');
     assert.equal(s.text.of, s.photo);
   });
 
@@ -503,7 +509,7 @@ describe('connecter l’arbre ouvert', () => {
     assert.deepEqual(calls.find((c) => c.url.endsWith('/git/commits')).body.parents, ['premier']);
     const { tree } = calls.find((c) => c.url.endsWith('/git/trees')).body;
     const json = JSON.parse(tree.find((x) => x.path === 'agathe-famille.json').content);
-    assert.match(json.people[0].photo, /^photos\/Agathe-[0-9a-f-]{36}\.jpg$/);
+    assert.match(json.people[0].photo, /^photos\/Agathe\/Agathe-[0-9a-f-]{36}\.jpg$/);
     assert.ok(tree.some((x) => x.path === 'agathe-famille/' + json.people[0].photo));
     assert.equal(S.repoError, '');
   });
@@ -648,8 +654,9 @@ describe('connecter l’arbre ouvert', () => {
     await chooseRepoSave('replace');
     assert.ok(!calls.some((c) => c.url.endsWith('/git/blobs')), 'photo identique : pas renvoyée');
     const { tree } = calls.find((c) => c.url.endsWith('/git/trees')).body;
-    assert.equal(JSON.parse(tree.find((x) => x.path === 'agathe.json').content).people[0].photo, 'photos/Agathe-1.jpg');
-    assert.deepEqual(tree.filter((x) => x.sha === null).map((x) => x.path), ['agathe/photos/Agathe-0db90881-c80d-4a4f-a99a-632f168b33cd.jpg'], 'seul le doublon nommé par Lignée, dans son dossier, part');
+    assert.equal(JSON.parse(tree.find((x) => x.path === 'agathe.json').content).people[0].photo, 'photos/Agathe/Agathe-1.jpg', 'rangée dans son dossier');
+    assert.ok(tree.some((x) => x.path === 'agathe/photos/Agathe/Agathe-1.jpg' && x.sha), 'déplacée : le même contenu, rien de renvoyé');
+    assert.deepEqual(tree.filter((x) => x.sha === null).map((x) => x.path), ['agathe/photos/Agathe-1.jpg', 'agathe/photos/Agathe-0db90881-c80d-4a4f-a99a-632f168b33cd.jpg'], 'l’ancien emplacement et le doublon nommé par Lignée partent');
   });
 
   test('avant de remplacer : la liste de ce qui change ; « Remplacer » retire ce qui n’est que dans le dépôt', async () => {

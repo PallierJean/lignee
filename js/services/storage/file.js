@@ -7,6 +7,7 @@ import { S, treeName } from '../../state.js';
 import { buildBackup, parseBackup, FORMAT_VERSION } from '../backup.js';
 import { isPhotoData, isPhotoFile, photoLabel, photoSrc } from '../../model/people.js';
 import { pool } from '../../utils/helpers.js';
+import { GALLERY_FOLDER, personFolder, photoFolders, folderOfRef } from '../../model/photo-folders.js';
 import { say, failure } from '../notify.js';
 import { ensureTree, sortTrees } from './trees.js';
 import { readLocalTrees, readLocalData, openBrowserStore } from './local.js';
@@ -110,8 +111,9 @@ export async function loadFileTree() {
   S.sources = new Map(data.sources.map((x) => [x.id, x.data]));
   S.media = new Map(data.media.map((x) => [x.id, x.data]));
   if (serverTooOld) return; // nothing written, no photo swept, until the server is restarted
-  // Photos still embedded in the record (an imported backup): they are moved out to files
-  if (await storePhotos()) await saveFile().catch(() => {}); // message already shown
+  // Photos still embedded in the record (an imported backup): they are moved out to files;
+  // files not in their folder (saved before folders, a person renamed): filed
+  if ((await storePhotos()) + (await arrangePhotos())) await saveFile().catch(() => {}); // message already shown
   // Photos removed during the previous session: nothing can restore them any more
   fetch(API + encodeURIComponent(S.tree) + '/photos/sweep', { method: 'POST' }).catch(() => {});
 }
@@ -119,17 +121,19 @@ export async function loadFileTree() {
 /* ---------- Photos as files ---------- */
 
 /**
- * Photo to save in record `p`: in file mode, a data URL becomes a
- * file in data/arbres/<tree id>/photos/ and the record keeps "photos/<file>".
+ * Photo to save in record `p`: in file mode, a data URL becomes a file in
+ * data/arbres/<tree id>/photos/<folder>/ and the record keeps "photos/<folder>/<file>"; the folder is
+ * the person's ("DUPONT_Jean"), "galerie" for a gallery image, or `folder` when given.
  * In the other modes, the photo stays embedded.
  */
-export async function storePhoto(photo, p) {
+export async function storePhoto(photo, p, folder = '') {
   if (S.mode !== 'file' || !isPhotoData(photo)) return photo;
+  const where = folder || (p === GALLERY_LABEL ? GALLERY_FOLDER : personFolder(p, S.people));
   try {
     const res = await fetch(API + encodeURIComponent(S.tree) + '/photos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label: photoLabel(p), data: photo }),
+      body: JSON.stringify({ label: photoLabel(p), folder: where, data: photo }),
     });
     if (!res.ok) throw new Error(res.status + ' ' + (await res.text()));
     return (await res.json()).photo;
@@ -169,16 +173,52 @@ export const GALLERY_LABEL = { given: 'galerie' };
 export async function storePhotos() {
   if (S.mode !== 'file') return 0;
   let n = 0;
-  for (const [map, label] of [[S.people, (p) => p], [S.sources, sourceLabel], [S.media, () => GALLERY_LABEL]]) {
+  const folders = photoFolders(S);
+  for (const [map, label, folder] of [[S.people, (p) => p, folders.person], [S.sources, sourceLabel, folders.source], [S.media, () => GALLERY_LABEL, folders.media]]) {
     const ids = [...map].filter(([, p]) => hasPhotoData(p)).map(([id]) => id);
     await pool(ids, 4, async (id) => {
       const p = map.get(id);
       try {
-        const stored = await convertPhotos(p, (photo) => storePhoto(photo, label(p)));
+        const stored = await convertPhotos(p, (photo) => storePhoto(photo, label(p), folder(id)));
         if (map.get(id) === p) map.set(id, stored);
         n++;
       } catch (e) {
         /* the photo stays embedded: it still shows, another try on the next load */
+      }
+    });
+  }
+  return n;
+}
+
+/** Copy of photo file `photo` in `folder` ("photos/<folder>/<file>"); the original goes with the next sweep. */
+async function movePhoto(photo, folder) {
+  const res = await fetch(API + encodeURIComponent(S.tree) + '/photos/move', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: photo, folder }),
+  });
+  if (!res.ok) throw new Error(String(res.status));
+  return (await res.json()).photo;
+}
+
+/**
+ * Files the open tree's photos: a person's portrait and documents in their folder, the rest in
+ * "galerie" (model/photo-folders.js). Returns the number of records changed; a photo that can't be
+ * moved stays where it is, for another try on the next load.
+ */
+export async function arrangePhotos() {
+  if (S.mode !== 'file' || !S.canWrite) return 0;
+  let n = 0;
+  const folders = photoFolders(S);
+  for (const [map, folder] of [[S.people, folders.person], [S.sources, folders.source], [S.media, folders.media]]) {
+    const misplaced = ([id, p]) => [p.photo, ...attached(p)].some((x) => isPhotoFile(x) && folderOfRef(x) !== folder(id));
+    await pool([...map].filter(misplaced), 4, async ([id, p]) => {
+      try {
+        const moved = await convertPhotos(p, (photo) => (isPhotoFile(photo) && folderOfRef(photo) !== folder(id) ? movePhoto(photo, folder(id)) : photo));
+        if (map.get(id) === p) map.set(id, moved);
+        n++;
+      } catch (e) {
+        /* stays where it is */
       }
     });
   }

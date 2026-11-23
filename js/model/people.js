@@ -308,7 +308,8 @@ export function photoLabel(p) {
   return name.replace(/[^\p{L}\p{M}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'photo';
 }
 
-export const isPhotoFile = (s) => /^photos\/[^/\\]+\.(jpg|png|webp|gif)$/.test(String(s || ''));
+/** A saved photo file: "photos/<file>", or "photos/<folder>/<file>" (model/photo-folders.js). */
+export const isPhotoFile = (s) => /^photos\/(?:[^/\\.][^/\\]*\/)?[^/\\]+\.(jpg|png|webp|gif)$/.test(String(s || ''));
 
 /**
  * Displayable address of a saved photo (photo field of a record), or '':

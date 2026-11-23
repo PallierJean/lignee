@@ -32,11 +32,15 @@ chaque modification. Au premier lancement de `server.js`, les arbres déjà gard
 dans le navigateur (à la même adresse) y sont recopiés automatiquement.
 
 Les photos n'y sont pas intégrées : chacune est un fichier
-`data/arbres/<id de l'arbre>/photos/NOM-Prénom-<uuid>.jpg` (même identifiant que le
-fichier `<id>.json`), et la fiche garde `"photo": "photos/<fichier>"`. Les documents des
-sources et les images de la galerie suivent la même règle ; les images de la galerie, qui
-n'appartiennent à aucune fiche, s'appellent `galerie-<uuid>.jpg`. Renommer l'arbre
-ne déplace rien. Une
+`data/arbres/<id de l'arbre>/photos/<dossier>/NOM-Prénom-<uuid>.jpg` (même identifiant que le
+fichier `<id>.json`), et la fiche garde `"photo": "photos/<dossier>/<fichier>"`. Le dossier est
+`NOM_Prénom` pour le portrait d'une personne et ses actes (un acte partagé va chez la personne
+dont il parle, l'acte de mariage chez le premier époux), et `galerie` pour les images de la
+galerie et les documents que personne ne cite ; deux homonymes sont distingués par leur année de
+naissance (`DUPONT_Jean_1850`). À l'ouverture de l'arbre, une photo qui n'est pas dans son
+dossier (enregistrée avant les dossiers, personne renommée) y est copiée et la fiche suit ;
+l'ancien fichier part au balayage. Un dépôt GitHub suit le même rangement : à l'envoi, une photo
+déjà présente ailleurs y est déplacée sans être renvoyée. Renommer l'arbre ne déplace rien. Une
 photo retirée ou remplacée, ou celle d'une personne supprimée, reste sur le disque le temps
 que l'action puisse être annulée, puis est effacée à la prochaine ouverture de l'arbre. Les photos
 encore intégrées (arbre importé, ou enregistré avant ce changement) sont sorties en

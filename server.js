@@ -1,8 +1,9 @@
 /**
  * Lignée local server: serves the application and saves each tree
  * in data/arbres/<id>.json (Lignée backup format, with its name).
- * The tree's photos are files in data/arbres/<id>/photos/,
- * named SURNAME-Firstname-<uuid>.jpg; the record keeps "photos/<file>".
+ * The tree's photos are files in data/arbres/<id>/photos/<folder>/ (a person's "DUPONT_Jean",
+ * or "galerie"), named SURNAME-Firstname-<uuid>.jpg; the record keeps "photos/<folder>/<file>"
+ * ("photos/<file>" for one saved before folders, until it is filed).
  *
  *   node server.js            → http://localhost:8000
  *   PORT=9000 node server.js  → another port
@@ -13,8 +14,10 @@
  *                                     deletes the photos it no longer uses, except with
  *                                     ?keepPhotos=1 (the application may still restore them)
  * DELETE /api/trees/:id             : deletes the tree and its photos
- * POST   /api/trees/:id/photos      : saves a photo { label, data (data URL) }
- *                                     and returns { photo: 'photos/<file>' }
+ * POST   /api/trees/:id/photos      : saves a photo { label, folder, data (data URL) }
+ *                                     and returns { photo: 'photos/<folder>/<file>' }
+ * POST   /api/trees/:id/photos/move : files a copy of photo { from, folder } in that folder and
+ *                                     returns { photo }; the original goes with the next sweep
  * POST   /api/trees/:id/photos/sweep : deletes the photos the saved tree doesn't use
  * GET    /api/trees/:id/photos/:f   : a photo of the tree
  *
@@ -120,7 +123,8 @@ async function readBytes(req) {
 
 /* ---------- Photos ---------- */
 
-const PHOTO_REF = /^photos\/([^/\\]+\.(?:jpg|png|webp|gif))$/;
+// "photos/<file>" or "photos/<folder>/<file>"; a folder never starts with a dot (no "..")
+const PHOTO_REF = /^photos\/((?:[^/\\.][^/\\]*\/)?[^/\\]+\.(?:jpg|png|webp|gif))$/;
 // Backup format this server knows (= FORMAT_VERSION in js/services/backup.js, checked by the tests)
 const FORMAT_VERSION = 3;
 const PHOTO_EXT = { jpeg: '.jpg', png: '.png', webp: '.webp', gif: '.gif' };
@@ -153,9 +157,12 @@ function photoRefs(o) {
   return refs;
 }
 
-/** Deletes photos, then the folders left empty. */
+/** Deletes photos (paths relative to `dir`), then the folders left empty. */
 async function removePhotos(dir, files) {
   for (const f of files) await fs.rm(path.join(dir, f), { force: true });
+  for (const sub of new Set(files.filter((f) => f.includes('/')).map((f) => f.split('/')[0]))) {
+    await fs.rmdir(path.join(dir, sub)).catch(() => {}); // not empty: kept
+  }
   for (const d of [dir, path.dirname(dir)]) {
     try {
       await fs.rmdir(d);
@@ -164,6 +171,25 @@ async function removePhotos(dir, files) {
     }
   }
 }
+
+/** Photo files in `dir` and its folders, as "file" and "folder/file". */
+async function photoFiles(dir) {
+  let entries = [];
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch (e) {
+    if (e.code !== 'ENOENT') throw e;
+  }
+  const out = [];
+  for (const e of entries) {
+    if (e.isFile()) out.push(e.name);
+    else if (e.isDirectory()) for (const f of await fs.readdir(path.join(dir, e.name))) out.push(e.name + '/' + f);
+  }
+  return out.filter((f) => PHOTO_REF.test('photos/' + f));
+}
+
+/** Folder name of a photo: a person's or "galerie" ('' : none, directly in photos/). */
+const photoFolder = (s) => safeName(s, '');
 
 /* ---------- INSEE deaths (matchID) ---------- */
 
@@ -390,11 +416,43 @@ export function createServer({
       send(res, 400, 'Ce contenu n’est pas une image');
       return;
     }
-    const file = safeName(o.label, 'photo') + '-' + randomUUID() + PHOTO_EXT[m[1]];
+    const folder = photoFolder(o.folder);
+    const file = (folder ? folder + '/' : '') + safeName(o.label, 'photo') + '-' + randomUUID() + PHOTO_EXT[m[1]];
     await enqueue(async () => {
-      await fs.mkdir(photoDir(id), { recursive: true });
+      await fs.mkdir(path.dirname(path.join(photoDir(id), file)), { recursive: true });
       await fs.writeFile(path.join(photoDir(id), file), Buffer.from(m[2], 'base64'));
     });
+    send(res, 201, JSON.stringify({ photo: 'photos/' + file }), TYPES['.json']);
+  }
+
+  /**
+   * Files a copy of a photo in a folder (same file name): the record then cites the copy, and the
+   * original, cited by no record once the tree is saved, goes with the next sweep (Undo still finds it until then).
+   */
+  async function movePhoto(req, res, id) {
+    let o;
+    try {
+      o = JSON.parse(await readBody(req));
+    } catch (e) {
+      if (e.status) throw e;
+      return send(res, 400, 'JSON illisible');
+    }
+    const from = PHOTO_REF.exec(String((o && o.from) || ''));
+    const folder = photoFolder(o && o.folder);
+    if (!from || !folder) return send(res, 400, 'Photo ou dossier invalide');
+    const file = folder + '/' + path.basename(from[1]);
+    if (file === from[1]) return send(res, 200, JSON.stringify({ photo: 'photos/' + file }), TYPES['.json']);
+    let missing = false;
+    await enqueue(async () => {
+      try {
+        await fs.mkdir(path.join(photoDir(id), folder), { recursive: true });
+        await fs.copyFile(path.join(photoDir(id), from[1]), path.join(photoDir(id), file));
+      } catch (e) {
+        if (e.code !== 'ENOENT') throw e;
+        missing = true;
+      }
+    });
+    if (missing) return send(res, 404, 'Photo introuvable');
     send(res, 201, JSON.stringify({ photo: 'photos/' + file }), TYPES['.json']);
   }
 
@@ -405,13 +463,7 @@ export function createServer({
       if (!tree) return; // unreadable tree: nothing is touched
       if (Number(tree.version) > FORMAT_VERSION) return; // written by a newer Lignée: nothing is touched
       const kept = photoRefs(tree);
-      let names = [];
-      try {
-        names = await fs.readdir(photoDir(id));
-      } catch (e) {
-        if (e.code !== 'ENOENT') throw e;
-      }
-      await removePhotos(photoDir(id), names.filter((f) => PHOTO_REF.test('photos/' + f) && !kept.has(f)));
+      await removePhotos(photoDir(id), (await photoFiles(photoDir(id))).filter((f) => !kept.has(f)));
     });
     send(res, 204, '');
   }
@@ -491,6 +543,7 @@ export function createServer({
       } else if (sub === 'photos' && !rest.length) {
         if (!filePart && req.method === 'POST') return postPhoto(req, res, id);
         if (filePart === 'sweep' && req.method === 'POST') return sweepPhotos(res, id);
+        if (filePart === 'move' && req.method === 'POST') return movePhoto(req, res, id);
         if (filePart && req.method === 'GET') return getPhoto(res, id, decodeURIComponent(filePart));
       } else {
         return send(res, 404, 'Introuvable');

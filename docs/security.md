@@ -34,7 +34,8 @@ local ou au navigateur accède aux arbres. Ne l'exposez pas sur un réseau.
   l'API `/api/trees`.
 - **Noms de fichiers nettoyés** (`safeName`) : un nom d'arbre ou de personne ne peut pas créer
   de chemin (`/`, `\`, `..` et caractères interdits retirés). Seules les références de la forme
-  `photos/<fichier>.jpg|png|webp|gif` sont acceptées pour les images.
+  `photos/<fichier>.jpg|png|webp|gif` ou `photos/<dossier>/<fichier>…` (un seul dossier, qui ne
+  commence jamais par un point) sont acceptées pour les images.
 - **Taille des envois limitée** à 20 Mo (réponse 413 au-delà).
 - **Lecture des écritures** (`htr.js`) : le serveur lance le programme `kraken` installé sur
   l'ordinateur, sans passer par un shell, sur une photo de l'arbre désignée par son nom vérifié

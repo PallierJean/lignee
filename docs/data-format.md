@@ -300,9 +300,12 @@ La galerie n'est pas exportée en GEDCOM ; la sauvegarde `.json` la conserve.
 Une image est l'un ou l'autre :
 
 - une **data URL** intégrée : `data:image/jpeg;base64,…` (sauvegarde `.json`, mode navigateur) ;
-- une **référence** `photos/<fichier>` (`.jpg`, `.png`, `.webp` ou `.gif`), avec le serveur local :
-  le fichier est dans `data/arbres/<id de l'arbre>/photos/` (voir
-  [Stockage](storage.md#où-sont-les-données)).
+- une **référence** `photos/<dossier>/<fichier>` (`.jpg`, `.png`, `.webp` ou `.gif`), avec le serveur
+  local ou dans un dépôt GitHub : le fichier est dans `data/arbres/<id de l'arbre>/photos/<dossier>/`
+  (voir [Stockage](storage.md#où-sont-les-données)). Le dossier est celui de la personne
+  (`DUPONT_Jean`, `DUPONT_Jean_1850` s'il y a un homonyme dans l'arbre) pour son portrait et ses
+  actes, `galerie` pour le reste (`model/photo-folders.js`). Une référence `photos/<fichier>`, sans
+  dossier, vient d'une version précédente : elle est rangée à l'ouverture de l'arbre ou au prochain envoi.
 
 **Portrait** (`photo` d'une personne) : il est choisi dans le formulaire puis recadré (`ui/crop.js`) : la photo glisse et se zoome
 derrière un cadre portrait 4:5, et seule la partie cadrée est gardée, en 256 × 320 pixels (quelques
