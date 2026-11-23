@@ -19,7 +19,7 @@ import {
 } from '../model/communes.js';
 import { mediaGrid, addMediaTile, mediaGroups } from './record.js';
 import { ICON_TO_GALLERY, ICON_TRASH } from './icons.js';
-import { readLink, readText, unread, batchState } from './reading.js';
+import { readLink, readSide, readText, unread, batchState } from './reading.js';
 import { toast } from './toast.js';
 import { downloadBlob, fileBase } from './transfer.js';
 import { buildActsCsv } from '../services/csv.js';
@@ -999,7 +999,12 @@ function libraryItem({ src, cites }, kind) {
   const name = esc(String(src.title || t('src.' + kind)));
   // Front and back share data-pair: enlarged, one switches to the other (ui/events.js)
   const pair = (side) => (back ? ` data-pair="${esc(src.source || src.id || name)}" data-side="${side}"` : '');
-  const zoom = (url, label, side) => (kind === ARCHIVE_KIND && src.source
+  // A document with a text or a translation: a click shows it beside the image
+  const doc = src.source ? S.sources.get(src.source) : null;
+  const read = kind !== ARCHIVE_KIND && doc ? readSide(doc) : -1;
+  const zoom = (url, label, side) => (read >= 0
+    ? `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('htr.zoom')}" loading="lazy" data-act="read-open" data-source="${esc(src.source)}" data-back="${side ? 1 : 0}">`
+    : kind === ARCHIVE_KIND && src.source
     // An archive opens in the gallery's viewer: the people on it, and what can be done with it
     ? `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('arc.open')}" loading="lazy" data-act="archive-open" data-id="${esc(src.source)}"${side ? ' data-back="1"' : ''}>`
     : `<img class="lib-pic zoomable" src="${esc(url)}" alt="${label}" title="${t('lib.zoom')}" loading="lazy" data-act="photo-zoom"${pair(side)}>`);

@@ -135,3 +135,33 @@ describe('lecture : fenêtre du document', () => {
     S.mode = 'local';
   });
 });
+
+describe('lecture : traduction à côté du document', () => {
+  test('la ligne « En français moderne » de la note, en tête ; la photo et le bouton l’ouvrent', async () => {
+    const { S } = await import('../js/state.js');
+    const reading = await import('../js/ui/reading.js');
+    const { modernText } = await import('../js/model/sources.js');
+    const { renderAnalysis } = await import('../js/ui/analysis.js');
+    resetApp();
+    assert.equal(modernText({ note: 'AD, vue 3\nEn français moderne : Le 2 mai, mariage de Jean.\nÀ noter : rature.' }), 'Le 2 mai, mariage de Jean.');
+    assert.equal(modernText({ note: 'Rien de traduit' }), '');
+    loadTree([person('a', { given: 'Anne', surname: 'Roux', citations: [{ id: 'c1', source: 'S1', fact: 'birth' }, { id: 'c2', source: 'S2', fact: 'death' }] })]);
+    S.sources = new Map([
+      ['S1', { kind: 'birth', title: 'Naissance', photo: 'data:image/png;base64,A', note: 'En français moderne : Anne est née le 3 mars.' }],
+      ['S2', { kind: 'death', title: 'Décès', photo: 'data:image/png;base64,B' }],
+    ]);
+    assert.match(reading.readLink('S1', S.sources.get('S1')), /class="btn small rd-link"[^>]*data-source="S1" data-back="0">Texte lu et traduction</);
+    assert.equal(reading.readLink('S2', S.sources.get('S2')), '', 'ni texte ni traduction');
+    S.tab = 'analysis';
+    S.analysis = 'sources';
+    renderAnalysis();
+    const pane = document.getElementById('paneAnalysis').innerHTML;
+    assert.match(pane, /<img class="lib-pic zoomable"[^>]*data-act="read-open" data-source="S1" data-back="0">/, 'la photo ouvre le texte');
+    assert.match(pane, /<img class="lib-pic zoomable"[^>]*data-act="photo-zoom"/, 'sans texte : agrandie, comme avant');
+    reading.openReading('S1');
+    const card = document.getElementById('readCard').innerHTML;
+    assert.match(card, /<section class="rd-modern"><h3>En français moderne<\/h3><p>Anne est née le 3 mars.<\/p><\/section>/);
+    assert.match(card, /<div class="rd-pic"><img/, 'à côté de l’image');
+    reading.closeReading();
+  });
+});

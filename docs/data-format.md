@@ -195,7 +195,7 @@ Dans le formulaire, « Ou citer un document déjà dans l'arbre » ajoute une ci
 | `title` | `string` | | Intitulé | `TITL` |
 | `place` | `Place` | | Lieu de l'acte | `_PLAC` |
 | `ref` | `string` | | Cote, numéro d'acte | `PAGE` |
-| `note` | `string` | | Note | `NOTE` |
+| `note` | `string` | | Note ; une ligne « En français moderne : … » est la traduction, affichée à côté du document | `NOTE` |
 | `photo` | `Image` | | Document, 1400 pixels de côté au plus | non exporté |
 | `back` | `Image` | | Verso du document (second côté d'un contrat de mariage, d'un acte) ; seulement avec `photo` | non exporté |
 | `text` | `Reading` | | Texte lu sur `photo` (voir ci-dessous) | non exporté |

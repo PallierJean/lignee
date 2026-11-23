@@ -1386,8 +1386,31 @@
 }
 
 .rd-link {
-  display: block;
-  margin-top: 4px;
+  display: inline-flex;
+  margin-top: 6px;
+}
+
+.rd-modern {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.rd-modern h3,
+.rd-sub {
+  margin: 0 0 6px;
+  font-size: .8rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rd-modern p {
+  margin: 0;
+  font: 1rem/1.55 Georgia, serif;
+  white-space: pre-line;
 }
 
 .rd-batch {
