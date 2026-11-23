@@ -297,7 +297,7 @@ export async function pushBackup(repo, target, text, message, gedcom = '') {
   const folders = photoFolders({ people: byId(backup.people), unions: byId(backup.unions), sources: byId(backup.sources) });
 
   // `rename(ref)`: the name file `ref` takes in a person's folder ("DUPONT-Jean"), '' to keep it
-  const store = async (photo, p, dir, rename = '') => {
+  const store = async (photo, p, dir, rename = () => '') => {
     if (!isPhotoData(photo)) return photo;
     if (!photos.has(photo)) {
       let known = target.photos.get(photo);
