@@ -10,6 +10,7 @@ import { parseBackup } from './backup.js';
 import { isPhotoFile, isPhotoData, photoLabel } from '../model/people.js';
 import { pool, sleep } from '../utils/helpers.js';
 import { backupRecords } from './merge.js';
+import { photoFolders, folderOfRef } from '../model/photo-folders.js';
 
 const API = 'https://api.github.com/repos/';
 const RAW = 'https://raw.githubusercontent.com/';
@@ -291,14 +292,23 @@ export async function pushBackup(repo, target, text, message, gedcom = '') {
   const folder = target.path.replace(/\.json$/i, '/');
   const photos = new Map();
   const entries = [];
+  // Each photo in its folder: a person's portrait and documents in theirs ("DUPONT_Jean"), the rest in "galerie"
+  const byId = (list) => new Map((list || []).map((x) => [x.id, x]));
+  const folders = photoFolders({ people: byId(backup.people), unions: byId(backup.unions), sources: byId(backup.sources) });
 
-  const store = async (photo, p) => {
+  const store = async (photo, p, dir) => {
     if (!isPhotoData(photo)) return photo;
     if (!photos.has(photo)) {
       let known = target.photos.get(photo);
-      if (!known) {
+      const file = known && repo.files.get(known.path.normalize('NFC'));
+      if (known && file && folderOfRef(known.ref) !== dir) {
+        // Already in the repository, elsewhere: the same content under the new path, nothing sent again
+        const ref = `photos/${dir}/${known.ref.split('/').pop()}`;
+        known = { ref, path: folder + ref };
+        entries.push({ path: known.path, mode: '100644', type: 'blob', sha: file.sha });
+      } else if (!known) {
         const [, type, content] = photo.match(/^data:(image\/\w+);base64,(.*)$/s);
-        const ref = `photos/${photoLabel(p)}-${crypto.randomUUID()}.${EXT[type]}`;
+        const ref = `photos/${dir}/${photoLabel(p)}-${crypto.randomUUID()}.${EXT[type]}`;
         const { sha } = await repo.send('POST', '/git/blobs', { content, encoding: 'base64' });
         known = { ref, path: folder + ref };
         entries.push({ path: known.path, mode: '100644', type: 'blob', sha });
@@ -309,15 +319,15 @@ export async function pushBackup(repo, target, text, message, gedcom = '') {
   };
 
   const people = [];
-  for (const p of backup.people) people.push(await convertPhotos(p, (photo) => store(photo, p)));
+  for (const p of backup.people) people.push(await convertPhotos(p, (photo) => store(photo, p, folders.person(p.id))));
   backup.people = people;
   // A shared source's document: its file is named after its title or its kind
   const sources = [];
-  for (const s of backup.sources || []) sources.push(await convertPhotos(s, (photo) => store(photo, { given: s.title || s.kind || 'source' })));
+  for (const s of backup.sources || []) sources.push(await convertPhotos(s, (photo) => store(photo, { given: s.title || s.kind || 'source' }, folders.source(s.id))));
   if (backup.sources) backup.sources = sources;
   // A gallery image: the same name for all ("galerie-…"), not that of a person
   const media = [];
-  for (const m of backup.media || []) media.push(await convertPhotos(m, (photo) => store(photo, GALLERY_LABEL)));
+  for (const m of backup.media || []) media.push(await convertPhotos(m, (photo) => store(photo, GALLERY_LABEL, folders.media())));
   if (backup.media) backup.media = media;
 
   const kept = new Set([...photos.values()].map((x) => x.path));

@@ -59,14 +59,14 @@ describe('mode fichier, sur le vrai serveur', () => {
     await opSet('people', 'b', { given: 'Bob', surname: 'Roux' });
     await opUpdate('people', 'b', { occupation: 'Tisserand' });
     const stored = await storePhoto(PNG, S.people.get('b'));
-    assert.match(stored, /^photos\/ROUX-Bob-/);
+    assert.match(stored, /^photos\/ROUX_Bob\/ROUX-Bob-/, 'dans le dossier de la personne');
     await opUpdate('people', 'b', { photo: stored, sources: [{ id: 's', photo: PNG }, { id: 't' }] });
     await opSet('media', 'm', { photo: PNG, back: PNG, tags: [{ id: 'b' }] });
     assert.equal(await storePhotos(), 2, 'la source partagée et l’image de la galerie');
     const p = S.people.get('b');
-    assert.ok(sourcesOf(p)[0].photo.startsWith('photos/'));
-    assert.match(S.media.get('m').photo, /^photos\/galerie-/, 'une image de la galerie : un nom commun, pas celui d’une personne');
-    assert.match(S.media.get('m').back, /^photos\/galerie-/);
+    assert.ok(sourcesOf(p)[0].photo.startsWith('photos/ROUX_Bob/'), 'son acte : dans son dossier');
+    assert.match(S.media.get('m').photo, /^photos\/galerie\/galerie-/, 'une image de la galerie : un nom commun, pas celui d’une personne');
+    assert.match(S.media.get('m').back, /^photos\/galerie\/galerie-/);
     await saveLocal();
     const backup = JSON.parse(await buildPortableBackup());
     const portable = backup.people.find((x) => x.id === 'b');
@@ -85,6 +85,29 @@ describe('mode fichier, sur le vrai serveur', () => {
     const backup = JSON.parse(await buildPortableBackup());
     assert.equal(backup.people.find((x) => x.id === 'b').photo, undefined);
     assert.equal(backup.media.find((x) => x.id === 'm'), undefined, 'image introuvable : elle part sans');
+  });
+
+  test('photos rangées à l’ouverture : chacun son dossier, l’ancien fichier part au balayage', async () => {
+    const dir = path.join(dataDir, 'principal', 'photos');
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'vieux.png'), 'img');
+    await writeFile(path.join(dir, 'galerie-vieux.png'), 'img');
+    await opUpdate('people', 'b', { photo: 'photos/vieux.png' });
+    await opSet('media', 'm', { photo: 'photos/galerie-vieux.png', tags: [] });
+    await loadFile();
+    assert.equal(S.people.get('b').photo, 'photos/ROUX_Bob/vieux.png');
+    assert.equal(S.media.get('m').photo, 'photos/galerie/galerie-vieux.png');
+    await access(path.join(dir, 'ROUX_Bob', 'vieux.png'));
+    const saved = JSON.parse(await readFile(path.join(dataDir, 'principal.json'), 'utf8'));
+    assert.equal(saved.people.find((x) => x.id === 'b').photo, 'photos/ROUX_Bob/vieux.png', 'enregistré');
+    await fetch('api/trees/principal/photos/sweep', { method: 'POST' });
+    const left = await readdir(dir);
+    assert.ok(!left.includes('vieux.png') && !left.includes('galerie-vieux.png'), 'anciens emplacements balayés');
+    assert.ok((await readdir(path.join(dir, 'ROUX_Bob'))).includes('vieux.png'), 'le fichier rangé reste');
+    assert.equal((await fetch('api/trees/principal/photos/ROUX_Bob%2Fvieux.png')).status, 200);
+    assert.equal((await fetch('api/trees/principal/photos/..%2Fprincipal.json')).status, 400, 'pas de sortie du dossier');
+    const bad = await fetch('api/trees/principal/photos/move', { method: 'POST', body: JSON.stringify({ from: 'photos/ROUX_Bob/vieux.png', folder: '..' }) });
+    assert.equal(bad.status, 400);
   });
 
   test('collection d’arbres', async () => {
