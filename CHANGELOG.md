@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.9.1](https://github.com/PallierJean/lignee/compare/v4.9.0...v4.9.1) (2026-11-23)
+
+### Bug Fixes
+
+* Send the origin as Referer so OpenStreetMap serves the map tiles ([aae9a21](https://github.com/PallierJean/lignee/commit/aae9a2107202a37350ec12bb722865aa7ec1db97))
+
+---
+
+### Corrections
+
+* La carte affichait « Access blocked » au lieu du fond OpenStreetMap avec le serveur local. ([aae9a21](https://github.com/PallierJean/lignee/commit/aae9a2107202a37350ec12bb722865aa7ec1db97))
+
 ## [4.9.0](https://github.com/PallierJean/lignee/compare/v4.8.0...v4.9.0) (2026-11-23)
 
 ### Features
