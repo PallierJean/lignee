@@ -1,5 +1,33 @@
 # Changelog
 
+## [4.9.0](https://github.com/PallierJean/lignee/compare/v4.8.0...v4.9.0) (2026-11-23)
+
+### Features
+
+* File marriage certificates in the couple's folder ([fa2e34b](https://github.com/PallierJean/lignee/commit/fa2e34b95e238ea0aed2246e9392a4509d2410f8))
+* File a marriage certificate with the husband ([2e64458](https://github.com/PallierJean/lignee/commit/2e6445838c68f88b2f912e576e645a038b711e9a))
+* File each person's photos in a SURNAME_Given folder and the rest in "galerie" ([84233d6](https://github.com/PallierJean/lignee/commit/84233d6c541fa1e24fab925293f0a411b6f77f95))
+* Open the map full size from a toolbar button next to Sources ([b8d1ed0](https://github.com/PallierJean/lignee/commit/b8d1ed0d65251835cd1e5508759b57b50e9eea52))
+* Draw the map over real OpenStreetMap tiles and locate each town in its department ([688da30](https://github.com/PallierJean/lignee/commit/688da3057ad49d6b1d71539028d5aa1fad517978))
+
+### Bug Fixes
+
+* Show the map tiles, fit the full-size map to the screen and stop showing doubtful positions ([e6216cf](https://github.com/PallierJean/lignee/commit/e6216cf5552fd21b0984cb4801a8d49360baec88))
+
+---
+
+### Nouveautés
+
+* Les actes de mariage sont rangés dans le dossier du couple, NOM_Prénom_X_NOM_Prénom, l'homme d'abord. ([fa2e34b](https://github.com/PallierJean/lignee/commit/fa2e34b95e238ea0aed2246e9392a4509d2410f8))
+* Un acte de mariage est rangé dans le dossier de l'homme ([2e64458](https://github.com/PallierJean/lignee/commit/2e6445838c68f88b2f912e576e645a038b711e9a))
+* Les photos d'une personne (portrait et actes) sont rangées dans un dossier NOM_Prénom, les autres dans « galerie » ([84233d6](https://github.com/PallierJean/lignee/commit/84233d6c541fa1e24fab925293f0a411b6f77f95))
+* Un bouton Carte, à droite de Sources, affiche la carte en grand à la place de l'arbre ([b8d1ed0](https://github.com/PallierJean/lignee/commit/b8d1ed0d65251835cd1e5508759b57b50e9eea52))
+* La carte s'affiche sur un vrai fond OpenStreetMap, et chaque commune est cherchée dans son département ([688da30](https://github.com/PallierJean/lignee/commit/688da3057ad49d6b1d71539028d5aa1fad517978))
+
+### Corrections
+
+* Le fond de carte s'affiche, la carte en grand prend toute la place avec les notes à droite, et les positions douteuses ne sont plus montrées ([e6216cf](https://github.com/PallierJean/lignee/commit/e6216cf5552fd21b0984cb4801a8d49360baec88))
+
 ## [4.8.0](https://github.com/PallierJean/lignee/compare/v4.7.0...v4.8.0) (2026-11-20)
 
 ### Features
