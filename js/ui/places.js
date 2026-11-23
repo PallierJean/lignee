@@ -10,11 +10,11 @@ import { t } from '../i18n.js';
 import { P, fullName, lifeYears } from '../model/people.js';
 import { cityUses, migrations, datedBirths, parsePlace } from '../model/places.js';
 import { departmentCode, departmentName } from '../model/departments.js';
-import { knownPlaces, locatePlaces, placesToLocate } from '../services/geocode.js';
+import { knownPlaces, locatePlaces, placesToLocate, placesToRelocate } from '../services/geocode.js';
 import { toast } from './toast.js';
 
-const W = 340;
-const H = 360;
+let W = 340;         // size of the map: the Analysis panel's, or the screen's full size
+let H = 360;
 const PAD = 26;
 const MIN_SPAN = 0.4;  // degrees: a single commune isn't enlarged infinitely
 const ZOOM = 1.6;      // factor of one zoom step
@@ -227,8 +227,30 @@ function placeHTML(points) {
     + '</ul></section>';
 }
 
-export function mapView() {
+let refresher = null; // redraws whichever view shows the map
+let relocating = false;
+
+/** How the map is redrawn while places are located without a click (set by ui/analysis.js). */
+export const setMapRefresh = (fn) => {
+  refresher = fn;
+};
+
+/**
+ * The map view, `size` units wide and high: the Analysis panel's by default, the screen's full
+ * size in place of the tree (one unit for one pixel, labels keep their size). With `size.side`,
+ * the notes, the chosen commune and the migrations are in a column beside the map, not under it.
+ */
+export function mapView(size = { w: 340, h: 360 }) {
+  // Another size (panel, full size, window resized): everything framed again, nothing cut off
+  if (Math.round(size.w) !== W || Math.round(size.h) !== H) view = null;
+  W = Math.round(size.w);
+  H = Math.round(size.h);
   const uses = cityUses();
+  const again = !busy && !relocating && refresher ? placesToRelocate(uses.map((u) => u.name)) : [];
+  if (again.length) {
+    relocating = true;
+    setTimeout(() => locateMissing(refresher, again));
+  }
   if (!uses.length) return `<p class="nofocus">${t('map.empty')}</p>`;
   const known = knownPlaces();
   const points = located();
@@ -237,17 +259,18 @@ export function mapView() {
   const moves = migrations();
 
   let html = '';
+  let main = '';
   if (points.length) {
     const chips = regions(points).slice(0, 8)
       .map((g) => `<button class="btn small" type="button" data-act="map-region" data-key="${esc(g.key)}">${esc(g.label)} · ${g.n}</button>`).join('');
-    html += `<div class="row-btns map-tools"><button class="btn small" type="button" data-act="map-zoom" data-d="1" aria-label="${t('ctl.zoomIn')}">+</button>`
+    main = `<div class="row-btns map-tools"><button class="btn small" type="button" data-act="map-zoom" data-d="1" aria-label="${t('ctl.zoomIn')}">+</button>`
       + `<button class="btn small" type="button" data-act="map-zoom" data-d="-1" aria-label="${t('ctl.zoomOut')}">−</button>`
       + `<button class="btn small" type="button" data-act="map-region">${t('map.fit')}</button>${chips}</div>`
-      + `<div class="map-box" id="mapBox">${mapBox()}</div><div class="map-time" id="mapTime">${timelineHTML()}</div>`
-      + `<p class="hint an-hint map-credit">${t('map.credit')}</p>`
+      + `<div class="map-box" id="mapBox">${mapBox()}</div><div class="map-time" id="mapTime">${timelineHTML()}</div>`;
+    html += `<p class="hint an-hint map-credit">${t('map.credit')}</p>`
       + `<p class="hint an-hint">${t('map.help')}</p><div id="mapPlace">${placeHTML(points)}</div>`;
   } else {
-    html += `<p class="nofocus">${t('map.none')}</p>`;
+    main = `<p class="nofocus">${t('map.none')}</p>`;
   }
   html += `<p class="hint an-hint">${t('map.legend')}</p>`;
   if (busy) html += `<p class="hint an-hint">${t('map.progress', busy.done, busy.total)}</p>`;
@@ -261,7 +284,7 @@ export function mapView() {
     html += `<section class="rel"><h3>${t('map.moves')}</h3><div class="bars">`
       + top.map((m) => `<div class="mv-row"><span>${esc(m.from)} → ${esc(m.to)}</span><span class="bv">${m.n}</span></div>`).join('') + '</div></section>';
   }
-  return html;
+  return size.side ? `<div class="map-split"><div class="map-main">${main}</div><aside class="map-side">${html}</aside></div>` : main + html;
 }
 
 /** The map as framed. */
@@ -353,9 +376,9 @@ export function mapDrag(ev) {
 }
 
 /** Locates the places still unknown, then redraws the map. */
-export async function locateMissing(refresh) {
+export async function locateMissing(refresh, only = null) {
   if (busy) return;
-  const names = placesToLocate(cityUses().map((u) => u.name));
+  const names = only || placesToLocate(cityUses().map((u) => u.name));
   busy = { done: 0, total: names.length };
   refresh();
   try {

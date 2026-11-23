@@ -56,6 +56,8 @@ export function renderSide(force) {
 }
 
 /** The whole gallery, or every source, over the tree (toolbar buttons): the tree stays drawn underneath, where it was. */
+const SIDE = 320; // the column beside the full-size map (css: .map-side)
+
 export function renderStageGallery() {
   const el = $('#stageGallery');
   const show = !!S.stage && !isLoading();
@@ -67,7 +69,14 @@ export function renderStageGallery() {
   }
   const back = `<button class="btn small" type="button" data-act="stage-${S.stage}">${t('sg.back')}</button></div>`;
   if (S.stage === 'map') {
-    setHTML(el, `<div class="sg-head"><h2>${t('ctl.map')}</h2>${back}<div class="stage-map">${mapView()}</div>`);
+    // As high as the window below the tools and above the timeline; on a wide screen, the
+    // notes and migrations in a column on the right (SIDE pixels and the gap)
+    const width = el.clientWidth || 800;
+    const top = el.getBoundingClientRect ? el.getBoundingClientRect().top : 0;
+    const side = width >= 900;
+    const w = Math.max(300, width - 40 - (side ? SIDE + 24 : 0));
+    const h = Math.max(300, (window.innerHeight || 800) - top - 190);
+    setHTML(el, `<div class="sg-head"><h2>${t('ctl.map')}</h2>${back}<div class="stage-map">${mapView({ w, h, side })}</div>`);
     return;
   }
   const sources = S.stage === 'sources';

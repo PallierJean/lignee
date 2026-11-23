@@ -19,16 +19,33 @@ function readCache(key = GEO_KEY) {
   }
 }
 
-/**
- * Known coordinates: Map name -> { lat, lon }, or null for a place that can't be found. Those
- * located before the department was checked are still shown until they are located again.
- */
-export const knownPlaces = () => new Map([...readCache(GEO_OLD_KEY), ...readCache()]);
+/** Known coordinates: Map name -> { lat, lon }, or null for a place that can't be found. */
+export const knownPlaces = () => readCache();
 
 /** Places among `names` still to locate (never located, or located before the department was checked). */
 export function placesToLocate(names) {
   const cache = readCache();
   return names.filter((n) => !cache.has(n));
+}
+
+/**
+ * Places among `names` located before the department was checked, often on a namesake: they
+ * aren't shown, and are located again without asking (the user asked once already). Once
+ * they all are, the old positions are forgotten.
+ */
+export function placesToRelocate(names) {
+  const old = readCache(GEO_OLD_KEY);
+  if (!old.size) return [];
+  const cache = readCache();
+  if ([...old.keys()].every((n) => cache.has(n))) {
+    try {
+      localStorage.removeItem(GEO_OLD_KEY);
+    } catch (e) {
+      /* unavailable storage: nothing to forget */
+    }
+    return [];
+  }
+  return names.filter((n) => old.has(n) && !cache.has(n));
 }
 
 /**

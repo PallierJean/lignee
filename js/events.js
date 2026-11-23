@@ -12,6 +12,7 @@ import {
   openTransfer, closeTransfer, exportGedcom, exportBackup, exportCsv, readImportFile, importGo, pickRepoBackup, connectRepo, connectOpenedRepo,
 } from './ui/transfer.js';
 import { renderRegister } from './ui/register.js';
+import { renderStageGallery } from './ui/render.js';
 import {
   startLocate, placeRowValue, startInsee, restartInsee, inseeSendCode, inseeSendAuth, inseeOtherEmail, copyActs, exportActsCsv, findActsHall, findAllActsHalls, setActsCc, setActsKind, setActsStatus, setActsType, askedPatches, remindPatches, setLibraryFilter,
 } from './ui/analysis.js';
@@ -438,6 +439,14 @@ const DIALOGS = () => [
 ];
 
 export function bindEvents() {
+  // The full-size map follows the window's size
+  let resized = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(resized);
+    resized = setTimeout(() => {
+      if (S.stage === 'map') renderStageGallery();
+    }, 150);
+  });
   defineDialogs(DIALOGS());
   // A click in the suggestions must not take the cursor out of the search field
   document.getElementById('findList').addEventListener('mousedown', (ev) => ev.preventDefault());
