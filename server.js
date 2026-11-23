@@ -16,8 +16,9 @@
  * DELETE /api/trees/:id             : deletes the tree and its photos
  * POST   /api/trees/:id/photos      : saves a photo { label, folder, data (data URL) }
  *                                     and returns { photo: 'photos/<folder>/<file>' }
- * POST   /api/trees/:id/photos/move : files a copy of photo { from, folder } in that folder and
- *                                     returns { photo }; the original goes with the next sweep
+ * POST   /api/trees/:id/photos/move : files a copy of photo { from, folder, name? } in that folder
+ *                                     (under `name`, same extension, when given) and returns
+ *                                     { photo }; the original goes with the next sweep
  * POST   /api/trees/:id/photos/sweep : deletes the photos the saved tree doesn't use
  * GET    /api/trees/:id/photos/:f   : a photo of the tree
  *
@@ -427,7 +428,8 @@ export function createServer({
   }
 
   /**
-   * Files a copy of a photo in a folder (same file name): the record then cites the copy, and the
+   * Files a copy of a photo in a folder, under the same file name or `name` (a person renamed: same
+   * extension, a plain file name): the record then cites the copy, and the
    * original, cited by no record once the tree is saved, goes with the next sweep (Undo still finds it until then).
    */
   async function movePhoto(req, res, id) {
@@ -440,8 +442,10 @@ export function createServer({
     }
     const from = PHOTO_REF.exec(String((o && o.from) || ''));
     const folder = photoFolder(o && o.folder);
-    if (!from || !folder) return send(res, 400, 'Photo ou dossier invalide');
-    const file = folder + '/' + path.basename(from[1]);
+    const name = o && o.name ? String(o.name) : path.basename(from ? from[1] : '');
+    const sameExt = from && path.extname(name).toLowerCase() === path.extname(from[1]).toLowerCase();
+    if (!from || !folder || !sameExt || safeName(name, '') !== name || !PHOTO_REF.test('photos/' + name)) return send(res, 400, 'Photo ou dossier invalide');
+    const file = folder + '/' + name;
     if (file === from[1]) return send(res, 200, JSON.stringify({ photo: 'photos/' + file }), TYPES['.json']);
     let missing = false;
     await enqueue(async () => {
