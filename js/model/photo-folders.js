@@ -36,7 +36,8 @@ export const folderOfRef = (ref) => (/^photos\/([^/]+)\//.exec(String(ref || '')
 /**
  * Folders of a tree's records: { person(id), source(id), media() }. A shared document goes with the
  * person it is about (the first citing it with no other part in it), else the first who cites
- * it, else the first spouse of a union citing it; one nobody cites goes to the gallery.
+ * it, else the husband of a union citing it; between two people it is about equally (a marriage
+ * certificate cited by both spouses), always the man. One nobody cites goes to the gallery.
  */
 export function photoFolders({ people, unions = new Map(), sources = new Map() }) {
   const folders = new Map();
@@ -45,9 +46,11 @@ export function photoFolders({ people, unions = new Map(), sources = new Map() }
     return folders.get(id);
   };
   const owner = new Map(); // source id -> { id, rank }
+  const man = (id) => (people.get(id) || {}).sex === 'M';
   const claim = (source, id, rank) => {
     const was = owner.get(source);
-    if (sources.has(source) && people.has(id) && (!was || rank < was.rank)) owner.set(source, { id, rank });
+    if (!sources.has(source) || !people.has(id)) return;
+    if (!was || rank < was.rank || (rank === was.rank && man(id) && !man(was.id))) owner.set(source, { id, rank });
   };
   for (const [id, p] of people) {
     for (const c of Array.isArray(p && p.citations) ? p.citations : []) {
@@ -56,7 +59,7 @@ export function photoFolders({ people, unions = new Map(), sources = new Map() }
   }
   for (const [, u] of unions) {
     for (const c of Array.isArray(u && u.citations) ? u.citations : []) {
-      if (c && c.source) claim(c.source, u.a || u.b, 2);
+      if (c && c.source) for (const id of [u.a, u.b]) claim(c.source, id, 2);
     }
   }
   return {
