@@ -8,7 +8,7 @@ import { S } from '../state.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t } from '../i18n.js';
 import { photoSrc, SOURCE_KINDS } from '../model/people.js';
-import { readingOf } from '../model/sources.js';
+import { readingOf, modernText } from '../model/sources.js';
 import { opUpdate, beginAction, commitAction } from '../services/storage.js';
 import { checkHtr, canRead, readPhoto } from '../services/htr.js';
 import { emit } from '../services/notify.js';
@@ -64,6 +64,10 @@ export function renderReading() {
   } else {
     text = `<p class="hint">${t('htr.unavailable')}</p>`;
   }
+  // The translation (from the note), above the text read: what one reads first beside the image
+  const modern = modernText(src);
+  if (modern) text = `<section class="rd-modern"><h3>${t('htr.modern')}</h3><p>${esc(modern)}</p></section>`
+    + (reading || cur.busy || reader ? `<h3 class="rd-sub">${t('htr.show')}</h3>${text}` : '');
   setHTML($('#readCard'), `<div class="sheet-head"><h2 id="rdTitle">${esc(title)}</h2>${sides}`
     + `<button class="icon-btn" type="button" data-act="read-close" aria-label="${t('close')}">×</button></div>`
     + `<div class="rd-body"><div class="rd-pic"><img src="${esc(photoSrc(ref))}" alt="${esc(title)}">${boxes}</div>`
@@ -204,14 +208,23 @@ export function stopBatch() {
 
 export const readingOpen = () => !!cur;
 
+/** Side of document `src` to open the reading on (0 front, 1 back), -1 with nothing to show beside it. */
+export function readSide(src) {
+  if (!src || !photoSrc(src.photo)) return -1;
+  if (readingOf(src)) return 0;
+  if (readingOf(src, true)) return 1;
+  return modernText(src) ? 0 : -1;
+}
+
 /**
- * Link to the reading of document `src` (source `sid`), for a record or the Sources view: "Text"
- * when a side was read, "Read the text" when this computer can read it, nothing otherwise.
+ * Button to the reading of document `src` (source `sid`), for a record or the Sources view: "Text
+ * and translation" or "Text read" when there is one to show, "Read the text" when this computer
+ * can read it, nothing otherwise.
  */
 export function readLink(sid, src) {
   if (!sid || !src || !photoSrc(src.photo)) return '';
-  const read = readingOf(src) ? 0 : readingOf(src, true) ? 1 : -1;
-  if (read >= 0) return `<button class="link rd-link" type="button" data-act="read-open" data-source="${esc(sid)}" data-back="${read}">${t('htr.show')}</button>`;
+  const read = readSide(src);
+  if (read >= 0) return `<button class="btn small rd-link" type="button" data-act="read-open" data-source="${esc(sid)}" data-back="${read}">${t(modernText(src) ? 'htr.showBoth' : 'htr.show')}</button>`;
   if (S.canWrite && (canRead(src.photo) || canRead(src.back))) return `<button class="link rd-link" type="button" data-act="read-open" data-source="${esc(sid)}" data-back="0">${t('htr.open')}</button>`;
   return '';
 }

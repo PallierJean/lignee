@@ -38,6 +38,15 @@ export function readingOf(src, back = false) {
   return r && typeof r === 'object' && Array.isArray(r.lines) && img && r.of === img ? r : null;
 }
 
+/**
+ * Translation in modern French of document `src`: the line of its note that starts with
+ * "En français moderne :" (or "In modern French:"), without those words; '' without one.
+ */
+export function modernText(src) {
+  const m = /^[ \t]*(?:en français moderne|in modern french)[ \t]*:[ \t]*(.+)$/imu.exec(String((src && src.note) || ''));
+  return m ? m[1].trim() : '';
+}
+
 const listOf = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object') : []);
 
 /** The document's fields of `x`, without the empty ones. */
