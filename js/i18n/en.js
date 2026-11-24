@@ -1068,6 +1068,13 @@ export const EN = {
   'med.untag': 'remove',
   'med.untagWho': (name) => `Remove ${name} from the image`,
   'med.onImage': 'On the image',
+  'med.guesses': 'Recognised faces',
+  'med.guessHint': 'Lignée thinks it recognises them: confirm or dismiss each suggestion.',
+  'med.guessing': 'Looking for known faces…',
+  'med.guessYes': 'Confirm',
+  'med.guessYesWho': (name) => `Confirm: this is ${name}`,
+  'med.guessNoWho': (name) => `Dismiss the suggestion ${name}`,
+  'med.guessAll': (n) => `Confirm all (${n})`,
 
   'pr.content': 'Content',
   'fb.open': 'Family booklet',

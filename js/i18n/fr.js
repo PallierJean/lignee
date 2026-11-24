@@ -1101,6 +1101,13 @@ export const FR = {
   'med.untag': 'retirer',
   'med.untagWho': (name) => `Retirer ${name} de l’image`,
   'med.onImage': 'Sur l’image',
+  'med.guesses': 'Visages reconnus',
+  'med.guessHint': 'Lignée pense les reconnaître : confirmez ou écartez chaque suggestion.',
+  'med.guessing': 'Recherche des visages connus…',
+  'med.guessYes': 'Confirmer',
+  'med.guessYesWho': (name) => `Confirmer : c’est bien ${name}`,
+  'med.guessNoWho': (name) => `Écarter la suggestion ${name}`,
+  'med.guessAll': (n) => `Tout confirmer (${n})`,
 
   // Printing: contents
   'pr.content': 'Contenu',

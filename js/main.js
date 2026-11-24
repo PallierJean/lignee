@@ -14,6 +14,7 @@ import { loadLocal, seedExample, loadFile } from './services/storage.js';
 import { applyTheme } from './ui/theme.js';
 import { connectServices } from './ui/connect.js';
 import { checkHtr } from './services/htr.js';
+import { checkFaces } from './services/faces.js';
 import { initVoice } from './ui/voice.js';
 import * as A from './actions.js';
 
@@ -46,6 +47,9 @@ async function init() {
 
   // 2. Reading handwriting on this computer (local server with Kraken): the buttons appear once known
   checkHtr().then(({ ready }) => ready && renderAll()).catch(() => {});
+
+  // 2a. Recognising faces on this computer (local server with OpenCV): the gallery suggests who is on an image
+  checkFaces().catch(() => {});
 
   // 2b. Voice commands: the microphone appears if this device can listen (ui/voice.js)
   initVoice(A).catch(() => {});

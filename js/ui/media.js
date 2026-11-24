@@ -23,6 +23,7 @@ import { searchPeople } from './search.js';
 import { toast, reportError } from './toast.js';
 import { mediaGroups } from './record.js';
 import { ICON_TO_GALLERY, ICON_TRASH } from './icons.js';
+import { canFindFaces, findFaces } from '../services/faces.js';
 
 /** Data changed: indexes and page follow (ui/render.js afterData, see ui/connect.js). */
 const afterData = () => emit('data');
@@ -34,6 +35,8 @@ let sequence = [];    // [id]: the images of the grid it was opened from, in ord
 let back = false;     // the back of the image is shown (contract, annotated photo)
 let askDelete = false; // the deletion of the image waits for its confirmation
 let askArchive = false; // moving the image to the archives waits for a confirmation
+const guesses = new Map(); // photo -> [{ x, y, id, score }] faces recognised (null while looking)
+const dismissed = new Set(); // "photo|id": suggestions dismissed, not made again in this session
 
 const isDraft = () => !!current && current.draft !== undefined;
 const isArchive = () => !!current && current.archive !== undefined;
@@ -79,6 +82,49 @@ function tagLabel(p) {
 /** Face at the bottom of the photo: the label above. On the sides, see fitLabel. */
 const pinSide = (x) => (x.y > 70 ? ' up' : '');
 
+/**
+ * Faces recognised on image `m` that are still to confirm: not dismissed, of people not yet placed
+ * on it, on faces without a marker. The first time, asks the local server, then shows them.
+ */
+function guessesOf(m) {
+  if (back || isDraft() || !S.canWrite || !canFindFaces(m.photo)) return [];
+  const photo = m.photo;
+  if (!guesses.has(photo)) {
+    guesses.set(photo, null);
+    findFaces(photo)
+      .then((list) => guesses.set(photo, list))
+      .catch(() => guesses.set(photo, []))
+      .then(() => {
+        // Not while a marker waits for its name or the caption is typed: it would clear the field
+        const m2 = item();
+        if (m2 && m2.photo === photo && !pin && !editing) renderMedia();
+      });
+  }
+  const placed = tagsOf(m).filter(hasPlace);
+  const near = (g) => placed.some((x) => Math.hypot(x.x - g.x, x.y - g.y) < 4);
+  return (guesses.get(photo) || []).filter((g) => P(g.id) && !dismissed.has(photo + '|' + g.id)
+    && !placed.some((x) => x.id === g.id) && !near(g));
+}
+
+/** Suggestions waiting for an answer from the server on image `m`. */
+const guessing = (m) => !back && !isDraft() && S.canWrite && canFindFaces(m.photo) && guesses.get(m.photo) === null;
+
+/** The faces recognised: dashed markers on the photo, and below, each name to confirm or dismiss. */
+function guessBlock(list) {
+  const rows = list.map((g, i) => {
+    const p = P(g.id);
+    const years = lifeYears(p);
+    return `<li class="tag-chip guess-chip" data-guess="${i}">`
+      + `<button class="tag-who" type="button" data-act="media-person" data-id="${esc(g.id)}"><b>${esc(fullName(p))}</b>${years ? ` <small>${esc(years)}</small>` : ''} ?</button>`
+      + `<button class="guess-yes" type="button" data-act="guess-yes" data-id="${esc(g.id)}" aria-label="${esc(t('med.guessYesWho', fullName(p)))}" title="${esc(t('med.guessYesWho', fullName(p)))}">✓ ${t('med.guessYes')}</button>`
+      + `<button class="tag-x" type="button" data-act="guess-no" data-id="${esc(g.id)}" aria-label="${esc(t('med.guessNoWho', fullName(p)))}" title="${esc(t('med.guessNoWho', fullName(p)))}">×</button>`
+      + '</li>';
+  }).join('');
+  const all = list.length > 1 ? ` <button class="link guess-all" type="button" data-act="guess-all">${t('med.guessAll', list.length)}</button>` : '';
+  return `<section class="media-people media-guesses"><h3>${t('med.guesses')} <span class="n">${list.length}</span>${all}</h3>`
+    + `<p class="hint">${t('med.guessHint')}</p><ul class="tag-list guess-list">${rows}</ul></section>`;
+}
+
 export function renderMedia() {
   if (!current) return;
   const m = item();
@@ -101,6 +147,9 @@ export function renderMedia() {
       + '</li>';
   }).join('');
   // People named in the caption, without a marker yet, at the top of the list
+  const guessed = guessesOf(m);
+  const guessMarks = guessed.map((g, i) => `<button class="tag-pin guess${pinSide(g)}" type="button" data-guess="${i}" data-style="left:${g.x}%;top:${g.y}%"`
+    + ` data-act="guess-yes" data-id="${esc(g.id)}" aria-label="${esc(t('med.guessYesWho', fullName(P(g.id))))}">${tagLabel(P(g.id))}</button>`).join('');
   const tagged = new Set(tags.filter(hasPlace).map((x) => x.id));
   const named = peopleNamedIn([m.title, m.note].join(' ')).filter((id) => !tagged.has(id));
   const picker = pin
@@ -129,10 +178,11 @@ export function renderMedia() {
   setHTML($('#mediaCard'), `<div class="sheet-head"><h2 id="mdTitle">${esc(mediaLabel(m) || t('med.untitled'))}</h2>${pen}${nav}`
     + `<button class="icon-btn" type="button" data-act="media-close" aria-label="${t('close')}">×</button></div>`
     + sides + hint
-    + `<div class="media-pic${S.canWrite && !back ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(back ? m.back : m.photo))}" alt="${esc(m.title || '')}${back ? ' (' + t('med.back') + ')' : ''}">${marks}`
+    + `<div class="media-pic${S.canWrite && !back ? ' can-tag' : ''}" data-act="media-pic"><img src="${esc(photoSrc(back ? m.back : m.photo))}" alt="${esc(m.title || '')}${back ? ' (' + t('med.back') + ')' : ''}">${marks}${pin ? '' : guessMarks}`
     + (pin ? `<span class="tag-pin new" data-style="left:${pin.x}%;top:${pin.y}%">+</span>` : '') + '</div>'
     + (isDraft() ? `<p class="hint">${t('med.draftHint')}</p>` : caption(m))
     + (names ? `<section class="media-people"><h3>${t('med.onImage')} <span class="n">${shown.length}</span></h3><ul class="tag-list">${names}</ul></section>` : '') + picker
+    + (guessed.length && !pin ? guessBlock(guessed) : guessing(m) ? `<p class="hint guessing">${t('med.guessing')}</p>` : '')
     + (isDraft() || !S.canWrite || editing ? '' : deleteBlock()));
 }
 
@@ -509,8 +559,9 @@ function fitLabel(pin) {
 /** Hover (or focus) of a face, or of a name in the list, which then lights up its person on the photo. */
 export function highlightTag(target, on) {
   if (!target || !target.closest) return;
-  const row = target.closest('.tag-list [data-tag]');
-  const pin = row ? document.querySelector(`.tag-pin[data-tag="${row.dataset.tag}"]`) : target.closest('.tag-pin[data-tag]');
+  const row = target.closest('.tag-list [data-tag], .guess-list [data-guess]');
+  const sel = (r) => (r.dataset.guess !== undefined ? `.tag-pin[data-guess="${r.dataset.guess}"]` : `.tag-pin[data-tag="${r.dataset.tag}"]`);
+  const pin = row ? document.querySelector(sel(row)) : target.closest('.tag-pin[data-tag], .tag-pin[data-guess]');
   if (!pin) return;
   if (on) fitLabel(pin);
   if (row) pin.classList.toggle('lit', on);
@@ -734,4 +785,25 @@ export async function addTag(id) {
 export async function removeTag(i) {
   const m = item();
   if (m) await saveTags(tagsOf(m).filter((_, k) => k !== i));
+}
+
+/** Confirms the faces recognised of people `ids` (all of them without `ids`): markers placed where they are. */
+export async function acceptGuesses(ids) {
+  const m = item();
+  if (!m || !S.canWrite) return;
+  const list = guessesOf(m).filter((g) => !ids || ids.includes(g.id));
+  if (!list.length) return;
+  const who = new Set(list.map((g) => g.id));
+  // A person already on the image without a marker: the marker is theirs now
+  const tags = [...tagsOf(m).filter((x) => !who.has(x.id) || hasPlace(x)), ...list.map((g) => ({ id: g.id, x: g.x, y: g.y }))];
+  pin = null;
+  await saveTags(tags);
+}
+
+/** Dismisses the suggestion of person `id` on the image shown. */
+export function dismissGuess(id) {
+  const m = item();
+  if (!m) return;
+  dismissed.add(m.photo + '|' + id);
+  renderMedia();
 }

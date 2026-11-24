@@ -41,6 +41,10 @@ local ou au navigateur accède aux arbres. Ne l'exposez pas sur un réseau.
   l'ordinateur, sans passer par un shell, sur une photo de l'arbre désignée par son nom vérifié
   (`photos/<fichier>`) ; une lecture à la fois, arrêtée au bout de dix minutes. Rien ne sort sur
   Internet.
+- **Visages reconnus** (`faces.js`) : le serveur lance le Python d'OpenCV installé sur l'ordinateur,
+  sans passer par un shell, sur les photos de l'arbre désignées par leur nom vérifié
+  (`photos/<fichier>`) ; une recherche à la fois, arrêtée au bout de cinq minutes. Les vecteurs des
+  visages restent dans la mémoire du serveur, jamais dans l'arbre. Rien ne sort sur Internet.
 - **Commandes à la voix** (`voice.js`) : l'enregistrement (un WAV vérifié, 20 Mo au plus) est
   écrit dans un dossier temporaire supprimé aussitôt et passé au programme Whisper de l'ordinateur,
   lancé sans shell ; la phrase va à Ollama, sur l'ordinateur (`127.0.0.1`). Rien ne sort sur
