@@ -32,6 +32,11 @@
  * POST   /api/insee/register        : { email } — matchID sends a code to this address
  * POST   /api/insee/auth            : { email, code } — keeps the token in data/matchid.json
  *
+ * POST   /api/trees/:id/photos/:f/read  : reads the handwriting of a photo (htr.js): { model, lines }
+ * POST   /api/trees/:id/photos/:f/faces : who may be on a photo, from the faces identified in the
+ *                                     saved tree (faces.js): { faces: [{ x, y, id, score }] }
+ * GET    /api/htr, /api/faces       : can this computer read handwriting, recognise faces? { ready }
+ *
  * GET    /api/voice                 : voice commands on this computer (voice.js): { listen, understand, … }
  * POST   /api/voice/warm            : loads Whisper and the language model while the user speaks
  * POST   /api/voice/listen?lang=&hint= : a WAV recording → { text } (Whisper)
@@ -47,6 +52,8 @@ import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { htrStatus, readImage } from './htr.js';
+import { facesStatus, findFaces } from './faces.js';
+import { faceRefs } from './js/model/faces.js';
 import { voiceStatus, transcribe, understand, warmUp } from './voice.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -324,6 +331,7 @@ export function createServer({
   root = ROOT, dataDir = path.join(root, 'data', 'arbres'), tokenFile = path.join(root, 'data', 'matchid.json'),
   deaths = matchidClient(tokenFile),
   htr = { status: htrStatus, read: readImage },
+  faces = { status: facesStatus, find: findFaces },
   voice = { status: voiceStatus, listen: transcribe, understand, warm: warmUp },
 } = {}) {
   const { treeFile, photoDir, readTree, treeIds } = paths(dataDir);
@@ -496,6 +504,23 @@ export function createServer({
   }
 
   /**
+   * Who may be on a photo of the tree (faces.js): the faces identified in the saved tree (markers,
+   * portraits) compared with those of the photo. { faces: [{ x, y, id, score }] }
+   */
+  async function photoFaces(res, id, file) {
+    if (!PHOTO_REF.test('photos/' + file)) return send(res, 400, 'Nom de photo invalide');
+    const full = path.join(photoDir(id), file);
+    try {
+      await fs.access(full);
+    } catch (e) {
+      return send(res, 404, 'Photo introuvable');
+    }
+    const { tags, refs } = faceRefs(await readTree(id), 'photos/' + file);
+    const known = refs.filter((r) => PHOTO_REF.test(r.photo)).map(({ photo, ...r }) => ({ ...r, file: path.join(photoDir(id), photo.slice(7)) }));
+    send(res, 200, JSON.stringify({ faces: await faces.find(full, known, tags) }), TYPES['.json']);
+  }
+
+  /**
    * Voice commands, on this computer (voice.js): GET /api/voice → what it can do;
    * POST /api/voice/warm → loads the models while the user speaks;
    * POST /api/voice/listen?lang=&hint= (a WAV recording) → { text };
@@ -545,6 +570,8 @@ export function createServer({
         if (req.method === 'DELETE') return deleteTree(res, id);
       } else if (sub === 'photos' && filePart && rest.length === 1 && rest[0] === 'read') {
         if (req.method === 'POST') return readPhoto(res, id, decodeURIComponent(filePart));
+      } else if (sub === 'photos' && filePart && rest.length === 1 && rest[0] === 'faces') {
+        if (req.method === 'POST') return photoFaces(res, id, decodeURIComponent(filePart));
       } else if (sub === 'photos' && !rest.length) {
         if (!filePart && req.method === 'POST') return postPhoto(req, res, id);
         if (filePart === 'sweep' && req.method === 'POST') return sweepPhotos(res, id);
@@ -629,6 +656,9 @@ export function createServer({
         await api(req, res, route[1], query);
       } else if (pathname === '/api/htr') {
         if (req.method === 'GET') send(res, 200, JSON.stringify(await htr.status()), TYPES['.json']);
+        else send(res, 405, 'Méthode non autorisée');
+      } else if (pathname === '/api/faces') {
+        if (req.method === 'GET') send(res, 200, JSON.stringify(await faces.status()), TYPES['.json']);
         else send(res, 405, 'Méthode non autorisée');
       } else if (pathname.startsWith('/api/voice')) {
         await voiceApi(req, res, pathname, query);

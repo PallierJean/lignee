@@ -30,7 +30,7 @@ une famille d'exemple vous attend.
 ### Construire votre arbre
 - Des fiches complètes : naissance, décès, professions, unions, événements, notes et sources.
 - Photos de famille, portraits recadrés et galerie de documents, avec les personnes identifiées
-  sur chaque photo.
+  sur chaque photo ; les visages déjà connus sont reconnus sur les nouvelles (sur l'ordinateur, avec OpenCV).
 - Numéros Sosa calculés automatiquement, et plusieurs arbres dans la même application.
 - Annuler et rétablir à tout moment.
 

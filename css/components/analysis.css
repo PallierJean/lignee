@@ -948,6 +948,54 @@
   cursor: default;
 }
 
+/* Face recognised, to confirm: a dashed ring; a click confirms it (the label says who) */
+.tag-pin.guess {
+  border: 2px dashed rgba(255, 255, 255, .85);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .25);
+}
+
+.tag-pin.guess:hover,
+.tag-pin.guess:focus-visible,
+.tag-pin.guess.lit {
+  border-style: solid;
+  border-color: var(--accent);
+}
+
+.media-guesses .hint {
+  margin: 0 0 8px;
+}
+
+.media-guesses h3 .guess-all {
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.guess-chip {
+  border-style: dashed;
+}
+
+.guess-yes {
+  font: inherit;
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  border-left: 1px solid var(--line);
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.guess-yes:hover {
+  background: var(--accent-soft, rgba(0, 0, 0, .05));
+}
+
+.guessing {
+  margin: 12px 0 0;
+}
+
 /* People on the image: a heading and boxes, as the record's relatives */
 .media-people {
   margin: 14px 0 0;

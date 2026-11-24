@@ -18,7 +18,7 @@ import {
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
-  openMedia, openArchive, archiveToGallery, askArchiveDelete, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, askMediaArchive, archiveMedia, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack } from './ui/media.js';
+  openMedia, openArchive, archiveToGallery, askArchiveDelete, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, askMediaArchive, archiveMedia, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack, acceptGuesses, dismissGuess } from './ui/media.js';
 import { closeCropFree, resetCropFree, cropFreeDrag, cropFreeOpen } from './ui/crop-free.js';
 import { openReading, closeReading, readingSide, runReading, lightLine, editLine, readAll, stopBatch, readingOpen } from './ui/reading.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
@@ -336,6 +336,9 @@ const CLICK_ACTIONS = {
   'med-tag': (el) => openDraftMedia(+el.dataset.i),
   'media-delete': () => askMediaDelete(true),
   'tag-pick': once((el) => addTag(el.dataset.id)),
+  'guess-yes': once((el) => acceptGuesses([el.dataset.id])),
+  'guess-all': once(() => acceptGuesses()),
+  'guess-no': (el) => dismissGuess(el.dataset.id),
   'media-crop': once(() => cropMedia()),
   'media-back-remove': once(() => setMediaBack(null)),
   'med-crop': (el) => A.cropDraftMedia(+el.dataset.i),
