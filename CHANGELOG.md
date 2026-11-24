@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.10.1](https://github.com/PallierJean/lignee/compare/v4.10.0...v4.10.1) (2026-11-24)
+
+### Bug Fixes
+
+* Keep a document named after a long source title in GitHub ([ea03e8d](https://github.com/PallierJean/lignee/commit/ea03e8dc6d7b63693561b04154873f395119e790))
+* Send a tree with gallery images already in the repository ([efe0754](https://github.com/PallierJean/lignee/commit/efe0754863f124a73e24b5b2047ffddaddc49cd8))
+
+---
+
+### Corrections
+
+* Un acte au titre de source long n'est plus renommé au nom de la personne à l'envoi vers GitHub. ([ea03e8d](https://github.com/PallierJean/lignee/commit/ea03e8dc6d7b63693561b04154873f395119e790))
+* L'envoi vers GitHub échouait quand une image de la galerie était déjà dans le dépôt. ([efe0754](https://github.com/PallierJean/lignee/commit/efe0754863f124a73e24b5b2047ffddaddc49cd8))
+
 ## [4.10.0](https://github.com/PallierJean/lignee/compare/v4.9.1...v4.10.0) (2026-11-23)
 
 ### Features
