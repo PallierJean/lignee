@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.11.0](https://github.com/PallierJean/lignee/compare/v4.10.1...v4.11.0) (2026-11-24)
+
+### Features
+
+* Suggest who is on a gallery photo from the faces already known ([d826ab4](https://github.com/PallierJean/lignee/commit/d826ab477229bb11c1d58f968963ee995ce08b37))
+
+---
+
+### Nouveautés
+
+* Suggérer qui est sur une photo de la galerie, d'après les visages déjà identifiés. ([d826ab4](https://github.com/PallierJean/lignee/commit/d826ab477229bb11c1d58f968963ee995ce08b37))
+
 ## [4.10.1](https://github.com/PallierJean/lignee/compare/v4.10.0...v4.10.1) (2026-11-24)
 
 ### Bug Fixes
