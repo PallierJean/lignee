@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.12.0](https://github.com/PallierJean/lignee/compare/v4.11.0...v4.12.0) (2026-11-24)
+
+### Features
+
+* Name unknown faces across the gallery and take portraits from it ([5cc122a](https://github.com/PallierJean/lignee/commit/5cc122a3d6f5968d9f28acf198c4bfdd30000b62))
+
+---
+
+### Nouveautés
+
+* Nommer en une fois un visage inconnu vu sur plusieurs photos, et prendre un portrait dans la galerie. ([5cc122a](https://github.com/PallierJean/lignee/commit/5cc122a3d6f5968d9f28acf198c4bfdd30000b62))
+
 ## [4.11.0](https://github.com/PallierJean/lignee/compare/v4.10.1...v4.11.0) (2026-11-24)
 
 ### Features
