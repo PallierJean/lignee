@@ -69,6 +69,11 @@ test('nom du fichier : celui de la personne du dossier, renommé avec elle', () 
   assert.equal(f.label('source', 'n', `photos/BLANC_Jules/BLANC-Jul-${uuid}.jpg`), 'BLANC-Jules', 'un acte nommé d’après une personne : son nom d’aujourd’hui');
   assert.equal(f.label('source', 'n', `photos/BLANC_Jules/Acte-n-3-${uuid}.jpg`), '', 'nommé d’après sa source : gardé');
   assert.equal(f.label('source', 'm'), '', 'acte du couple : nom gardé');
+  const long = 'Mariage de Pierre DUPONT dit Grandpré et Catherine FAURE célébré en l’église du bourg en 1689';
+  const g = photoFolders({ people, unions, sources: new Map([['n', { title: long }]]) });
+  const whole = long.replace(/[^\p{L}\p{M}\p{N}]+/gu, '-');
+  assert.equal(g.label('source', 'n', `photos/BLANC_Jules/${whole}-${uuid}.jpg`), '', 'titre long entier (dépôt GitHub) : gardé');
+  assert.equal(g.label('source', 'n', `photos/BLANC_Jules/${whole.slice(0, 80)}-${uuid}.jpg`), '', 'titre long coupé à 80 : gardé');
   assert.equal(f.label('source', 'g'), '', 'galerie : nom gardé');
   assert.equal(f.label('media', 'x'), '');
 });

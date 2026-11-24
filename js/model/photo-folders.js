@@ -100,7 +100,9 @@ export function photoFolders({ people, unions = new Map(), sources = new Map() }
       // A document named after its source (its title, its kind) keeps that name
       const s = sources.get(id) || {};
       const file = String(ref || '').split('/').pop();
-      if (file.startsWith(photoLabel({ given: s.title || s.kind || 'source' }).slice(0, 80) + '-')) return '';
+      const titled = photoLabel({ given: s.title || s.kind || 'source' });
+      // Cut at 80 characters on this computer, whole in a GitHub repository
+      if (file.startsWith(titled + '-') || file.startsWith(titled.slice(0, 80) + '-')) return '';
     }
     return photoLabel(people.get(pid));
   };
