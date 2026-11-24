@@ -16,7 +16,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { knownFaces, suggestFaces } from './js/model/faces.js';
+import { knownFaces, suggestFaces, unknownGroups, portraitFaces } from './js/model/faces.js';
 
 const HOME = os.homedir();
 const PYTHON = process.env.LIGNEE_FACES || path.join(HOME, 'lignee-faces', 'bin', 'python');
@@ -75,9 +75,9 @@ function run(files) {
   });
 }
 
-const cache = new Map(); // path -> { stamp, faces }: an image changes name when it changes, but who knows
+const cache = new Map(); // path -> { stamp, faces, size }: an image changes name when it changes, but who knows
 
-/** Faces of each image of `files` (paths): Map path -> faces; an unreadable image has none. */
+/** Faces of each image of `files` (paths): Map path -> { faces, size }; an unreadable image has none. */
 async function facesOf(files) {
   const result = new Map();
   const todo = [];
@@ -90,17 +90,17 @@ async function facesOf(files) {
     }
     const stamp = `${st.size}:${st.mtimeMs}`;
     const hit = cache.get(file);
-    if (hit && hit.stamp === stamp) result.set(file, hit.faces);
+    if (hit && hit.stamp === stamp) result.set(file, hit);
     else todo.push({ file, stamp });
   }
   for (let i = 0; i < todo.length; i += CHUNK) {
     const part = todo.slice(i, i + CHUNK);
     const lines = await run(part.map((x) => x.file));
     part.forEach(({ file, stamp }, k) => {
-      const faces = Array.isArray(lines[k].faces) ? lines[k].faces : [];
+      const seen = { stamp, faces: Array.isArray(lines[k].faces) ? lines[k].faces : [], size: lines[k].size || null };
       if (cache.size >= CACHE) cache.clear();
-      cache.set(file, { stamp, faces });
-      result.set(file, faces);
+      cache.set(file, seen);
+      result.set(file, seen);
     });
   }
   return result;
@@ -108,17 +108,44 @@ async function facesOf(files) {
 
 let queue = Promise.resolve(); // one search at a time: each one uses every core
 
+/** Runs `fn` after the searches before it, once the computer is known to recognise faces. */
+function inTurn(fn) {
+  const job = queue.then(async () => {
+    if (!(await facesStatus()).ready) throw Object.assign(new Error('Reconnaissance des visages indisponible sur cet ordinateur'), { status: 503 });
+    return fn();
+  });
+  queue = job.catch(() => {});
+  return job;
+}
+
+/** `refs` ({ file, … }) with the faces and size of their image ({ faces, size, … }). */
+const withFaces = (refs, seen) => refs.map(({ file, ...r }) => ({ ...r, faces: (seen.get(file) || {}).faces || [], size: (seen.get(file) || {}).size }));
+
 /**
  * Who may be on image `file` (a path): [{ x, y, id, score }] (see suggestFaces). `refs` are the
  * known faces, [{ id, file, x?, y? }] in order of preference; `tags` the markers already on the image.
  */
 export function findFaces(file, refs, tags) {
-  const job = queue.then(async () => {
-    if (!(await facesStatus()).ready) throw Object.assign(new Error('Reconnaissance des visages indisponible sur cet ordinateur'), { status: 503 });
-    const faces = await facesOf([file, ...refs.map((r) => r.file)]);
-    const known = knownFaces(refs.filter((r) => r.file !== file).map(({ file: f, ...r }) => ({ ...r, faces: faces.get(f) })));
-    return suggestFaces(faces.get(file) || [], known, tags);
+  return inTurn(async () => {
+    const seen = await facesOf([file, ...refs.map((r) => r.file)]);
+    const known = knownFaces(withFaces(refs.filter((r) => r.file !== file), seen));
+    return suggestFaces((seen.get(file) || {}).faces || [], known, tags);
   });
-  queue = job.catch(() => {});
-  return job;
+}
+
+/**
+ * The whole gallery at once: { groups, portraits }. `images` are the gallery's images,
+ * [{ photo, file, tags }]; `refs` the known faces (as for findFaces, with `photo`); `ids` the people
+ * without a portrait. groups: unknown faces seen on several images (unknownGroups); portraits: the
+ * clearest face of each person without a portrait (portraitFaces).
+ */
+export function faceOverview(images, refs, ids) {
+  return inTurn(async () => {
+    const seen = await facesOf([...images.map((x) => x.file), ...refs.map((r) => r.file)]);
+    const known = knownFaces(withFaces(refs, seen));
+    return {
+      groups: unknownGroups(withFaces(images, seen), known),
+      portraits: portraitFaces(withFaces(refs, seen), ids),
+    };
+  });
 }

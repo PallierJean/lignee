@@ -34,7 +34,9 @@
  *
  * POST   /api/trees/:id/photos/:f/read  : reads the handwriting of a photo (htr.js): { model, lines }
  * POST   /api/trees/:id/photos/:f/faces : who may be on a photo, from the faces identified in the
- *                                     saved tree (faces.js): { faces: [{ x, y, id, score }] }
+ *                                     saved tree (faces.js): { faces: [{ x, y, w, box, id?, score? }] }
+ * GET    /api/trees/:id/faces       : the whole gallery (faces.js): { groups, portraits }, unknown
+ *                                     faces seen on several photos, faces for the missing portraits
  * GET    /api/htr, /api/faces       : can this computer read handwriting, recognise faces? { ready }
  *
  * GET    /api/voice                 : voice commands on this computer (voice.js): { listen, understand, … }
@@ -52,8 +54,8 @@ import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { htrStatus, readImage } from './htr.js';
-import { facesStatus, findFaces } from './faces.js';
-import { faceRefs } from './js/model/faces.js';
+import { facesStatus, findFaces, faceOverview } from './faces.js';
+import { faceRefs, galleryImages, withoutPortrait } from './js/model/faces.js';
 import { voiceStatus, transcribe, understand, warmUp } from './voice.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -331,7 +333,7 @@ export function createServer({
   root = ROOT, dataDir = path.join(root, 'data', 'arbres'), tokenFile = path.join(root, 'data', 'matchid.json'),
   deaths = matchidClient(tokenFile),
   htr = { status: htrStatus, read: readImage },
-  faces = { status: facesStatus, find: findFaces },
+  faces = { status: facesStatus, find: findFaces, overview: faceOverview },
   voice = { status: voiceStatus, listen: transcribe, understand, warm: warmUp },
 } = {}) {
   const { treeFile, photoDir, readTree, treeIds } = paths(dataDir);
@@ -516,8 +518,19 @@ export function createServer({
       return send(res, 404, 'Photo introuvable');
     }
     const { tags, refs } = faceRefs(await readTree(id), 'photos/' + file);
-    const known = refs.filter((r) => PHOTO_REF.test(r.photo)).map(({ photo, ...r }) => ({ ...r, file: path.join(photoDir(id), photo.slice(7)) }));
-    send(res, 200, JSON.stringify({ faces: await faces.find(full, known, tags) }), TYPES['.json']);
+    send(res, 200, JSON.stringify({ faces: await faces.find(full, filesOf(id, refs).map(({ photo, ...r }) => r), tags) }), TYPES['.json']);
+  }
+
+  /** Photos `list` ({ photo: 'photos/…', … }) of tree `id` with their path (`file`); invalid names left out. */
+  const filesOf = (id, list) => list.filter((r) => PHOTO_REF.test(r.photo)).map((r) => ({ ...r, file: path.join(photoDir(id), r.photo.slice(7)) }));
+
+  /** The whole gallery (faces.js): unknown faces seen on several photos, faces for the missing portraits. */
+  async function treeFaces(res, id) {
+    const tree = await readTree(id);
+    if (!tree) return send(res, 404, 'Arbre introuvable');
+    const { refs } = faceRefs(tree, '');
+    const o = await faces.overview(filesOf(id, galleryImages(tree)), filesOf(id, refs), withoutPortrait(tree));
+    send(res, 200, JSON.stringify(o), TYPES['.json']);
   }
 
   /**
@@ -570,6 +583,8 @@ export function createServer({
         if (req.method === 'DELETE') return deleteTree(res, id);
       } else if (sub === 'photos' && filePart && rest.length === 1 && rest[0] === 'read') {
         if (req.method === 'POST') return readPhoto(res, id, decodeURIComponent(filePart));
+      } else if (sub === 'faces' && filePart === undefined) {
+        if (req.method === 'GET') return treeFaces(res, id);
       } else if (sub === 'photos' && filePart && rest.length === 1 && rest[0] === 'faces') {
         if (req.method === 'POST') return photoFaces(res, id, decodeURIComponent(filePart));
       } else if (sub === 'photos' && !rest.length) {

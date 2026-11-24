@@ -30,3 +30,17 @@ export async function findFaces(ref) {
   const o = await r.json();
   return Array.isArray(o && o.faces) ? o.faces : [];
 }
+
+/** True if the local server recognises faces (known after checkFaces). */
+export const facesReady = () => ready && S.mode === 'file';
+
+/**
+ * The whole gallery of the open tree: { groups: [{ faces: [{ photo, x, y, w, box }] }], portraits:
+ * [{ id, photo, x, y, w, box }] } (unknown faces seen on several photos, faces for missing portraits).
+ */
+export async function faceOverview() {
+  const r = await fetch(`api/trees/${encodeURIComponent(S.tree)}/faces`, { cache: 'no-store' });
+  if (!r.ok) throw new Error((await r.text().catch(() => '')) || r.statusText);
+  const o = await r.json();
+  return { groups: Array.isArray(o && o.groups) ? o.groups : [], portraits: Array.isArray(o && o.portraits) ? o.portraits : [] };
+}

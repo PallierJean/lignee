@@ -3,7 +3,8 @@ import { test, describe, before, after } from 'node:test';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { cosine, faceAt, largestFace, knownFaces, suggestFaces, faceRefs, SAME } from '../js/model/faces.js';
+import { cosine, faceAt, largestFace, knownFaces, suggestFaces, faceRefs, unknownGroups, portraitFaces, galleryImages, withoutPortrait, SAME } from '../js/model/faces.js';
+import { faceView, FRAME } from '../js/ui/crop.js';
 import { createServer } from '../server.js';
 import { loadTree, person, resetApp } from './helpers.js';
 
@@ -42,7 +43,7 @@ describe('visages : correspondances', () => {
     assert.equal(knownFaces([{ id: 'a', faces: photo, x: 20, y: 20 }, { id: 'a', faces: photo, x: 20, y: 20 }], 1).get('a').length, 1);
   });
 
-  test('suggestions : au-dessus du seuil, une personne par visage, sans les visages ni les personnes déjà repérés', () => {
+  test('visages sans repère : suggestions au-dessus du seuil, une personne par visage ; les autres sans nom', () => {
     const known = new Map([['a', [ANNE]], ['l', [LOUIS]], ['p', [PAUL]]]);
     const faces = [
       face(0.6, 0.1, 0.2, 0.2, [0.1, 0.9, 0]),  // Louis
@@ -51,13 +52,16 @@ describe('visages : correspondances', () => {
       face(0.4, 0.6, 0.2, 0.2, [1, 1, 1]),      // proche d'Anne et de Louis, déjà pris tous deux
     ];
     const got = suggestFaces(faces, new Map([...known].filter(([id]) => id !== 'p')), []);
-    assert.deepEqual(got.map((g) => [g.id, g.x, g.y]), [['a', 20, 20], ['l', 70, 20]], 'chacun sur son visage le plus proche, de gauche à droite');
-    assert.ok(got.every((g) => g.score >= SAME));
+    assert.deepEqual(got.map((g) => [g.id, g.x, g.y, g.w]), [['a', 20, 20, 20], [undefined, 45, 20, 20], [undefined, 50, 70, 20], ['l', 70, 20, 20]],
+      'chacun sur son visage le plus proche ; les autres visages sans nom, de gauche à droite');
+    assert.deepEqual(got[0].box, [0.1, 0.1, 0.2, 0.2]);
+    assert.ok(got.filter((g) => g.id).every((g) => g.score >= SAME));
+    assert.ok(!('score' in got[1]));
     const tagged = suggestFaces(faces, known, [{ id: 'l', x: 70, y: 20 }, { id: 'p' }]);
     assert.ok(!tagged.some((g) => g.id === 'l'), 'Louis déjà repéré');
     assert.ok(tagged.some((g) => g.id === 'p'), 'Paul sur l’image sans repère : suggéré');
     assert.ok(!tagged.some((g) => g.x === 70), 'le visage de Louis n’est plus proposé');
-    assert.deepEqual(suggestFaces([face(0, 0, 0.1, 0.1, [1, -1, 0])], new Map([['a', [[-1, 1, 0]]]])), [], 'trop différent');
+    assert.deepEqual(suggestFaces([face(0, 0, 0.1, 0.1, [1, -1, 0])], new Map([['a', [[-1, 1, 0]]]])).map((g) => g.id), [undefined], 'trop différent : sans nom');
   });
 
   test('ce que l’arbre enregistré connaît : portraits, repères de la galerie (récents d’abord) et des archives', () => {
@@ -80,6 +84,52 @@ describe('visages : correspondances', () => {
       ],
     });
     assert.deepEqual(faceRefs(null, 'photos/x.jpg'), { tags: [], refs: [] });
+  });
+});
+
+describe('visages : groupes d’inconnus et portraits', () => {
+  test('inconnus regroupés d’une photo à l’autre, jamais deux visages d’une même photo ; repérés et connus à part', () => {
+    const x = [0.9, 0.1, 0.4];
+    const images = [
+      { photo: 'photos/g/1.jpg', faces: [face(0.1, 0.1, 0.1, 0.1, x), face(0.5, 0.1, 0.1, 0.1, [0.88, 0.12, 0.41]), face(0.8, 0.1, 0.1, 0.1, [-1, 0, 0])], tags: [] },
+      { photo: 'photos/g/2.jpg', faces: [face(0.2, 0.2, 0.1, 0.1, [0.91, 0.09, 0.39]), face(0.6, 0.2, 0.1, 0.1, [0, 0.2, 1])], tags: [{ id: 'p', x: 65, y: 25 }] },
+      { photo: 'photos/g/3.jpg', faces: [face(0.3, 0.3, 0.2, 0.2, [0, -1, 0])] },
+    ];
+    const groups = unknownGroups(images, new Map([['a', [[-1, 0, 0]]]]));
+    assert.equal(groups.length, 1, 'Anne connue, Paul repéré, le visage seul sans groupe');
+    assert.deepEqual(groups[0].faces.map((f) => [f.photo, f.x, f.y]).sort(), [['photos/g/1.jpg', 15, 15], ['photos/g/2.jpg', 25, 25]],
+      'sur la photo 1, un seul des deux visages semblables');
+    assert.deepEqual(groups[0].faces[0].box.length, 4);
+    assert.deepEqual(unknownGroups([], new Map()), []);
+  });
+
+  test('portrait : le visage le plus grand en pixels sous un repère, pour ceux qui n’en ont pas', () => {
+    const big = [face(0.1, 0.1, 0.1, 0.1, ANNE)];
+    const refs = [
+      { id: 'a', photo: 'photos/g/small.jpg', faces: big, size: [400, 300], x: 15, y: 15 },
+      { id: 'a', photo: 'photos/g/large.jpg', faces: big, size: [2000, 1500], x: 15, y: 15 },
+      { id: 'a', photo: 'photos/g/miss.jpg', faces: big, size: [4000, 3000], x: 90, y: 90 },
+      { id: 'a', photo: 'photos/a.jpg', faces: big },
+      { id: 'b', photo: 'photos/g/large.jpg', faces: big, size: [2000, 1500], x: 15, y: 15 },
+    ];
+    assert.deepEqual(portraitFaces(refs, new Set(['a'])), [{ id: 'a', photo: 'photos/g/large.jpg', x: 15, y: 15, w: 10, box: [0.1, 0.1, 0.1, 0.1] }]);
+    const tree = {
+      people: [{ id: 'a', photo: 'photos/a.jpg' }, { id: 'b' }, { id: 'c', photo: '' }],
+      media: [{ id: 'm', photo: 'photos/g/1.jpg', tags: [{ id: 'b', x: 1, y: 2 }, { id: 'c' }] }, { id: 'n', photo: 'data:image/png;base64,A' }],
+    };
+    assert.deepEqual([...withoutPortrait(tree)], ['b', 'c']);
+    assert.deepEqual(galleryImages(tree), [{ photo: 'photos/g/1.jpg', tags: [{ id: 'b', x: 1, y: 2 }] }]);
+  });
+
+  test('recadrage d’un portrait : le visage au milieu du cadre, zoom au-delà de l’ordinaire si le visage est petit', () => {
+    const min = Math.max(FRAME.w / 2000, FRAME.h / 1500);
+    const v = faceView([0.45, 0.45, 0.05, 0.05], 2000, 1500, min);
+    const cx = v.x + 0.475 * 2000 * v.scale;
+    const cy = v.y + 0.475 * 1500 * v.scale;
+    assert.ok(Math.abs(cx - FRAME.w / 2) < 1e-6 && Math.abs(cy - FRAME.h / 2) < 1e-6, 'centré');
+    assert.ok(v.scale > min * 4 && v.max === v.scale, 'petit visage : zoom permis jusque-là');
+    const edge = faceView([0, 0, 0.5, 0.5], 400, 500, Math.max(FRAME.w / 400, FRAME.h / 500));
+    assert.deepEqual([edge.x, edge.y], [0, 0], 'au bord : le cadre reste rempli');
   });
 });
 
@@ -107,6 +157,10 @@ describe('visages : serveur local', () => {
         asked.push({ file, refs, tags });
         return [{ x: 70, y: 20, id: 'l', score: 0.8 }];
       },
+      overview: async (images, refs, ids) => {
+        asked.push({ images, refs, ids: [...ids] });
+        return { groups: [], portraits: [] };
+      },
     };
     srv = createServer({ dataDir, faces });
     await new Promise((resolve) => srv.listen(0, '127.0.0.1', resolve));
@@ -133,6 +187,15 @@ describe('visages : serveur local', () => {
     assert.equal((await fetch(url('api/trees/arbre/photos/absente.jpg/faces'), { method: 'POST' })).status, 404);
     assert.equal((await fetch(url('api/trees/arbre/photos/g.jpg/faces'))).status, 405);
     assert.equal(asked.length, 1);
+
+    // Toute la galerie
+    const all = await fetch(url('api/trees/arbre/faces'));
+    assert.deepEqual(await all.json(), { groups: [], portraits: [] });
+    assert.deepEqual(asked[1].images.map((x) => x.file), [path.join(photos, 'galerie', 'g-1.jpg'), path.join(photos, 'galerie', 'g-2.jpg')]);
+    assert.equal(asked[1].refs.length, 3, 'le portrait et les deux repères');
+    assert.deepEqual(asked[1].ids, []);
+    assert.equal((await fetch(url('api/trees/autre/faces'))).status, 404);
+    assert.equal((await fetch(url('api/trees/arbre/faces'), { method: 'POST' })).status, 405);
   });
 });
 
@@ -197,6 +260,152 @@ describe('visages : suggestions dans la visionneuse', () => {
     assert.doesNotMatch(card(), /Recherche des visages/);
     media.closeMedia();
     S.canWrite = true;
+    S.mode = 'local';
+  });
+});
+
+describe('visages : inconnus dans la visionneuse', () => {
+  const nativeFetch = globalThis.fetch;
+  after(() => { globalThis.fetch = nativeFetch; });
+
+  test('un visage non reconnu se clique : le repère s’y place, on choisit la personne', async () => {
+    const { S } = await import('../js/state.js');
+    const media = await import('../js/ui/media.js');
+    const { checkFaces } = await import('../js/services/faces.js');
+    resetApp();
+    globalThis.fetch = async (u) => {
+      if (String(u) === 'api/faces') return new Response(JSON.stringify({ ready: true }));
+      if (String(u).endsWith('/faces')) return new Response(JSON.stringify({ faces: [{ x: 40, y: 30, w: 8, box: [0.36, 0.25, 0.08, 0.1] }] }));
+      return new Response('{}');
+    };
+    loadTree([person('a', { given: 'Anne', surname: 'Roux', media: [{ id: 'm1', photo: 'photos/galerie/g-2.jpg', tags: [] }] })]);
+    S.mode = 'file';
+    S.tree = 'arbre';
+    S.canWrite = true;
+    await checkFaces();
+    const card = () => document.getElementById('mediaCard').innerHTML;
+    media.openMedia('m1');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.match(card(), /class="tag-pin face" type="button" data-style="left:40%;top:30%;width:max\(32px,10.4%\)" data-act="face-pick" data-x="40" data-y="30"/);
+    assert.doesNotMatch(card(), /Visages reconnus/);
+    media.pickFace(40, 30);
+    assert.match(card(), /id="tagFind"/, 'qui est-ce ?');
+    assert.match(card(), /class="tag-pin new" data-style="left:40%;top:30%"/);
+    assert.doesNotMatch(card(), /tag-pin face/, 'les visages s’effacent le temps du choix');
+    await media.addTag('a');
+    assert.deepEqual(S.media.get('m1').tags, [{ id: 'a', x: 40, y: 30 }]);
+    assert.doesNotMatch(card(), /tag-pin face/, 'visage repéré : plus proposé');
+    media.closeMedia();
+    S.mode = 'local';
+  });
+});
+
+describe('visages : fenêtre « Visages à identifier »', () => {
+  const nativeFetch = globalThis.fetch;
+  const realCreate = document.createElement;
+  const realImage = globalThis.Image;
+  after(() => {
+    globalThis.fetch = nativeFetch;
+    document.createElement = realCreate;
+    globalThis.Image = realImage;
+  });
+
+  test('nommer un groupe (sans le visage retiré), annulable ; ignorer ; choisir un portrait recadré', async () => {
+    const { S } = await import('../js/state.js');
+    const faces = await import('../js/ui/faces.js');
+    const { galleryHTML } = await import('../js/ui/analysis.js');
+    const { cropOpen, closeCrop } = await import('../js/ui/crop.js');
+    const { undoAction } = await import('../js/services/storage.js');
+    const { checkFaces } = await import('../js/services/faces.js');
+    resetApp();
+    const box = [0.1, 0.1, 0.1, 0.1];
+    const stored = [];
+    globalThis.fetch = async (u, init) => {
+      if (String(u) === 'api/faces') return new Response(JSON.stringify({ ready: true }));
+      if (String(u) === 'api/trees/arbre/faces') {
+        return new Response(JSON.stringify({
+          groups: [
+            { faces: [{ photo: 'photos/g/1.jpg', x: 15, y: 15, w: 10, box }, { photo: 'photos/g/2.jpg', x: 30, y: 40, w: 10, box }, { photo: 'photos/g/3.jpg', x: 50, y: 50, w: 10, box }] },
+            { faces: [{ photo: 'photos/g/1.jpg', x: 70, y: 15, w: 10, box }, { photo: 'photos/g/3.jpg', x: 80, y: 50, w: 10, box }] },
+          ],
+          portraits: [{ id: 'p', photo: 'photos/g/2.jpg', x: 30, y: 40, w: 10, box }, { id: 'a', photo: 'photos/g/1.jpg', x: 1, y: 1, w: 1, box }],
+        }));
+      }
+      if (String(u).startsWith('api/trees/arbre/photos/g%2F')) return new Response(new Blob(['x'], { type: 'image/jpeg' }));
+      if (String(u).endsWith('/photos') && init && init.method === 'POST') {
+        stored.push(JSON.parse(init.body).folder);
+        return new Response(JSON.stringify({ photo: 'photos/ROUX_Paul/p.jpg' }));
+      }
+      return new Response('{}');
+    };
+    globalThis.URL.createObjectURL = () => 'blob:x';
+    globalThis.URL.revokeObjectURL = () => {};
+    globalThis.Image = class {
+      naturalWidth = 1000;
+      naturalHeight = 800;
+      decode = async () => {};
+    };
+    document.createElement = (tag) => {
+      const el = realCreate(tag);
+      el.getContext = () => ({ fillRect() {}, drawImage() {} });
+      el.toDataURL = () => 'data:image/jpeg;base64,CROP';
+      return el;
+    };
+    loadTree([
+      person('a', { given: 'Anne', surname: 'Roux', photo: 'photos/ROUX_Anne/a.jpg', media: [
+        { id: 'm1', photo: 'photos/g/1.jpg', tags: [] },
+        { id: 'm2', photo: 'photos/g/2.jpg', tags: [{ id: 'l' }] },
+        { id: 'm3', photo: 'photos/g/3.jpg', tags: [] },
+      ] }),
+      person('l', { given: 'Louis', surname: 'Roux', sex: 'M' }),
+      person('p', { given: 'Paul', surname: 'Roux' }),
+    ]);
+    S.mode = 'file';
+    S.tree = 'arbre';
+    S.canWrite = true;
+    await checkFaces();
+    assert.match(galleryHTML('all'), /data-act="faces-open">Visages à identifier/);
+
+    const card = () => document.getElementById('facesCard').innerHTML;
+    faces.openFaces();
+    assert.match(card(), /Recherche des visages dans la galerie/);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.match(card(), /Même personne sur plusieurs photos <span class="n">2<\/span>/);
+    assert.match(card(), /Sur 3 photos/);
+    assert.match(card(), /class="face-thumb"><img src="api\/trees\/arbre\/photos\/g%2F1.jpg" alt="" loading="lazy" data-style="width:625.00%;transform:translate\(-7.00%,-7.00%\)"/);
+    assert.match(card(), /Portraits à ajouter <span class="n">1<\/span>/, 'Anne a déjà le sien');
+
+    faces.onFacesFind(0, 'louis');
+    assert.match(document.getElementById('fcHits0').innerHTML, /data-act="fc-name" data-g="0" data-id="l">Louis/);
+    faces.dropFace(0, 2);
+    assert.match(card(), /Sur 2 photos/);
+    await faces.nameGroup(0, 'l');
+    assert.deepEqual(S.media.get('m1').tags, [{ id: 'a' }, { id: 'l', x: 15, y: 15 }]);
+    assert.deepEqual(S.media.get('m2').tags, [{ id: 'a' }, { id: 'l', x: 30, y: 40 }], 'Louis, sur la photo sans repère : son repère');
+    assert.deepEqual(S.media.get('m3').tags, [{ id: 'a' }], 'le visage retiré');
+    assert.equal(document.getElementById('toast').textContent, 'Louis ROUX identifié sur 2 photos');
+    assert.match(card(), /Même personne sur plusieurs photos <span class="n">1<\/span>/);
+    await undoAction();
+    assert.deepEqual(S.media.get('m1').tags, [{ id: 'a' }], 'Ctrl+Z, en une fois');
+    assert.deepEqual(S.media.get('m2').tags, [{ id: 'a' }, { id: 'l' }]);
+
+    faces.skipGroup(1);
+    assert.doesNotMatch(card(), /Même personne/);
+
+    const chosen = faces.choosePortrait('p');
+    for (let i = 0; i < 20 && !cropOpen(); i++) await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.ok(cropOpen(), 'le recadrage s’ouvre sur le visage');
+    assert.ok(+document.getElementById('cropZoom').max >= 4, 'zoom permis jusqu’au visage');
+    closeCrop(true);
+    await chosen;
+    assert.equal(S.people.get('p').photo, 'photos/ROUX_Paul/p.jpg');
+    assert.deepEqual(stored, ['ROUX_Paul']);
+    assert.match(card(), /Rien à proposer/);
+    await undoAction();
+    assert.equal(S.people.get('p').photo || '', '', 'Ctrl+Z');
+
+    faces.closeFaces();
+    assert.equal(faces.facesOpen(), false);
     S.mode = 'local';
   });
 });

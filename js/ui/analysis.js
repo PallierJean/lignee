@@ -1,5 +1,6 @@
 /** "Analysis" tab: kinship, consistency, statistics, anniversaries. */
 import { S } from '../state.js';
+import { facesButton } from './faces.js';
 import { $, esc, setHTML } from '../utils/dom.js';
 import { t, getLang } from '../i18n.js';
 import { P, fullName, longName, lifeYears, eventLabel, allMedia, sourcesOf, factLabel, photoSrc, SOURCE_KINDS, ARCHIVE_KIND, surname, maiden, given } from '../model/people.js';
@@ -1052,7 +1053,7 @@ export function galleryHTML(group) {
   // First cell: add photos to the tree's gallery, identifying no one yet
   const lead = addMediaTile();
   if (!items.length) return `${lead ? mediaGrid([], group, lead) : ''}<p class="nofocus">${t('med.empty')}</p>`;
-  return mediaGrid(items, group, lead);
+  return facesButton() + mediaGrid(items, group, lead);
 }
 
 const galleryView = () => galleryHTML('all');

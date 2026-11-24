@@ -19,7 +19,7 @@ echo "$#" >> "${dir}/runs.txt"
 for f in "$@"; do
   case "$f" in
     *broken*) echo '{"error": "unreadable image"}' ;;
-    *) echo '{"faces": [{"box": [0.1, 0.1, 0.2, 0.2], "score": 0.9, "vec": [1, 0, 0]}]}' ;;
+    *) echo '{"size": [1000, 800], "faces": [{"box": [0.1, 0.1, 0.2, 0.2], "score": 0.9, "vec": [1, 0, 0]}]}' ;;
   esac
 done
 `);
@@ -45,9 +45,19 @@ describe('visages : programme de l’ordinateur', { skip: process.platform === '
       { id: 'b', file: path.join(dir, 'broken.jpg') },
       { id: 'c', file: path.join(dir, 'gone.jpg') },
     ];
-    assert.deepEqual(await faces.findFaces(path.join(dir, 'new.jpg'), refs, []), [{ x: 20, y: 20, id: 'a', score: 1 }]);
+    assert.deepEqual(await faces.findFaces(path.join(dir, 'new.jpg'), refs, []), [{ x: 20, y: 20, w: 20, box: [0.1, 0.1, 0.2, 0.2], id: 'a', score: 1 }]);
     assert.deepEqual(await runs(), ['3'], 'une image disparue n’est pas lue');
     assert.deepEqual(await faces.findFaces(path.join(dir, 'new.jpg'), refs, [{ id: 'a', x: 20, y: 20 }]), [], 'visage déjà repéré');
     assert.deepEqual(await runs(), ['3'], 'déjà lues : gardées en mémoire');
+
+    // Toute la galerie : le visage de « new » ressemble à celui d'Anne ; portrait de Bruno sur « old »
+    await writeFile(path.join(dir, 'other.jpg'), 'x');
+    const images = [{ photo: 'photos/new.jpg', file: path.join(dir, 'new.jpg'), tags: [] }, { photo: 'photos/other.jpg', file: path.join(dir, 'other.jpg'), tags: [] }];
+    const o = await faces.faceOverview(images, [{ id: 'b', photo: 'photos/old.jpg', file: path.join(dir, 'old.jpg'), x: 20, y: 20 }], new Set(['b']));
+    assert.deepEqual(o.groups, [], 'semblables à un visage connu : pas des inconnus');
+    assert.deepEqual(o.portraits, [{ id: 'b', photo: 'photos/old.jpg', x: 20, y: 20, w: 20, box: [0.1, 0.1, 0.2, 0.2] }]);
+    const alone = await faces.faceOverview(images, [], new Set());
+    assert.equal(alone.groups.length, 1, 'sans visage connu : les deux visages semblables groupés');
+    assert.deepEqual(await runs(), ['3', '1'], 'seule l’image nouvelle est lue');
   });
 });

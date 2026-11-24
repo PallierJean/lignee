@@ -83,11 +83,12 @@ function tagLabel(p) {
 const pinSide = (x) => (x.y > 70 ? ' up' : '');
 
 /**
- * Faces recognised on image `m` that are still to confirm: not dismissed, of people not yet placed
- * on it, on faces without a marker. The first time, asks the local server, then shows them.
+ * Faces found on image `m` without a marker yet: { named, unknown }. `named` are the faces recognised
+ * still to confirm (not dismissed, of people not yet placed on it); `unknown` the others, a face
+ * whose suggestion was dismissed included. The first time, asks the local server, then shows them.
  */
-function guessesOf(m) {
-  if (back || isDraft() || !S.canWrite || !canFindFaces(m.photo)) return [];
+function facesOn(m) {
+  if (back || isDraft() || !S.canWrite || !canFindFaces(m.photo)) return { named: [], unknown: [] };
   const photo = m.photo;
   if (!guesses.has(photo)) {
     guesses.set(photo, null);
@@ -101,10 +102,17 @@ function guessesOf(m) {
       });
   }
   const placed = tagsOf(m).filter(hasPlace);
-  const near = (g) => placed.some((x) => Math.hypot(x.x - g.x, x.y - g.y) < 4);
-  return (guesses.get(photo) || []).filter((g) => P(g.id) && !dismissed.has(photo + '|' + g.id)
-    && !placed.some((x) => x.id === g.id) && !near(g));
+  const near = (g) => placed.some((x) => Math.hypot(x.x - g.x, x.y - g.y) < Math.max(4, (g.w || 0) / 2));
+  const open = (guesses.get(photo) || []).filter((g) => !near(g));
+  const named = open.filter((g) => g.id && P(g.id) && !dismissed.has(photo + '|' + g.id) && !placed.some((x) => x.id === g.id));
+  return { named, unknown: open.filter((g) => !named.includes(g)) };
 }
+
+/** Faces recognised on image `m`, still to confirm (see facesOn). */
+const guessesOf = (m) => facesOn(m).named;
+
+/** A marker's size on the photo: the face's width, if known. */
+const faceSize = (g) => (g.w ? `;width:max(32px,${g.w * 1.3}%)` : '');
 
 /** Suggestions waiting for an answer from the server on image `m`. */
 const guessing = (m) => !back && !isDraft() && S.canWrite && canFindFaces(m.photo) && guesses.get(m.photo) === null;
@@ -147,9 +155,12 @@ export function renderMedia() {
       + '</li>';
   }).join('');
   // People named in the caption, without a marker yet, at the top of the list
-  const guessed = guessesOf(m);
-  const guessMarks = guessed.map((g, i) => `<button class="tag-pin guess${pinSide(g)}" type="button" data-guess="${i}" data-style="left:${g.x}%;top:${g.y}%"`
-    + ` data-act="guess-yes" data-id="${esc(g.id)}" aria-label="${esc(t('med.guessYesWho', fullName(P(g.id))))}">${tagLabel(P(g.id))}</button>`).join('');
+  const { named: guessed, unknown } = facesOn(m);
+  const guessMarks = guessed.map((g, i) => `<button class="tag-pin guess${pinSide(g)}" type="button" data-guess="${i}" data-style="left:${g.x}%;top:${g.y}%${faceSize(g)}"`
+    + ` data-act="guess-yes" data-id="${esc(g.id)}" aria-label="${esc(t('med.guessYesWho', fullName(P(g.id))))}">${tagLabel(P(g.id))}</button>`).join('')
+    // Faces found but not recognised: a click asks who it is, the marker already on the face
+    + unknown.map((g) => `<button class="tag-pin face" type="button" data-style="left:${g.x}%;top:${g.y}%${faceSize(g)}"`
+      + ` data-act="face-pick" data-x="${g.x}" data-y="${g.y}" aria-label="${t('med.who')}" title="${t('med.who')}"></button>`).join('');
   const tagged = new Set(tags.filter(hasPlace).map((x) => x.id));
   const named = peopleNamedIn([m.title, m.note].join(' ')).filter((id) => !tagged.has(id));
   const picker = pin
@@ -806,4 +817,13 @@ export function dismissGuess(id) {
   if (!m) return;
   dismissed.add(m.photo + '|' + id);
   renderMedia();
+}
+
+/** Click on a face found but not recognised: the marker goes there, then you choose the person. */
+export function pickFace(x, y) {
+  if (!S.canWrite || editing || back || !item() || !Number.isFinite(x) || !Number.isFinite(y)) return;
+  pin = { x, y };
+  renderMedia();
+  const find = document.getElementById('tagFind');
+  if (find) find.focus();
 }

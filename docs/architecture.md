@@ -71,7 +71,7 @@ lignee/
 │   ├── model/
 │   │   ├── people.js           Noms, âges, parents, conjoints, enfants, événements, sources
 │   │   ├── media.js            Galerie de l'arbre, à part des fiches : images et personnes identifiées
-│   │   ├── faces.js            Visages reconnus : visages connus de l'arbre, suggestions pour une image
+│   │   ├── faces.js            Visages reconnus : visages connus de l'arbre, suggestions, groupes d'inconnus, portraits
 │   │   ├── sources.js          Sources partagées : citations, documents de l'import GEDCOM
 │   │   ├── voice.js            Commandes à la voix : la commande, la consigne du modèle, les phrases connues
 │   │   ├── kinship.js          Lien de parenté entre deux personnes
@@ -132,6 +132,7 @@ lignee/
 │       ├── analysis.js         Onglet Analyse
 │       ├── places.js           Carte des lieux en SVG
 │       ├── media.js            Visionneuse de la galerie, identification sur les photos
+│       ├── faces.js            Fenêtre « Visages à identifier » : groupes d'inconnus, portraits à ajouter
 │       ├── reading.js          Lecture d'un document : image, texte lu, corrections
 │       ├── voice.js            Le micro et la bulle des commandes à la voix
 │       ├── trees.js            Fenêtre Mes arbres : ouvrir, créer, renommer, supprimer

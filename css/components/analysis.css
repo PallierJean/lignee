@@ -961,6 +961,17 @@
   border-color: var(--accent);
 }
 
+/* Face found, not recognised: a faint ring; a click asks who it is */
+.tag-pin.face {
+  border: 1px dashed rgba(255, 255, 255, .55);
+}
+
+.tag-pin.face:hover,
+.tag-pin.face:focus-visible {
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .25);
+}
+
 .media-guesses .hint {
   margin: 0 0 8px;
 }
@@ -1531,4 +1542,134 @@
 
 @keyframes pt-born {
   from { r: 0; }
+}
+
+/* Faces to identify (ui/faces.js): groups of the same unknown face, portraits to add */
+.gallery-tools {
+  margin: 0 0 12px;
+}
+
+.sheet.faces-sheet {
+  width: min(760px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.fc-section {
+  margin: 16px 0 0;
+}
+
+.fc-section h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: .7188rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.fc-section h3 .n {
+  font-family: var(--f-mono);
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.fc-groups,
+.fc-portraits,
+.fc-faces {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fc-group {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.fc-count {
+  margin: 0 0 6px;
+  font-size: .8125rem;
+  color: var(--muted);
+}
+
+.fc-faces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fc-face {
+  position: relative;
+}
+
+/* A face cut out of its photo: the image enlarged and moved inside a small square (see faceThumb) */
+.face-thumb {
+  position: relative;
+  display: block;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.face-thumb img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  height: auto;
+  transform-origin: 0 0;
+}
+
+.fc-drop {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fc-drop:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.fc-pick {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.fc-portrait {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.fc-who {
+  flex: 1;
+}
+
+.fc-who small {
+  font-family: var(--f-mono);
+  font-size: .75rem;
+  color: var(--muted);
+  margin-left: 4px;
 }

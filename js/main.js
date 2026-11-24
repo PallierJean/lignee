@@ -49,7 +49,7 @@ async function init() {
   checkHtr().then(({ ready }) => ready && renderAll()).catch(() => {});
 
   // 2a. Recognising faces on this computer (local server with OpenCV): the gallery suggests who is on an image
-  checkFaces().catch(() => {});
+  checkFaces().then((ready) => ready && renderAll()).catch(() => {});
 
   // 2b. Voice commands: the microphone appears if this device can listen (ui/voice.js)
   initVoice(A).catch(() => {});

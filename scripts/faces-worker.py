@@ -3,9 +3,9 @@ Faces for Lignée (faces.js): finds the faces of images and describes each one, 
 
     python faces-worker.py <detector.onnx> <recognizer.onnx> <image>...
 
-Writes one line per image on stdout, in order: {"faces": [{"box": [x, y, w, h], "score": s,
-"vec": [128 numbers]}]} with the box in fractions of the image, or {"error": "..."} if the image
-can't be read. Two faces are the same person when their vectors are close (cosine, see faces.js).
+Writes one line per image on stdout, in order: {"size": [width, height], "faces": [{"box":
+[x, y, w, h], "score": s, "vec": [128 numbers]}]} with the box in fractions of the image, or
+{"error": "..."} if the image can't be read. Two faces are the same person when their vectors are close (cosine, see faces.js).
 
 The models come from OpenCV's model zoo: YuNet finds the faces, SFace describes them.
 """
@@ -20,16 +20,17 @@ MAX_SIDE = 2000  # larger images are reduced first: same faces, much faster
 
 
 def read(path):
-    """The image at `path` (any name, even with accents on Windows), in colour, or None."""
+    """The image at `path` (any name, even with accents on Windows), in colour, and its size; or None."""
     data = np.fromfile(path, dtype=np.uint8)
     img = cv2.imdecode(data, cv2.IMREAD_COLOR) if data.size else None
     if img is None:
-        return None
+        return None, None
     h, w = img.shape[:2]
+    size = [w, h]
     if max(h, w) > MAX_SIDE:
         k = MAX_SIDE / max(h, w)
         img = cv2.resize(img, (round(w * k), round(h * k)), interpolation=cv2.INTER_AREA)
-    return img
+    return img, size
 
 
 def faces_of(img, detector, recognizer):
@@ -60,8 +61,8 @@ def main():
     recognizer = cv2.FaceRecognizerSF.create(sys.argv[2], "")
     for path in sys.argv[3:]:
         try:
-            img = read(path)
-            line = {"faces": faces_of(img, detector, recognizer)} if img is not None else {"error": "unreadable image"}
+            img, size = read(path)
+            line = {"size": size, "faces": faces_of(img, detector, recognizer)} if img is not None else {"error": "unreadable image"}
         except Exception as e:  # one bad image must not stop the others
             line = {"error": str(e)}
         print(json.dumps(line), flush=True)

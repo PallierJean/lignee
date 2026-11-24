@@ -18,8 +18,9 @@ import {
 } from './ui/analysis.js';
 import { departmentHint, departmentFromCity } from './ui/form.js';
 import {
-  openMedia, openArchive, archiveToGallery, askArchiveDelete, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, askMediaArchive, archiveMedia, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack, acceptGuesses, dismissGuess } from './ui/media.js';
+  openMedia, openArchive, archiveToGallery, askArchiveDelete, closeMedia, stepMedia, showMediaSide, placePin, cancelPin, addTag, removeTag, highlightTag, editCaption, saveCaption, openDraftMedia, askMediaDelete, askMediaArchive, archiveMedia, deleteMedia, cropMedia, addGalleryPhotos, onTagFind, pickFirstTag, setMediaBack, acceptGuesses, dismissGuess, pickFace } from './ui/media.js';
 import { closeCropFree, resetCropFree, cropFreeDrag, cropFreeOpen } from './ui/crop-free.js';
+import { openFaces, closeFaces, facesOpen, onFacesFind, pickFirstFace, dropFace, skipGroup, skipPortrait, nameGroup, choosePortrait } from './ui/faces.js';
 import { openReading, closeReading, readingSide, runReading, lightLine, editLine, readAll, stopBatch, readingOpen } from './ui/reading.js';
 import { openPersonDlg, closePersonDlg } from './ui/person-dlg.js';
 import { fanHover, fanMove, fanClick, fanRecenter, fanBack } from './ui/fan-hover.js';
@@ -339,6 +340,14 @@ const CLICK_ACTIONS = {
   'guess-yes': once((el) => acceptGuesses([el.dataset.id])),
   'guess-all': once(() => acceptGuesses()),
   'guess-no': (el) => dismissGuess(el.dataset.id),
+  'face-pick': (el) => pickFace(+el.dataset.x, +el.dataset.y),
+  'faces-open': () => openFaces(),
+  'faces-close': () => closeFaces(),
+  'fc-drop': (el) => dropFace(+el.dataset.g, +el.dataset.k),
+  'fc-skip': (el) => skipGroup(+el.dataset.g),
+  'fc-name': once((el) => nameGroup(+el.dataset.g, el.dataset.id)),
+  'fc-portrait': once((el) => choosePortrait(el.dataset.id)),
+  'fc-portrait-skip': (el) => skipPortrait(el.dataset.id),
   'media-crop': once(() => cropMedia()),
   'media-back-remove': once(() => setMediaBack(null)),
   'med-crop': (el) => A.cropDraftMedia(+el.dataset.i),
@@ -432,6 +441,7 @@ const DIALOGS = () => [
   appearanceMenu(),
   { id: 'photoZoom', close: closePhotoZoom },
   { id: 'mediaDlg', close: closeMedia, backdrop: true },
+  { id: 'facesDlg', close: closeFaces, backdrop: true, isOpen: facesOpen },
   { id: 'readDlg', close: closeReading, backdrop: true, isOpen: readingOpen },
   { id: 'personDlg', close: closePersonDlg, backdrop: true },
   { id: 'repoDiffDlg', close: closeRepoDiff, backdrop: true },
@@ -588,6 +598,7 @@ export function bindEvents() {
     if (ev.target.id === 'lib-q' || ev.target.id === 'sg-lib-q') setLibraryFilter(undefined, ev.target.value);
     if (ev.target.id === 'map-year') setMapYear(ev.target.value);
     if (ev.target.id === 'tagFind') onTagFind(ev.target.value);
+    if (ev.target.classList && ev.target.classList.contains('fc-find')) onFacesFind(+ev.target.dataset.g, ev.target.value);
     if (ev.target.id === 'q') {
       S.query = ev.target.value;
       renderRegister();
@@ -637,6 +648,12 @@ export function bindEvents() {
     if (ev.target.id === 'tagFind' && ev.key === 'Enter') {
       ev.preventDefault();
       pickFirstTag();
+      return;
+    }
+    // Naming a group of faces: Enter takes the first result
+    if (ev.target.classList && ev.target.classList.contains('fc-find') && ev.key === 'Enter') {
+      ev.preventDefault();
+      pickFirstFace(+ev.target.dataset.g);
       return;
     }
     if (isPersonPick(ev.target.id)) {

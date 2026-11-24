@@ -12,7 +12,8 @@ const OUT = { w: 256, h: 320 };            // stored photo
 const QUALITY = 0.85;
 const MAX_ZOOM = 4;                         // at most 4 times the zoom that just fills the frame
 
-let crop = null; // { img, url, x, y, scale, min, resolve, drag }
+let crop = null; // { img, url, x, y, scale, min, max, resolve, drag }
+const FACE_SPACE = 2.2; // a face proposed for a portrait: the frame's height is that many faces
 
 /** Zoom that just fills the frame, with no empty band. */
 export const coverScale = (w, h, frame = FRAME) => Math.max(frame.w / w, frame.h / h);
@@ -33,7 +34,7 @@ export function cropRect({ x, y, scale }, frame = FRAME) {
 
 /** Zooms keeping the frame point (px, py) fixed (the centre by default). */
 function zoomTo(scale, px = FRAME.w / 2, py = FRAME.h / 2) {
-  const s = Math.min(crop.min * MAX_ZOOM, Math.max(crop.min, scale));
+  const s = Math.min(crop.max, Math.max(crop.min, scale));
   const k = s / crop.scale;
   Object.assign(crop, clampView({ scale: s, x: px - (px - crop.x) * k, y: py - (py - crop.y) * k }, crop.img.naturalWidth, crop.img.naturalHeight));
   show();
@@ -48,10 +49,22 @@ function show() {
 }
 
 /**
- * Opens the crop tool for image file `file`. Returns the cropped photo (JPEG data URL),
- * or null if cancelled.
+ * First view of a face for a portrait: the face of box `face` ([x, y, w, h] in fractions of the
+ * image) in the middle of the frame, the frame FACE_SPACE faces high; small faces may need more
+ * than the usual zoom, which then goes that far.
  */
-export async function cropPhoto(file) {
+export function faceView(face, w, h, min, frame = FRAME) {
+  const [bx, by, bw, bh] = face;
+  const scale = Math.max(min, frame.h / (bh * h * FACE_SPACE));
+  const view = clampView({ scale, x: frame.w / 2 - (bx + bw / 2) * w * scale, y: frame.h / 2 - (by + bh / 2) * h * scale }, w, h, frame);
+  return { ...view, max: Math.max(min * MAX_ZOOM, scale) };
+}
+
+/**
+ * Opens the crop tool for image file `file`, on face `face` if given (see faceView). Returns the
+ * cropped photo (JPEG data URL), or null if cancelled.
+ */
+export async function cropPhoto(file, face = null) {
   if (!file || !/^image\//.test(file.type)) throw new Error(t('img.notImage'));
   const url = URL.createObjectURL(file);
   const img = new Image();
@@ -64,7 +77,10 @@ export async function cropPhoto(file) {
   }
   const min = coverScale(img.naturalWidth, img.naturalHeight);
   // At first: the whole frame filled, image centred
-  crop = { img, url, scale: min, min, x: (FRAME.w - img.naturalWidth * min) / 2, y: (FRAME.h - img.naturalHeight * min) / 2 };
+  crop = face
+    ? { img, url, min, ...faceView(face, img.naturalWidth, img.naturalHeight, min) }
+    : { img, url, scale: min, min, max: min * MAX_ZOOM, x: (FRAME.w - img.naturalWidth * min) / 2, y: (FRAME.h - img.naturalHeight * min) / 2 };
+  $('#cropZoom').max = String(crop.max / min);
   $('#cropImg').src = url;
   show();
   $('#cropDlg').hidden = false;
